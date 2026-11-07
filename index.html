@@ -119,39 +119,56 @@
     <!-- Sección de IMAGEN (oculta inicialmente) -->
     <div id="seccionImagen" style="display: none;">
 
-      <div class="campo">
-        <label class="rotulo" for="cargadorImagen">Cargá una imagen</label>
-        <input type="file" id="cargadorImagen" accept="image/*" />
-        <p class="descripcion-campo">Formatos: JPG, PNG, GIF, WebP.</p>
-      </div>
-
-      <div class="campo switch-fila">
-        <span class="rotulo" style="margin:0;">Difuminado</span>
-        <label class="switch">
-          <input type="checkbox" id="dithering" />
-          <span class="via"><span class="perilla"></span></span>
-        </label>
-      </div>
-      <p class="descripcion-campo">Activado: mejor para fotos y degradados.<br>Desactivado: umbral duro, mejor para logos e íconos.</p>
-
-      <div class="campo">
-        <label class="rotulo" for="umbral">Umbral de binarización</label>
-        <div class="control-rango">
-          <input type="range" id="umbral" min="0" max="255" value="127" />
-          <span class="valor-rango" id="valorUmbral">127</span>
+      <section class="grupo">
+        <h2 class="grupo-titulo">Imagen</h2>
+        <div class="campo">
+          <!-- El input real sigue siendo #cargadorImagen; la etiqueta lo
+               envuelve para que toda la zona sea tocable. -->
+          <label class="zona-subida" for="cargadorImagen">
+            <input type="file" id="cargadorImagen" accept="image/*" />
+            <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="zona-subida-titulo">Elegí una imagen</span>
+            <span class="zona-subida-desc">JPG, PNG, GIF o WebP · se adapta a 128×64</span>
+          </label>
         </div>
-        <p class="descripcion-campo">Ajustá la sensibilidad: 0 = todo blanco, 255 = todo negro.</p>
-      </div>
+      </section>
 
-      <div class="campo">
-        <label class="rotulo" for="nombreGaleria">Añadir esta imagen a la galería</label>
-        <div class="fila-guardar-galeria">
-          <input type="text" id="nombreGaleria" placeholder="Nombre para guardarla" maxlength="60" />
-          <button type="button" id="botonGuardarGaleria" class="boton-secundario">Añadir imagen a la galería</button>
+      <section class="grupo">
+        <h2 class="grupo-titulo">Ajustes</h2>
+
+        <div class="campo switch-fila fila-ajuste-simple">
+          <span class="fila-ajuste-texto">
+            <span class="fila-ajuste-titulo">Difuminado</span>
+            <span class="fila-ajuste-desc">Activado: mejor para fotos y degradados. Desactivado: umbral duro, mejor para logos e íconos.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" id="dithering" />
+            <span class="via"><span class="perilla"></span></span>
+          </label>
         </div>
-        <p class="descripcion-campo">Guarda una copia de la imagen procesada de arriba para poder reutilizarla después. La sección <strong>Galería</strong> tiene la galería completa, con opción de editarlas o borrarlas.</p>
-        <div id="avisoGaleria" class="aviso" style="display: none;"></div>
-      </div>
+
+        <div class="campo">
+          <label class="rotulo" for="umbral">Umbral de binarización</label>
+          <div class="control-rango">
+            <input type="range" id="umbral" min="0" max="255" value="127" />
+            <span class="valor-rango" id="valorUmbral">127</span>
+          </div>
+          <p class="descripcion-campo">0 = todo blanco, 255 = todo negro.</p>
+        </div>
+      </section>
+
+      <section class="grupo">
+        <h2 class="grupo-titulo">Guardar en galería</h2>
+        <div class="campo">
+          <label class="rotulo" for="nombreGaleria">Nombre</label>
+          <div class="fila-guardar-galeria">
+            <input type="text" id="nombreGaleria" placeholder="Nombre para guardarla" maxlength="60" />
+            <button type="button" id="botonGuardarGaleria" class="boton-secundario">Añadir imagen a la galería</button>
+          </div>
+          <p class="descripcion-campo">Guarda una copia de la imagen procesada para reutilizarla después. En <strong>Galería</strong> podés editarlas o borrarlas.</p>
+          <div id="avisoGaleria" class="aviso" style="display: none;"></div>
+        </div>
+      </section>
 
     </div>
 

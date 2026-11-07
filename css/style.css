@@ -982,6 +982,118 @@ textarea {
   transform: translateX(22px);
 }
 
+
+/* ===================================================
+   Pestaña Imagen: zona de subida, ajustes y guardar
+   =================================================== */
+.zona-subida {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-1);
+  min-height: 132px;
+  padding: var(--esp-5) var(--esp-4);
+  border: 1.5px dashed var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-hundida);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .12s ease, background .12s ease;
+}
+
+.zona-subida:hover,
+.zona-subida:focus-within {
+  border-color: var(--acento);
+  background: var(--acento-fondo);
+}
+
+.zona-subida:focus-within {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* El input queda invisible pero sigue en el DOM y enfocable. */
+.zona-subida input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.zona-subida-icono {
+  width: 32px;
+  height: 32px;
+  color: var(--acento);
+  margin-bottom: var(--esp-1);
+}
+
+.zona-subida-titulo {
+  font-size: var(--texto-md);
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.zona-subida-desc {
+  font-size: var(--texto-xs);
+  color: var(--texto-2);
+}
+
+/* Fila con interruptor sin separador superior (dentro de un grupo). */
+.fila-ajuste-simple {
+  gap: var(--esp-4);
+}
+
+/* Controles deshabilitados (imagen sin fuente editable). */
+.switch input:disabled + .via {
+  opacity: .4;
+}
+
+.switch input:disabled {
+  cursor: not-allowed;
+}
+
+input[type="range"]:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* Slider más grueso y fácil de agarrar con el dedo. */
+input[type="range"] {
+  height: 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.valor-rango {
+  min-width: 48px;
+  padding: 4px var(--esp-2);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-hundida);
+  text-align: center;
+}
+
+/* Guardar: nombre y botón apilados a lo ancho. */
+.fila-guardar-galeria {
+  flex-direction: column;
+}
+
+.fila-guardar-galeria input[type="text"] {
+  min-height: var(--toque-min);
+  border-radius: var(--radio-md);
+  padding: 0 var(--esp-4);
+}
+
+.fila-guardar-galeria .boton-secundario {
+  min-height: var(--toque-min);
+  border-radius: var(--radio-md);
+  font-size: var(--texto-sm);
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {
