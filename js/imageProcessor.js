@@ -272,6 +272,160 @@ function convertirAMonocromaticoDither(canvas, umbral = 127) {
 }
 
 /**
+ * Difuminado de Atkinson (el mismo de CancionesMiniTV / Mac clásico):
+ * reparte solo 6/8 del error (1/8 a cada uno de 6 vecinos) y descarta el
+ * resto. A diferencia de Floyd-Steinberg (que conserva el 100 % del error
+ * y por eso el brillo promedio casi no cambia aunque se mueva el umbral),
+ * acá el umbral sí aclara u oscurece la imagen de forma notoria, y el
+ * resultado tiene más contraste: se ve mejor en una OLED de 1 bit.
+ *
+ * @param {Uint8Array|Float32Array} gris - 0..255, ancho*alto valores
+ * @param {number} width
+ * @param {number} height
+ * @param {number} umbral - 0..255 (más alto = más oscuro)
+ * @returns {Uint8Array} bitmap 1bpp, MSB primero, 1 = encendido
+ */
+export function grisABitmapAtkinson(gris, width, height, umbral = 127) {
+  const g = Float32Array.from(gris);
+  const bytesPorFila = Math.ceil(width / 8);
+  const bitmap = new Uint8Array(bytesPorFila * height);
+  const suma = (x, y, e) => { if (x >= 0 && x < width && y < height) g[y * width + x] += e; };
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const viejo = g[y * width + x];
+      const nuevo = viejo >= umbral ? 255 : 0;
+      const e = (viejo - nuevo) / 8;
+      if (nuevo === 255) bitmap[y * bytesPorFila + (x >> 3)] |= (1 << (7 - (x & 7)));
+      suma(x + 1, y, e); suma(x + 2, y, e);
+      suma(x - 1, y + 1, e); suma(x, y + 1, e); suma(x + 1, y + 1, e);
+      suma(x, y + 2, e);
+    }
+  }
+  return bitmap;
+}
+
+/**
+ * Umbral simple sobre un arreglo de grises (sin difuminado).
+ * @returns {Uint8Array} bitmap 1bpp, MSB primero, 1 = encendido
+ */
+export function grisABitmapUmbral(gris, width, height, umbral = 127) {
+  const bytesPorFila = Math.ceil(width / 8);
+  const bitmap = new Uint8Array(bytesPorFila * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (gris[y * width + x] > umbral) bitmap[y * bytesPorFila + (x >> 3)] |= (1 << (7 - (x & 7)));
+    }
+  }
+  return bitmap;
+}
+
+/**
+ * Grises (0..255) de un canvas, con la misma fórmula de luminancia que
+ * convertirAEscalaGrises. No modifica el canvas.
+ */
+export function grisesDeCanvas(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const d = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+  const g = new Uint8Array(w * h);
+  for (let k = 0; k < g.length; k++) g[k] = Math.round(0.299 * d[k * 4] + 0.587 * d[k * 4 + 1] + 0.114 * d[k * 4 + 2]);
+  return g;
+}
+
+/**
+ * Opciones de geometría al convertir (mismas que CancionesMiniTV):
+ *   escala: 'ajustar' (entra entera, con bordes) | 'llenar' (cubre todo,
+ *           recorta) | 'estirar' (deforma) | 'original' (píxel a píxel)
+ *   fondo:  'negro' | 'blanco' (lo que no cubre la imagen)
+ *   rotar:  0 | 90 | 180 | 270 (sentido horario)
+ *   volteoH, volteoV: espejo horizontal / vertical (sobre lo ya girado)
+ */
+export const OPCIONES_GEOMETRIA_DEFECTO = Object.freeze({
+  escala: 'ajustar', fondo: 'negro', rotar: 0, volteoH: false, volteoV: false
+});
+
+/**
+ * Dibuja "fuente" (img, canvas, ImageBitmap…) de tamaño sw×sh dentro de
+ * un canvas destino ya creado, aplicando escala, fondo, giro y volteo.
+ * Portado de acomodarEn128x64 (CancionesMiniTV).
+ */
+export function acomodarEnDestino(fuente, sw, sh, opciones, destino) {
+  const o = Object.assign({}, OPCIONES_GEOMETRIA_DEFECTO, opciones || {});
+  const ANCHO = destino.width, ALTO = destino.height;
+  const dctx = destino.getContext('2d', { willReadFrequently: true });
+  const giro = o.rotar === 90 || o.rotar === 270;
+  const rw = giro ? sh : sw, rh = giro ? sw : sh;              // tamaño de la imagen ya girada
+  const ratio = rw / rh, ratioDest = ANCHO / ALTO;
+  let dw, dh;
+  if (o.escala === 'estirar') { dw = ANCHO; dh = ALTO; }
+  else if (o.escala === 'original') { dw = rw; dh = rh; }
+  else if ((o.escala === 'llenar') === (ratio > ratioDest)) { dh = ALTO; dw = Math.max(1, Math.round(ALTO * ratio)); }
+  else { dw = ANCHO; dh = Math.max(1, Math.round(ANCHO / ratio)); }
+  const ox = Math.round((ANCHO - dw) / 2), oy = Math.round((ALTO - dh) / 2);
+
+  dctx.save();
+  dctx.setTransform(1, 0, 0, 1, 0, 0);
+  dctx.fillStyle = o.fondo === 'blanco' ? '#ffffff' : '#000000';
+  dctx.fillRect(0, 0, ANCHO, ALTO);
+  dctx.imageSmoothingEnabled = o.escala !== 'original';
+  dctx.imageSmoothingQuality = 'high';
+  if (o.rotar === 0 && !o.volteoH && !o.volteoV) {
+    dctx.drawImage(fuente, ox, oy, dw, dh);
+  } else {
+    dctx.translate(ox + dw / 2, oy + dh / 2);
+    dctx.scale(o.volteoH ? -1 : 1, o.volteoV ? -1 : 1);
+    dctx.rotate(o.rotar * Math.PI / 180);
+    const pw = giro ? dh : dw, ph = giro ? dw : dh;            // tamaño antes de girar
+    dctx.drawImage(fuente, -pw / 2, -ph / 2, pw, ph);
+  }
+  dctx.restore();
+}
+
+/**
+ * Carga un archivo de imagen y devuelve la imagen ORIGINAL (sin achicar),
+ * para poder reconvertirla cuantas veces haga falta al cambiar escala,
+ * fondo, giro o volteo.
+ * @returns {Promise<{el: HTMLImageElement, w: number, h: number, dataUrl: string}>}
+ */
+export async function cargarImagenOriginal(file) {
+  const dataUrl = await leerArchivoComoDataURL(file);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ el: img, w: img.naturalWidth || img.width, h: img.naturalHeight || img.height, dataUrl });
+    img.onerror = () => reject(new Error('Error al cargar la imagen'));
+    img.src = dataUrl;
+  });
+}
+
+/**
+ * Convierte una imagen original con opciones de geometría + umbral +
+ * difuminado (Atkinson). Devuelve lo mismo que procesarImagenDesdeDataURL,
+ * así el resto del panel la usa igual.
+ *
+ * @param {{el, w, h}} original - de cargarImagenOriginal
+ * @param {object} opciones - { escala, fondo, rotar, volteoH, volteoV, umbral, dithering }
+ */
+export function procesarImagenConOpciones(original, opciones = {}, targetWidth = 128, targetHeight = 64) {
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  acomodarEnDestino(original.el, original.w, original.h, opciones, canvas);
+  const preprocesada = canvas.toDataURL('image/png');
+  const gris = grisesDeCanvas(canvas);
+  const umbral = Number.isFinite(opciones.umbral) ? opciones.umbral : 127;
+  const bitmap = opciones.dithering
+    ? grisABitmapAtkinson(gris, targetWidth, targetHeight, umbral)
+    : grisABitmapUmbral(gris, targetWidth, targetHeight, umbral);
+  return {
+    imagenData: codificarBase64(bitmap),
+    imagenAncho: targetWidth,
+    imagenAlto: targetHeight,
+    canvas,
+    preprocesada
+  };
+}
+
+/**
  * Procesa una imagen ya en memoria (dataURL): redimensiona, convierte a
  * monocromático y codifica en Base64. Es el núcleo que usan tanto
  * procesarImagen (arranca de un File) como la re-edición de imágenes
@@ -281,7 +435,7 @@ function convertirAMonocromaticoDither(canvas, umbral = 127) {
  * @param {number} targetWidth - Ancho destino (128)
  * @param {number} targetHeight - Alto destino (64)
  * @param {number} umbral - Umbral de binarización (0-255)
- * @param {boolean} dithering - true = Floyd-Steinberg, false = umbral simple
+ * @param {boolean} dithering - true = Atkinson, false = umbral simple
  * @returns {Promise<{imagenData: string, imagenAncho: number, imagenAlto: number, canvas: HTMLCanvasElement, preprocesada: string}>}
  */
 export async function procesarImagenDesdeDataURL(dataUrl, targetWidth = 128, targetHeight = 64, umbral = 127, dithering = true) {
@@ -304,10 +458,14 @@ export async function procesarImagenDesdeDataURL(dataUrl, targetWidth = 128, tar
     // 2. Convertir a escala de grises
     const canvasGris = convertirAEscalaGrises(canvasRedim);
     
-    // 3. Convertir a monocromático (dithering o umbral simple)
-    const { bitmap, width, height } = dithering
-      ? convertirAMonocromaticoDither(canvasGris, umbral)
-      : convertirAMonocromatico(canvasGris, umbral);
+    // 3. Convertir a monocromático: difuminado de Atkinson (el umbral sí
+    //    cambia el resultado) o umbral simple. Floyd-Steinberg
+    //    (convertirAMonocromaticoDither) queda disponible pero ya no se usa.
+    const width = canvasGris.width;
+    const height = canvasGris.height;
+    const bitmap = dithering
+      ? grisABitmapAtkinson(grisesDeCanvas(canvasGris), width, height, umbral)
+      : convertirAMonocromatico(canvasGris, umbral).bitmap;
     
     // 4. Codificar en Base64
     const imagenData = codificarBase64(bitmap);
@@ -332,7 +490,7 @@ export async function procesarImagenDesdeDataURL(dataUrl, targetWidth = 128, tar
  * @param {number} targetWidth - Ancho destino (128)
  * @param {number} targetHeight - Alto destino (64)
  * @param {number} umbral - Umbral de binarización (0-255)
- * @param {boolean} dithering - true = Floyd-Steinberg (mejor para fotos/degradados),
+ * @param {boolean} dithering - true = Atkinson (mejor para fotos/degradados),
  *                              false = umbral simple (mejor para logos/texto)
  * @returns {Promise<{imagenData: string, imagenAncho: number, imagenAlto: number, canvas: HTMLCanvasElement, preprocesada: string}>}
  */
