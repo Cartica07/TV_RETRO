@@ -33,8 +33,10 @@ import {
   limpiarLienzo,
   hayHistorial,
   hayRehistorial,
-  obtenerResultadoImagen
+  obtenerResultadoImagen,
+  cancelarTrazoActual
 } from './dibujo.js';
+import { crearZoomLienzo } from './lienzoZoom.js';
 import {
   obtenerElementos,
   poblarControles,
@@ -484,6 +486,7 @@ function actualizarPreviewDesdeLienzo() {
 // en Android); si no (iPhone, escritorio), queda igual de grande y en
 // vertical se muestra "Girá el teléfono".
 let dibujoExpandido = false;
+let zoomDibujo = null;              // control de zoom del lienzo (lienzoZoom.js)
 let pantallaCompletaPropia = false; // true si la pantalla completa la pidió el panel
 
 async function expandirDibujo() {
@@ -1731,6 +1734,12 @@ function configurarEventos() {
   if (elementos.botonContraerDibujo) {
     elementos.botonContraerDibujo.addEventListener('click', () => contraerDibujo());
   }
+  if (elementos.botonZoomMasDibujo) {
+    elementos.botonZoomMasDibujo.addEventListener('click', () => { if (zoomDibujo) zoomDibujo.acercar(); });
+  }
+  if (elementos.botonZoomMenosDibujo) {
+    elementos.botonZoomMenosDibujo.addEventListener('click', () => { if (zoomDibujo) zoomDibujo.alejar(); });
+  }
   // "Atrás" de Android (o del navegador) con el lienzo expandido: contrae
   // en vez de salir de la página (se apiló un estado al expandir).
   window.addEventListener('popstate', () => {
@@ -1975,6 +1984,19 @@ async function inicializar() {
       actualizarBotonesHistorialDibujo();
     });
     actualizarBotonesHistorialDibujo();
+
+    // Zoom y desplazamiento del lienzo (dos dedos, rueda, botones). Al
+    // apoyar el segundo dedo se descarta el trazo que empezó el primero.
+    if (elementos.visorLienzo) {
+      zoomDibujo = crearZoomLienzo({
+        visor: elementos.visorLienzo,
+        canvas: elementos.lienzoDibujo,
+        indicador: elementos.indicadorZoomDibujo,
+        alEmpezarGesto: () => {
+          if (cancelarTrazoActual()) actualizarBotonesHistorialDibujo();
+        }
+      });
+    }
   }
 
   configurarEventos();

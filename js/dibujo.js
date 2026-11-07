@@ -182,6 +182,21 @@ export function limpiarLienzo(canvas) {
   pintarFondo(canvas);
 }
 
+/**
+ * Descarta el trazo que se está dibujando en este momento (si hay uno):
+ * vuelve el lienzo a como estaba antes de empezarlo. Se usa cuando el
+ * usuario apoya un segundo dedo para hacer zoom: el primer dedo ya había
+ * empezado un trazo que no tiene que quedar. Devuelve true si descartó algo.
+ */
+export function cancelarTrazoActual() {
+  if (!dibujando) return false;
+  dibujando = false;
+  const snapshot = historial.pop();
+  if (snapshot) ctx.putImageData(snapshot, 0, 0);
+  if (notificarCambio) notificarCambio();
+  return true;
+}
+
 /** true si hay al menos un trazo para deshacer. */
 export function hayHistorial() {
   return historial.length > 0;
