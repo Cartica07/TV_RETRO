@@ -6,7 +6,8 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 ## Archivos
 - `index.html` + `js/main.js` (orquestador) + `js/ui.js` (IDs del DOM y helpers visuales)
 - `js/firebase.js`: ÚNICO acceso a Firebase
-- `js/renderer.js` + `js/fonts.js`: réplica pixel-perfect de la OLED
+- `js/renderer.js` + `js/fonts.js`: réplica pixel-perfect de la OLED (fuente clásica 5×7)
+- `js/fuentesTexto.js` + `js/fuentesGfx.js`: fuentes FreeSans/FreeSerif (GFXfont, generadas desde CancionesMiniTV/fuentes.js)
 - `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF animado → animación `{ancho, alto, cuadros:[{datos, dur}]}`), `js/dibujo.js`
 - Referencia externa (solo lectura, no modificar ni commitear): `C:\Proyectos\CancionesMiniTV` (repo Cartica07/CancionesMiniTV). De ahí se portaron el decodificador de GIF, Atkinson y el encuadre.
 - `css/tokens.css`: tokens de diseño (colores, fuentes, medidas) compartidos por las dos páginas
@@ -23,7 +24,8 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - Colores: `--acento` (#4DD2FF, el de la OLED) para textos e íconos; `--acento-relleno` (#50C5EC, desaturado) para rellenos grandes.
 
 ## Contrato con el firmware (NO CAMBIAR)
-- `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
+- `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto,fuente}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
+- `config.fuente` (agregado con aprobación del dueño): `clasica` | `sans` | `sansb` | `serif` | `serifi`; si falta, `clasica`. `config.tamano` va de 1 a 5 (en las fuentes nuevas: 6/10/12/16/18 pt). El firmware todavía no lo implementa: ver `docs/firmware-fuentes.md`.
 - `oled_remota/lastSeen` (heartbeat, solo lectura desde la web)
 - Catálogos: `canciones/`, `imagenes/`, `animaciones/` (hermanos de `oled_remota`)
 - Dibujo y Galería se envían como `tipo:"imagen"`. Un GIF subido en la pestaña Imagen se envía como `tipo:"animacion"`.
