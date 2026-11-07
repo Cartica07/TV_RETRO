@@ -1,20 +1,7 @@
 /* =========================================================
-   TOKENS: Instrumento retro, ámbar fósforo sobre negro real.
+   TV RETRO · estilos del panel. Los colores, fuentes y medidas
+   viven en tokens.css (cargado antes que este archivo).
    ========================================================= */
-:root {
-  --negro:        #060503;
-  --panel:        #14110c;
-  --panel-alto:   #1c1810;
-  --metal-borde:  #2c2519;
-  --ambar:        #4dd2ff;
-  --ambar-tenue:  #0d5c7a;
-  --ambar-suave:  #2ba7d6;
-  --ambar-brillo: #a6ecff;
-  --led-ok:       #4fae6f;
-  --led-error:    #d1543f;
-  --fuente-ui:    'Space Grotesk', system-ui, sans-serif;
-  --fuente-data:  'JetBrains Mono', ui-monospace, monospace;
-}
 
 * {
   box-sizing: border-box;
@@ -24,9 +11,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse 900px 500px at 50% -10%, #241c10 0%, transparent 60%),
+    radial-gradient(ellipse 900px 500px at 50% -10%, var(--brillo-fondo) 0%, transparent 60%),
     var(--negro);
-  color: #e9ddc7;
+  color: var(--texto);
   font-family: var(--fuente-ui);
   display: flex;
   justify-content: center;
@@ -56,13 +43,13 @@ h1 {
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 6px;
-  color: #f3e9d4;
+  color: var(--texto);
   letter-spacing: -0.01em;
 }
 
 .subtitulo {
   font-size: 13px;
-  color: #8a8070;
+  color: var(--texto-2);
   margin: 0;
 }
 
@@ -75,7 +62,7 @@ h1 {
   background:
     linear-gradient(155deg, var(--panel-alto), var(--panel) 55%);
   border: 1px solid var(--metal-borde);
-  border-radius: 18px;
+  border-radius: var(--radio-lg);
   padding: 22px 22px 16px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, .04) inset,
@@ -89,7 +76,7 @@ h1 {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #4a4030, #171208);
+  background: radial-gradient(circle at 35% 35%, var(--borde-fuerte), var(--fondo));
   box-shadow: 0 1px 1px rgba(0, 0, 0, .6);
 }
 
@@ -114,7 +101,7 @@ h1 {
 }
 
 .marco-pantalla {
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border-radius: 8px;
   padding: 14px;
   box-shadow:
@@ -165,7 +152,7 @@ h1 {
   font-family: var(--fuente-data);
   font-size: 10px;
   letter-spacing: .1em;
-  color: #7a7060;
+  color: var(--texto-2);
   text-transform: uppercase;
 }
 
@@ -176,7 +163,7 @@ h1 {
   font-family: var(--fuente-data);
   font-size: 10px;
   letter-spacing: .08em;
-  color: #7a7060;
+  color: var(--texto-2);
   text-transform: uppercase;
 }
 
@@ -184,31 +171,31 @@ h1 {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #3a2f1c;
+  background: var(--borde);
   box-shadow: 0 0 0 rgba(0, 0, 0, 0);
   transition: box-shadow .15s ease, background .15s ease;
 }
 
 .led.tx-activo {
   background: var(--ambar);
-  box-shadow: 0 0 6px 2px rgba(255, 176, 0, .85);
+  box-shadow: 0 0 6px 2px rgba(77, 210, 255, .85);
 }
 
 .led.conectado {
   background: var(--led-ok);
-  box-shadow: 0 0 5px 1px rgba(79, 174, 111, .7);
+  box-shadow: 0 0 5px 1px rgba(61, 220, 132, .7);
 }
 
 .led.error {
   background: var(--led-error);
-  box-shadow: 0 0 5px 1px rgba(209, 84, 63, .7);
+  box-shadow: 0 0 5px 1px rgba(255, 92, 92, .7);
 }
 
 /* ===== Controles ===== */
 .controles {
   background: var(--panel);
   border: 1px solid var(--metal-borde);
-  border-radius: 18px;
+  border-radius: var(--radio-lg);
   padding: 22px;
 }
 
@@ -248,10 +235,10 @@ input[type="range"] {
 textarea {
   resize: vertical;
   min-height: 64px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 8px;
-  color: #f3e9d4;
+  color: var(--texto);
   font-family: var(--fuente-data);
   font-size: 14px;
   padding: 10px 12px;
@@ -260,10 +247,10 @@ textarea {
 
 input[type="file"] {
   padding: 8px 12px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 8px;
-  color: #f3e9d4;
+  color: var(--texto);
   font-family: var(--fuente-data);
   font-size: 13px;
   cursor: pointer;
@@ -273,7 +260,7 @@ input[type="range"] {
   accent-color: var(--ambar);
   height: 6px;
   border-radius: 3px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
 }
 
@@ -289,7 +276,7 @@ button:focus-visible,
 
 .descripcion-campo {
   font-size: 12px;
-  color: #8a8070;
+  color: var(--texto-2);
   margin: 6px 0 0;
   line-height: 1.4;
 }
@@ -298,7 +285,7 @@ button:focus-visible,
   text-align: right;
   font-family: var(--fuente-data);
   font-size: 10px;
-  color: #635a4b;
+  color: var(--texto-3);
   margin-top: 4px;
 }
 
@@ -342,10 +329,10 @@ fieldset {
 
 .segmento button {
   flex: 1;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: none;
   border-right: 1px solid var(--metal-borde);
-  color: #8a8070;
+  color: var(--texto-2);
   font-family: var(--fuente-data);
   font-size: 13px;
   padding: 9px 0;
@@ -358,12 +345,12 @@ fieldset {
 }
 
 .segmento button:hover {
-  color: #c9bd9f;
+  color: var(--texto);
 }
 
 .segmento button.activo {
-  background: var(--ambar-tenue);
-  color: #1a1206;
+  background: var(--acento);
+  color: var(--sobre-acento);
   font-weight: 700;
 }
 
@@ -378,7 +365,7 @@ fieldset {
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 8px;
   cursor: pointer;
@@ -392,20 +379,20 @@ fieldset {
 .modo-opcion .modo-nombre {
   font-family: var(--fuente-data);
   font-size: 13px;
-  color: #f3e9d4;
+  color: var(--texto);
   display: block;
 }
 
 .modo-opcion .modo-desc {
   font-size: 12px;
-  color: #8a8070;
+  color: var(--texto-2);
   display: block;
   margin-top: 2px;
 }
 
 .modo-opcion:has(input:checked) {
   border-color: var(--ambar-tenue);
-  background: #151007;
+  background: var(--acento-fondo);
 }
 
 .switch-fila {
@@ -433,7 +420,7 @@ fieldset {
 .switch .via {
   position: absolute;
   inset: 0;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 999px;
   transition: background .15s ease;
@@ -446,7 +433,7 @@ fieldset {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #4a4030;
+  background: var(--texto-3);
   transition: transform .15s ease, background .15s ease;
 }
 
@@ -469,7 +456,7 @@ button#enviar {
   width: 100%;
   margin-top: 22px;
   background: var(--ambar);
-  color: #1a1206;
+  color: var(--sobre-acento);
   border: none;
   border-radius: 9px;
   font-family: var(--fuente-ui);
@@ -499,7 +486,7 @@ button#enviar:disabled {
   font-family: var(--fuente-data);
   font-size: 11px;
   letter-spacing: .04em;
-  color: #7a7060;
+  color: var(--texto-2);
   display: flex;
   align-items: center;
   gap: 7px;
@@ -516,7 +503,7 @@ button#enviar:disabled {
 
 .aviso {
   padding: 10px 12px;
-  background: #1a1206;
+  background: var(--acento-fondo);
   border: 1px solid var(--ambar-tenue);
   border-radius: 8px;
   font-size: 12px;
@@ -525,9 +512,9 @@ button#enviar:disabled {
 }
 
 .aviso.error {
-  background: #1a0d0a;
+  background: var(--error-fondo);
   border-color: var(--led-error);
-  color: #e08a7a;
+  color: var(--error-texto);
 }
 
 /* ===== Galería de imágenes guardadas ===== */
@@ -540,10 +527,10 @@ button#enviar:disabled {
 .fila-guardar-galeria input[type="text"] {
   flex: 1;
   min-width: 140px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 8px;
-  color: #f3e9d4;
+  color: var(--texto);
   font-family: var(--fuente-data);
   font-size: 13px;
   padding: 8px 12px;
@@ -580,15 +567,20 @@ button#enviar:disabled {
   white-space: nowrap;
 }
 
-.boton-secundario:hover {
+.boton-secundario:hover:not(:disabled) {
   border-color: var(--ambar-tenue);
   color: var(--ambar-brillo);
+}
+
+.boton-secundario:disabled {
+  opacity: .4;
+  cursor: not-allowed;
 }
 
 .panel-galeria {
   margin-top: 14px;
   padding: 14px;
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border: 1px solid var(--metal-borde);
   border-radius: 10px;
 }
@@ -603,7 +595,7 @@ button#enviar:disabled {
 .boton-cerrar {
   background: transparent;
   border: 1px solid var(--metal-borde);
-  color: #8a8070;
+  color: var(--texto-2);
   border-radius: 6px;
   width: 26px;
   height: 26px;
@@ -628,7 +620,7 @@ button#enviar:disabled {
 .galeria-vacio {
   grid-column: 1 / -1;
   font-size: 12px;
-  color: #635a4b;
+  color: var(--texto-3);
   text-align: center;
   padding: 20px 0;
   margin: 0;
@@ -653,7 +645,7 @@ button#enviar:disabled {
 
 .item-galeria.activo {
   border-color: var(--ambar);
-  background: #0d1416;
+  background: var(--acento-fondo);
 }
 
 .item-galeria canvas {
@@ -666,7 +658,7 @@ button#enviar:disabled {
 .item-galeria .item-galeria-nombre {
   font-family: var(--fuente-data);
   font-size: 10px;
-  color: #8a8070;
+  color: var(--texto-2);
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -683,7 +675,7 @@ footer {
   margin-top: 26px;
   font-family: var(--fuente-data);
   font-size: 10px;
-  color: #4d473a;
+  color: var(--texto-3);
   letter-spacing: .05em;
 }
 
@@ -739,7 +731,7 @@ footer {
    =================================================== */
 
 .marco-dibujo {
-  background: #0a0805;
+  background: var(--superficie-hundida);
   border-radius: 8px;
   padding: 14px;
   box-shadow:
