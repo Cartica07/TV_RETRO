@@ -262,6 +262,15 @@ export function obtenerElementos() {
     botonLimpiarDibujo: document.getElementById('botonLimpiarDibujo'),
     nombreGaleriaDibujo: document.getElementById('nombreGaleriaDibujo'),
     botonGuardarGaleriaDibujo: document.getElementById('botonGuardarGaleriaDibujo'),
+
+    // Dibujo: lienzo expandido y zoom
+    marcoDibujo: document.getElementById('marcoDibujo'),
+    visorLienzo: document.getElementById('visorLienzo'),
+    indicadorZoomDibujo: document.getElementById('indicadorZoomDibujo'),
+    botonExpandirDibujo: document.getElementById('botonExpandirDibujo'),
+    botonContraerDibujo: document.getElementById('botonContraerDibujo'),
+    botonZoomMasDibujo: document.getElementById('botonZoomMasDibujo'),
+    botonZoomMenosDibujo: document.getElementById('botonZoomMenosDibujo'),
     avisoGaleriaDibujo: document.getElementById('avisoGaleriaDibujo'),
     
     // Botón enviar

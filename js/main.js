@@ -474,6 +474,59 @@ function actualizarPreviewDesdeLienzo() {
   });
 }
 
+// ===================================================
+// Dibujo: lienzo expandido (pantalla completa, horizontal)
+// ===================================================
+// El modo expandido es solo la clase body.dibujo-expandido: el MISMO
+// canvas y la MISMA barra de herramientas pasan a pantalla completa por
+// CSS (mismos IDs y listeners). Además, si el navegador lo permite, se
+// pide pantalla completa y se bloquea la rotación en horizontal (Chrome
+// en Android); si no (iPhone, escritorio), queda igual de grande y en
+// vertical se muestra "Girá el teléfono".
+let dibujoExpandido = false;
+let pantallaCompletaPropia = false; // true si la pantalla completa la pidió el panel
+
+async function expandirDibujo() {
+  if (dibujoExpandido) return;
+  dibujoExpandido = true;
+  document.body.classList.add('dibujo-expandido');
+  // Para que el botón Atrás de Android contraiga en vez de salir.
+  try { history.pushState({ dibujoExpandido: true }, ''); } catch (e) { /* sin historial: no pasa nada */ }
+
+  try {
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      pantallaCompletaPropia = true;
+    }
+  } catch (e) {
+    pantallaCompletaPropia = false; // no permitido (iPhone, permisos): se sigue sin pantalla completa
+  }
+  try {
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch (e) {
+    // Bloquear la rotación solo anda en pantalla completa y en algunos
+    // navegadores; si no, el CSS se acomoda al girar el teléfono.
+  }
+}
+
+function contraerDibujo({ desdeHistorial = false } = {}) {
+  if (!dibujoExpandido) return;
+  dibujoExpandido = false;
+  document.body.classList.remove('dibujo-expandido');
+
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) { /* nada */ }
+  if (pantallaCompletaPropia && document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {});
+  }
+  pantallaCompletaPropia = false;
+
+  // Si se contrajo con el botón (no con Atrás), se saca el estado que se
+  // había apilado al expandir, para que Atrás vuelva a funcionar normal.
+  if (!desdeHistorial && history.state && history.state.dibujoExpandido) {
+    try { history.back(); } catch (e) { /* nada */ }
+  }
+}
+
 // Deshabilita Deshacer/Rehacer cuando no hay nada en la pila
 // correspondiente (ver hayHistorial/hayRehistorial en dibujo.js).
 function actualizarBotonesHistorialDibujo() {
@@ -1670,6 +1723,26 @@ function configurarEventos() {
   if (elementos.botonGuardarGaleriaDibujo) {
     elementos.botonGuardarGaleriaDibujo.addEventListener('click', manejarGuardarDibujoEnGaleria);
   }
+
+  // Dibujo: expandir / contraer el lienzo.
+  if (elementos.botonExpandirDibujo) {
+    elementos.botonExpandirDibujo.addEventListener('click', expandirDibujo);
+  }
+  if (elementos.botonContraerDibujo) {
+    elementos.botonContraerDibujo.addEventListener('click', () => contraerDibujo());
+  }
+  // "Atrás" de Android (o del navegador) con el lienzo expandido: contrae
+  // en vez de salir de la página (se apiló un estado al expandir).
+  window.addEventListener('popstate', () => {
+    if (dibujoExpandido) contraerDibujo({ desdeHistorial: true });
+  });
+  // Si el usuario sale de la pantalla completa por su cuenta, se contrae.
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && dibujoExpandido && pantallaCompletaPropia) contraerDibujo();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dibujoExpandido) contraerDibujo();
+  });
 
   // Enviar
   elementos.botonEnviar.addEventListener('click', enviarAFirebase);
