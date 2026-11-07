@@ -2035,6 +2035,223 @@ label.fila-ajuste-titulo {
   }
 }
 
+/* ===================================================
+   Dibujo: visor con zoom y modo expandido (pantalla completa)
+   =================================================== */
+
+/* Visor: recorta el canvas cuando tiene zoom (transform en el canvas). */
+.lienzo-visor {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 128 / 64;
+  overflow: hidden;
+  border-radius: 2px;
+  touch-action: none;
+}
+
+.lienzo-visor canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+}
+
+/* Nivel de zoom (tocar = volver a ×1). */
+.indicador-zoom {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  min-height: 28px;
+  padding: 0 var(--esp-2);
+  border: 1px solid var(--acento-tenue);
+  border-radius: var(--radio-pill);
+  background: rgba(11, 15, 20, .85);
+  color: var(--acento);
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Botones que solo existen en un modo. */
+.solo-expandido {
+  display: none !important;
+}
+
+.aviso-girar {
+  display: none;
+}
+
+/* ---------- Modo expandido ---------- */
+:root {
+  --ancho-herramientas: 112px;
+}
+
+body.dibujo-expandido {
+  overflow: hidden;
+}
+
+body.dibujo-expandido .solo-expandido {
+  display: inline-flex !important;
+}
+
+body.dibujo-expandido .solo-normal {
+  display: none !important;
+}
+
+/* El marco ocupa toda la pantalla, menos la barra de herramientas. */
+body.dibujo-expandido .marco-dibujo {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-2);
+  padding:
+    calc(var(--esp-2) + env(safe-area-inset-top, 0px))
+    calc(var(--ancho-herramientas) + var(--esp-2) + env(safe-area-inset-right, 0px))
+    calc(var(--esp-2) + env(safe-area-inset-bottom, 0px))
+    calc(var(--esp-2) + env(safe-area-inset-left, 0px));
+  background: var(--fondo);
+  box-shadow: none;
+}
+
+/* El lienzo, lo más grande posible manteniendo 2:1. */
+body.dibujo-expandido .lienzo-visor {
+  width: min(100%, calc((100dvh - 2 * var(--esp-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 2));
+  border-radius: var(--radio-sm);
+}
+
+/* Barra de herramientas a la derecha: grosor en una columna, acciones en otra. */
+body.dibujo-expandido .herramientas-dibujo {
+  position: fixed;
+  z-index: 201;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: calc(var(--ancho-herramientas) + env(safe-area-inset-right, 0px));
+  margin: 0;
+  padding:
+    calc(var(--esp-3) + env(safe-area-inset-top, 0px))
+    calc(var(--esp-2) + env(safe-area-inset-right, 0px))
+    calc(var(--esp-3) + env(safe-area-inset-bottom, 0px))
+    var(--esp-2);
+  display: grid;
+  grid-template-columns: 44px 44px;
+  justify-content: center;
+  align-content: center;
+  gap: var(--esp-2);
+  background: var(--superficie);
+  border-left: 1px solid var(--borde);
+}
+
+body.dibujo-expandido .herramientas-dibujo .rotulo-fila {
+  display: contents;
+}
+
+body.dibujo-expandido .herramientas-dibujo .rotulo {
+  display: none;
+}
+
+body.dibujo-expandido .herramientas-dibujo #grupoGrosor {
+  grid-column: 1;
+  grid-row: 1;
+  flex-direction: column;
+  align-self: center;
+}
+
+body.dibujo-expandido .herramientas-dibujo #grupoGrosor button {
+  min-height: 40px;
+  border-right: none;
+  border-bottom: 1px solid var(--borde);
+}
+
+body.dibujo-expandido .herramientas-dibujo #grupoGrosor button:last-child {
+  border-bottom: none;
+}
+
+body.dibujo-expandido .herramientas-dibujo .acciones-lienzo {
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  align-self: center;
+}
+
+body.dibujo-expandido .herramientas-dibujo .boton-icono {
+  width: 44px;
+  height: 40px;
+}
+
+/* Teléfono en vertical (sin poder bloquear la rotación): herramientas
+   abajo en dos filas y un aviso para girar el teléfono. */
+@media (orientation: portrait) {
+  body.dibujo-expandido .marco-dibujo {
+    padding:
+      calc(var(--esp-3) + env(safe-area-inset-top, 0px))
+      calc(var(--esp-2) + env(safe-area-inset-right, 0px))
+      calc(120px + env(safe-area-inset-bottom, 0px))
+      calc(var(--esp-2) + env(safe-area-inset-left, 0px));
+  }
+
+  body.dibujo-expandido .lienzo-visor {
+    width: 100%;
+  }
+
+  body.dibujo-expandido .aviso-girar {
+    display: block;
+    margin: 0;
+    color: var(--texto-2);
+    font-size: var(--texto-sm);
+    text-align: center;
+  }
+
+  body.dibujo-expandido .herramientas-dibujo {
+    top: auto;
+    left: 0;
+    width: auto;
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    border-left: none;
+    border-top: 1px solid var(--borde);
+    padding:
+      var(--esp-3)
+      calc(var(--esp-3) + env(safe-area-inset-right, 0px))
+      calc(var(--esp-3) + env(safe-area-inset-bottom, 0px))
+      calc(var(--esp-3) + env(safe-area-inset-left, 0px));
+  }
+
+  body.dibujo-expandido .herramientas-dibujo #grupoGrosor,
+  body.dibujo-expandido .herramientas-dibujo .acciones-lienzo {
+    grid-column: 1;
+    flex-direction: row;
+  }
+
+  body.dibujo-expandido .herramientas-dibujo #grupoGrosor {
+    grid-row: 2;
+  }
+
+  body.dibujo-expandido .herramientas-dibujo .acciones-lienzo {
+    grid-row: 1;
+    justify-content: space-between;
+  }
+
+  body.dibujo-expandido .herramientas-dibujo #grupoGrosor button {
+    border-bottom: none;
+    border-right: 1px solid var(--borde);
+  }
+
+  body.dibujo-expandido .herramientas-dibujo #grupoGrosor button:last-child {
+    border-right: none;
+  }
+}
+
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
    campo. Va al final para ganarle a los font-size de cada control. */
 @media (pointer: coarse) {
