@@ -8,7 +8,14 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `js/firebase.js`: ÚNICO acceso a Firebase
 - `js/renderer.js` + `js/fonts.js`: réplica pixel-perfect de la OLED
 - `js/imageProcessor.js`, `js/dibujo.js`
-- `css/style.css`; `carga-masiva.html` (CSS/JS inline)
+- `css/tokens.css`: tokens de diseño (colores, fuentes, medidas) compartidos por las dos páginas
+- `css/style.css`: estilos del panel (estructura de app: cabecera fija, barra de Enviar, navegación inferior; en escritorio, dos columnas)
+- `carga-masiva.html`: usa `css/tokens.css` + estilos propios inline; su `<script>` inline no se toca en pasos visuales
+
+## Estructura de index.html (rediseño)
+- `.cabecera-fija` (barra superior + tarjeta `.dispositivo` con `#oled`), `main.controles` con una sección por pestaña, `.barra-accion` (Enviar + estado) y `nav.nav-inferior`.
+- La navegación inferior ES `#grupoTipo`: sus botones `data-valor` (texto, imagen, dibujo, cancion, galeria) los usa `cambiarTipo()` en main.js.
+- Cada pantalla se arma con `section.grupo` + `h2.grupo-titulo`; filas con interruptor usan `.fila-ajuste` / `.fila-ajuste-simple`.
 
 ## Contrato con el firmware (NO CAMBIAR)
 - `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
