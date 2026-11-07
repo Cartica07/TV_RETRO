@@ -1480,6 +1480,43 @@ label.fila-ajuste-titulo {
   margin-bottom: 0;
 }
 
+
+/* Galería: selector Imágenes/Animaciones + tacho en una fila. */
+.fila-galeria-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.fila-galeria-cabecera .segmento-subvista {
+  flex: 1;
+}
+
+/* Botón de ícono que envuelve un input de archivo (Añadir imagen). */
+.boton-subir {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--acento);
+}
+
+.boton-subir input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.boton-subir:focus-within {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.grupo-ajustes-galeria {
+  margin-bottom: var(--esp-4);
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {

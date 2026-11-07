@@ -235,30 +235,43 @@
 
     </div>
 
-    <!-- Sección de GALERÍA (oculta inicialmente) -->
-    <div id="seccionGaleria" style="display: none;">
+    <!-- Galería, parte superior: selector Imágenes/Animaciones, borrar,
+         añadir y guardar, y ajustes de la imagen elegida. Va antes que la
+         grilla para que estas herramientas queden siempre a la vista.
+         main.js la muestra solo en Galería (igual que #seccionGaleria). -->
+    <div id="seccionGaleriaFinal" style="display: none;">
 
-      <!-- Imágenes guardadas -->
-      <section class="grupo">
-        <div class="cabecera-grupo">
-          <h2 class="grupo-titulo">Imágenes</h2>
-          <button type="button" id="botonBorrarGaleria" class="boton-icono boton-icono-peligro" aria-label="Borrar la imagen seleccionada" title="Borrar la imagen seleccionada" disabled>
-            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
+      <div class="campo fila-galeria-cabecera">
+        <div class="segmento segmento-subvista" id="grupoSubvistaGaleria" role="tablist" aria-label="Qué mostrar">
+          <button type="button" role="tab" data-subvista="imagenes" class="activo" aria-selected="true">Imágenes</button>
+          <button type="button" role="tab" data-subvista="animaciones" aria-selected="false">Animaciones</button>
         </div>
-        <div id="gridGaleria" class="grid-galeria">
-          <p class="galeria-vacio" id="galeriaVacio">Todavía no hay imágenes guardadas.</p>
+        <button type="button" id="botonBorrarGaleria" data-subvista="imagenes" class="boton-icono boton-icono-peligro" aria-label="Borrar la imagen seleccionada" title="Borrar la imagen seleccionada" disabled>
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+        <button type="button" id="botonBorrarAnimacion" data-subvista="animaciones" class="boton-icono boton-icono-peligro" aria-label="Borrar la animación seleccionada" title="Borrar la animación seleccionada" disabled>
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+
+      <!-- Añadir una imagen nueva + nombre + guardar (también guarda los
+           reajustes de la imagen elegida), en una sola fila. -->
+      <div class="campo" data-subvista="imagenes">
+        <div class="fila-guardar-galeria fila-guardar-inline">
+          <label class="boton-icono boton-subir" for="cargadorImagenGaleria" title="Añadir una imagen nueva">
+            <input type="file" id="cargadorImagenGaleria" accept="image/*" aria-label="Añadir una imagen nueva" />
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </label>
+          <input type="text" id="nombreGaleriaNueva" placeholder="Nombre" maxlength="60" aria-label="Nombre para guardar en la galería" />
+          <button type="button" id="botonGuardarGaleriaNueva" class="boton-secundario" title="Guardar en la galería (si el nombre ya existe, la reemplaza)">Guardar</button>
         </div>
-      </section>
+        <div id="avisoGaleriaNueva" class="aviso" style="display: none;"></div>
+      </div>
 
-      <!-- Reajuste de la imagen seleccionada o recién subida -->
-      <section class="grupo">
-        <h2 class="grupo-titulo">Ajustes de la imagen</h2>
-
+      <!-- Reajuste de la imagen elegida o recién subida. -->
+      <div class="grupo-ajustes-galeria" id="grupoAjustesGaleria" data-subvista="imagenes">
         <div class="campo switch-fila fila-ajuste-simple">
-          <span class="fila-ajuste-texto">
-            <span class="fila-ajuste-titulo">Difuminado</span>
-          </span>
+          <label class="fila-ajuste-titulo" for="ditheringGaleria">Difuminado</label>
           <label class="switch">
             <input type="checkbox" id="ditheringGaleria" />
             <span class="via"><span class="perilla"></span></span>
@@ -266,53 +279,26 @@
         </div>
 
         <div class="campo">
-          <label class="rotulo" for="umbralGaleria">Umbral de binarización</label>
+          <label class="rotulo" for="umbralGaleria">Umbral</label>
           <div class="control-rango">
             <input type="range" id="umbralGaleria" min="0" max="255" value="127" />
             <span class="valor-rango" id="valorUmbralGaleria">127</span>
           </div>
         </div>
-      </section>
-
-      <!-- Animaciones guardadas -->
-      <section class="grupo">
-        <div class="cabecera-grupo">
-          <h2 class="grupo-titulo">Animaciones</h2>
-          <button type="button" id="botonBorrarAnimacion" class="boton-icono boton-icono-peligro" aria-label="Borrar la animación seleccionada" title="Borrar la animación seleccionada" disabled>
-            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-        <div id="gridAnimaciones" class="grid-galeria">
-          <p class="galeria-vacio" id="animacionesVacio">Todavía no hay animaciones guardadas.</p>
-        </div>
-      </section>
+      </div>
 
     </div>
 
-    <!-- Galería: añadir una imagen nueva y guardar (también guarda los
-         reajustes de la seleccionada). main.js la muestra solo en Galería. -->
-    <div id="seccionGaleriaFinal" style="display: none;">
+    <!-- Galería, grillas: imágenes y animaciones guardadas. -->
+    <div id="seccionGaleria" style="display: none;">
 
-      <section class="grupo grupo-separado">
-        <h2 class="grupo-titulo">Añadir o guardar</h2>
+      <div id="gridGaleria" class="grid-galeria" data-subvista="imagenes">
+        <p class="galeria-vacio" id="galeriaVacio">Todavía no hay imágenes guardadas.</p>
+      </div>
 
-        <div class="campo">
-          <label class="zona-subida" for="cargadorImagenGaleria">
-            <input type="file" id="cargadorImagenGaleria" accept="image/*" />
-            <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span class="zona-subida-titulo">Añadir una imagen nueva</span>
-          </label>
-        </div>
-
-        <div class="campo">
-          <label class="rotulo" for="nombreGaleriaNueva">Nombre</label>
-          <div class="fila-guardar-galeria">
-            <input type="text" id="nombreGaleriaNueva" placeholder="Nombre para guardarla" maxlength="60" />
-            <button type="button" id="botonGuardarGaleriaNueva" class="boton-secundario">Guardar en la galería</button>
-          </div>
-          <div id="avisoGaleriaNueva" class="aviso" style="display: none;"></div>
-        </div>
-      </section>
+      <div id="gridAnimaciones" class="grid-galeria" data-subvista="animaciones">
+        <p class="galeria-vacio" id="animacionesVacio">Todavía no hay animaciones guardadas.</p>
+      </div>
 
     </div>
 
