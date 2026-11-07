@@ -32,6 +32,7 @@ import {
   marcarSegmentoActivo,
   marcarEstado,
   marcarConexion,
+  marcarUltimaVista,
   setBotonEnviarEstado,
   activarLedTransmision,
   desactivarLedTransmision
@@ -113,19 +114,39 @@ const INTERVALO_CHEQUEO_CONEXION_MS = 5000;
 
 let ultimoLastSeen = null; // ms desde época (heartbeat), o null si nunca llegó nada
 
+// Texto relativo para la última señal: "hace 4 s", "hace 12 min",
+// "hace 3 h", o fecha y hora si pasó más de un día. Se recalcula cada
+// INTERVALO_CHEQUEO_CONEXION_MS junto con el estado de conexión.
+function formatearHaceCuanto(timestampMs) {
+  const seg = Math.max(0, Math.round((Date.now() - timestampMs) / 1000));
+  if (seg < 60) return `hace ${seg} s`;
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `hace ${min} min`;
+  const horas = Math.floor(min / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  const f = new Date(timestampMs);
+  const dd = String(f.getDate()).padStart(2, '0');
+  const mm = String(f.getMonth() + 1).padStart(2, '0');
+  const hh = String(f.getHours()).padStart(2, '0');
+  const mi = String(f.getMinutes()).padStart(2, '0');
+  return `el ${dd}/${mm} ${hh}:${mi}`;
+}
+
 function evaluarConexionDispositivo() {
   if (ultimoLastSeen === null) {
     marcarConexion('sin señal del dispositivo', 'error', elementos);
+    marcarUltimaVista('', elementos);
     return;
   }
 
   const antiguedad = Date.now() - ultimoLastSeen;
 
   if (antiguedad <= UMBRAL_DESCONEXION_MS) {
-    marcarConexion('conectado', 'ok', elementos);
+    marcarConexion('en línea', 'ok', elementos);
   } else {
     marcarConexion('desconectado', 'error', elementos);
   }
+  marcarUltimaVista(formatearHaceCuanto(ultimoLastSeen), elementos);
 }
 
 function iniciarMonitoreoConexion() {

@@ -82,6 +82,17 @@ export function marcarConexion(texto, tipo, elementos) {
 }
 
 /**
+ * Muestra la última señal del dispositivo (ej. "hace 4 s") junto al
+ * estado de conexión. Con texto vacío o null, la oculta.
+ */
+export function marcarUltimaVista(texto, elementos) {
+  const el = elementos.ultimaActualizacion;
+  if (!el) return;
+  el.textContent = texto || '';
+  el.hidden = !texto;
+}
+
+/**
  * Habilita/deshabilita el botón de envío
  */
 export function setBotonEnviarEstado(habilitado, elementos) {
@@ -179,6 +190,7 @@ export function obtenerElementos() {
     // LEDs y estado
     ledConexion: document.getElementById('ledConexion'),
     textoConexion: document.getElementById('textoConexion'),
+    ultimaActualizacion: document.getElementById('ultimaActualizacion'),
     ledEstado: document.getElementById('ledEstado'),
     estadoLinea: document.getElementById('estadoLinea'),
     estadoTexto: document.getElementById('estadoTexto'),
