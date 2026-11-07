@@ -1428,6 +1428,47 @@ input[type="text"]:focus {
   vertical-align: middle;
 }
 
+
+/* Zona de subida en una sola fila baja (ícono + texto). */
+.zona-subida.zona-subida-fila {
+  flex-direction: row;
+  gap: var(--esp-3);
+  min-height: 56px;
+  padding: 0 var(--esp-4);
+}
+
+.zona-subida.zona-subida-fila .zona-subida-icono {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+/* Nombre + Guardar en una sola fila. */
+.fila-guardar-galeria.fila-guardar-inline {
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.fila-guardar-galeria.fila-guardar-inline input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--fuente-ui);
+}
+
+.fila-guardar-galeria.fila-guardar-inline .boton-secundario {
+  flex-shrink: 0;
+  padding: 0 var(--esp-4);
+}
+
+/* Las filas con interruptor necesitan la altura táctil completa. */
+.fila-ajuste-simple {
+  min-height: var(--toque-min);
+}
+
+label.fila-ajuste-titulo {
+  cursor: pointer;
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {
