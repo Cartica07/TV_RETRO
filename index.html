@@ -168,7 +168,7 @@
     <!-- Sección de IMAGEN (oculta inicialmente) -->
     <div id="seccionImagen" style="display: none;">
 
-      <div class="campo">
+      <div class="campo fila-subida">
         <!-- El input real sigue siendo #cargadorImagen; la etiqueta lo
              envuelve para que toda la zona sea tocable. -->
         <label class="zona-subida zona-subida-fila" for="cargadorImagen">
@@ -176,6 +176,11 @@
           <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span class="zona-subida-titulo">Elegí una imagen o GIF</span>
         </label>
+        <!-- Pegar del portapapeles (también funciona Ctrl+V en esta pestaña). -->
+        <button type="button" id="botonPegarImagen" class="boton-pegar" title="Pegar una imagen del portapapeles (o Ctrl+V)">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+          <span>Pegar</span>
+        </button>
       </div>
 
       <!-- Encuadre: escala + rotar + voltear + fondo (opciones de
