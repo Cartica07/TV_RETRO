@@ -10,6 +10,8 @@ El panel ya envía el estilo de letra, pero el ESP32 todavía no lo dibuja: hast
 |---|---|---|
 | `fuente` (nuevo) | `clasica`, `sans`, `sansb`, `serif`, `serifi` | Si falta, es `clasica`. |
 | `tamano` | `1` a `5` | Antes era de 1 a 4. |
+| `manual` (nuevo) | `true` / `false` | Si es `true`, se ignoran `alineacion` y `alineacionV` y se usan `x` e `y`. |
+| `x`, `y` (nuevos) | enteros | Esquina superior izquierda del bloque de texto. |
 
 Los demás campos no cambian.
 
@@ -39,3 +41,17 @@ Esto es lo que hace `js/fuentesTexto.js`:
 6. **Alineación horizontal**, según el ancho de tinta de cada línea: izquierda 0, centro (128 − ancho) / 2, derecha 128 − ancho. Se dibuja con `cursor x = posición − (lado izquierdo de la tinta)`.
 7. **Scroll**: una sola línea (los `\n` pasan a espacios) que entra por la derecha, con la misma regla vertical.
 8. Un carácter que la fuente no tiene se dibuja como `?`.
+
+## Posición manual (`manual = true`)
+
+Vale para la fuente clásica y para las nuevas. Esto es lo que hacen `medirBloqueTexto` en `js/renderer.js` y `medirBloqueFuente` en `js/fuentesTexto.js`:
+
+1. Se mide el bloque como en Ajustar.
+   - **Ancho:** el de la línea más ancha.
+   - **Alto en la clásica:** líneas × 8 × tamaño.
+   - **Alto en las nuevas:** ascenso + (líneas − 1) × `yAdvance` + descenso.
+2. Se limita la posición para que el bloque no se salga: `x = clamp(x, 0, 128 − ancho)` e `y = clamp(y, 0, 64 − alto)`.
+3. Todas las líneas se alinean a la izquierda en `x`.
+   - **En la clásica:** la línea *i* va en `setCursor(x, y + i × 8 × tamaño)`.
+   - **En las nuevas:** la base de la línea *i* = `y + ascenso + i × yAdvance`, con la tinta empezando en `x`.
+4. En **Scroll** solo se usa la `y` como borde superior de la línea. La `x` la maneja el desplazamiento.

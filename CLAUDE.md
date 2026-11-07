@@ -24,8 +24,9 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - Colores: `--acento` (#4DD2FF, el de la OLED) para textos e íconos; `--acento-relleno` (#50C5EC, desaturado) para rellenos grandes.
 
 ## Contrato con el firmware (NO CAMBIAR)
-- `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto,fuente}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
-- `config.fuente` (agregado con aprobación del dueño): `clasica` | `sans` | `sansb` | `serif` | `serifi`; si falta, `clasica`. `config.tamano` va de 1 a 5 (en las fuentes nuevas: 6/10/12/16/18 pt). El firmware todavía no lo implementa: ver `docs/firmware-fuentes.md`.
+- `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto,fuente,manual,x,y}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
+- `config.fuente` (agregado con aprobación del dueño): `clasica` | `sans` | `sansb` | `serif` | `serifi`. Para el firmware, si falta es `clasica`; el panel usa `sans` por defecto (FUENTE_DEFECTO, como CancionesMiniTV).
+- `config.manual`, `config.x`, `config.y` (agregados con aprobación): posición manual del bloque de texto; con `manual = false` se usan `alineacion`/`alineacionV` como siempre. `config.tamano` va de 1 a 5 (en las fuentes nuevas: 6/10/12/16/18 pt). El firmware todavía no lo implementa: ver `docs/firmware-fuentes.md`.
 - `oled_remota/lastSeen` (heartbeat, solo lectura desde la web)
 - Catálogos: `canciones/`, `imagenes/`, `animaciones/` (hermanos de `oled_remota`)
 - Dibujo y Galería se envían como `tipo:"imagen"`. Un GIF subido en la pestaña Imagen se envía como `tipo:"animacion"`.
