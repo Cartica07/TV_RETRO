@@ -13,11 +13,12 @@ import {
   calcularTamanoReducido,
   recortarTexto,
   calcularX,
+  calcularAnchoTexto,
   dibujarTextoBitmap
 } from './fonts.js';
 
 import { dibujarPreviewImagen } from './imageProcessor.js';
-import { esFuenteVariable, dibujarTextoFuente } from './fuentesTexto.js';
+import { esFuenteVariable, dibujarTextoFuente, medirBloqueFuente } from './fuentesTexto.js';
 
 const ANCHO = 128;
 const ALTO = 64;
@@ -33,6 +34,36 @@ const NEGRO = '#000000';
 function calcularY(alturaContenido, alineacionV) {
   const y = (alineacionV === 'arriba') ? 0 : Math.round((ALTO - alturaContenido) / 2);
   return Math.max(0, y);
+}
+
+/**
+ * Posición manual (config.manual + config.x/config.y): esquina superior
+ * izquierda del bloque de texto, limitada para que el bloque entero quede
+ * dentro de la pantalla (igual que los sliders X/Y de CancionesMiniTV).
+ */
+export function limitarPosicion(valor, tamanoBloque, maximo) {
+  const v = Math.round(Number(valor) || 0);
+  return Math.max(0, Math.min(v, maximo - tamanoBloque));
+}
+
+/**
+ * Mide el bloque de texto tal como se dibuja (fuente clásica o variable):
+ * { ancho, alto, xAuto, yAuto }. xAuto/yAuto son la esquina superior
+ * izquierda que tendría con la alineación automática; se usan para que el
+ * texto no salte al pasar a modo manual.
+ */
+export function medirBloqueTexto(estado) {
+  if (esFuenteVariable(estado.fuente)) return medirBloqueFuente(estado);
+  const tamano = estado.tamano;
+  if (estado.modoTexto === 'scroll') {
+    const alto = fontMetrics[tamano].height;
+    return { ancho: calcularAnchoTexto(estado.texto, tamano), alto, xAuto: 0, yAuto: calcularY(alto, estado.alineacionV) };
+  }
+  const lineas = dividirEnLineas(estado.texto, tamano, ANCHO);
+  const ancho = Math.max(0, ...lineas.map(l => calcularAnchoTexto(l, tamano)));
+  const alto = calcularAltoTexto(lineas, tamano);
+  const xAuto = Math.min(...lineas.map(l => calcularX(l, tamano, estado.alineacion, ANCHO)));
+  return { ancho, alto, xAuto, yAuto: calcularY(alto, estado.alineacionV) };
 }
 
 /**
@@ -84,6 +115,19 @@ function renderizarAjustar(ctx, estado, colorFrente) {
   const metrics = fontMetrics[tamano];
 
   const alturaBloque = calcularAltoTexto(lineas, tamano);
+
+  // Posición manual: el bloque va en (x, y), con las líneas alineadas a
+  // la izquierda dentro del bloque.
+  if (estado.manual) {
+    const anchoBloque = Math.max(0, ...lineas.map(l => calcularAnchoTexto(l, tamano)));
+    const x0 = limitarPosicion(estado.x, anchoBloque, ANCHO);
+    const y0 = limitarPosicion(estado.y, alturaBloque, ALTO);
+    lineas.forEach((linea, i) => {
+      dibujarTextoBitmap(ctx, linea, tamano, x0, y0 + i * metrics.lineHeight, colorFrente);
+    });
+    return;
+  }
+
   const y = calcularY(alturaBloque, estado.alineacionV);
 
   dibujarLineas(ctx, lineas, tamano, estado.alineacion, y, colorFrente);
@@ -118,7 +162,10 @@ function renderizarScroll(ctx, estado, colorFrente, scrollX) {
   const metrics = fontMetrics[tamano];
 
   const x = typeof scrollX === 'number' ? scrollX : ANCHO;
-  const y = calcularY(metrics.height, estado.alineacionV);
+  // En modo manual el scroll respeta la Y elegida (la X la maneja el scroll).
+  const y = estado.manual
+    ? limitarPosicion(estado.y, metrics.height, ALTO)
+    : calcularY(metrics.height, estado.alineacionV);
 
   dibujarTextoBitmap(ctx, estado.texto, tamano, x, y, colorFrente);
 }

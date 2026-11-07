@@ -3,7 +3,7 @@
  * Orquesta los módulos de renderizado, UI y Firebase.
  */
 
-import { dibujarOLED } from './renderer.js';
+import { dibujarOLED, medirBloqueTexto, limitarPosicion } from './renderer.js';
 import {
   cargarEstado,
   enviarEstado,
@@ -40,6 +40,7 @@ import {
   poblarControles,
   marcarSegmentoActivo,
   marcarPestanaActual,
+  marcarModoPosicion,
   mostrarSubvistaGaleria,
   marcarEstado,
   marcarConexion,
@@ -67,6 +68,11 @@ let estadoActual = {
   invertido: false,
   modoTexto: 'ajustar',
   fuente: 'sans',      // estilo de letra (config.fuente); por defecto FUENTE_DEFECTO
+  // Posición manual del texto (config.manual/x/y): esquina superior
+  // izquierda del bloque. Con manual = false se usa la alineación.
+  manual: false,
+  x: 0,
+  y: 0,
   imagenData: '',
   imagenAncho: 0,
   imagenAlto: 0,
@@ -288,7 +294,48 @@ function iniciarAnimacionPreview() {
   paso();
 }
 
+// ===================================================
+// Posición del texto: automática (alineación) o manual (sliders X/Y)
+// ===================================================
+
+// Ajusta los sliders X/Y al bloque de texto actual: el máximo es lo que
+// entra en la pantalla (128 - ancho, 64 - alto) y la posición guardada se
+// recorta si quedó afuera (por ejemplo, al agrandar la letra).
+function sincronizarPosicionManual() {
+  if (!elementos.posicionX || !elementos.posicionY) return;
+  const b = medirBloqueTexto(estadoActual);
+  const maxX = Math.max(0, ANCHO_OLED - b.ancho);
+  const maxY = Math.max(0, 64 - b.alto);
+  if (estadoActual.manual) {
+    estadoActual.x = limitarPosicion(estadoActual.x, b.ancho, ANCHO_OLED);
+    estadoActual.y = limitarPosicion(estadoActual.y, b.alto, 64);
+  }
+  elementos.posicionX.max = String(maxX);
+  elementos.posicionY.max = String(maxY);
+  elementos.posicionX.value = String(estadoActual.x);
+  elementos.posicionY.value = String(estadoActual.y);
+  if (elementos.valorPosicionX) elementos.valorPosicionX.textContent = String(estadoActual.x);
+  if (elementos.valorPosicionY) elementos.valorPosicionY.textContent = String(estadoActual.y);
+  // En scroll la X la maneja el desplazamiento: solo se elige la Y.
+  elementos.posicionX.disabled = estadoActual.modoTexto === 'scroll';
+}
+
+// Pasa a modo automático o manual. Al entrar a manual, arranca desde
+// donde estaba el texto con la alineación automática (no salta).
+function cambiarModoPosicion(manual) {
+  if (manual && !estadoActual.manual) {
+    const b = medirBloqueTexto(estadoActual);
+    estadoActual.x = b.xAuto;
+    estadoActual.y = b.yAuto;
+  }
+  estadoActual.manual = manual;
+  marcarModoPosicion(estadoActual.manual, elementos);
+  renderizar();
+}
+
 function renderizar() {
+  if (estadoActual.tipo === 'texto') sincronizarPosicionManual();
+
   // "Cancion" no dibuja nada propio: en el dispositivo real, mandar una
   // canción NO toca la pantalla (ver pantalla.cpp -- mostrarPantalla()
   // es un no-op para tipo="cancion"). Sigue mostrando lo que ya había:
@@ -1351,6 +1398,27 @@ function configurarEventos() {
   });
 
   // Modo de texto
+  // Posición: Auto / Manual y sliders X / Y
+  if (elementos.grupoPosicion) {
+    elementos.grupoPosicion.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-valor]');
+      if (!btn) return;
+      cambiarModoPosicion(btn.dataset.valor === 'manual');
+    });
+  }
+  if (elementos.posicionX) {
+    elementos.posicionX.addEventListener('input', () => {
+      estadoActual.x = Number(elementos.posicionX.value) || 0;
+      renderizar();
+    });
+  }
+  if (elementos.posicionY) {
+    elementos.posicionY.addEventListener('input', () => {
+      estadoActual.y = Number(elementos.posicionY.value) || 0;
+      renderizar();
+    });
+  }
+
   // Estilo de letra (config.fuente)
   if (elementos.fuenteTexto) {
     elementos.fuenteTexto.addEventListener('change', () => {
@@ -1525,6 +1593,9 @@ async function cargarEstadoInicial() {
           invertido: resultado.invertido,
           modoTexto: resultado.modoTexto,
           fuente: resultado.fuente || FUENTE_DEFECTO,
+          manual: !!resultado.manual,
+          x: resultado.x || 0,
+          y: resultado.y || 0,
           imagenData: resultado.imagenData || '',
           imagenAncho: resultado.imagenAncho || 0,
           imagenAlto: resultado.imagenAlto || 0,

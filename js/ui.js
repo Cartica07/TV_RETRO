@@ -34,6 +34,8 @@ export function poblarControles(estado, elementos) {
   if (elementos.grupoAlineacionV) {
     marcarSegmentoActivo(elementos.grupoAlineacionV, estado.alineacionV || 'centro');
   }
+
+  marcarModoPosicion(!!estado.manual, elementos);
   
   if (elementos.grupoModo) {
     elementos.grupoModo.querySelectorAll('input[name="modoTexto"]').forEach(r => {
@@ -45,6 +47,16 @@ export function poblarControles(estado, elementos) {
   if (elementos.grupoTipo) {
     marcarSegmentoActivo(elementos.grupoTipo, estado.tipo || 'texto');
   }
+}
+
+/**
+ * Posición del texto: marca Auto/Manual y muestra los íconos de
+ * alineación (auto) o los sliders X/Y (manual), en el mismo lugar.
+ */
+export function marcarModoPosicion(manual, elementos) {
+  if (elementos.grupoPosicion) marcarSegmentoActivo(elementos.grupoPosicion, manual ? 'manual' : 'auto');
+  if (elementos.filaAlineacionAuto) elementos.filaAlineacionAuto.hidden = !!manual;
+  if (elementos.filaAlineacionManual) elementos.filaAlineacionManual.hidden = !manual;
 }
 
 /**
@@ -182,6 +194,15 @@ export function obtenerElementos() {
     fuenteTexto: document.getElementById('fuenteTexto'),
     grupoAlineacion: document.getElementById('grupoAlineacion'),
     grupoAlineacionV: document.getElementById('grupoAlineacionV'),
+
+    // Posición: Auto (alineación) / Manual (sliders X/Y)
+    grupoPosicion: document.getElementById('grupoPosicion'),
+    filaAlineacionAuto: document.getElementById('filaAlineacionAuto'),
+    filaAlineacionManual: document.getElementById('filaAlineacionManual'),
+    posicionX: document.getElementById('posicionX'),
+    posicionY: document.getElementById('posicionY'),
+    valorPosicionX: document.getElementById('valorPosicionX'),
+    valorPosicionY: document.getElementById('valorPosicionY'),
     grupoModo: document.getElementById('grupoModo'),
     invertido: document.getElementById('invertido'),
     filaInvertido: document.getElementById('filaInvertido'),

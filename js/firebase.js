@@ -49,6 +49,11 @@ export async function cargarEstado() {
         // (datos viejos o enviados antes de esta opción) queda vacío y el
         // panel usa su estilo por defecto (ver FUENTE_DEFECTO en main.js).
         fuente: (typeof config.fuente === 'string') ? config.fuente : '',
+        // Posición manual (agregada en el rediseño): si manual es true, el
+        // bloque de texto va con su esquina superior izquierda en (x, y).
+        manual: !!config.manual,
+        x: Number(config.x) || 0,
+        y: Number(config.y) || 0,
         imagenData: imagen.datos || '',
         imagenAncho: Number(imagen.ancho) || 0,
         imagenAlto: Number(imagen.alto) || 0,
@@ -77,6 +82,9 @@ export async function cargarEstado() {
         invertido: false,
         modoTexto: 'ajustar',
         fuente: '',
+        manual: false,
+        x: 0,
+        y: 0,
         imagenData: '',
         imagenAncho: 0,
         imagenAlto: 0,
@@ -322,7 +330,12 @@ export async function enviarEstado(estado) {
         // Nuevo (no reemplaza a ningún campo): "clasica" | "sans" | "sansb"
         // | "serif" | "serifi". tamano (1..5) se interpreta según la fuente
         // (clásica: setTextSize; las demás: 6/10/12/16/18 pt).
-        fuente: estado.fuente || 'sans'
+        fuente: estado.fuente || 'sans',
+        // Nuevos: posición manual. Con manual = false el firmware usa
+        // alineacion/alineacionV como siempre.
+        manual: !!estado.manual,
+        x: Math.round(Number(estado.x) || 0),
+        y: Math.round(Number(estado.y) || 0)
       }
     };
 

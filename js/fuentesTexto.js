@@ -172,9 +172,39 @@ export function anchoScrollFuente(estado) {
   return anchoDe(d, textoScroll(estado.texto));
 }
 
+/** Posición manual dentro de la pantalla (mismo criterio que renderer.js). */
+function limitar(valor, tamanoBloque, maximo) {
+  const v = Math.round(Number(valor) || 0);
+  return Math.max(0, Math.min(v, maximo - tamanoBloque));
+}
+
+/**
+ * Mide el bloque de texto con la fuente variable:
+ * { ancho, alto, xAuto, yAuto } (ver medirBloqueTexto en renderer.js).
+ */
+export function medirBloqueFuente(estado) {
+  const d = datosFuente(estado.fuente, estado.tamano);
+  if (estado.modoTexto === 'scroll') {
+    const alto = d.asc + d.desc;
+    return { ancho: anchoDe(d, textoScroll(estado.texto)), alto, xAuto: 0, yAuto: yArriba(alto, estado.alineacionV) };
+  }
+  const lineas = dividirEnLineasFuente(d, String(estado.texto || ''));
+  const anchos = lineas.map(l => anchoDe(d, l));
+  const alto = d.asc + (lineas.length - 1) * d.y + d.desc;
+  return {
+    ancho: Math.max(0, ...anchos),
+    alto,
+    xAuto: Math.min(...anchos.map(a => xSegunAlineacion(a, estado.alineacion))),
+    yAuto: yArriba(alto, estado.alineacionV)
+  };
+}
+
 /**
  * Dibuja el texto del estado con la fuente estado.fuente. El fondo ya
  * está pintado; se usa ctx.fillStyle = colorFrente.
+ * Con estado.manual, el bloque va con su esquina superior izquierda en
+ * (estado.x, estado.y) y las líneas alineadas a la izquierda; en scroll
+ * solo se usa la Y.
  */
 export function dibujarTextoFuente(ctx, estado, colorFrente, scrollX = null) {
   const d = datosFuente(estado.fuente, estado.tamano);
@@ -182,7 +212,7 @@ export function dibujarTextoFuente(ctx, estado, colorFrente, scrollX = null) {
   const altoLinea = d.asc + d.desc;
 
   if (estado.modoTexto === 'scroll') {
-    const top = yArriba(altoLinea, estado.alineacionV);
+    const top = estado.manual ? limitar(estado.y, altoLinea, ALTO) : yArriba(altoLinea, estado.alineacionV);
     const x = typeof scrollX === 'number' ? scrollX : ANCHO;
     dibujarLinea(ctx, d, textoScroll(estado.texto), x, top + d.asc);
     return;
@@ -191,6 +221,15 @@ export function dibujarTextoFuente(ctx, estado, colorFrente, scrollX = null) {
   // Ajustar (y, por compatibilidad, cualquier otro modo).
   const lineas = dividirEnLineasFuente(d, String(estado.texto || ''));
   const alto = d.asc + (lineas.length - 1) * d.y + d.desc;
+
+  if (estado.manual) {
+    const anchoBloque = Math.max(0, ...lineas.map(l => anchoDe(d, l)));
+    const x0 = limitar(estado.x, anchoBloque, ANCHO);
+    const top = limitar(estado.y, alto, ALTO);
+    lineas.forEach((linea, i) => dibujarLinea(ctx, d, linea, x0, top + d.asc + i * d.y));
+    return;
+  }
+
   const top = yArriba(alto, estado.alineacionV);
   lineas.forEach((linea, i) => {
     const x = xSegunAlineacion(anchoDe(d, linea), estado.alineacion);
