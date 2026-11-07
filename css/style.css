@@ -1469,6 +1469,17 @@ label.fila-ajuste-titulo {
   cursor: pointer;
 }
 
+
+/* Dibujo: fila con rótulo Grosor y acciones del lienzo a la derecha. */
+.rotulo-fila.rotulo-fila-acciones {
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+
+.rotulo-fila.rotulo-fila-acciones .rotulo {
+  margin-bottom: 0;
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {

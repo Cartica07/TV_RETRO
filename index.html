@@ -190,10 +190,16 @@
     <!-- Sección de DIBUJO (oculta inicialmente) -->
     <div id="seccionDibujo" style="display: none;">
 
-      <section class="grupo">
-        <!-- Cabecera del lienzo: título a la izquierda, acciones a la derecha. -->
-        <div class="cabecera-lienzo">
-          <h2 class="grupo-titulo">Lienzo</h2>
+      <div class="campo">
+        <div class="marco-dibujo">
+          <canvas id="lienzoDibujo" width="128" height="64"></canvas>
+        </div>
+      </div>
+
+      <div class="campo">
+        <!-- Rótulo del grosor a la izquierda, acciones del lienzo a la derecha. -->
+        <div class="rotulo-fila rotulo-fila-acciones">
+          <span class="rotulo">Grosor</span>
           <div class="acciones-lienzo">
             <button id="botonDeshacerDibujo" type="button" class="boton-icono" aria-label="Deshacer" title="Deshacer">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
@@ -206,40 +212,26 @@
             </button>
           </div>
         </div>
-
-        <div class="marco-dibujo">
-          <canvas id="lienzoDibujo" width="128" height="64"></canvas>
+        <div class="segmento" id="grupoGrosor" role="group" aria-label="Grosor del trazo">
+          <button type="button" data-valor="1">1</button>
+          <button type="button" data-valor="2" class="activo">2</button>
+          <button type="button" data-valor="3">3</button>
+          <button type="button" data-valor="4">4</button>
+          <button type="button" data-valor="5">5</button>
+          <button type="button" data-valor="6">6</button>
         </div>
-
-        <div class="campo campo-grosor">
-          <fieldset>
-            <span class="rotulo">Grosor del trazo</span>
-            <div class="segmento" id="grupoGrosor">
-              <button type="button" data-valor="1">1</button>
-              <button type="button" data-valor="2" class="activo">2</button>
-              <button type="button" data-valor="3">3</button>
-              <button type="button" data-valor="4">4</button>
-              <button type="button" data-valor="5">5</button>
-              <button type="button" data-valor="6">6</button>
-            </div>
-          </fieldset>
-        </div>
-      </section>
+      </div>
 
       <!-- Guardar en galería: misma galería /imagenes que usa la
            sección Imagen -- un dibujo guardado se ve y se usa exactamente
            igual que una imagen subida guardada. -->
-      <section class="grupo">
-        <h2 class="grupo-titulo">Guardar en galería</h2>
-        <div class="campo">
-          <label class="rotulo" for="nombreGaleriaDibujo">Nombre</label>
-          <div class="fila-guardar-galeria">
-            <input type="text" id="nombreGaleriaDibujo" placeholder="Nombre para guardarlo" maxlength="60" />
-            <button type="button" id="botonGuardarGaleriaDibujo" class="boton-secundario">Añadir dibujo a la galería</button>
-          </div>
-          <div id="avisoGaleriaDibujo" class="aviso" style="display: none;"></div>
+      <div class="campo">
+        <div class="fila-guardar-galeria fila-guardar-inline">
+          <input type="text" id="nombreGaleriaDibujo" placeholder="Nombre" maxlength="60" aria-label="Nombre para guardar el dibujo en la galería" />
+          <button type="button" id="botonGuardarGaleriaDibujo" class="boton-secundario" title="Añadir este dibujo a la galería">Guardar</button>
         </div>
-      </section>
+        <div id="avisoGaleriaDibujo" class="aviso" style="display: none;"></div>
+      </div>
 
     </div>
 
