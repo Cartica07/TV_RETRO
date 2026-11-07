@@ -1296,6 +1296,128 @@ input[type="text"]:focus {
   }
 }
 
+
+/* ===================================================
+   Escritorio (≥ 900px): dos columnas.
+   Izquierda: barra superior + OLED (fija) y Enviar abajo.
+   Derecha: pestañas arriba (fijas) y el contenido.
+   =================================================== */
+@media (min-width: 900px) {
+  :root {
+    --ancho-app: 1120px;
+    --ancho-izq: 420px;
+    --hueco: 32px;
+  }
+
+  body {
+    padding:
+      0
+      calc(24px + env(safe-area-inset-right, 0px))
+      24px
+      calc(24px + env(safe-area-inset-left, 0px));
+  }
+
+  .hoja {
+    max-width: var(--ancho-app);
+    display: grid;
+    grid-template-columns: var(--ancho-izq) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    column-gap: var(--hueco);
+    align-items: start;
+  }
+
+  .cabecera-fija {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    padding-top: calc(var(--esp-5) + env(safe-area-inset-top, 0px));
+    background: transparent;
+  }
+
+  .nav-inferior {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    padding: var(--esp-5) 0 var(--esp-4);
+    background: var(--fondo);
+    border-top: none;
+  }
+
+  .controles {
+    grid-column: 2;
+    grid-row: 2;
+    padding: var(--esp-6);
+  }
+
+  footer {
+    grid-column: 2;
+    grid-row: 3;
+    margin: var(--esp-4) 0 var(--esp-6);
+  }
+
+  /* Pestañas como control segmentado horizontal. */
+  .nav-pestanas {
+    max-width: none;
+    height: auto;
+    gap: var(--esp-1);
+    padding: var(--esp-1);
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+  }
+
+  .nav-pestanas button {
+    flex-direction: row;
+    gap: var(--esp-2);
+    min-height: 48px;
+    border-radius: var(--radio-pill);
+    font-size: var(--texto-sm);
+  }
+
+  .nav-pestanas button::before {
+    display: none;
+  }
+
+  .nav-pestanas button.activo {
+    background: var(--acento-fondo);
+    box-shadow: inset 0 0 0 1px var(--acento-tenue);
+  }
+
+  .nav-pestanas .icono {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Enviar: fijo abajo, alineado con la columna izquierda. */
+  .barra-accion {
+    left: max(calc(24px + env(safe-area-inset-left, 0px)), calc((100vw - var(--ancho-app)) / 2));
+    right: auto;
+    bottom: 24px;
+    width: var(--ancho-izq);
+    padding: var(--esp-4);
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-tarjeta);
+  }
+
+  .barra-accion-interior {
+    max-width: none;
+  }
+
+  .barra-accion .estado-linea {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .grid-galeria {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
    campo. Va al final para ganarle a los font-size de cada control. */
 @media (pointer: coarse) {
