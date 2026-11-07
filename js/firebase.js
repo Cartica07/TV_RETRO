@@ -46,8 +46,9 @@ export async function cargarEstado() {
         invertido: !!config.invertido,
         modoTexto: config.modoTexto || 'ajustar',
         // Campo agregado en el rediseño: estilo de letra. Si no está
-        // (datos viejos), es la fuente clásica 5×7 de siempre.
-        fuente: (typeof config.fuente === 'string' && config.fuente) ? config.fuente : 'clasica',
+        // (datos viejos o enviados antes de esta opción) queda vacío y el
+        // panel usa su estilo por defecto (ver FUENTE_DEFECTO en main.js).
+        fuente: (typeof config.fuente === 'string') ? config.fuente : '',
         imagenData: imagen.datos || '',
         imagenAncho: Number(imagen.ancho) || 0,
         imagenAlto: Number(imagen.alto) || 0,
@@ -75,7 +76,7 @@ export async function cargarEstado() {
         alineacionV: 'centro',
         invertido: false,
         modoTexto: 'ajustar',
-        fuente: 'clasica',
+        fuente: '',
         imagenData: '',
         imagenAncho: 0,
         imagenAlto: 0,
@@ -321,7 +322,7 @@ export async function enviarEstado(estado) {
         // Nuevo (no reemplaza a ningún campo): "clasica" | "sans" | "sansb"
         // | "serif" | "serifi". tamano (1..5) se interpreta según la fuente
         // (clásica: setTextSize; las demás: 6/10/12/16/18 pt).
-        fuente: estado.fuente || 'clasica'
+        fuente: estado.fuente || 'sans'
       }
     };
 

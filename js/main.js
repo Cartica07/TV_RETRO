@@ -54,6 +54,10 @@ import { esFuenteVariable, anchoScrollFuente } from './fuentesTexto.js';
 // ===================================================
 // Estado Global
 // ===================================================
+// Estilo de letra por defecto, igual que en la herramienta CancionesMiniTV
+// (FreeSans 10 pt = Sans, tamaño 2). Se usa si Firebase no trae config.fuente.
+const FUENTE_DEFECTO = 'sans';
+
 let estadoActual = {
   tipo: 'texto',
   texto: 'Hola Mundo',
@@ -62,7 +66,7 @@ let estadoActual = {
   alineacionV: 'centro',
   invertido: false,
   modoTexto: 'ajustar',
-  fuente: 'clasica',   // estilo de letra (config.fuente): clasica | sans | sansb | serif | serifi
+  fuente: 'sans',      // estilo de letra (config.fuente); por defecto FUENTE_DEFECTO
   imagenData: '',
   imagenAncho: 0,
   imagenAlto: 0,
@@ -1520,7 +1524,7 @@ async function cargarEstadoInicial() {
           alineacionV: resultado.alineacionV || 'centro',
           invertido: resultado.invertido,
           modoTexto: resultado.modoTexto,
-          fuente: resultado.fuente || 'clasica',
+          fuente: resultado.fuente || FUENTE_DEFECTO,
           imagenData: resultado.imagenData || '',
           imagenAncho: resultado.imagenAncho || 0,
           imagenAlto: resultado.imagenAlto || 0,
