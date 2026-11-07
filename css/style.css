@@ -17,7 +17,16 @@ body {
   font-family: var(--fuente-ui);
   display: flex;
   justify-content: center;
-  padding: 40px 18px 80px;
+  /* Zonas seguras: notch / barra de estado arriba, barra de gestos abajo
+     (requiere viewport-fit=cover en index.html). */
+  padding:
+    calc(40px + env(safe-area-inset-top, 0px))
+    calc(18px + env(safe-area-inset-right, 0px))
+    calc(80px + env(safe-area-inset-bottom, 0px))
+    calc(18px + env(safe-area-inset-left, 0px));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hoja {
@@ -756,4 +765,17 @@ footer {
     drop-shadow(0 0 1px rgba(77, 210, 255, .9))
     drop-shadow(0 0 10px rgba(77, 210, 255, .35))
     drop-shadow(0 0 26px rgba(77, 210, 255, .18));
+}
+
+/* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
+   campo. Va al final para ganarle a los font-size de cada control. */
+@media (pointer: coarse) {
+  textarea,
+  select,
+  input[type="text"],
+  input[type="number"],
+  input[type="file"],
+  .fila-guardar-galeria input[type="text"] {
+    font-size: 16px;
+  }
 }
