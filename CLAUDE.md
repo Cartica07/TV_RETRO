@@ -8,7 +8,7 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `js/firebase.js`: ÚNICO acceso a Firebase
 - `js/renderer.js` + `js/fonts.js`: réplica pixel-perfect de la OLED (fuente clásica 5×7)
 - `js/fuentesTexto.js` + `js/fuentesGfx.js`: fuentes FreeSans/FreeSerif (GFXfont, generadas desde CancionesMiniTV/fuentes.js)
-- `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF animado → animación `{ancho, alto, cuadros:[{datos, dur}]}`), `js/dibujo.js`
+- `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF animado → animación `{ancho, alto, cuadros:[{datos, dur}]}`), `js/dibujo.js`, `js/lienzoZoom.js` (zoom y desplazamiento del lienzo de Dibujo; modo expandido = clase `body.dibujo-expandido`)
 - Referencia externa (solo lectura, no modificar ni commitear): `C:\Proyectos\CancionesMiniTV` (repo Cartica07/CancionesMiniTV). De ahí se portaron el decodificador de GIF, Atkinson y el encuadre.
 - `css/tokens.css`: tokens de diseño (colores, fuentes, medidas) compartidos por las dos páginas
 - `css/style.css`: estilos del panel (estructura de app: cabecera fija, barra de Enviar, navegación inferior; en escritorio, dos columnas)
@@ -43,6 +43,7 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 ## Fases
 1. ACTUAL: rediseño visual tipo app IoT (tarjeta de dispositivo arriba con preview OLED, estado y última actualización; navegación inferior por pestañas; mobile-first, zonas seguras, modo oscuro; bien en escritorio).
 2. POSTERIOR (no hacer todavía): APK Android con Capacitor, manteniendo el mismo código como web.
+   - Pendiente para la APK: el lienzo expandido de Dibujo bloquea la rotación con `screen.orientation.lock('landscape')` (solo anda en pantalla completa en el navegador); en la APK usar el plugin de orientación de Capacitor.
    - Pendiente para la APK: pegar imágenes del portapapeles (botón Pegar de la pestaña Imagen) usa `navigator.clipboard.read()`, que en Chrome/Edge (también Android) pide permiso, pero el WebView de Android no lo maneja: habrá que leer el portapapeles con un plugin nativo.
 
 ## Reglas obligatorias
