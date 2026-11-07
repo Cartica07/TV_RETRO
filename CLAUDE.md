@@ -42,6 +42,7 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 ## Fases
 1. ACTUAL: rediseño visual tipo app IoT (tarjeta de dispositivo arriba con preview OLED, estado y última actualización; navegación inferior por pestañas; mobile-first, zonas seguras, modo oscuro; bien en escritorio).
 2. POSTERIOR (no hacer todavía): APK Android con Capacitor, manteniendo el mismo código como web.
+   - Pendiente para la APK: pegar imágenes del portapapeles (botón Pegar de la pestaña Imagen) usa `navigator.clipboard.read()`, que en Chrome/Edge (también Android) pide permiso, pero el WebView de Android no lo maneja: habrá que leer el portapapeles con un plugin nativo.
 
 ## Reglas obligatorias
 - No cambiar rutas, nombres de campos ni formato de datos en Firebase.
