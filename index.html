@@ -77,13 +77,30 @@
         <textarea id="texto" rows="2" maxlength="200" placeholder="Escribí el mensaje para la OLED…"></textarea>
       </div>
 
-      <div class="campo">
-        <span class="rotulo">Tamaño</span>
-        <div class="segmento" id="grupoTamano">
-          <button type="button" data-valor="1">1</button>
-          <button type="button" data-valor="2">2</button>
-          <button type="button" data-valor="3">3</button>
-          <button type="button" data-valor="4">4</button>
+      <!-- Letra (config.fuente) y tamaño 1..5 en una misma fila. -->
+      <div class="campo fila-letra">
+        <div>
+          <label class="rotulo" for="fuenteTexto">Letra</label>
+          <div class="selector selector-compacto">
+            <select id="fuenteTexto">
+              <option value="clasica">Clásica</option>
+              <option value="sans">Sans</option>
+              <option value="sansb">Sans negrita</option>
+              <option value="serif">Serif</option>
+              <option value="serifi">Serif cursiva</option>
+            </select>
+            <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div>
+          <span class="rotulo">Tamaño</span>
+          <div class="segmento" id="grupoTamano" role="group" aria-label="Tamaño">
+            <button type="button" data-valor="1">1</button>
+            <button type="button" data-valor="2">2</button>
+            <button type="button" data-valor="3">3</button>
+            <button type="button" data-valor="4">4</button>
+            <button type="button" data-valor="5">5</button>
+          </div>
         </div>
       </div>
 

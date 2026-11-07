@@ -1601,6 +1601,18 @@ label.fila-ajuste-titulo {
   position: relative;
 }
 
+
+/* Texto: Letra (selector) y Tamaño (1..5) en una misma fila. */
+.fila-letra {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--esp-2);
+}
+
+.fila-letra .segmento button {
+  padding: 0;
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {
