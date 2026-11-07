@@ -44,7 +44,16 @@
         <!-- Última señal del dispositivo (heartbeat lastSeen), ej. "hace 4 s". -->
         <span class="ultima-vista" id="ultimaActualizacion" hidden></span>
       </span>
-      <span class="etiqueta-chip">SSD1306 · 128×64</span>
+      <!-- Invertir: junto a la vista previa para ver el efecto al instante.
+           Aplica a texto, imagen, dibujo y galería (display.invertDisplay en
+           el firmware); main.js oculta esta fila en Música. -->
+      <div class="invertir-compacto" id="filaInvertido">
+        <label class="invertir-etiqueta" for="invertido">Invertir</label>
+        <label class="switch switch-chico">
+          <input type="checkbox" id="invertido" aria-label="Invertir colores" />
+          <span class="via"><span class="perilla"></span></span>
+        </label>
+      </div>
     </div>
   </section>
 
@@ -334,18 +343,6 @@
         </div>
       </section>
 
-    </div>
-
-    <!-- Invertido: aplica a texto, imagen, dibujo y galería (display.invertDisplay en el firmware). No aplica a Canción -- no hay nada visual que invertir mientras suena. -->
-    <div class="campo switch-fila fila-ajuste" id="filaInvertido">
-      <span class="fila-ajuste-texto">
-        <span class="fila-ajuste-titulo">Invertir colores</span>
-        <span class="fila-ajuste-desc">Fondo encendido y contenido apagado</span>
-      </span>
-      <label class="switch">
-        <input type="checkbox" id="invertido" />
-        <span class="via"><span class="perilla"></span></span>
-      </label>
     </div>
 
   </main>
