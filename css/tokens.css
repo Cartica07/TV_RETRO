@@ -24,6 +24,10 @@
   /* ----- Acento: mismo cian que dibuja renderer.js en la OLED ----- */
   --acento:           #4DD2FF;
   --acento-presionado:#1FB6E8;
+  /* Relleno de superficies grandes (botones llenos, segmento activo):
+     algo menos saturado que --acento para no encandilar en modo oscuro
+     (guía de tema oscuro de Material: acentos desaturados). */
+  --acento-relleno:   #50C5EC;
   --acento-suave:     #7FDFFF;
   --acento-brillo:    #B8EEFF;
   --acento-tenue:     #0E4A63;
