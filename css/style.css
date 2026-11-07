@@ -531,6 +531,13 @@ button#enviar:disabled {
   color: var(--error-texto);
 }
 
+/* Advertencia (ej. GIF pesado): amarillo, menos grave que error. */
+.aviso.advertencia {
+  background: rgba(255, 176, 32, .08);
+  border-color: var(--aviso);
+  color: var(--aviso);
+}
+
 /* ===== Galería de imágenes guardadas ===== */
 .fila-guardar-galeria {
   display: flex;
