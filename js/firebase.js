@@ -4,7 +4,7 @@
  */
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
-import { getDatabase, ref, get, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, remove, onValue } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -352,7 +352,9 @@ export async function enviarEstado(estado) {
       };
     }
 
-    await set(ref(db, 'oled_remota'), Object.assign({ version: nuevaVersion }, { pantalla: pantallaPayload }));
+    // update() (no set()): reemplaza version y pantalla completos, pero no
+    // borra oled_remota/lastSeen (heartbeat que escribe el ESP).
+    await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload });
 
     return {
       exito: true,
