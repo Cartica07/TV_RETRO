@@ -759,6 +759,12 @@ footer {
   min-height: 14px;
 }
 
+/* Sin mensaje: no se muestra el LED suelto, pero se conserva el alto
+   para que la tarjeta no cambie de tamaño cuando aparece un mensaje. */
+.dispositivo .estado-linea:has(#estadoTexto:empty) {
+  visibility: hidden;
+}
+
 .barra-accion button#enviar {
   min-height: 52px;
   border-radius: var(--radio-md);
