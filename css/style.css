@@ -2252,6 +2252,19 @@ body.dibujo-expandido .herramientas-dibujo .boton-icono {
   }
 }
 
+/* Celular en horizontal (pantalla baja): la cabecera fija + las barras
+   de abajo ocupaban toda la altura y no se podía tocar el contenido.
+   Acá la cabecera se desplaza con la página y la vista previa es más baja. */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 899px) {
+  .cabecera-fija {
+    position: static;
+  }
+
+  .marco-pantalla canvas {
+    height: min(96px, 26vh);
+  }
+}
+
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
    campo. Va al final para ganarle a los font-size de cada control. */
 @media (pointer: coarse) {
