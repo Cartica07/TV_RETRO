@@ -54,6 +54,8 @@ export async function cargarEstado() {
         manual: !!config.manual,
         x: Number(config.x) || 0,
         y: Number(config.y) || 0,
+        // Dirección del scroll (agregada en el rediseño): 'h' (de siempre) o 'v'.
+        direccion: config.direccion === 'v' ? 'v' : 'h',
         imagenData: imagen.datos || '',
         imagenAncho: Number(imagen.ancho) || 0,
         imagenAlto: Number(imagen.alto) || 0,
@@ -85,6 +87,7 @@ export async function cargarEstado() {
         manual: false,
         x: 0,
         y: 0,
+        direccion: 'h',
         imagenData: '',
         imagenAncho: 0,
         imagenAlto: 0,
@@ -335,7 +338,10 @@ export async function enviarEstado(estado) {
         // alineacion/alineacionV como siempre.
         manual: !!estado.manual,
         x: Math.round(Number(estado.x) || 0),
-        y: Math.round(Number(estado.y) || 0)
+        y: Math.round(Number(estado.y) || 0),
+        // Nuevo: dirección del scroll ('h' | 'v'). modoTexto sigue siendo
+        // 'scroll': un firmware que no conozca este campo hace el horizontal.
+        direccion: estado.direccion === 'v' ? 'v' : 'h'
       }
     };
 

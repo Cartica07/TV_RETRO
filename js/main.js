@@ -73,6 +73,9 @@ let estadoActual = {
   manual: false,
   x: 0,
   y: 0,
+  // Dirección del scroll (config.direccion): "h" horizontal (de siempre) o
+  // "v" vertical. Solo cuenta con modoTexto = "scroll".
+  direccion: 'h',
   imagenData: '',
   imagenAncho: 0,
   imagenAlto: 0,
@@ -218,6 +221,40 @@ function detenerScroll() {
     cancelAnimationFrame(idAnimacionScroll);
     idAnimacionScroll = null;
   }
+}
+
+// Scroll vertical (como el bloque de texto de CancionesMiniTV, pero en
+// bucle): 1 s quieto arriba, sube a VELOCIDAD_SCROLL_V px/s hasta que se
+// ve la última línea, 1 s quieto al final y vuelve a empezar. Si el texto
+// entra entero en la pantalla, no se mueve.
+const VELOCIDAD_SCROLL_V = 12;   // px/segundo (vel por defecto de la herramienta)
+const PAUSA_INICIO_V_MS = 1000;
+const PAUSA_FIN_V_MS = 1000;
+
+function iniciarScrollVertical() {
+  detenerScroll();
+  const bloque = medirBloqueTexto(estadoActual);
+  const distancia = Math.max(0, bloque.alto - 64);
+  if (distancia === 0) {
+    dibujarOLED(elementos.canvas, estadoActual, 0);
+    return;
+  }
+  const recorridoMs = distancia / VELOCIDAD_SCROLL_V * 1000;
+  const cicloMs = PAUSA_INICIO_V_MS + recorridoMs + PAUSA_FIN_V_MS;
+  let inicio = null;
+
+  function frame(ts) {
+    if (inicio === null) inicio = ts;
+    const t = (ts - inicio) % cicloMs;
+    let desplazamiento = 0;
+    if (t > PAUSA_INICIO_V_MS) {
+      desplazamiento = Math.min(distancia, Math.floor(distancia * (t - PAUSA_INICIO_V_MS) / recorridoMs));
+    }
+    dibujarOLED(elementos.canvas, estadoActual, desplazamiento);
+    idAnimacionScroll = requestAnimationFrame(frame);
+  }
+
+  idAnimacionScroll = requestAnimationFrame(frame);
 }
 
 function iniciarScroll() {
@@ -401,7 +438,8 @@ function renderizar() {
   // Si es texto y modo scroll, animar
   if (estadoActual.modoTexto === 'scroll') {
     detenerAnimacionPreview();
-    iniciarScroll();
+    if (estadoActual.direccion === 'v') iniciarScrollVertical();
+    else iniciarScroll();
   } else {
     detenerScroll();
     detenerAnimacionPreview();
@@ -1489,7 +1527,15 @@ function configurarEventos() {
 
   elementos.grupoModo.addEventListener('change', (e) => {
     if (e.target.name !== 'modoTexto') return;
-    estadoActual.modoTexto = e.target.value;
+    // "scrollv" es solo de la interfaz: en los datos es modoTexto "scroll"
+    // con direccion "v" (así un firmware viejo hace el scroll de siempre).
+    if (e.target.value === 'scrollv') {
+      estadoActual.modoTexto = 'scroll';
+      estadoActual.direccion = 'v';
+    } else {
+      estadoActual.modoTexto = e.target.value;
+      estadoActual.direccion = 'h';
+    }
     renderizar();
   });
 
@@ -1662,6 +1708,7 @@ async function cargarEstadoInicial() {
           manual: !!resultado.manual,
           x: resultado.x || 0,
           y: resultado.y || 0,
+          direccion: resultado.direccion === 'v' ? 'v' : 'h',
           imagenData: resultado.imagenData || '',
           imagenAncho: resultado.imagenAncho || 0,
           imagenAlto: resultado.imagenAlto || 0,

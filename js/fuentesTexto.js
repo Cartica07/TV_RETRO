@@ -184,7 +184,7 @@ function limitar(valor, tamanoBloque, maximo) {
  */
 export function medirBloqueFuente(estado) {
   const d = datosFuente(estado.fuente, estado.tamano);
-  if (estado.modoTexto === 'scroll') {
+  if (estado.modoTexto === 'scroll' && estado.direccion !== 'v') {
     const alto = d.asc + d.desc;
     return { ancho: anchoDe(d, textoScroll(estado.texto)), alto, xAuto: 0, yAuto: yArriba(alto, estado.alineacionV) };
   }
@@ -211,26 +211,32 @@ export function dibujarTextoFuente(ctx, estado, colorFrente, scrollX = null) {
   ctx.fillStyle = colorFrente;
   const altoLinea = d.asc + d.desc;
 
-  if (estado.modoTexto === 'scroll') {
+  const vertical = estado.modoTexto === 'scroll' && estado.direccion === 'v';
+
+  if (estado.modoTexto === 'scroll' && !vertical) {
     const top = estado.manual ? limitar(estado.y, altoLinea, ALTO) : yArriba(altoLinea, estado.alineacionV);
     const x = typeof scrollX === 'number' ? scrollX : ANCHO;
     dibujarLinea(ctx, d, textoScroll(estado.texto), x, top + d.asc);
     return;
   }
 
-  // Ajustar (y, por compatibilidad, cualquier otro modo).
+  // Ajustar (y, por compatibilidad, cualquier otro modo). El scroll
+  // vertical usa estas mismas líneas: si el bloque es más alto que la
+  // pantalla, arranca arriba y sube (scrollX = desplazamiento en px).
   const lineas = dividirEnLineasFuente(d, String(estado.texto || ''));
   const alto = d.asc + (lineas.length - 1) * d.y + d.desc;
+  const subiendo = vertical && alto > ALTO;
+  const topSubiendo = -Math.round(Number(scrollX) || 0);
 
   if (estado.manual) {
     const anchoBloque = Math.max(0, ...lineas.map(l => anchoDe(d, l)));
     const x0 = limitar(estado.x, anchoBloque, ANCHO);
-    const top = limitar(estado.y, alto, ALTO);
+    const top = subiendo ? topSubiendo : limitar(estado.y, alto, ALTO);
     lineas.forEach((linea, i) => dibujarLinea(ctx, d, linea, x0, top + d.asc + i * d.y));
     return;
   }
 
-  const top = yArriba(alto, estado.alineacionV);
+  const top = subiendo ? topSubiendo : yArriba(alto, estado.alineacionV);
   lineas.forEach((linea, i) => {
     const x = xSegunAlineacion(anchoDe(d, linea), estado.alineacion);
     dibujarLinea(ctx, d, linea, x, top + d.asc + i * d.y);

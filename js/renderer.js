@@ -47,6 +47,15 @@ export function limitarPosicion(valor, tamanoBloque, maximo) {
 }
 
 /**
+ * Scroll vertical (config.modoTexto = 'scroll' + config.direccion = 'v'):
+ * el texto se arma en líneas como en Ajustar y, si el bloque es más alto
+ * que la pantalla, sube (ver iniciarScrollVertical en main.js).
+ */
+export function esScrollVertical(estado) {
+  return estado.modoTexto === 'scroll' && estado.direccion === 'v';
+}
+
+/**
  * Mide el bloque de texto tal como se dibuja (fuente clásica o variable):
  * { ancho, alto, xAuto, yAuto }. xAuto/yAuto son la esquina superior
  * izquierda que tendría con la alineación automática; se usan para que el
@@ -55,7 +64,7 @@ export function limitarPosicion(valor, tamanoBloque, maximo) {
 export function medirBloqueTexto(estado) {
   if (esFuenteVariable(estado.fuente)) return medirBloqueFuente(estado);
   const tamano = estado.tamano;
-  if (estado.modoTexto === 'scroll') {
+  if (estado.modoTexto === 'scroll' && !esScrollVertical(estado)) {
     const alto = fontMetrics[tamano].height;
     return { ancho: calcularAnchoTexto(estado.texto, tamano), alto, xAuto: 0, yAuto: calcularY(alto, estado.alineacionV) };
   }
@@ -98,6 +107,10 @@ export function dibujarOLED(canvas, estado, scrollX = null) {
     renderizarReducir(ctx, estado, frente);
   } else if (estado.modoTexto === 'recortar') {
     renderizarRecortar(ctx, estado, frente);
+  } else if (esScrollVertical(estado)) {
+    // Vertical: mismas líneas que Ajustar, desplazadas hacia arriba
+    // (scrollX trae el desplazamiento en píxeles).
+    renderizarAjustar(ctx, estado, frente, scrollX);
   } else if (estado.modoTexto === 'scroll') {
     renderizarScroll(ctx, estado, frente, scrollX);
   }
@@ -109,26 +122,30 @@ export function dibujarOLED(canvas, estado, scrollX = null) {
  * solo la tinta -- así el margen inferior queda igual de "grande" que
  * en la pantalla real (ver nota en fonts.js).
  */
-function renderizarAjustar(ctx, estado, colorFrente) {
+function renderizarAjustar(ctx, estado, colorFrente, desplazamientoY = null) {
   const tamano = estado.tamano;
   const lineas = dividirEnLineas(estado.texto, tamano, ANCHO);
   const metrics = fontMetrics[tamano];
 
   const alturaBloque = calcularAltoTexto(lineas, tamano);
+  // Scroll vertical con un bloque más alto que la pantalla: el bloque
+  // arranca arriba (y = 0) y sube según el desplazamiento.
+  const subiendo = esScrollVertical(estado) && alturaBloque > ALTO;
+  const ySubiendo = -Math.round(Number(desplazamientoY) || 0);
 
   // Posición manual: el bloque va en (x, y), con las líneas alineadas a
   // la izquierda dentro del bloque.
   if (estado.manual) {
     const anchoBloque = Math.max(0, ...lineas.map(l => calcularAnchoTexto(l, tamano)));
     const x0 = limitarPosicion(estado.x, anchoBloque, ANCHO);
-    const y0 = limitarPosicion(estado.y, alturaBloque, ALTO);
+    const y0 = subiendo ? ySubiendo : limitarPosicion(estado.y, alturaBloque, ALTO);
     lineas.forEach((linea, i) => {
       dibujarTextoBitmap(ctx, linea, tamano, x0, y0 + i * metrics.lineHeight, colorFrente);
     });
     return;
   }
 
-  const y = calcularY(alturaBloque, estado.alineacionV);
+  const y = subiendo ? ySubiendo : calcularY(alturaBloque, estado.alineacionV);
 
   dibujarLineas(ctx, lineas, tamano, estado.alineacion, y, colorFrente);
 }

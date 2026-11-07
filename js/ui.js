@@ -38,8 +38,11 @@ export function poblarControles(estado, elementos) {
   marcarModoPosicion(!!estado.manual, elementos);
   
   if (elementos.grupoModo) {
+    // Scroll vertical se muestra como el radio "scrollv" (en los datos es
+    // modoTexto "scroll" + direccion "v").
+    const valorUi = (estado.modoTexto === 'scroll' && estado.direccion === 'v') ? 'scrollv' : estado.modoTexto;
     elementos.grupoModo.querySelectorAll('input[name="modoTexto"]').forEach(r => {
-      r.checked = (r.value === estado.modoTexto);
+      r.checked = (r.value === valorUi);
     });
   }
   
