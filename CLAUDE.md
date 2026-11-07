@@ -38,4 +38,4 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - Responder siempre en español.
 
 ## Cómo probar
-Servir por HTTP (los módulos ES no cargan con file://), p. ej. `python -m http.server 8000`, y abrir `http://localhost:8000`. Probar cada pestaña y verificar en la consola de Firebase que lo escrito en `oled_remota` no cambió de forma.
+Servir por HTTP (los módulos ES no cargan con file://): `npx serve .` y abrir la URL que muestra (Node está instalado; en esta máquina `python` es solo el alias de la Microsoft Store y se cuelga). Revisar sintaxis antes de cada commit con `node --check js/<archivo>.js`. Probar cada pestaña y verificar en la consola de Firebase que lo escrito en `oled_remota` no cambió de forma.
