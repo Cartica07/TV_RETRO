@@ -1534,13 +1534,14 @@ async function cargarEstadoInicial() {
       // El LED de conexión ya no se marca acá: refleja el heartbeat del
       // dispositivo (ver iniciarMonitoreoConexion), no si el navegador
       // pudo leer Firebase, que es una cosa completamente distinta.
-      marcarEstado(
-        resultado.vacio
-          ? 'Conectado a Firebase. Todavía no hay datos.'
-          : `En la OLED ahora mismo: v${resultado.version}`,
-        'ok',
-        elementos
-      );
+      // La versión (contador de envíos) no se muestra en la interfaz por
+      // ahora: queda en la consola del navegador para depurar.
+      if (resultado.vacio) {
+        marcarEstado('Conectado a Firebase. Todavía no hay datos.', 'ok', elementos);
+      } else {
+        console.info(`[TV RETRO] En la OLED ahora mismo: v${resultado.version}`);
+        marcarEstado('', null, elementos);
+      }
     } else {
       poblarControles(estadoActual, elementos);
       renderizar();
@@ -1554,6 +1555,13 @@ async function cargarEstadoInicial() {
     marcarConexion('sin Firebase', 'error', elementos);
     marcarEstado('Error de conexión a Firebase.', 'error', elementos);
   }
+}
+
+// Mensaje tras un envío exitoso. La versión (contador de envíos) no se
+// muestra en la interfaz por ahora: queda en la consola para depurar.
+function textoEnviado(version) {
+  console.info(`[TV RETRO] Enviado: v${version}`);
+  return 'Enviado ✅ La OLED lo toma en el próximo chequeo.';
 }
 
 async function enviarAFirebase() {
@@ -1582,7 +1590,7 @@ async function enviarAFirebase() {
 
       if (resultado.exito) {
         marcarEstado(
-          `Enviado ✅ · v${resultado.version}. La OLED la toma en el próximo chequeo.`,
+          textoEnviado(resultado.version),
           'ok',
           elementos
         );
@@ -1603,7 +1611,7 @@ async function enviarAFirebase() {
 
       if (resultado.exito) {
         marcarEstado(
-          `Enviado ✅ · v${resultado.version}. La OLED la toma en el próximo chequeo.`,
+          textoEnviado(resultado.version),
           'ok',
           elementos
         );
@@ -1624,7 +1632,7 @@ async function enviarAFirebase() {
 
       if (resultado.exito) {
         marcarEstado(
-          `Enviado ✅ · v${resultado.version}. La OLED la toma en el próximo chequeo.`,
+          textoEnviado(resultado.version),
           'ok',
           elementos
         );
@@ -1657,7 +1665,7 @@ async function enviarAFirebase() {
 
     if (resultado.exito) {
       marcarEstado(
-        `Enviado ✅ · v${resultado.version}. La OLED la toma en el próximo chequeo.`,
+        textoEnviado(resultado.version),
         'ok',
         elementos
       );
