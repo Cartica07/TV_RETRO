@@ -7,7 +7,8 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `index.html` + `js/main.js` (orquestador) + `js/ui.js` (IDs del DOM y helpers visuales)
 - `js/firebase.js`: ÚNICO acceso a Firebase
 - `js/renderer.js` + `js/fonts.js`: réplica pixel-perfect de la OLED
-- `js/imageProcessor.js`, `js/dibujo.js`
+- `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF animado → animación `{ancho, alto, cuadros:[{datos, dur}]}`), `js/dibujo.js`
+- Referencia externa (solo lectura, no modificar ni commitear): `C:\Proyectos\CancionesMiniTV` (repo Cartica07/CancionesMiniTV). De ahí se portaron el decodificador de GIF, Atkinson y el encuadre.
 - `css/tokens.css`: tokens de diseño (colores, fuentes, medidas) compartidos por las dos páginas
 - `css/style.css`: estilos del panel (estructura de app: cabecera fija, barra de Enviar, navegación inferior; en escritorio, dos columnas)
 - `carga-masiva.html`: usa `css/tokens.css` + estilos propios inline; su `<script>` inline no se toca en pasos visuales
@@ -25,7 +26,8 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
 - `oled_remota/lastSeen` (heartbeat, solo lectura desde la web)
 - Catálogos: `canciones/`, `imagenes/`, `animaciones/` (hermanos de `oled_remota`)
-- Dibujo y Galería se envían como `tipo:"imagen"`.
+- Dibujo y Galería se envían como `tipo:"imagen"`. Un GIF subido en la pestaña Imagen se envía como `tipo:"animacion"`.
+- GIF guardados: en `animaciones/` con `meta.origen: "gif"` (así se separan en la lista GIF de la Galería; el ESP no lee los catálogos).
 - `enviarEstado` usa `update()` sobre `oled_remota` (escribe `version` y `pantalla` sin borrar `lastSeen`).
 - Seguridad: login con Firebase Auth (email/contraseña) en index.html y carga-masiva.html; reglas en `database.rules.json` (lectura pública de `oled_remota` para el ESP, `lastSeen` escribible por el ESP, todo lo demás restringido al UID del dueño).
 
