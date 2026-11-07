@@ -537,14 +537,6 @@ button#enviar:disabled {
   flex-shrink: 0;
 }
 
-.galeria-cabecera-campo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .boton-secundario {
   background: transparent;
   color: var(--ambar-suave);
@@ -567,38 +559,6 @@ button#enviar:disabled {
 .boton-secundario:disabled {
   opacity: .4;
   cursor: not-allowed;
-}
-
-.panel-galeria {
-  margin-top: 14px;
-  padding: 14px;
-  background: var(--superficie-hundida);
-  border: 1px solid var(--metal-borde);
-  border-radius: 10px;
-}
-
-.galeria-cabecera {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.boton-cerrar {
-  background: transparent;
-  border: 1px solid var(--metal-borde);
-  color: var(--texto-2);
-  border-radius: 6px;
-  width: 26px;
-  height: 26px;
-  line-height: 1;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.boton-cerrar:hover {
-  color: var(--ambar-brillo);
-  border-color: var(--ambar-tenue);
 }
 
 .grid-galeria {
@@ -681,32 +641,6 @@ footer {
    V1.14: ajustes de layout y galería
    =================================================== */
 
-/* Ícono de basura junto a "Galería guardada": borra la imagen
-   actualmente seleccionada (ver item-galeria.activo). Reemplaza el
-   botón "Borrar" que antes iba en cada miniatura. */
-.boton-borrar-galeria {
-  background: transparent;
-  border: 1px solid var(--metal-borde);
-  color: var(--led-error);
-  border-radius: 7px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color .12s ease, opacity .12s ease;
-}
-
-.boton-borrar-galeria:hover:not(:disabled) {
-  border-color: var(--led-error);
-}
-
-.boton-borrar-galeria:disabled {
-  opacity: .3;
-  cursor: not-allowed;
-}
 
 
 /* ===================================================
@@ -774,6 +708,18 @@ footer {
 .barra-accion .estado-linea {
   justify-content: center;
   text-align: center;
+}
+
+/* Una sola línea: los mensajes largos se cortan con "…". */
+.barra-accion #estadoTexto {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.barra-accion .led {
+  flex-shrink: 0;
 }
 
 .barra-accion button#enviar {
@@ -1225,6 +1171,87 @@ input[type="text"]:focus {
   height: 18px;
   margin-top: 1px;
   color: var(--acento);
+}
+
+
+/* ===================================================
+   Pestaña Galería: grillas de imágenes y animaciones
+   =================================================== */
+.cabecera-grupo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-2);
+}
+
+.cabecera-grupo .grupo-titulo {
+  margin: 0;
+}
+
+.descripcion-grupo {
+  margin: 0 0 var(--esp-3);
+}
+
+/* Grupo en otro contenedor (no hereda el separador de .grupo + .grupo). */
+.grupo-separado {
+  margin-top: var(--esp-5);
+  padding-top: var(--esp-5);
+  border-top: 1px solid var(--borde);
+}
+
+.boton-icono-peligro {
+  color: var(--error);
+}
+
+.boton-icono-peligro:hover:not(:disabled) {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.grid-galeria {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--esp-3);
+  max-height: none;
+  overflow: visible;
+}
+
+@media (min-width: 480px) {
+  .grid-galeria {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.galeria-vacio {
+  padding: var(--esp-5) var(--esp-3);
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio-md);
+  font-size: var(--texto-sm);
+  color: var(--texto-2);
+}
+
+.item-galeria {
+  padding: var(--esp-2);
+  gap: var(--esp-2);
+  background: var(--superficie-hundida);
+  border-radius: var(--radio-md);
+}
+
+.item-galeria canvas {
+  border-radius: var(--radio-sm);
+  background: #000;
+}
+
+.item-galeria .item-galeria-nombre {
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-xs);
+  color: var(--texto-2);
+}
+
+.item-galeria.activo {
+  border-color: var(--acento);
+  background: var(--acento-fondo);
+  box-shadow: 0 0 0 1px var(--acento);
 }
 
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
