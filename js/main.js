@@ -30,6 +30,7 @@ import {
   obtenerElementos,
   poblarControles,
   marcarSegmentoActivo,
+  marcarPestanaActual,
   marcarEstado,
   marcarConexion,
   marcarUltimaVista,
@@ -352,6 +353,7 @@ function mostrarSeccionSegunTipo(tipo) {
   const tipoSeccion = (tipo === 'animacion') ? 'galeria' : tipo;
 
   marcarSegmentoActivo(elementos.grupoTipo, tipoSeccion);
+  marcarPestanaActual(elementos.grupoTipo, tipoSeccion);
 
   const secciones = {
     texto: elementos.seccionTexto,
@@ -384,6 +386,10 @@ function mostrarSeccionSegunTipo(tipo) {
 function cambiarTipo(nuevoTipo) {
   estadoActual.tipo = nuevoTipo;
   mostrarSeccionSegunTipo(nuevoTipo);
+
+  // Como en una app: cada pestaña nueva arranca desde arriba, en vez de
+  // quedar a mitad de página donde había quedado la anterior.
+  if (window.scrollY > 0) window.scrollTo(0, 0);
 
   // Al entrar a Galería, refrescar ambos catálogos por si se guardó
   // algo desde otra pestaña/dispositivo (o desde carga-masiva.html)

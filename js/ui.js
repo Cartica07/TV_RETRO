@@ -51,6 +51,18 @@ export function marcarSegmentoActivo(grupo, valor) {
 }
 
 /**
+ * Marca la pestaña activa de la navegación para lectores de pantalla
+ * (aria-current="page"); el resto queda sin el atributo.
+ */
+export function marcarPestanaActual(grupo, valor) {
+  if (!grupo) return;
+  grupo.querySelectorAll('button').forEach(b => {
+    if (b.dataset.valor === String(valor)) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+}
+
+/**
  * Muestra un mensaje de estado en la pantalla
  */
 export function marcarEstado(texto, tipo, elementos) {
