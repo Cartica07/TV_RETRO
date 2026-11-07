@@ -21,6 +21,48 @@ import {
 const ANCHO = 128;
 const ALTO = 64;
 
+/*
+ * Límites de peso para que la animación entre en la memoria de un ESP32
+ * común (ESP32-WROOM-32, sin PSRAM):
+ *  - De ~520 KB de SRAM, con WiFi + HTTPS (TLS) quedan del orden de
+ *    100-250 KB libres, pero el bloque CONTIGUO más grande suele ser
+ *    bastante menor (la memoria está repartida en regiones y se fragmenta).
+ *  - El ESP descarga oled_remota.json completo en cada chequeo. Si el
+ *    firmware lo lee entero (getString) y después lo interpreta con
+ *    ArduinoJson, necesita aprox. el doble del tamaño del JSON, y la
+ *    primera copia en un solo bloque contiguo. Hay reportes de fallas con
+ *    buffers de más de ~64 KB en ESP32.
+ *  - Cada cuadro de 128×64 ocupa ~1,4 KB en el JSON (1024 bytes en Base64
+ *    + nombres de campos).
+ * Por eso: hasta ~28 KB (unos 20 cuadros) es seguro; hasta ~56 KB (unos
+ * 40 cuadros) puede andar según cuánta memoria libre tenga el firmware;
+ * más de eso es muy probable que no entre.
+ */
+export const PESO_RECOMENDADO_BYTES = 28 * 1024;
+export const PESO_MAXIMO_BYTES = 56 * 1024;
+
+/**
+ * Estima cuánto pesa una animación dentro de oled_remota.json y la
+ * clasifica: 'ok' | 'pesado' | 'muy-pesado'.
+ * @returns {{bytes: number, kb: number, cuadros: number, nivel: string, mensaje: string}}
+ */
+export function evaluarPesoAnimacion(cuadros) {
+  const lista = cuadros || [];
+  // {"datos":"…","dur":123}, + coma: ~22 bytes de estructura por cuadro
+  const bytes = lista.reduce((s, c) => s + (c.datos ? c.datos.length : 0) + 22, 0);
+  const kb = Math.round(bytes / 1024);
+  const n = lista.length;
+  if (bytes > PESO_MAXIMO_BYTES) {
+    return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
+      mensaje: `GIF muy pesado/largo: ${n} cuadros · ${kb} KB. Es muy probable que no entre en la memoria del ESP32 (máximo recomendado ~${Math.round(PESO_MAXIMO_BYTES / 1024)} KB). Usá un GIF más corto.` };
+  }
+  if (bytes > PESO_RECOMENDADO_BYTES) {
+    return { bytes, kb, cuadros: n, nivel: 'pesado',
+      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB. Puede fallar si el ESP32 tiene poca memoria libre (seguro hasta ~${Math.round(PESO_RECOMENDADO_BYTES / 1024)} KB).` };
+  }
+  return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
+}
+
 /** true si los primeros bytes son la firma de un GIF. */
 export function esGif(buffer) {
   const d = new Uint8Array(buffer, 0, Math.min(6, buffer.byteLength));
