@@ -1276,6 +1276,61 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 1px var(--acento);
 }
 
+
+/* Modo de texto (Ajustar / Scroll) como segmento compacto. Siguen
+   siendo los mismos radios name="modoTexto", solo ocultos a la vista. */
+.modo-lista {
+  flex-direction: row;
+  gap: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  background: var(--superficie-hundida);
+  overflow: hidden;
+}
+
+.modo-lista .modo-opcion {
+  position: relative;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--toque-min);
+  padding: 0 var(--esp-2);
+  border: none;
+  border-right: 1px solid var(--borde);
+  border-radius: 0;
+  background: transparent;
+}
+
+.modo-lista .modo-opcion:last-child {
+  border-right: none;
+}
+
+.modo-lista .modo-opcion input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+}
+
+.modo-lista .modo-opcion .modo-nombre {
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--texto-2);
+}
+
+.modo-lista .modo-opcion:has(input:checked) {
+  background: var(--acento);
+}
+
+.modo-lista .modo-opcion:has(input:checked) .modo-nombre {
+  color: var(--sobre-acento);
+}
+
+.modo-lista .modo-opcion:focus-within {
+  outline: 2px solid var(--acento);
+  outline-offset: -2px;
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {

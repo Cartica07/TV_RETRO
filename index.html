@@ -108,14 +108,12 @@
               <input type="radio" name="modoTexto" value="ajustar" checked />
               <span>
                 <span class="modo-nombre">Ajustar</span>
-                <span class="modo-desc">Reparte el texto en varias líneas para que entre completo.</span>
               </span>
             </label>
             <label class="modo-opcion">
               <input type="radio" name="modoTexto" value="scroll" />
               <span>
                 <span class="modo-nombre">Scroll</span>
-                <span class="modo-desc">Una sola línea que se desliza de derecha a izquierda.</span>
               </span>
             </label>
           </div>
@@ -136,7 +134,6 @@
             <input type="file" id="cargadorImagen" accept="image/*" />
             <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span class="zona-subida-titulo">Elegí una imagen</span>
-            <span class="zona-subida-desc">JPG, PNG, GIF o WebP · se adapta a 128×64</span>
           </label>
         </div>
       </section>
@@ -147,7 +144,6 @@
         <div class="campo switch-fila fila-ajuste-simple">
           <span class="fila-ajuste-texto">
             <span class="fila-ajuste-titulo">Difuminado</span>
-            <span class="fila-ajuste-desc">Activado: mejor para fotos y degradados. Desactivado: umbral duro, mejor para logos e íconos.</span>
           </span>
           <label class="switch">
             <input type="checkbox" id="dithering" />
@@ -161,7 +157,6 @@
             <input type="range" id="umbral" min="0" max="255" value="127" />
             <span class="valor-rango" id="valorUmbral">127</span>
           </div>
-          <p class="descripcion-campo">0 = todo blanco, 255 = todo negro.</p>
         </div>
       </section>
 
@@ -173,7 +168,6 @@
             <input type="text" id="nombreGaleria" placeholder="Nombre para guardarla" maxlength="60" />
             <button type="button" id="botonGuardarGaleria" class="boton-secundario">Añadir imagen a la galería</button>
           </div>
-          <p class="descripcion-campo">Guarda una copia de la imagen procesada para reutilizarla después. En <strong>Galería</strong> podés editarlas o borrarlas.</p>
           <div id="avisoGaleria" class="aviso" style="display: none;"></div>
         </div>
       </section>
@@ -196,18 +190,12 @@
         <div class="campo switch-fila fila-ajuste-simple">
           <label class="fila-ajuste-texto" for="inputRepeticiones">
             <span class="fila-ajuste-titulo">Repeticiones</span>
-            <span class="fila-ajuste-desc">Cuántas veces se toca la canción.</span>
           </label>
           <input type="number" id="inputRepeticiones" class="numero-compacto" min="1" value="1" inputmode="numeric" />
         </div>
 
         <div id="avisoCancion" class="aviso" style="display:none;"></div>
       </section>
-
-      <p class="nota-info">
-        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>La pantalla no cambia mientras suena: solo se activa el buzzer del dispositivo.</span>
-      </p>
 
     </div>
 
@@ -261,7 +249,6 @@
             <input type="text" id="nombreGaleriaDibujo" placeholder="Nombre para guardarlo" maxlength="60" />
             <button type="button" id="botonGuardarGaleriaDibujo" class="boton-secundario">Añadir dibujo a la galería</button>
           </div>
-          <p class="descripcion-campo">Guarda una copia del dibujo actual en la misma galería de imágenes, para reusarlo después.</p>
           <div id="avisoGaleriaDibujo" class="aviso" style="display: none;"></div>
         </div>
       </section>
@@ -279,7 +266,6 @@
             <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           </button>
         </div>
-        <p class="descripcion-campo descripcion-grupo">Tocá una imagen para verla en la vista previa. Para borrarla, seleccionala y tocá el tacho.</p>
         <div id="gridGaleria" class="grid-galeria">
           <p class="galeria-vacio" id="galeriaVacio">Todavía no hay imágenes guardadas.</p>
         </div>
@@ -292,7 +278,6 @@
         <div class="campo switch-fila fila-ajuste-simple">
           <span class="fila-ajuste-texto">
             <span class="fila-ajuste-titulo">Difuminado</span>
-            <span class="fila-ajuste-desc">Activado: mejor para fotos y degradados. Desactivado: umbral duro, mejor para logos e íconos.</span>
           </span>
           <label class="switch">
             <input type="checkbox" id="ditheringGaleria" />
@@ -306,7 +291,6 @@
             <input type="range" id="umbralGaleria" min="0" max="255" value="127" />
             <span class="valor-rango" id="valorUmbralGaleria">127</span>
           </div>
-          <p class="descripcion-campo">0 = todo blanco, 255 = todo negro. Se aplica a la imagen seleccionada o a la que acabás de subir.</p>
         </div>
       </section>
 
@@ -318,7 +302,6 @@
             <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           </button>
         </div>
-        <p class="descripcion-campo descripcion-grupo">Tocá una animación para verla en bucle en la vista previa.</p>
         <div id="gridAnimaciones" class="grid-galeria">
           <p class="galeria-vacio" id="animacionesVacio">Todavía no hay animaciones guardadas.</p>
         </div>
@@ -338,7 +321,6 @@
             <input type="file" id="cargadorImagenGaleria" accept="image/*" />
             <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span class="zona-subida-titulo">Añadir una imagen nueva</span>
-            <span class="zona-subida-desc">Se procesa igual que en la pestaña Imagen</span>
           </label>
         </div>
 
@@ -348,7 +330,6 @@
             <input type="text" id="nombreGaleriaNueva" placeholder="Nombre para guardarla" maxlength="60" />
             <button type="button" id="botonGuardarGaleriaNueva" class="boton-secundario">Guardar en la galería</button>
           </div>
-          <p class="descripcion-campo">Si el nombre coincide con una imagen guardada, la reemplaza.</p>
           <div id="avisoGaleriaNueva" class="aviso" style="display: none;"></div>
         </div>
       </section>
