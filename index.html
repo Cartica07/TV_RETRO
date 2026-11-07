@@ -14,44 +14,35 @@
 </head>
 <body>
 
-<div class="hoja">
+<div class="hoja app">
 
-  <header>
-    <p class="eyebrow">Panel de control · Firmware V1.6</p>
-    <h1>TV RETRO</h1>
-    <p class="subtitulo">Lo que ves acá es lo que se dibuja en la pantalla física. Ajustá, mirá el resultado y recién ahí enviá.</p>
+  <!-- Cabecera fija: barra superior + tarjeta del dispositivo -->
+  <div class="cabecera-fija">
+
+  <!-- Barra superior -->
+  <header class="barra-superior">
+    <h1 class="marca">TV RETRO</h1>
+    <span class="barra-superior-meta">Firmware V1.6</span>
   </header>
 
-  <div class="dispositivo">
-    <span class="tornillo tl"></span><span class="tornillo tr"></span>
-    <span class="tornillo bl"></span><span class="tornillo br"></span>
-
+  <!-- Tarjeta del dispositivo: vista previa + estado de conexión -->
+  <section class="dispositivo" aria-label="Pantalla del dispositivo">
     <div class="marco-pantalla">
       <canvas id="oled" width="128" height="64"></canvas>
     </div>
 
     <div class="franja-inferior">
-      <span class="etiqueta-chip">SSD1306 · 128×64</span>
       <span class="indicador">
         <span class="led" id="ledConexion"></span>
         <span id="textoConexion">conectando…</span>
       </span>
+      <span class="etiqueta-chip">SSD1306 · 128×64</span>
     </div>
+  </section>
+
   </div>
 
-  <div class="controles">
-
-    <!-- Selector Tipo: Texto o Imagen -->
-    <div class="campo">
-      <span class="rotulo rotulo-espaciado">Tipo de contenido</span>
-      <div class="segmento" id="grupoTipo">
-        <button type="button" data-valor="texto" class="activo">Texto</button>
-        <button type="button" data-valor="imagen">Imagen</button>
-        <button type="button" data-valor="cancion">Canción</button>
-        <button type="button" data-valor="dibujo">Dibujo</button>
-        <button type="button" data-valor="galeria">Galería</button>
-      </div>
-    </div>
+  <main class="controles">
 
     <!-- Sección de TEXTO (mostrada por defecto) -->
     <div id="seccionTexto">
@@ -329,16 +320,32 @@
 
     </div>
 
-    <!-- Botón Enviar y Estado -->
-    <button id="enviar" type="button">Enviar a la OLED</button>
-    <div class="estado-linea" id="estadoLinea">
-      <span class="led" id="ledEstado"></span>
-      <span id="estadoTexto">Cargando estado actual…</span>
-    </div>
-
-  </div>
+  </main>
 
   <footer>TV RETRO · Firebase Realtime Database</footer>
+
+  <!-- Barra de acción fija: Enviar + estado del último envío -->
+  <div class="barra-accion">
+    <div class="barra-accion-interior">
+      <div class="estado-linea" id="estadoLinea">
+        <span class="led" id="ledEstado"></span>
+        <span id="estadoTexto">Cargando estado actual…</span>
+      </div>
+      <button id="enviar" type="button">Enviar a la OLED</button>
+    </div>
+  </div>
+
+  <!-- Navegación inferior: es el mismo selector de tipo (#grupoTipo,
+       mismos data-valor) que usa main.js para cambiar de sección. -->
+  <nav class="nav-inferior" aria-label="Secciones">
+    <div class="nav-pestanas" id="grupoTipo">
+      <button type="button" data-valor="texto" class="activo">Texto</button>
+      <button type="button" data-valor="imagen">Imagen</button>
+      <button type="button" data-valor="dibujo">Dibujo</button>
+      <button type="button" data-valor="cancion">Música</button>
+      <button type="button" data-valor="galeria">Galería</button>
+    </div>
+  </nav>
 
 </div>
 

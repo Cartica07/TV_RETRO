@@ -7,23 +7,29 @@
   box-sizing: border-box;
 }
 
+/* Alturas de las barras fijas (nav inferior y barra de Enviar). */
+:root {
+  --alto-nav: 64px;
+  --alto-accion: 96px;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 900px 500px at 50% -10%, var(--brillo-fondo) 0%, transparent 60%),
-    var(--negro);
+  min-height: 100dvh;
+  background: var(--fondo);
   color: var(--texto);
   font-family: var(--fuente-ui);
   display: flex;
   justify-content: center;
   /* Zonas seguras: notch / barra de estado arriba, barra de gestos abajo
-     (requiere viewport-fit=cover en index.html). */
+     (requiere viewport-fit=cover en index.html). Abajo se deja lugar
+     para la barra de Enviar y la navegación, que son fijas. */
   padding:
-    calc(40px + env(safe-area-inset-top, 0px))
-    calc(18px + env(safe-area-inset-right, 0px))
-    calc(80px + env(safe-area-inset-bottom, 0px))
-    calc(18px + env(safe-area-inset-left, 0px));
+    0
+    calc(16px + env(safe-area-inset-right, 0px))
+    calc(var(--alto-nav) + var(--alto-accion) + 16px + env(safe-area-inset-bottom, 0px))
+    calc(16px + env(safe-area-inset-left, 0px));
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
@@ -34,85 +40,59 @@ body {
   max-width: 560px;
 }
 
-/* ===== Encabezado ===== */
-header {
-  margin-bottom: 28px;
+/* ===== Barra superior ===== */
+.barra-superior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  min-height: var(--toque-min);
+  margin-bottom: var(--esp-2);
 }
 
-.eyebrow {
+.marca {
+  margin: 0;
+  font-size: var(--texto-lg);
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--texto);
+}
+
+.barra-superior-meta {
   font-family: var(--fuente-data);
   font-size: 11px;
-  letter-spacing: .18em;
-  color: var(--ambar-suave);
+  letter-spacing: .1em;
   text-transform: uppercase;
-  margin: 0 0 6px;
+  color: var(--texto-3);
 }
 
-h1 {
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0 0 6px;
-  color: var(--texto);
-  letter-spacing: -0.01em;
+/* ===== Cabecera fija: barra superior + tarjeta del dispositivo =====
+   Queda fija arriba al hacer scroll, para ver siempre el resultado
+   mientras se ajustan los controles. Tiene fondo propio para tapar el
+   contenido que pasa por detrás (también bajo la barra de estado). */
+.cabecera-fija {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-top: calc(var(--esp-2) + env(safe-area-inset-top, 0px));
+  padding-bottom: var(--esp-4);
+  background: var(--fondo);
 }
 
-.subtitulo {
-  font-size: 13px;
-  color: var(--texto-2);
-  margin: 0;
-}
-
-.subtitulo a {
-  color: var(--ambar-suave);
-}
-
-/* ===== Dispositivo (OLED) ===== */
+/* ===== Tarjeta del dispositivo (OLED) ===== */
 .dispositivo {
   background:
     linear-gradient(155deg, var(--panel-alto), var(--panel) 55%);
   border: 1px solid var(--metal-borde);
   border-radius: var(--radio-lg);
-  padding: 22px 22px 16px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, .04) inset,
-    0 30px 60px -30px rgba(0, 0, 0, .8);
-  position: relative;
-  margin-bottom: 28px;
-}
-
-.tornillo {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, var(--borde-fuerte), var(--fondo));
-  box-shadow: 0 1px 1px rgba(0, 0, 0, .6);
-}
-
-.tornillo.tl {
-  top: 10px;
-  left: 10px;
-}
-
-.tornillo.tr {
-  top: 10px;
-  right: 10px;
-}
-
-.tornillo.bl {
-  bottom: 10px;
-  left: 10px;
-}
-
-.tornillo.br {
-  bottom: 10px;
-  right: 10px;
+  padding: var(--esp-3) var(--esp-3) var(--esp-2);
+  box-shadow: var(--sombra-tarjeta);
 }
 
 .marco-pantalla {
   background: var(--superficie-hundida);
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
   box-shadow:
     inset 0 2px 6px rgba(0, 0, 0, .9),
     inset 0 0 0 1px #000;
@@ -137,7 +117,7 @@ h1 {
 .marco-pantalla::after {
   content: "";
   position: absolute;
-  inset: 14px;
+  inset: 10px;
   pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,
@@ -153,7 +133,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
+  margin-top: var(--esp-2);
   padding: 0 2px;
 }
 
@@ -236,9 +216,12 @@ h1 {
 }
 
 textarea,
+select,
+input[type="number"],
 input[type="file"],
 input[type="range"] {
   width: 100%;
+  max-width: 100%;
 }
 
 textarea {
@@ -324,7 +307,7 @@ fieldset {
 
 .fila-doble {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
   margin-bottom: 20px;
 }
@@ -463,7 +446,7 @@ fieldset {
 
 button#enviar {
   width: 100%;
-  margin-top: 22px;
+  margin-top: 0;
   background: var(--ambar);
   color: var(--sobre-acento);
   border: none;
@@ -491,7 +474,7 @@ button#enviar:disabled {
 }
 
 .estado-linea {
-  margin-top: 12px;
+  margin-top: 0;
   font-family: var(--fuente-data);
   font-size: 11px;
   letter-spacing: .04em;
@@ -765,6 +748,110 @@ footer {
     drop-shadow(0 0 1px rgba(77, 210, 255, .9))
     drop-shadow(0 0 10px rgba(77, 210, 255, .35))
     drop-shadow(0 0 26px rgba(77, 210, 255, .18));
+}
+
+
+/* ===================================================
+   Estructura de app: barra de Enviar y navegación inferior fijas
+   =================================================== */
+.controles {
+  margin-bottom: var(--esp-4);
+}
+
+.barra-accion {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--alto-nav) + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  padding:
+    var(--esp-3)
+    calc(16px + env(safe-area-inset-right, 0px))
+    var(--esp-2)
+    calc(16px + env(safe-area-inset-left, 0px));
+  background: linear-gradient(to top, var(--fondo) 75%, transparent);
+}
+
+.barra-accion-interior {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+}
+
+.barra-accion .estado-linea {
+  justify-content: center;
+  text-align: center;
+}
+
+.barra-accion button#enviar {
+  min-height: 52px;
+  border-radius: var(--radio-md);
+  font-size: var(--texto-md);
+}
+
+.nav-inferior {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+  padding:
+    0
+    env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
+}
+
+.nav-pestanas {
+  max-width: 560px;
+  height: var(--alto-nav);
+  margin: 0 auto;
+  display: flex;
+}
+
+.nav-pestanas button {
+  flex: 1;
+  position: relative;
+  min-height: var(--toque-min);
+  background: none;
+  border: none;
+  color: var(--texto-2);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: color .12s ease;
+}
+
+/* Indicador de pestaña activa: píldora de acento arriba. */
+.nav-pestanas button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 32px;
+  height: 3px;
+  margin-left: -16px;
+  border-radius: 0 0 var(--radio-pill) var(--radio-pill);
+  background: transparent;
+  transition: background .12s ease;
+}
+
+.nav-pestanas button:hover {
+  color: var(--texto);
+}
+
+.nav-pestanas button.activo {
+  color: var(--acento);
+}
+
+.nav-pestanas button.activo::before {
+  background: var(--acento);
 }
 
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
