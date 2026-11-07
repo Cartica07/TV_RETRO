@@ -662,16 +662,17 @@ function marcarControlesEncuadre() {
   }
 }
 
-// Dispara al elegir un archivo nuevo del disco. Si es un GIF animado
+// Dispara al elegir un archivo nuevo del disco (o al pegar una imagen del
+// portapapeles, que llega como Blob sin nombre). Si es un GIF animado
 // (más de un cuadro) queda como animación; si no, como imagen fija.
-async function procesarYMostrarImagen() {
-  const file = elementos.cargadorImagen.files[0];
+async function procesarYMostrarImagen(archivo = elementos.cargadorImagen.files[0], nombreSugerido = '') {
+  const file = archivo;
   if (!file) return;
 
   try {
     marcarEstado('Procesando imagen…', null, elementos);
 
-    const nombreBase = file.name.replace(/\.[^.]+$/, '');
+    const nombreBase = (file.name || nombreSugerido || 'imagen').replace(/\.[^.]+$/, '');
     const buffer = await file.arrayBuffer();
     let leido = null;
     if (esGif(buffer)) {
@@ -695,12 +696,71 @@ async function procesarYMostrarImagen() {
     // guardar nada todavía -- eso solo pasa si el usuario toca el botón
     // "Añadir imagen al catálogo" a propósito.
     if (elementos.nombreGaleria && !elementos.nombreGaleria.value) {
-      elementos.nombreGaleria.value = file.name.replace(/\.[^.]+$/, '');
+      elementos.nombreGaleria.value = nombreBase;
     }
   } catch (error) {
     console.error('Error procesando imagen:', error);
     marcarEstado(`Error: ${error.message}`, 'error', elementos);
   }
+}
+
+// ---------------------------------------------------
+// Pegar una imagen del portapapeles (pestaña Imagen)
+// ---------------------------------------------------
+// Nombre para una imagen pegada: "pegada-HHMMSS".
+function nombreImagenPegada() {
+  const f = new Date();
+  const dos = (n) => String(n).padStart(2, '0');
+  return `pegada-${dos(f.getHours())}${dos(f.getMinutes())}${dos(f.getSeconds())}`;
+}
+
+// Botón Pegar: lee el portapapeles con la Async Clipboard API. El
+// navegador pide permiso la primera vez (Chrome/Edge, también en
+// Android). Si no está disponible (Firefox, WebView de Android sin
+// soporte) o se niega el permiso, avisa y sugiere las otras opciones.
+async function pegarImagenDelPortapapeles() {
+  if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+    marcarEstado('Este navegador no deja leer imágenes del portapapeles. Probá Ctrl+V o elegí el archivo.', 'error', elementos);
+    return;
+  }
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const tipo = item.types.find((t) => t.startsWith('image/'));
+      if (tipo) {
+        const blob = await item.getType(tipo);
+        await procesarYMostrarImagen(blob, nombreImagenPegada());
+        return;
+      }
+    }
+    marcarEstado('El portapapeles no tiene una imagen. Copiá una imagen y volvé a tocar Pegar.', 'error', elementos);
+  } catch (error) {
+    console.error('No se pudo leer el portapapeles:', error);
+    const denegado = error && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
+    marcarEstado(
+      denegado
+        ? 'Sin permiso para leer el portapapeles. Permitilo en el navegador, o usá Ctrl+V o elegí el archivo.'
+        : 'No se pudo leer el portapapeles. Probá Ctrl+V o elegí el archivo.',
+      'error',
+      elementos
+    );
+  }
+}
+
+// Ctrl+V / Cmd+V (o "Pegar" del menú del navegador) con la pestaña
+// Imagen abierta: no necesita permiso. No interfiere si se está
+// escribiendo en un campo de texto.
+function manejarEventoPegar(e) {
+  if (estadoActual.tipo !== 'imagen') return;
+  const destino = e.target;
+  if (destino && (destino.tagName === 'INPUT' || destino.tagName === 'TEXTAREA' || destino.isContentEditable)) return;
+  const datos = e.clipboardData;
+  if (!datos) return;
+  const archivo = Array.from(datos.files || []).find((f) => f.type.startsWith('image/'))
+    || Array.from(datos.items || []).filter((it) => it.kind === 'file' && it.type.startsWith('image/')).map((it) => it.getAsFile()).find(Boolean);
+  if (!archivo) return;
+  e.preventDefault();
+  procesarYMostrarImagen(archivo, archivo.name ? '' : nombreImagenPegada());
 }
 
 // Dispara al mover cualquiera de los dos sliders de umbral, o
@@ -1436,6 +1496,12 @@ function configurarEventos() {
   // Cargador de imagen: solo procesa y muestra el preview. Guardar en
   // el catálogo es una acción aparte (botón "Añadir imagen al catálogo").
   elementos.cargadorImagen.addEventListener('change', () => procesarYMostrarImagen());
+
+  // Pegar imagen del portapapeles: botón Pegar y Ctrl+V en la pestaña Imagen.
+  if (elementos.botonPegarImagen) {
+    elementos.botonPegarImagen.addEventListener('click', pegarImagenDelPortapapeles);
+  }
+  document.addEventListener('paste', manejarEventoPegar);
 
   // Umbral de binarización (sección Imagen)
   elementos.umbral.addEventListener('input', (e) => {

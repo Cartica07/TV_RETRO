@@ -209,6 +209,7 @@ export function obtenerElementos() {
     
     // Controles de imagen
     cargadorImagen: document.getElementById('cargadorImagen'),
+    botonPegarImagen: document.getElementById('botonPegarImagen'),
     umbral: document.getElementById('umbral'),
     valorUmbral: document.getElementById('valorUmbral'),
     dithering: document.getElementById('dithering'),
