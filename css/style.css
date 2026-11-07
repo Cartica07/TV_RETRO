@@ -7,6 +7,11 @@
   box-sizing: border-box;
 }
 
+/* El atributo hidden siempre oculta, aunque la clase defina display. */
+[hidden] {
+  display: none !important;
+}
+
 /* Alturas de las barras fijas (nav inferior y barra de Enviar). */
 :root {
   --alto-nav: 64px;
@@ -1435,6 +1440,145 @@ input[type="text"]:focus {
   }
 }
 
+
+/* ===================================================
+   Barra superior: lado derecho (firmware + cerrar sesión)
+   =================================================== */
+.barra-superior-derecha {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+}
+
+/* ===================================================
+   Pantalla de inicio de sesión (oculta hasta conectar el login)
+   =================================================== */
+.pantalla-login {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding:
+    calc(var(--esp-5) + env(safe-area-inset-top, 0px))
+    calc(16px + env(safe-area-inset-right, 0px))
+    calc(var(--esp-5) + env(safe-area-inset-bottom, 0px))
+    calc(16px + env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(ellipse 600px 400px at 50% 0%, var(--brillo-fondo) 0%, transparent 70%),
+    var(--fondo);
+}
+
+.login-tarjeta {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--esp-6) var(--esp-5);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.login-marca {
+  text-align: center;
+  margin-bottom: var(--esp-5);
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--esp-3);
+  border-radius: var(--radio-lg);
+  background: var(--acento-fondo);
+  color: var(--acento);
+  box-shadow: 0 0 24px rgba(77, 210, 255, .18);
+}
+
+.login-logo .icono {
+  width: 32px;
+  height: 32px;
+}
+
+.login-titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--texto);
+}
+
+.login-subtitulo {
+  margin: var(--esp-2) 0 0;
+  font-size: var(--texto-sm);
+  color: var(--texto-2);
+}
+
+.campo-texto {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--esp-4);
+  background: var(--superficie-hundida);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-md);
+}
+
+.campo-texto::placeholder {
+  color: var(--texto-3);
+}
+
+.campo-texto:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+.boton-primario {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--esp-2);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  border: none;
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-weight: 700;
+  font-size: var(--texto-md);
+  cursor: pointer;
+  transition: filter .12s ease, transform .05s ease;
+}
+
+.boton-primario:hover {
+  filter: brightness(1.08);
+}
+
+.boton-primario:active {
+  transform: translateY(1px);
+}
+
+.boton-primario:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.login-form .aviso {
+  margin: 0 0 var(--esp-4);
+}
+
+.login-pie {
+  margin: var(--esp-5) 0 0;
+  text-align: center;
+  font-size: var(--texto-xs);
+  color: var(--texto-3);
+}
+
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
    campo. Va al final para ganarle a los font-size de cada control. */
 @media (pointer: coarse) {
@@ -1442,6 +1586,8 @@ input[type="text"]:focus {
   select,
   input[type="text"],
   input[type="number"],
+  input[type="email"],
+  input[type="password"],
   input[type="file"],
   .fila-guardar-galeria input[type="text"] {
     font-size: 16px;
