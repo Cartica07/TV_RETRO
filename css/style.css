@@ -1383,6 +1383,51 @@ input[type="text"]:focus {
   white-space: nowrap;
 }
 
+
+/* ===================================================
+   Compacto: cada pestaña debe entrar en una pantalla de celular
+   =================================================== */
+.controles .campo {
+  margin-bottom: var(--esp-4);
+}
+
+.controles .campo:last-child {
+  margin-bottom: 0;
+}
+
+.rotulo {
+  margin-bottom: 6px;
+}
+
+/* Rótulo a la izquierda y dato (ej. contador) a la derecha. */
+.rotulo-fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--esp-3);
+}
+
+.rotulo-fila .contador {
+  margin: 0;
+}
+
+#texto {
+  min-height: 0;
+}
+
+/* Dos segmentos en una fila (alineación horizontal + vertical). */
+.fila-segmentos {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--esp-2);
+}
+
+.segmento-iconos button .icono {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {

@@ -69,70 +69,62 @@
     <!-- Sección de TEXTO (mostrada por defecto) -->
     <div id="seccionTexto">
 
-      <section class="grupo">
-        <h2 class="grupo-titulo">Mensaje</h2>
-        <div class="campo">
-          <label class="rotulo" for="texto">Texto</label>
-          <textarea id="texto" maxlength="200" placeholder="Escribí el mensaje para la OLED…"></textarea>
+      <div class="campo">
+        <div class="rotulo-fila">
+          <label class="rotulo" for="texto">Mensaje</label>
           <div class="contador"><span id="contador">0</span>/200</div>
         </div>
-      </section>
+        <textarea id="texto" rows="2" maxlength="200" placeholder="Escribí el mensaje para la OLED…"></textarea>
+      </div>
 
-      <section class="grupo">
-        <h2 class="grupo-titulo">Formato</h2>
-        <div class="campo">
-          <fieldset>
-            <span class="rotulo">Tamaño</span>
-            <div class="segmento" id="grupoTamano">
-              <button type="button" data-valor="1">1</button>
-              <button type="button" data-valor="2">2</button>
-              <button type="button" data-valor="3">3</button>
-              <button type="button" data-valor="4">4</button>
-            </div>
-          </fieldset>
+      <div class="campo">
+        <span class="rotulo">Tamaño</span>
+        <div class="segmento" id="grupoTamano">
+          <button type="button" data-valor="1">1</button>
+          <button type="button" data-valor="2">2</button>
+          <button type="button" data-valor="3">3</button>
+          <button type="button" data-valor="4">4</button>
         </div>
+      </div>
 
-        <div class="campo">
-          <fieldset>
-            <span class="rotulo">Alineación horizontal</span>
-            <div class="segmento" id="grupoAlineacion">
-              <button type="button" data-valor="izquierda">Izquierda</button>
-              <button type="button" data-valor="centro">Centro</button>
-              <button type="button" data-valor="derecha">Derecha</button>
-            </div>
-          </fieldset>
-        </div>
-
-        <div class="campo">
-          <fieldset>
-            <span class="rotulo">Alineación vertical</span>
-            <div class="segmento" id="grupoAlineacionV">
-              <button type="button" data-valor="arriba">Arriba</button>
-              <button type="button" data-valor="centro">Centro</button>
-            </div>
-          </fieldset>
-        </div>
-      </section>
-
-      <section class="grupo">
-        <h2 class="grupo-titulo">Modo</h2>
-        <div class="campo">
-          <div class="modo-lista" id="grupoModo">
-            <label class="modo-opcion">
-              <input type="radio" name="modoTexto" value="ajustar" checked />
-              <span>
-                <span class="modo-nombre">Ajustar</span>
-              </span>
-            </label>
-            <label class="modo-opcion">
-              <input type="radio" name="modoTexto" value="scroll" />
-              <span>
-                <span class="modo-nombre">Scroll</span>
-              </span>
-            </label>
+      <div class="campo">
+        <span class="rotulo">Alineación</span>
+        <div class="fila-segmentos">
+          <div class="segmento segmento-iconos" id="grupoAlineacion" role="group" aria-label="Alineación horizontal">
+            <button type="button" data-valor="izquierda" aria-label="Izquierda" title="Izquierda">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+            </button>
+            <button type="button" data-valor="centro" aria-label="Centro" title="Centro">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+            </button>
+            <button type="button" data-valor="derecha" aria-label="Derecha" title="Derecha">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="segmento segmento-iconos" id="grupoAlineacionV" role="group" aria-label="Alineación vertical">
+            <button type="button" data-valor="arriba" aria-label="Arriba" title="Arriba">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="3" x2="20" y2="3"/><rect x="8" y="6" width="8" height="9" rx="1"/></svg>
+            </button>
+            <button type="button" data-valor="centro" aria-label="Centro vertical" title="Centro vertical">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="8" height="10" rx="1"/><line x1="3" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="21" y2="12"/></svg>
+            </button>
           </div>
         </div>
-      </section>
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Modo</span>
+        <div class="modo-lista" id="grupoModo">
+          <label class="modo-opcion">
+            <input type="radio" name="modoTexto" value="ajustar" checked />
+            <span class="modo-nombre">Ajustar</span>
+          </label>
+          <label class="modo-opcion">
+            <input type="radio" name="modoTexto" value="scroll" />
+            <span class="modo-nombre">Scroll</span>
+          </label>
+        </div>
+      </div>
 
     </div>
 
