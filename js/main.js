@@ -31,6 +31,7 @@ import {
   poblarControles,
   marcarSegmentoActivo,
   marcarPestanaActual,
+  mostrarSubvistaGaleria,
   marcarEstado,
   marcarConexion,
   marcarUltimaVista,
@@ -100,6 +101,10 @@ let galeriaSeleccionActual = null;
 // vieja del catálogo, o el estado que trae Firebase al arrancar), los
 // controles quedan inertes porque no hay nada que reprocesar.
 let imagenFuenteActual = null;
+
+// Galería: qué lista se ve ("imagenes" o "animaciones"). Es solo de
+// presentación: no cambia estadoActual.tipo ni lo que se envía.
+let subvistaGaleria = 'imagenes';
 
 // ===================================================
 // Estado de conexión del DISPOSITIVO (heartbeat)
@@ -352,6 +357,10 @@ function mostrarSeccionSegunTipo(tipo) {
   // que "galeria".
   const tipoSeccion = (tipo === 'animacion') ? 'galeria' : tipo;
 
+  // Si lo activo es una animación, la Galería abre en esa lista.
+  if (tipo === 'animacion') subvistaGaleria = 'animaciones';
+  actualizarVistaGaleria();
+
   marcarSegmentoActivo(elementos.grupoTipo, tipoSeccion);
   marcarPestanaActual(elementos.grupoTipo, tipoSeccion);
 
@@ -423,6 +432,18 @@ function actualizarControlesEdicionImagen() {
   if (elementos.dithering) elementos.dithering.disabled = !hayFuente;
   if (elementos.umbralGaleria) elementos.umbralGaleria.disabled = !hayFuente;
   if (elementos.ditheringGaleria) elementos.ditheringGaleria.disabled = !hayFuente;
+
+  actualizarVistaGaleria();
+}
+
+// Galería: muestra solo la lista elegida (Imágenes o Animaciones) y, en
+// Imágenes, los ajustes de umbral/difuminado solo si hay una imagen
+// editable (imagenFuenteActual) -- sin fuente no hay nada que reajustar.
+function actualizarVistaGaleria() {
+  mostrarSubvistaGaleria(subvistaGaleria, elementos);
+  if (elementos.grupoAjustesGaleria && subvistaGaleria === 'imagenes') {
+    elementos.grupoAjustesGaleria.hidden = !imagenFuenteActual;
+  }
 }
 
 // Aplica el resultado de procesarImagen/procesarImagenDesdeDataURL al
@@ -1107,6 +1128,16 @@ function configurarEventos() {
   }
   if (elementos.botonBorrarAnimacion) {
     elementos.botonBorrarAnimacion.addEventListener('click', manejarBorrarAnimacionSeleccionada);
+  }
+
+  // Galería: selector Imágenes / Animaciones (solo presentación).
+  if (elementos.grupoSubvistaGaleria) {
+    elementos.grupoSubvistaGaleria.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-subvista]');
+      if (!btn) return;
+      subvistaGaleria = btn.dataset.subvista;
+      actualizarVistaGaleria();
+    });
   }
 
   // V1.12: Dibujo -- grosor, deshacer, limpiar, guardar en catálogo

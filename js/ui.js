@@ -63,6 +63,30 @@ export function marcarPestanaActual(grupo, valor) {
 }
 
 /**
+ * Galería: muestra solo los elementos de la subvista elegida
+ * ("imagenes" o "animaciones"), marcados con data-subvista, y marca el
+ * botón activo del selector. Los botones del selector también llevan
+ * data-subvista, pero esos no se ocultan.
+ */
+export function mostrarSubvistaGaleria(subvista, elementos) {
+  const selector = elementos.grupoSubvistaGaleria;
+  if (selector) {
+    selector.querySelectorAll('button[data-subvista]').forEach(b => {
+      const activo = b.dataset.subvista === subvista;
+      b.classList.toggle('activo', activo);
+      b.setAttribute('aria-selected', activo ? 'true' : 'false');
+    });
+  }
+  [elementos.seccionGaleria, elementos.seccionGaleriaFinal].forEach(cont => {
+    if (!cont) return;
+    cont.querySelectorAll('[data-subvista]').forEach(el => {
+      if (selector && selector.contains(el)) return;
+      el.hidden = el.dataset.subvista !== subvista;
+    });
+  });
+}
+
+/**
  * Muestra un mensaje de estado en la pantalla
  */
 export function marcarEstado(texto, tipo, elementos) {
@@ -175,6 +199,8 @@ export function obtenerElementos() {
     gridGaleria: document.getElementById('gridGaleria'),
     galeriaVacio: document.getElementById('galeriaVacio'),
     botonBorrarGaleria: document.getElementById('botonBorrarGaleria'),
+    grupoSubvistaGaleria: document.getElementById('grupoSubvistaGaleria'),
+    grupoAjustesGaleria: document.getElementById('grupoAjustesGaleria'),
 
     // Galería: Animaciones
     gridAnimaciones: document.getElementById('gridAnimaciones'),
