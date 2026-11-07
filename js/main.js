@@ -312,6 +312,13 @@ function actualizarPreviewDesdeLienzo() {
   });
 }
 
+// Deshabilita Deshacer/Rehacer cuando no hay nada en la pila
+// correspondiente (ver hayHistorial/hayRehistorial en dibujo.js).
+function actualizarBotonesHistorialDibujo() {
+  if (elementos.botonDeshacerDibujo) elementos.botonDeshacerDibujo.disabled = !hayHistorial();
+  if (elementos.botonRehacerDibujo) elementos.botonRehacerDibujo.disabled = !hayRehistorial();
+}
+
 // ===================================================
 // Gestión de Tipo de Contenido
 // ===================================================
@@ -372,13 +379,6 @@ function cambiarTipo(nuevoTipo) {
 // Gestión de Imágenes
 // ===================================================
 
-// El umbral y el dithering se pueden reajustar en vivo mientras exista
-// una "fuente" editable (imagenFuenteActual): un dataURL 128×64 ya
-// redimensionado pero SIN binarizar. Esa fuente puede venir de un
-// archivo recién subido, o de una imagen del catálogo que se guardó
-// CON esa copia (ver guardarImagenCatalogo). Si no hay fuente (subida
-// vieja del catálogo sin "preprocesada"), los controles se desactivan
-// porque no hay nada que reprocesar.
 // El umbral y el dithering se pueden reajustar en vivo mientras exista
 // una "fuente" editable (imagenFuenteActual): un dataURL 128×64 ya
 // redimensionado pero SIN binarizar. Esa fuente puede venir de un
@@ -1099,6 +1099,7 @@ function configurarEventos() {
       } else {
         actualizarPreviewDesdeLienzo();
       }
+      actualizarBotonesHistorialDibujo();
     });
   }
   if (elementos.botonRehacerDibujo) {
@@ -1108,12 +1109,14 @@ function configurarEventos() {
       } else {
         actualizarPreviewDesdeLienzo();
       }
+      actualizarBotonesHistorialDibujo();
     });
   }
   if (elementos.botonLimpiarDibujo) {
     elementos.botonLimpiarDibujo.addEventListener('click', () => {
       limpiarLienzo(elementos.lienzoDibujo);
       actualizarPreviewDesdeLienzo();
+      actualizarBotonesHistorialDibujo();
     });
   }
   if (elementos.botonGuardarGaleriaDibujo) {
@@ -1310,7 +1313,13 @@ async function inicializar() {
   marcarConexion('conectando…', null, elementos);
 
   if (elementos.lienzoDibujo) {
-    inicializarDibujo(elementos.lienzoDibujo, actualizarPreviewDesdeLienzo);
+    // Cada cambio del trazo actualiza el preview y el estado de
+    // Deshacer/Rehacer (un trazo nuevo vacía la pila de rehacer).
+    inicializarDibujo(elementos.lienzoDibujo, () => {
+      actualizarPreviewDesdeLienzo();
+      actualizarBotonesHistorialDibujo();
+    });
+    actualizarBotonesHistorialDibujo();
   }
 
   configurarEventos();
