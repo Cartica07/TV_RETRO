@@ -18,6 +18,10 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `enviarEstado` usa `update()` sobre `oled_remota` (escribe `version` y `pantalla` sin borrar `lastSeen`).
 - Seguridad: login con Firebase Auth (email/contraseña) en index.html y carga-masiva.html; reglas en `database.rules.json` (lectura pública de `oled_remota` para el ESP, `lastSeen` escribible por el ESP, todo lo demás restringido al UID del dueño).
 
+## Nombre de la app
+- El nombre visible pasa a ser **TV RETRO** (antes "OLED Remota" / "OLED Control"). Aplicarlo en los pasos visuales: `<title>`, encabezados, barra superior, footer, carga-masiva.html y, más adelante, el nombre de la APK.
+- Es SOLO el nombre visible: la ruta de Firebase `oled_remota` y demás nombres de datos NO se renombran.
+
 ## Fases
 1. ACTUAL: rediseño visual tipo app IoT (tarjeta de dispositivo arriba con preview OLED, estado y última actualización; navegación inferior por pestañas; mobile-first, zonas seguras, modo oscuro; bien en escritorio).
 2. POSTERIOR (no hacer todavía): APK Android con Capacitor, manteniendo el mismo código como web.
