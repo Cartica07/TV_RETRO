@@ -137,8 +137,37 @@
         <label class="zona-subida zona-subida-fila" for="cargadorImagen">
           <input type="file" id="cargadorImagen" accept="image/*" />
           <svg class="icono zona-subida-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span class="zona-subida-titulo">Elegí una imagen</span>
+          <span class="zona-subida-titulo">Elegí una imagen o GIF</span>
         </label>
+      </div>
+
+      <!-- Encuadre: escala + rotar + voltear + fondo (opciones de
+           acomodarEnDestino en imageProcessor.js). -->
+      <div class="campo">
+        <span class="rotulo">Encuadre</span>
+        <div class="fila-encuadre">
+          <div class="selector selector-compacto">
+            <select id="escalaImagen" aria-label="Escala">
+              <option value="ajustar">Ajustar</option>
+              <option value="llenar">Llenar</option>
+              <option value="estirar">Estirar</option>
+              <option value="original">Original</option>
+            </select>
+            <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <button type="button" id="botonRotarImagen" class="boton-icono" aria-label="Rotar 90°" title="Rotar 90° (horario)">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button type="button" id="botonVoltearHImagen" class="boton-icono" aria-label="Voltear horizontal" title="Voltear horizontal" aria-pressed="false">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M8 7l-5 5 5 5z"/><path d="M16 7l5 5-5 5z"/></svg>
+          </button>
+          <button type="button" id="botonVoltearVImagen" class="boton-icono" aria-label="Voltear vertical" title="Voltear vertical" aria-pressed="false">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><path d="M7 8l5-5 5 5z"/><path d="M7 16l5 5 5-5z"/></svg>
+          </button>
+          <button type="button" id="botonFondoImagen" class="boton-icono boton-fondo" aria-label="Fondo blanco" title="Fondo: negro (tocá para blanco)" aria-pressed="false">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+          </button>
+        </div>
       </div>
 
       <div class="campo switch-fila fila-ajuste-simple">
@@ -245,6 +274,7 @@
         <div class="segmento segmento-subvista" id="grupoSubvistaGaleria" role="tablist" aria-label="Qué mostrar">
           <button type="button" role="tab" data-subvista="imagenes" class="activo" aria-selected="true">Imágenes</button>
           <button type="button" role="tab" data-subvista="animaciones" aria-selected="false">Animaciones</button>
+          <button type="button" role="tab" data-subvista="gif" aria-selected="false">GIF</button>
         </div>
         <button type="button" id="botonBorrarGaleria" data-subvista="imagenes" class="boton-icono boton-icono-peligro" aria-label="Borrar la imagen seleccionada" title="Borrar la imagen seleccionada" disabled>
           <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -298,6 +328,11 @@
 
       <div id="gridAnimaciones" class="grid-galeria" data-subvista="animaciones">
         <p class="galeria-vacio" id="animacionesVacio">Todavía no hay animaciones guardadas.</p>
+      </div>
+
+      <!-- Animaciones que vinieron de un GIF (meta.origen = "gif" en /animaciones). -->
+      <div id="gridGifs" class="grid-galeria" data-subvista="gif">
+        <p class="galeria-vacio" id="gifsVacio">Todavía no hay GIF guardados.</p>
       </div>
 
     </div>
