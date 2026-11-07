@@ -83,11 +83,11 @@
           <label class="rotulo" for="fuenteTexto">Letra</label>
           <div class="selector selector-compacto">
             <select id="fuenteTexto">
-              <option value="clasica">Clásica</option>
               <option value="sans">Sans</option>
               <option value="sansb">Sans negrita</option>
               <option value="serif">Serif</option>
               <option value="serifi">Serif cursiva</option>
+              <option value="clasica">Clásica 5×7</option>
             </select>
             <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -105,8 +105,28 @@
       </div>
 
       <div class="campo">
-        <span class="rotulo">Alineación</span>
-        <div class="fila-segmentos">
+        <!-- Alineación automática (íconos) o manual (sliders X/Y), en el
+             mismo lugar: main.js muestra una u otra. -->
+        <div class="rotulo-fila rotulo-fila-modo">
+          <span class="rotulo">Alineación</span>
+          <div class="segmento segmento-mini" id="grupoPosicion" role="group" aria-label="Modo de alineación">
+            <button type="button" data-valor="auto" class="activo">Auto</button>
+            <button type="button" data-valor="manual">Manual</button>
+          </div>
+        </div>
+        <div class="fila-posicion" id="filaAlineacionManual" hidden>
+          <label class="slider-posicion" for="posicionX">
+            <span class="slider-posicion-eje">X</span>
+            <input type="range" id="posicionX" min="0" max="127" value="0" step="1" />
+            <span class="valor-rango" id="valorPosicionX">0</span>
+          </label>
+          <label class="slider-posicion" for="posicionY">
+            <span class="slider-posicion-eje">Y</span>
+            <input type="range" id="posicionY" min="0" max="63" value="0" step="1" />
+            <span class="valor-rango" id="valorPosicionY">0</span>
+          </label>
+        </div>
+        <div class="fila-segmentos" id="filaAlineacionAuto">
           <div class="segmento segmento-iconos" id="grupoAlineacion" role="group" aria-label="Alineación horizontal">
             <button type="button" data-valor="izquierda" aria-label="Izquierda" title="Izquierda">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>

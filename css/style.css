@@ -1613,6 +1613,62 @@ label.fila-ajuste-titulo {
   padding: 0;
 }
 
+
+/* Alineación: selector chico Auto / Manual a la derecha del rótulo. */
+.rotulo-fila.rotulo-fila-modo {
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.rotulo-fila.rotulo-fila-modo .rotulo {
+  margin-bottom: 0;
+}
+
+.segmento.segmento-mini {
+  border-radius: var(--radio-pill);
+}
+
+.segmento.segmento-mini button {
+  min-height: 28px;
+  padding: 0 var(--esp-3);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+}
+
+/* Manual: sliders X e Y en una sola fila (mismo alto que los íconos). */
+.fila-posicion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--esp-3);
+  min-height: var(--toque-min);
+  align-items: center;
+}
+
+.slider-posicion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.slider-posicion-eje {
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  color: var(--acento-suave);
+}
+
+.slider-posicion input[type="range"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.slider-posicion .valor-rango {
+  min-width: 36px;
+  padding: 2px 4px;
+  font-size: var(--texto-xs);
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {
@@ -1920,6 +1976,14 @@ label.fila-ajuste-titulo {
 /* Celulares bajos (ej. 360×740): achica vista previa y espacios para que
    cada pestaña siga entrando sin scroll. */
 @media (max-width: 600px) and (max-height: 780px) {
+  .segmento.segmento-mini button {
+    min-height: 26px;
+  }
+
+  .rotulo-fila.rotulo-fila-modo {
+    margin-bottom: 4px;
+  }
+
   .barra-superior {
     min-height: 36px;
   }
