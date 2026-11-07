@@ -854,6 +854,47 @@ footer {
   background: var(--acento);
 }
 
+
+/* ===================================================
+   Íconos SVG inline (trazo, heredan el color del texto)
+   =================================================== */
+.icono {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Pestañas: ícono arriba, etiqueta abajo. */
+.nav-pestanas button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nav-pestanas button span {
+  pointer-events: none;
+}
+
+/* Botones con ícono a la izquierda del texto (Deshacer/Rehacer/Limpiar). */
+.boton-secundario.con-icono {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.boton-secundario.con-icono .icono {
+  width: 16px;
+  height: 16px;
+}
+
 /* En pantallas táctiles, 16px evita que iOS haga zoom al enfocar un
    campo. Va al final para ganarle a los font-size de cada control. */
 @media (pointer: coarse) {
