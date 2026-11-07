@@ -681,15 +681,6 @@ footer {
    V1.14: ajustes de layout y galería
    =================================================== */
 
-/* Título "DIBUJAR" de la sección Dibujo, centrado. */
-.titulo-dibujo {
-  display: block;
-  text-align: center;
-  font-size: 13px;
-  letter-spacing: .14em;
-  margin-bottom: 8px;
-}
-
 /* Ícono de basura junto a "Galería guardada": borra la imagen
    actualmente seleccionada (ver item-galeria.activo). Reemplaza el
    botón "Borrar" que antes iba en cada miniatura. */
@@ -1092,6 +1083,72 @@ input[type="range"] {
   min-height: var(--toque-min);
   border-radius: var(--radio-md);
   font-size: var(--texto-sm);
+}
+
+
+/* ===================================================
+   Pestaña Dibujo: lienzo con acciones arriba y grosor abajo
+   =================================================== */
+.cabecera-lienzo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-3);
+}
+
+.cabecera-lienzo .grupo-titulo {
+  margin: 0;
+}
+
+.acciones-lienzo {
+  display: flex;
+  gap: var(--esp-2);
+}
+
+/* Botón cuadrado solo con ícono (44×44, objetivo táctil mínimo). */
+.boton-icono {
+  width: var(--toque-min);
+  height: var(--toque-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--superficie-hundida);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  transition: border-color .12s ease, color .12s ease, opacity .12s ease;
+}
+
+.boton-icono:hover:not(:disabled) {
+  border-color: var(--acento);
+  color: var(--acento);
+}
+
+.boton-icono:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.boton-icono:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.boton-icono .icono {
+  width: 20px;
+  height: 20px;
+}
+
+.marco-dibujo {
+  margin-top: 0;
+  padding: var(--esp-2);
+  border-radius: var(--radio-md);
+}
+
+.campo-grosor {
+  margin-top: var(--esp-4);
 }
 
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
