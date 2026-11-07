@@ -81,7 +81,9 @@ export function mostrarSubvistaGaleria(subvista, elementos) {
     if (!cont) return;
     cont.querySelectorAll('[data-subvista]').forEach(el => {
       if (selector && selector.contains(el)) return;
-      el.hidden = el.dataset.subvista !== subvista;
+      // data-subvista puede listar varias, separadas por espacio
+      // (ej. el tacho de animaciones sirve también para los GIF).
+      el.hidden = !el.dataset.subvista.split(/\s+/).includes(subvista);
     });
   });
 }
@@ -200,6 +202,14 @@ export function obtenerElementos() {
     galeriaVacio: document.getElementById('galeriaVacio'),
     botonBorrarGaleria: document.getElementById('botonBorrarGaleria'),
     grupoSubvistaGaleria: document.getElementById('grupoSubvistaGaleria'),
+    gridGifs: document.getElementById('gridGifs'),
+
+    // Pestaña Imagen: encuadre
+    escalaImagen: document.getElementById('escalaImagen'),
+    botonRotarImagen: document.getElementById('botonRotarImagen'),
+    botonVoltearHImagen: document.getElementById('botonVoltearHImagen'),
+    botonVoltearVImagen: document.getElementById('botonVoltearVImagen'),
+    botonFondoImagen: document.getElementById('botonFondoImagen'),
     grupoAjustesGaleria: document.getElementById('grupoAjustesGaleria'),
 
     // Galería: Animaciones

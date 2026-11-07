@@ -13,9 +13,17 @@ import {
   guardarImagenCatalogo,
   borrarImagenCatalogo,
   listarAnimaciones,
-  borrarAnimacionCatalogo
+  borrarAnimacionCatalogo,
+  guardarAnimacionCatalogo
 } from './firebase.js';
-import { procesarImagen, procesarImagenDesdeDataURL, dibujarPreviewImagen } from './imageProcessor.js';
+import {
+  procesarImagen,
+  procesarImagenDesdeDataURL,
+  dibujarPreviewImagen,
+  cargarImagenOriginal,
+  procesarImagenConOpciones
+} from './imageProcessor.js';
+import { esGif, leerGif, construirCuadrosGif } from './gif.js';
 import {
   inicializarDibujo,
   establecerGrosor,
@@ -102,9 +110,23 @@ let galeriaSeleccionActual = null;
 // controles quedan inertes porque no hay nada que reprocesar.
 let imagenFuenteActual = null;
 
-// Galería: qué lista se ve ("imagenes" o "animaciones"). Es solo de
-// presentación: no cambia estadoActual.tipo ni lo que se envía.
+// Galería: qué lista se ve ("imagenes", "animaciones" o "gif"). Es solo
+// de presentación: no cambia estadoActual.tipo ni lo que se envía.
 let subvistaGaleria = 'imagenes';
+
+// Pestaña Imagen: archivo ORIGINAL subido (sin achicar), para poder
+// reconvertirlo al cambiar escala/fondo/giro/volteo sin perder calidad.
+// { el, w, h, dataUrl } de cargarImagenOriginal, o null.
+let imagenOriginal = null;
+
+// Pestaña Imagen: GIF animado subido. { buffer, leido, nombre }:
+// "leido" son los cuadros ya acomodados a 128×64 en grises (leerGif);
+// se recalcula solo si cambia la geometría. Mientras exista, la pestaña
+// Imagen muestra y envía una animación (tipo "animacion").
+let gifActual = null;
+
+// Opciones de encuadre de la pestaña Imagen (ver acomodarEnDestino).
+const geometriaImagen = { escala: 'ajustar', fondo: 'negro', rotar: 0, volteoH: false, volteoV: false };
 
 // ===================================================
 // Estado de conexión del DISPOSITIVO (heartbeat)
@@ -280,6 +302,12 @@ function renderizar() {
   // este dibujado puntual, igual que se hace al enviar (enviarAFirebase).
   if (estadoActual.tipo === 'imagen') {
     detenerScroll();
+    // GIF animado subido en la pestaña Imagen: se reproduce en bucle,
+    // igual que una animación de la Galería (mismos animacionCuadros).
+    if (gifActual) {
+      iniciarAnimacionPreview();
+      return;
+    }
     detenerAnimacionPreview();
     dibujarOLED(elementos.canvas, estadoActual);
     return;
@@ -358,7 +386,9 @@ function mostrarSeccionSegunTipo(tipo) {
   const tipoSeccion = (tipo === 'animacion') ? 'galeria' : tipo;
 
   // Si lo activo es una animación, la Galería abre en esa lista.
-  if (tipo === 'animacion') subvistaGaleria = 'animaciones';
+  if (tipo === 'animacion') {
+    subvistaGaleria = esAnimacionDeGif(animacionesCatalogo[estadoActual.animacion]) ? 'gif' : 'animaciones';
+  }
   actualizarVistaGaleria();
 
   marcarSegmentoActivo(elementos.grupoTipo, tipoSeccion);
@@ -427,9 +457,11 @@ function cambiarTipo(nuevoTipo) {
 // que fija.
 function actualizarControlesEdicionImagen() {
   const hayFuente = !!imagenFuenteActual;
+  // En la pestaña Imagen también se puede reajustar un GIF subido.
+  const hayFuenteImagen = hayFuente || !!gifActual;
 
-  if (elementos.umbral) elementos.umbral.disabled = !hayFuente;
-  if (elementos.dithering) elementos.dithering.disabled = !hayFuente;
+  if (elementos.umbral) elementos.umbral.disabled = !hayFuenteImagen;
+  if (elementos.dithering) elementos.dithering.disabled = !hayFuenteImagen;
   if (elementos.umbralGaleria) elementos.umbralGaleria.disabled = !hayFuente;
   if (elementos.ditheringGaleria) elementos.ditheringGaleria.disabled = !hayFuente;
 
@@ -463,7 +495,79 @@ function aplicarResultadoImagen(resultado) {
   marcarEstado(`Imagen procesada: ${resultado.imagenAncho}×${resultado.imagenAlto}px`, 'ok', elementos);
 }
 
-// Dispara al elegir un archivo nuevo del disco.
+// Pestaña Imagen: convierte la imagen original con el encuadre actual
+// (escala/fondo/giro/volteo) + umbral + difuminado.
+function aplicarImagenOriginal() {
+  if (!imagenOriginal) return;
+  const resultado = procesarImagenConOpciones(imagenOriginal, Object.assign({}, geometriaImagen, {
+    umbral: parseInt(elementos.umbral.value),
+    dithering: elementos.dithering.checked
+  }));
+  aplicarResultadoImagen(resultado);
+}
+
+// Pestaña Imagen: binariza los cuadros del GIF con el umbral/difuminado
+// actuales y los deja como animación lista para mostrar y enviar.
+function aplicarGif() {
+  if (!gifActual) return;
+  const anim = construirCuadrosGif(gifActual.leido, parseInt(elementos.umbral.value), elementos.dithering.checked);
+  estadoActual.animacion = gifActual.nombre;
+  estadoActual.animacionAncho = anim.ancho;
+  estadoActual.animacionAlto = anim.alto;
+  estadoActual.animacionCuadros = anim.cuadros;
+  renderizar();
+  actualizarControlesEdicionImagen();
+  const totalMs = anim.cuadros.reduce((s, c) => s + c.dur, 0);
+  const kb = Math.round(anim.cuadros.length * anim.ancho * anim.alto / 8 / 1024);
+  marcarEstado(`GIF: ${anim.cuadros.length} cuadros · ${(totalMs / 1000).toFixed(1)} s · ${kb} KB`, 'ok', elementos);
+}
+
+// Pestaña Imagen: reprocesa lo que haya (GIF, imagen original o, si no,
+// la copia 128×64 guardada) al mover umbral/difuminado o el encuadre.
+function reprocesarPestanaImagen() {
+  try {
+    if (gifActual) aplicarGif();
+    else if (imagenOriginal) aplicarImagenOriginal();
+    else reprocesarImagenFuenteActual(elementos.umbral, elementos.dithering);
+  } catch (error) {
+    console.error('Error reprocesando:', error);
+    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+  }
+}
+
+// Pestaña Imagen: cambia el encuadre. Para un GIF hay que volver a leer
+// los cuadros (la geometría se aplica antes de pasarlos a grises).
+function cambiarGeometriaImagen(cambios) {
+  Object.assign(geometriaImagen, cambios);
+  marcarControlesEncuadre();
+  try {
+    if (gifActual) gifActual.leido = leerGif(gifActual.buffer, geometriaImagen);
+  } catch (error) {
+    console.error('Error releyendo el GIF:', error);
+    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    return;
+  }
+  if (gifActual || imagenOriginal) reprocesarPestanaImagen();
+}
+
+// Refleja geometriaImagen en los botones del encuadre.
+function marcarControlesEncuadre() {
+  if (elementos.escalaImagen) elementos.escalaImagen.value = geometriaImagen.escala;
+  if (elementos.botonRotarImagen) {
+    elementos.botonRotarImagen.dataset.grados = String(geometriaImagen.rotar);
+    elementos.botonRotarImagen.classList.toggle('activo', geometriaImagen.rotar !== 0);
+  }
+  if (elementos.botonVoltearHImagen) elementos.botonVoltearHImagen.setAttribute('aria-pressed', String(geometriaImagen.volteoH));
+  if (elementos.botonVoltearVImagen) elementos.botonVoltearVImagen.setAttribute('aria-pressed', String(geometriaImagen.volteoV));
+  if (elementos.botonFondoImagen) {
+    const blanco = geometriaImagen.fondo === 'blanco';
+    elementos.botonFondoImagen.setAttribute('aria-pressed', String(blanco));
+    elementos.botonFondoImagen.title = blanco ? 'Fondo: blanco (tocá para negro)' : 'Fondo: negro (tocá para blanco)';
+  }
+}
+
+// Dispara al elegir un archivo nuevo del disco. Si es un GIF animado
+// (más de un cuadro) queda como animación; si no, como imagen fija.
 async function procesarYMostrarImagen() {
   const file = elementos.cargadorImagen.files[0];
   if (!file) return;
@@ -471,11 +575,24 @@ async function procesarYMostrarImagen() {
   try {
     marcarEstado('Procesando imagen…', null, elementos);
 
-    const umbral = parseInt(elementos.umbral.value);
-    const dithering = elementos.dithering.checked;
-    const resultado = await procesarImagen(file, 128, 64, umbral, dithering);
+    const nombreBase = file.name.replace(/\.[^.]+$/, '');
+    const buffer = await file.arrayBuffer();
+    let leido = null;
+    if (esGif(buffer)) {
+      marcarEstado('Leyendo GIF…', null, elementos);
+      leido = leerGif(buffer, geometriaImagen);
+    }
 
-    aplicarResultadoImagen(resultado);
+    if (leido && leido.grises.length > 1) {
+      imagenOriginal = null;
+      imagenFuenteActual = null;
+      gifActual = { buffer, leido, nombre: nombreBase };
+      aplicarGif();
+    } else {
+      gifActual = null;
+      imagenOriginal = await cargarImagenOriginal(file);
+      aplicarImagenOriginal();
+    }
 
     // Sugerir un nombre para el catálogo basado en el archivo, pero SIN
     // guardar nada todavía -- eso solo pasa si el usuario toca el botón
@@ -518,12 +635,43 @@ async function reprocesarImagenFuenteActual(umbralEl, ditheringEl) {
 // también la copia editable (imagenFuenteActual) y los valores de
 // umbral/dithering usados, para poder reajustarla más adelante.
 async function manejarGuardarEnGaleria() {
+  const nombre = (elementos.nombreGaleria && elementos.nombreGaleria.value.trim()) || '';
+
+  // GIF animado: se guarda en /animaciones (mismo formato que las
+  // animaciones de carga-masiva) marcado con meta.origen = "gif", que es
+  // lo que lo hace aparecer en la lista GIF de la Galería.
+  if (estadoActual.tipo === 'imagen' && gifActual) {
+    if (!nombre) {
+      setAvisoGaleria('Poné un nombre para guardar el GIF en la galería.', 'error');
+      return;
+    }
+    setAvisoGaleria('Guardando…');
+    const resultadoGif = await guardarAnimacionCatalogo(
+      nombre,
+      estadoActual.animacionAncho,
+      estadoActual.animacionAlto,
+      estadoActual.animacionCuadros,
+      Object.assign({
+        origen: 'gif',
+        umbral: parseInt(elementos.umbral.value),
+        dithering: elementos.dithering.checked,
+        fecha: Date.now()
+      }, geometriaImagen)
+    );
+    if (resultadoGif.exito) {
+      await poblarCatalogoAnimaciones();
+      setAvisoGaleria(`GIF guardado en la galería como "${resultadoGif.key}"`);
+    } else {
+      setAvisoGaleria('No se pudo guardar: ' + (resultadoGif.error || ''), 'error');
+    }
+    return;
+  }
+
   if (estadoActual.tipo !== 'imagen' || !estadoActual.imagenData) {
     setAvisoGaleria('Primero subí y procesá una imagen para poder guardarla.', 'error');
     return;
   }
 
-  const nombre = (elementos.nombreGaleria && elementos.nombreGaleria.value.trim()) || '';
   if (!nombre) {
     setAvisoGaleria('Poné un nombre para guardar la imagen en la galería.', 'error');
     return;
@@ -536,12 +684,12 @@ async function manejarGuardarEnGaleria() {
     estadoActual.imagenAncho,
     estadoActual.imagenAlto,
     imagenFuenteActual,
-    {
+    Object.assign({
       origen: 'upload',
       umbral: parseInt(elementos.umbral.value),
       dithering: elementos.dithering.checked,
       fecha: Date.now()
-    }
+    }, imagenOriginal ? geometriaImagen : {})
   );
 
   if (resultado.exito) {
@@ -666,6 +814,10 @@ function renderizarGaleria() {
       estadoActual.imagenAncho = entry.ancho || 128;
       estadoActual.imagenAlto = entry.alto || 64;
       galeriaSeleccionActual = key;
+      // La imagen activa pasa a ser esta: lo subido en la pestaña Imagen
+      // (original o GIF) deja de ser la fuente de los reajustes.
+      imagenOriginal = null;
+      gifActual = null;
 
       // Limpiar el input de "añadir nueva": si quedaba un archivo de una
       // subida anterior, no queremos que se confunda con la fuente que
@@ -792,25 +944,34 @@ async function poblarCatalogoAnimaciones() {
   }
 }
 
+// true si la animación del catálogo vino de un GIF (se muestra en la
+// lista GIF de la Galería en vez de en Animaciones).
+function esAnimacionDeGif(entry) {
+  return !!(entry && entry.meta && entry.meta.origen === 'gif');
+}
+
 function renderizarAnimaciones() {
-  const grid = elementos.gridAnimaciones;
-  if (!grid) return;
-  grid.innerHTML = '';
+  const gridAnim = elementos.gridAnimaciones;
+  const gridGif = elementos.gridGifs;
+  if (!gridAnim) return;
+  gridAnim.innerHTML = '';
+  if (gridGif) gridGif.innerHTML = '';
 
   const claves = Object.keys(animacionesCatalogo);
 
-  if (claves.length === 0) {
+  // Mensaje de "vacío" en la lista que no tenga nada.
+  const ponerVacio = (grid, texto) => {
+    if (!grid || grid.children.length > 0) return;
     const vacio = document.createElement('p');
     vacio.className = 'galeria-vacio';
-    vacio.textContent = 'Todavía no hay animaciones guardadas.';
+    vacio.textContent = texto;
     grid.appendChild(vacio);
-    actualizarBotonBorrarAnimacion();
-    return;
-  }
+  };
 
   claves.forEach((key) => {
     const entry = animacionesCatalogo[key];
     if (!entry || !entry.cuadros || entry.cuadros.length === 0) return;
+    const grid = (gridGif && esAnimacionDeGif(entry)) ? gridGif : gridAnim;
 
     const item = document.createElement('div');
     item.className = 'item-galeria';
@@ -844,11 +1005,15 @@ function renderizarAnimaciones() {
       estadoActual.animacionAlto = entry.alto || 64;
       estadoActual.animacionCuadros = entry.cuadros;
       animacionSeleccionActual = key;
+      // Lo elegido acá reemplaza a un GIF subido en la pestaña Imagen
+      // (comparten animacionCuadros).
+      gifActual = null;
 
       renderizarAnimaciones(); // re-dibuja el grid para mover el resaltado "activo"
       renderizar(); // arranca el preview en bucle en la pantalla de arriba
       actualizarBotonBorrarAnimacion();
-      marcarEstado(`Animación "${key}" cargada desde la galería`, 'ok', elementos);
+      const queEs = esAnimacionDeGif(entry) ? 'GIF' : 'Animación';
+      marcarEstado(`${queEs} "${key}" cargado desde la galería`, 'ok', elementos);
     });
 
     item.appendChild(canvas);
@@ -856,6 +1021,8 @@ function renderizarAnimaciones() {
     grid.appendChild(item);
   });
 
+  ponerVacio(gridAnim, 'Todavía no hay animaciones guardadas.');
+  ponerVacio(gridGif, 'Todavía no hay GIF guardados.');
   actualizarBotonBorrarAnimacion();
 }
 
@@ -895,6 +1062,8 @@ async function procesarYMostrarImagenGaleria() {
     const resultado = await procesarImagen(file, 128, 64, umbral, dithering);
 
     estadoActual.tipo = 'galeria';
+    imagenOriginal = null;
+    gifActual = null;
     aplicarResultadoImagen(resultado);
     renderizarGaleria(); // por si había una entrada seleccionada, sacarle el resaltado
 
@@ -1091,13 +1260,40 @@ function configurarEventos() {
   // Umbral de binarización (sección Imagen)
   elementos.umbral.addEventListener('input', (e) => {
     elementos.valorUmbral.textContent = e.target.value;
-    reprocesarImagenFuenteActual(elementos.umbral, elementos.dithering);
+    reprocesarPestanaImagen();
   });
 
-  // Dithering (Floyd-Steinberg) vs umbral simple (sección Imagen)
+  // Difuminado (Atkinson) vs umbral simple (sección Imagen)
   elementos.dithering.addEventListener('change', () => {
-    reprocesarImagenFuenteActual(elementos.umbral, elementos.dithering);
+    reprocesarPestanaImagen();
   });
+
+  // Encuadre (sección Imagen): escala, rotar, voltear, fondo.
+  if (elementos.escalaImagen) {
+    elementos.escalaImagen.addEventListener('change', () => {
+      cambiarGeometriaImagen({ escala: elementos.escalaImagen.value });
+    });
+  }
+  if (elementos.botonRotarImagen) {
+    elementos.botonRotarImagen.addEventListener('click', () => {
+      cambiarGeometriaImagen({ rotar: (geometriaImagen.rotar + 90) % 360 });
+    });
+  }
+  if (elementos.botonVoltearHImagen) {
+    elementos.botonVoltearHImagen.addEventListener('click', () => {
+      cambiarGeometriaImagen({ volteoH: !geometriaImagen.volteoH });
+    });
+  }
+  if (elementos.botonVoltearVImagen) {
+    elementos.botonVoltearVImagen.addEventListener('click', () => {
+      cambiarGeometriaImagen({ volteoV: !geometriaImagen.volteoV });
+    });
+  }
+  if (elementos.botonFondoImagen) {
+    elementos.botonFondoImagen.addEventListener('click', () => {
+      cambiarGeometriaImagen({ fondo: geometriaImagen.fondo === 'blanco' ? 'negro' : 'blanco' });
+    });
+  }
 
   // Guardar la imagen actualmente procesada en el catálogo
   if (elementos.botonGuardarGaleria) {
@@ -1299,6 +1495,26 @@ async function enviarAFirebase() {
       return;
     }
 
+    // GIF subido en la pestaña Imagen: se envía como animación (payload
+    // TEMPORAL con tipo "animacion", mismo formato que una animación de
+    // la Galería), sin pisar estadoActual.tipo: el usuario se queda en
+    // la pestaña Imagen después de enviar.
+    if (estadoActual.tipo === 'imagen' && gifActual) {
+      const payloadGif = Object.assign({}, estadoActual, { tipo: 'animacion' });
+      const resultado = await enviarEstado(payloadGif);
+
+      if (resultado.exito) {
+        marcarEstado(
+          `Enviado ✅ · v${resultado.version}. La OLED la toma en el próximo chequeo.`,
+          'ok',
+          elementos
+        );
+      } else {
+        marcarEstado('Error al enviar. Revisar conexión.', 'error', elementos);
+      }
+      return;
+    }
+
     // V1.13: Galería -- misma idea que Dibujo: payload TEMPORAL con
     // tipo forzado a "imagen", sin pisar estadoActual.tipo, así el
     // usuario se queda en la pestaña Galería después de enviar. La
@@ -1381,6 +1597,7 @@ async function inicializar() {
   }
 
   configurarEventos();
+  marcarControlesEncuadre();
   iniciarMonitoreoConexion();
 
   await cargarEstadoInicial();
