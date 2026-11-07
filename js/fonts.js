@@ -108,7 +108,8 @@ export const fontMetrics = {
   1: { width: AVANCE_X * 1, height: AVANCE_Y * 1, charWidth: ANCHO_GLYPH * 1, lineHeight: AVANCE_Y * 1 },
   2: { width: AVANCE_X * 2, height: AVANCE_Y * 2, charWidth: ANCHO_GLYPH * 2, lineHeight: AVANCE_Y * 2 },
   3: { width: AVANCE_X * 3, height: AVANCE_Y * 3, charWidth: ANCHO_GLYPH * 3, lineHeight: AVANCE_Y * 3 },
-  4: { width: AVANCE_X * 4, height: AVANCE_Y * 4, charWidth: ANCHO_GLYPH * 4, lineHeight: AVANCE_Y * 4 }
+  4: { width: AVANCE_X * 4, height: AVANCE_Y * 4, charWidth: ANCHO_GLYPH * 4, lineHeight: AVANCE_Y * 4 },
+  5: { width: AVANCE_X * 5, height: AVANCE_Y * 5, charWidth: ANCHO_GLYPH * 5, lineHeight: AVANCE_Y * 5 }
 };
 
 /**

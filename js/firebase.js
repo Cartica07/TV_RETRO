@@ -45,6 +45,9 @@ export async function cargarEstado() {
         alineacionV: config.alineacionV || 'centro',
         invertido: !!config.invertido,
         modoTexto: config.modoTexto || 'ajustar',
+        // Campo agregado en el rediseño: estilo de letra. Si no está
+        // (datos viejos), es la fuente clásica 5×7 de siempre.
+        fuente: (typeof config.fuente === 'string' && config.fuente) ? config.fuente : 'clasica',
         imagenData: imagen.datos || '',
         imagenAncho: Number(imagen.ancho) || 0,
         imagenAlto: Number(imagen.alto) || 0,
@@ -72,6 +75,7 @@ export async function cargarEstado() {
         alineacionV: 'centro',
         invertido: false,
         modoTexto: 'ajustar',
+        fuente: 'clasica',
         imagenData: '',
         imagenAncho: 0,
         imagenAlto: 0,
@@ -313,7 +317,11 @@ export async function enviarEstado(estado) {
         alineacion: estado.alineacion,
         alineacionV: estado.alineacionV,
         invertido: estado.invertido,
-        modoTexto: estado.modoTexto
+        modoTexto: estado.modoTexto,
+        // Nuevo (no reemplaza a ningún campo): "clasica" | "sans" | "sansb"
+        // | "serif" | "serifi". tamano (1..5) se interpreta según la fuente
+        // (clásica: setTextSize; las demás: 6/10/12/16/18 pt).
+        fuente: estado.fuente || 'clasica'
       }
     };
 

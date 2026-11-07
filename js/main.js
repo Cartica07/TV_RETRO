@@ -49,6 +49,7 @@ import {
   desactivarLedTransmision
 } from './ui.js';
 import { calcularAnchoTexto } from './fonts.js';
+import { esFuenteVariable, anchoScrollFuente } from './fuentesTexto.js';
 
 // ===================================================
 // Estado Global
@@ -61,6 +62,7 @@ let estadoActual = {
   alineacionV: 'centro',
   invertido: false,
   modoTexto: 'ajustar',
+  fuente: 'clasica',   // estilo de letra (config.fuente): clasica | sans | sansb | serif | serifi
   imagenData: '',
   imagenAncho: 0,
   imagenAlto: 0,
@@ -218,7 +220,10 @@ function iniciarScroll() {
     const dt = (ts - ultimoTs) / 1000;
     ultimoTs = ts;
 
-    const anchoTexto = calcularAnchoTexto(estadoActual.texto, estadoActual.tamano);
+    // Con fuente de ancho variable se mide con sus propios glifos.
+    const anchoTexto = esFuenteVariable(estadoActual.fuente)
+      ? anchoScrollFuente(estadoActual)
+      : calcularAnchoTexto(estadoActual.texto, estadoActual.tamano);
 
     scrollX -= VELOCIDAD_SCROLL * dt;
     if (scrollX < -anchoTexto) scrollX = ANCHO_OLED;
@@ -1342,6 +1347,14 @@ function configurarEventos() {
   });
 
   // Modo de texto
+  // Estilo de letra (config.fuente)
+  if (elementos.fuenteTexto) {
+    elementos.fuenteTexto.addEventListener('change', () => {
+      estadoActual.fuente = elementos.fuenteTexto.value || 'clasica';
+      renderizar();
+    });
+  }
+
   elementos.grupoModo.addEventListener('change', (e) => {
     if (e.target.name !== 'modoTexto') return;
     estadoActual.modoTexto = e.target.value;
@@ -1507,6 +1520,7 @@ async function cargarEstadoInicial() {
           alineacionV: resultado.alineacionV || 'centro',
           invertido: resultado.invertido,
           modoTexto: resultado.modoTexto,
+          fuente: resultado.fuente || 'clasica',
           imagenData: resultado.imagenData || '',
           imagenAncho: resultado.imagenAncho || 0,
           imagenAlto: resultado.imagenAlto || 0,

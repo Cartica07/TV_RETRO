@@ -20,6 +20,12 @@ export function poblarControles(estado, elementos) {
   if (elementos.grupoTamano) {
     marcarSegmentoActivo(elementos.grupoTamano, estado.tamano);
   }
+
+  if (elementos.fuenteTexto) {
+    elementos.fuenteTexto.value = estado.fuente || 'clasica';
+    // Valor desconocido (ej. una fuente que este panel no tiene): clásica.
+    if (!elementos.fuenteTexto.value) elementos.fuenteTexto.value = 'clasica';
+  }
   
   if (elementos.grupoAlineacion) {
     marcarSegmentoActivo(elementos.grupoAlineacion, estado.alineacion);
@@ -173,6 +179,7 @@ export function obtenerElementos() {
     
     // Controles de formato
     grupoTamano: document.getElementById('grupoTamano'),
+    fuenteTexto: document.getElementById('fuenteTexto'),
     grupoAlineacion: document.getElementById('grupoAlineacion'),
     grupoAlineacionV: document.getElementById('grupoAlineacionV'),
     grupoModo: document.getElementById('grupoModo'),

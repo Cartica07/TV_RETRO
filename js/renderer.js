@@ -17,6 +17,7 @@ import {
 } from './fonts.js';
 
 import { dibujarPreviewImagen } from './imageProcessor.js';
+import { esFuenteVariable, dibujarTextoFuente } from './fuentesTexto.js';
 
 const ANCHO = 128;
 const ALTO = 64;
@@ -50,6 +51,12 @@ export function dibujarOLED(canvas, estado, scrollX = null) {
   // V1.6: Si tipo es "imagen", renderizar bitmap monocromático
   if (estado.tipo === 'imagen' && estado.imagenData) {
     dibujarPreviewImagen(canvas, estado.imagenData, estado.imagenAncho, estado.imagenAlto, frente);
+    return;
+  }
+
+  // Fuente de ancho variable (FreeSans / FreeSerif): config.fuente.
+  if (esFuenteVariable(estado.fuente)) {
+    dibujarTextoFuente(ctx, estado, frente, scrollX);
     return;
   }
 
