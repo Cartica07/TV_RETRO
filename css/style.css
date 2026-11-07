@@ -1151,6 +1151,82 @@ input[type="range"] {
   margin-top: var(--esp-4);
 }
 
+
+/* ===================================================
+   Pestaña Música: selector, repeticiones y nota
+   =================================================== */
+.selector {
+  position: relative;
+}
+
+select,
+input[type="number"] {
+  min-height: 48px;
+  background: var(--superficie-hundida);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-md);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 44px 0 var(--esp-4);
+  cursor: pointer;
+}
+
+select option {
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+.selector-flecha {
+  position: absolute;
+  right: var(--esp-3);
+  top: 50%;
+  margin-top: -11px;
+  color: var(--texto-2);
+}
+
+input[type="number"] {
+  padding: 0 var(--esp-3);
+}
+
+input[type="number"].numero-compacto {
+  width: 88px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+select:focus,
+input[type="number"]:focus,
+input[type="text"]:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.nota-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-2);
+  margin: var(--esp-5) 0 0;
+  padding: var(--esp-3) var(--esp-4);
+  border-radius: var(--radio-md);
+  background: var(--acento-fondo);
+  color: var(--texto-2);
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+}
+
+.nota-info .icono {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--acento);
+}
+
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
 @media (max-width: 600px) {
   .barra-superior {

@@ -175,21 +175,31 @@
     <!-- Sección de CANCIÓN (oculta inicialmente) -->
     <div id="seccionCancion" style="display: none;">
 
-      <div class="fila-doble">
+      <section class="grupo">
+        <h2 class="grupo-titulo">Canción</h2>
         <div class="campo">
-          <label class="rotulo" for="seleccionCancion">Canción</label>
-          <select id="seleccionCancion"></select>
-          <p class="descripcion-campo">Seleccioná una canción.</p>
+          <label class="rotulo" for="seleccionCancion">Elegí una canción</label>
+          <div class="selector">
+            <select id="seleccionCancion"></select>
+            <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
         </div>
 
-        <div class="campo">
-          <label class="rotulo" for="inputRepeticiones">Repeticiones</label>
-          <input type="number" id="inputRepeticiones" min="1" value="1" />
-          <p class="descripcion-campo">Número de veces que se repetirá la canción.</p>
+        <div class="campo switch-fila fila-ajuste-simple">
+          <label class="fila-ajuste-texto" for="inputRepeticiones">
+            <span class="fila-ajuste-titulo">Repeticiones</span>
+            <span class="fila-ajuste-desc">Cuántas veces se toca la canción.</span>
+          </label>
+          <input type="number" id="inputRepeticiones" class="numero-compacto" min="1" value="1" inputmode="numeric" />
         </div>
-      </div>
 
-      <div id="avisoCancion" class="aviso" style="display:none;"></div>
+        <div id="avisoCancion" class="aviso" style="display:none;"></div>
+      </section>
+
+      <p class="nota-info">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>La pantalla no cambia mientras suena: solo se activa el buzzer del dispositivo.</span>
+      </p>
 
     </div>
 
