@@ -12,6 +12,7 @@ El panel ya envía el estilo de letra, pero el ESP32 todavía no lo dibuja: hast
 | `tamano` | `1` a `5` | Antes era de 1 a 4. |
 | `manual` (nuevo) | `true` / `false` | Si es `true`, se ignoran `alineacion` y `alineacionV` y se usan `x` e `y`. |
 | `x`, `y` (nuevos) | enteros | Esquina superior izquierda del bloque de texto. |
+| `direccion` (nuevo) | `h` / `v` | Solo cuenta con `modoTexto = "scroll"`. Si falta, es `h` (el scroll horizontal de siempre). |
 
 Los demás campos no cambian.
 
@@ -41,6 +42,18 @@ Esto es lo que hace `js/fuentesTexto.js`:
 6. **Alineación horizontal**, según el ancho de tinta de cada línea: izquierda 0, centro (128 − ancho) / 2, derecha 128 − ancho. Se dibuja con `cursor x = posición − (lado izquierdo de la tinta)`.
 7. **Scroll**: una sola línea (los `\n` pasan a espacios) que entra por la derecha, con la misma regla vertical.
 8. Un carácter que la fuente no tiene se dibuja como `?`.
+
+## Scroll vertical (`modoTexto = "scroll"`, `direccion = "v"`)
+
+Vale para la fuente clásica y para las nuevas. Esto es lo que hace `iniciarScrollVertical` en `js/main.js`:
+
+1. Las líneas se arman como en **Ajustar** (mismo corte de líneas, misma alineación horizontal o `x` manual).
+2. Si el alto del bloque es **64 px o menos**, el texto no se mueve: se muestra como en Ajustar.
+3. Si es más alto, el bloque arranca con su borde superior en y = 0 y **sube**, en un ciclo que se repite:
+   1. **1 s quieto** arriba;
+   2. **sube a 12 px/s** hasta que el borde inferior del bloque llega a y = 64. Recorre `alto − 64` píxeles; el desplazamiento es `floor(recorrido × tiempo / duración)`;
+   3. **1 s quieto** al final, y vuelve al paso 1.
+4. Con `manual = true` se respeta la `x`; la `y` la maneja el desplazamiento.
 
 ## Posición manual (`manual = true`)
 
