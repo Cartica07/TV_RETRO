@@ -156,6 +156,23 @@ body {
   text-transform: uppercase;
 }
 
+/* Última señal del dispositivo, junto al estado de conexión. */
+.ultima-vista {
+  color: var(--texto-3);
+  text-transform: none;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.ultima-vista::before {
+  content: "·";
+  margin: 0 6px 0 2px;
+}
+
+.ultima-vista[hidden] {
+  display: none;
+}
+
 .led {
   width: 7px;
   height: 7px;
