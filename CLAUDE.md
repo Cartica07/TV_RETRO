@@ -15,7 +15,11 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 ## Estructura de index.html (rediseño)
 - `.cabecera-fija` (barra superior + tarjeta `.dispositivo` con `#oled`), `main.controles` con una sección por pestaña, `.barra-accion` (Enviar + estado) y `nav.nav-inferior`.
 - La navegación inferior ES `#grupoTipo`: sus botones `data-valor` (texto, imagen, dibujo, cancion, galeria) los usa `cambiarTipo()` en main.js.
-- Cada pantalla se arma con `section.grupo` + `h2.grupo-titulo`; filas con interruptor usan `.fila-ajuste` / `.fila-ajuste-simple`.
+- Objetivo de diseño: cada pestaña (salvo las grillas de Galería) entra SIN scroll en celulares de 390×844 y 360×740. Sin textos explicativos (se explicarán con un tutorial guiado más adelante). Medirlo con un script que compare el final de `main.controles` con el borde superior de `.barra-accion`.
+- Cada pantalla son `.campo` con un `.rotulo` corto (sin títulos de grupo); filas con interruptor: `.fila-ajuste-simple`; nombre + Guardar en una fila: `.fila-guardar-inline`.
+- La tarjeta `.dispositivo` contiene también `#filaInvertido` (Invertir, siempre visible) y `#estadoLinea` (resultado del último envío).
+- Galería: `#seccionGaleriaFinal` (herramientas: selector `#grupoSubvistaGaleria`, tachos, añadir/guardar, `#grupoAjustesGaleria`) va antes que `#seccionGaleria` (grillas). Los elementos con `data-subvista` los muestra/oculta `actualizarVistaGaleria()` en main.js.
+- Colores: `--acento` (#4DD2FF, el de la OLED) para textos e íconos; `--acento-relleno` (#50C5EC, desaturado) para rellenos grandes.
 
 ## Contrato con el firmware (NO CAMBIAR)
 - `oled_remota` = `{ version, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}]} } }`
