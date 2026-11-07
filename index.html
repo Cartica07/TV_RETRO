@@ -155,9 +155,15 @@
             <input type="radio" name="modoTexto" value="ajustar" checked />
             <span class="modo-nombre">Ajustar</span>
           </label>
-          <label class="modo-opcion">
+          <label class="modo-opcion" title="Scroll horizontal: una línea que entra por la derecha">
             <input type="radio" name="modoTexto" value="scroll" />
-            <span class="modo-nombre">Scroll</span>
+            <span class="modo-nombre">Scroll ↔</span>
+          </label>
+          <!-- "scrollv" es solo de la interfaz: main.js lo guarda como
+               modoTexto "scroll" + direccion "v". -->
+          <label class="modo-opcion" title="Scroll vertical: el texto sube línea por línea">
+            <input type="radio" name="modoTexto" value="scrollv" />
+            <span class="modo-nombre">Scroll ↕</span>
           </label>
         </div>
       </div>
