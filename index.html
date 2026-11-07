@@ -47,62 +47,72 @@
     <!-- Sección de TEXTO (mostrada por defecto) -->
     <div id="seccionTexto">
 
-      <div class="campo">
-        <label class="rotulo" for="texto">Texto</label>
-        <textarea id="texto" maxlength="200" placeholder="Escribí el mensaje para la OLED…"></textarea>
-        <div class="contador"><span id="contador">0</span>/200</div>
-      </div>
-
-      <div class="fila-doble">
-        <fieldset>
-          <span class="rotulo">Tamaño</span>
-          <div class="segmento" id="grupoTamano">
-            <button type="button" data-valor="1">1</button>
-            <button type="button" data-valor="2">2</button>
-            <button type="button" data-valor="3">3</button>
-            <button type="button" data-valor="4">4</button>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <span class="rotulo">Alineación</span>
-          <div class="segmento" id="grupoAlineacion">
-            <button type="button" data-valor="izquierda">Izq.</button>
-            <button type="button" data-valor="centro">Centro</button>
-            <button type="button" data-valor="derecha">Der.</button>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="campo">
-        <fieldset>
-          <span class="rotulo">Alineación vertical</span>
-          <div class="segmento" id="grupoAlineacionV">
-            <button type="button" data-valor="arriba">Arriba</button>
-            <button type="button" data-valor="centro">Centro</button>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="campo">
-        <span class="rotulo rotulo-espaciado">Modo de texto</span>
-        <div class="modo-lista" id="grupoModo">
-          <label class="modo-opcion">
-            <input type="radio" name="modoTexto" value="ajustar" checked />
-            <span>
-              <span class="modo-nombre">ajustar</span>
-              <span class="modo-desc">Reparte el texto en varias líneas para que entre completo.</span>
-            </span>
-          </label>
-          <label class="modo-opcion">
-            <input type="radio" name="modoTexto" value="scroll" />
-            <span>
-              <span class="modo-nombre">scroll</span>
-              <span class="modo-desc">Una sola línea que se desliza de derecha a izquierda.</span>
-            </span>
-          </label>
+      <section class="grupo">
+        <h2 class="grupo-titulo">Mensaje</h2>
+        <div class="campo">
+          <label class="rotulo" for="texto">Texto</label>
+          <textarea id="texto" maxlength="200" placeholder="Escribí el mensaje para la OLED…"></textarea>
+          <div class="contador"><span id="contador">0</span>/200</div>
         </div>
-      </div>
+      </section>
+
+      <section class="grupo">
+        <h2 class="grupo-titulo">Formato</h2>
+        <div class="campo">
+          <fieldset>
+            <span class="rotulo">Tamaño</span>
+            <div class="segmento" id="grupoTamano">
+              <button type="button" data-valor="1">1</button>
+              <button type="button" data-valor="2">2</button>
+              <button type="button" data-valor="3">3</button>
+              <button type="button" data-valor="4">4</button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="campo">
+          <fieldset>
+            <span class="rotulo">Alineación horizontal</span>
+            <div class="segmento" id="grupoAlineacion">
+              <button type="button" data-valor="izquierda">Izquierda</button>
+              <button type="button" data-valor="centro">Centro</button>
+              <button type="button" data-valor="derecha">Derecha</button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="campo">
+          <fieldset>
+            <span class="rotulo">Alineación vertical</span>
+            <div class="segmento" id="grupoAlineacionV">
+              <button type="button" data-valor="arriba">Arriba</button>
+              <button type="button" data-valor="centro">Centro</button>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section class="grupo">
+        <h2 class="grupo-titulo">Modo</h2>
+        <div class="campo">
+          <div class="modo-lista" id="grupoModo">
+            <label class="modo-opcion">
+              <input type="radio" name="modoTexto" value="ajustar" checked />
+              <span>
+                <span class="modo-nombre">Ajustar</span>
+                <span class="modo-desc">Reparte el texto en varias líneas para que entre completo.</span>
+              </span>
+            </label>
+            <label class="modo-opcion">
+              <input type="radio" name="modoTexto" value="scroll" />
+              <span>
+                <span class="modo-nombre">Scroll</span>
+                <span class="modo-desc">Una sola línea que se desliza de derecha a izquierda.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </section>
 
     </div>
 
@@ -298,8 +308,11 @@
     </div>
 
     <!-- Invertido: aplica a texto, imagen, dibujo y galería (display.invertDisplay en el firmware). No aplica a Canción -- no hay nada visual que invertir mientras suena. -->
-    <div class="campo switch-fila" id="filaInvertido" style="margin-top: 10px;">
-      <span class="rotulo" style="margin:0;">Invertido (fondo/texto)</span>
+    <div class="campo switch-fila fila-ajuste" id="filaInvertido">
+      <span class="fila-ajuste-texto">
+        <span class="fila-ajuste-titulo">Invertir colores</span>
+        <span class="fila-ajuste-desc">Fondo encendido y contenido apagado</span>
+      </span>
       <label class="switch">
         <input type="checkbox" id="invertido" />
         <span class="via"><span class="perilla"></span></span>
