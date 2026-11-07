@@ -55,6 +55,11 @@
         </label>
       </div>
     </div>
+    <!-- Resultado del último envío / lectura (marcarEstado en ui.js). -->
+    <div class="estado-linea" id="estadoLinea">
+      <span class="led" id="ledEstado"></span>
+      <span id="estadoTexto">Cargando estado actual…</span>
+    </div>
   </section>
 
   </div>
@@ -349,13 +354,10 @@
 
   <footer>TV RETRO · Firebase Realtime Database</footer>
 
-  <!-- Barra de acción fija: Enviar + estado del último envío -->
+  <!-- Barra de acción fija: Enviar (el estado del último envío está en
+       la tarjeta del dispositivo, #estadoLinea). -->
   <div class="barra-accion">
     <div class="barra-accion-interior">
-      <div class="estado-linea" id="estadoLinea">
-        <span class="led" id="ledEstado"></span>
-        <span id="estadoTexto">Cargando estado actual…</span>
-      </div>
       <button id="enviar" type="button">Enviar a la OLED</button>
     </div>
   </div>

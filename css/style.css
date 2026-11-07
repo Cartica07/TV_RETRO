@@ -15,7 +15,7 @@
 /* Alturas de las barras fijas (nav inferior y barra de Enviar). */
 :root {
   --alto-nav: 64px;
-  --alto-accion: 96px;
+  --alto-accion: 72px;
 }
 
 body {
@@ -733,15 +733,23 @@ footer {
 }
 
 /* Una sola línea: los mensajes largos se cortan con "…". */
-.barra-accion #estadoTexto {
+.dispositivo #estadoTexto {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.barra-accion .led {
+.dispositivo .estado-linea .led {
   flex-shrink: 0;
+}
+
+/* Estado del último envío, debajo de la fila de conexión. */
+.dispositivo .estado-linea {
+  margin-top: 4px;
+  padding: 0 var(--esp-1);
+  font-size: 10px;
+  min-height: 14px;
 }
 
 .barra-accion button#enviar {
