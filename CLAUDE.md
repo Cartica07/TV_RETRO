@@ -27,7 +27,8 @@ Panel web (HTML/CSS/JS puro, módulos ES, sin frameworks) con Firebase Realtime 
 - `oled_remota/lastSeen` (heartbeat, solo lectura desde la web)
 - Catálogos: `canciones/`, `imagenes/`, `animaciones/` (hermanos de `oled_remota`)
 - Dibujo y Galería se envían como `tipo:"imagen"`. Un GIF subido en la pestaña Imagen se envía como `tipo:"animacion"`.
-- GIF guardados: en `animaciones/` con `meta.origen: "gif"` (así se separan en la lista GIF de la Galería; el ESP no lee los catálogos).
+- GIF guardados: en `animaciones/` con `meta.origen: "gif"` (así se separan en la lista GIF de la Galería; el ESP no lee los catálogos). Se pueden subir desde la pestaña Imagen (con encuadre) o desde el + de la Galería.
+- Peso de animaciones (ESP32-WROOM-32 sin PSRAM): ~1,4 KB por cuadro en `oled_remota.json`. Seguro ≤ 28 KB (~20 cuadros); aviso amarillo hasta 56 KB (~40); aviso rojo por encima (`evaluarPesoAnimacion` en gif.js). Solo avisa, no bloquea. Pendiente: optimizar el envío de archivos pesados.
 - `enviarEstado` usa `update()` sobre `oled_remota` (escribe `version` y `pantalla` sin borrar `lastSeen`).
 - Seguridad: login con Firebase Auth (email/contraseña) en index.html y carga-masiva.html; reglas en `database.rules.json` (lectura pública de `oled_remota` para el ESP, `lastSeen` escribible por el ESP, todo lo demás restringido al UID del dueño).
 
