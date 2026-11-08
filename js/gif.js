@@ -63,6 +63,36 @@ export function evaluarPesoAnimacion(cuadros) {
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
 
+/**
+ * Límites para animaciones COMPRIMIDAS (formato "z1", js/compresion.js).
+ * El firmware ya no la baja entera a la RAM: la escribe en su memoria
+ * flash a medida que llega (LittleFS, 256 KB). Ahí conviven por un
+ * momento la animación anterior y la nueva, más la canción, así que:
+ * hasta ~64 KB comprimidos es seguro; hasta ~110 KB entra justo; más,
+ * probablemente no entra.
+ */
+export const PESO_COMPRIMIDO_RECOMENDADO_BYTES = 64 * 1024;
+export const PESO_COMPRIMIDO_MAXIMO_BYTES = 110 * 1024;
+
+/**
+ * Clasifica una animación según su tamaño comprimido:
+ * 'ok' | 'pesado' | 'muy-pesado' (mismo formato que evaluarPesoAnimacion).
+ */
+export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
+  const bytes = Number(bytesComprimidos) || 0;
+  const kb = Math.round(bytes / 1024);
+  const n = cantidadCuadros || 0;
+  if (bytes > PESO_COMPRIMIDO_MAXIMO_BYTES) {
+    return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
+      mensaje: `GIF muy pesado: ${n} cuadros · ${kb} KB comprimido. Es muy probable que no entre en la memoria de la TV (máximo ~${Math.round(PESO_COMPRIMIDO_MAXIMO_BYTES / 1024)} KB). Usá un GIF más corto.` };
+  }
+  if (bytes > PESO_COMPRIMIDO_RECOMENDADO_BYTES) {
+    return { bytes, kb, cuadros: n, nivel: 'pesado',
+      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB comprimido. Puede no entrar si la TV tiene además una canción guardada (seguro hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB).` };
+  }
+  return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
+}
+
 /** true si los primeros bytes son la firma de un GIF. */
 export function esGif(buffer) {
   const d = new Uint8Array(buffer, 0, Math.min(6, buffer.byteLength));

@@ -23,7 +23,8 @@ import {
   cargarImagenOriginal,
   procesarImagenConOpciones
 } from './imageProcessor.js';
-import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion } from './gif.js';
+import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido } from './gif.js';
+import { puedeComprimir, comprimirCuadros } from './compresion.js';
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
 import {
   inicializarDibujo,
@@ -688,14 +689,38 @@ function aplicarGif() {
   actualizarControlesEdicionImagen();
 
   const totalMs = anim.cuadros.reduce((s, c) => s + c.dur, 0);
-  const peso = evaluarPesoAnimacion(anim.cuadros);
-  marcarEstado(
-    `GIF: ${anim.cuadros.length} cuadros · ${(totalMs / 1000).toFixed(1)} s · ${peso.kb} KB`,
-    peso.nivel === 'ok' ? 'ok' : 'error',
-    elementos
-  );
-  mostrarAvisoPesoGif(deGaleria ? elementos.avisoGaleriaNueva : elementos.avisoGaleria, peso);
+  const avisoEl = deGaleria ? elementos.avisoGaleriaNueva : elementos.avisoGaleria;
+  const mostrarPeso = (peso, sufijo) => {
+    marcarEstado(
+      `GIF: ${anim.cuadros.length} cuadros · ${(totalMs / 1000).toFixed(1)} s · ${peso.kb} KB${sufijo}`,
+      peso.nivel === 'ok' ? 'ok' : 'error',
+      elementos
+    );
+    mostrarAvisoPesoGif(avisoEl, peso);
+  };
+
+  if (!puedeComprimir()) {
+    mostrarPeso(evaluarPesoAnimacion(anim.cuadros), '');
+    return;
+  }
+
+  // Se envía comprimido (js/compresion.js): el peso que importa es el
+  // comprimido. Se calcula aparte; si mientras tanto se volvió a procesar
+  // el GIF (umbral, encuadre), este resultado ya no corresponde.
+  const turno = ++turnoPesoGif;
+  comprimirCuadros(anim.cuadros)
+    .then(z => {
+      if (turno !== turnoPesoGif) return;
+      mostrarPeso(evaluarPesoComprimido(z.bytes, z.cantidad), ' comprimido');
+    })
+    .catch(() => {
+      if (turno !== turnoPesoGif) return;
+      mostrarPeso(evaluarPesoAnimacion(anim.cuadros), '');
+    });
 }
+
+// Ver aplicarGif(): descarta cálculos de peso que ya quedaron viejos.
+let turnoPesoGif = 0;
 
 // Muestra (o limpia) el aviso de peso del GIF en el recuadro de aviso de
 // la pantalla correspondiente: amarillo si es pesado, rojo si es muy pesado.

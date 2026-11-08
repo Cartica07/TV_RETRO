@@ -5,6 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+import { FORMATO_COMPRIMIDO, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -36,6 +37,17 @@ export async function cargarEstado() {
       const imagen = pantalla.imagen || {};
       const cancion = pantalla.cancion || {};
       const animacion = pantalla.animacion || {};
+
+      // Animación comprimida (formato "z1"): los cuadros están en
+      // oled_remota/archivo; se descomprimen para la vista previa.
+      let cuadrosAnimacion = Array.isArray(animacion.cuadros) ? animacion.cuadros : [];
+      if (animacion.formato === FORMATO_COMPRIMIDO && datos.archivo && typeof datos.archivo.datos === 'string' && puedeComprimir()) {
+        try {
+          cuadrosAnimacion = await descomprimirCuadros(datos.archivo.datos);
+        } catch (err) {
+          console.error('No se pudo descomprimir la animación:', err);
+        }
+      }
 
       return {
         tipo: pantalla.tipo || 'texto',
@@ -69,7 +81,7 @@ export async function cargarEstado() {
         animacionNombre: (typeof animacion.nombre === 'string') ? animacion.nombre : '',
         animacionAncho: Number(animacion.ancho) || 0,
         animacionAlto: Number(animacion.alto) || 0,
-        animacionCuadros: Array.isArray(animacion.cuadros) ? animacion.cuadros : [],
+        animacionCuadros: cuadrosAnimacion,
         version: Number(datos.version) || 0,
         exito: true
       };
@@ -322,6 +334,9 @@ export async function enviarEstado(estado) {
     // Mundo". Guardándolo siempre, el último texto enviado persiste
     // hasta que se envíe uno nuevo, sin importar cuántas imágenes,
     // canciones o dibujos se manden en el medio.
+    // oled_remota/archivo: solo para animaciones comprimidas (ver abajo).
+    let archivo = null;
+
     const pantallaPayload = {
       texto: estado.texto,
       config: {
@@ -361,15 +376,30 @@ export async function enviarEstado(estado) {
       };
     } else if (estado.tipo === 'animacion') {
       pantallaPayload.tipo = 'animacion';
-      pantallaPayload.animacion = {
-        nombre: estado.animacion || '',
-        ancho: estado.animacionAncho,
-        alto: estado.animacionAlto,
-        // [{ datos: base64 1bpp (mismo formato que imagen.datos), dur: ms }, ...]
-        // Formato leído por animacion.h/.cpp (animacion_beginSave/appendCuadro)
-        // en el firmware -- ver ese módulo para el detalle del guardado en LittleFS.
-        cuadros: estado.animacionCuadros || []
-      };
+      if (puedeComprimir()) {
+        // Formato "z1": los cuadros van comprimidos (sin pérdida) en
+        // oled_remota/archivo, con la misma versión que el envío; en
+        // pantalla queda solo la descripción. Ver js/compresion.js.
+        const z = await comprimirCuadros(estado.animacionCuadros || []);
+        pantallaPayload.animacion = {
+          nombre: estado.animacion || '',
+          ancho: estado.animacionAncho,
+          alto: estado.animacionAlto,
+          formato: FORMATO_COMPRIMIDO,
+          cantidad: z.cantidad
+        };
+        archivo = { version: nuevaVersion, datos: z.datos };
+      } else {
+        pantallaPayload.animacion = {
+          nombre: estado.animacion || '',
+          ancho: estado.animacionAncho,
+          alto: estado.animacionAlto,
+          // [{ datos: base64 1bpp (mismo formato que imagen.datos), dur: ms }, ...]
+          // Formato leído por animacion.h/.cpp (animacion_beginSave/appendCuadro)
+          // en el firmware -- ver ese módulo para el detalle del guardado en LittleFS.
+          cuadros: estado.animacionCuadros || []
+        };
+      }
     } else {
       // Texto por defecto
       pantallaPayload.tipo = 'texto';
@@ -382,7 +412,9 @@ export async function enviarEstado(estado) {
 
     // update() (no set()): reemplaza version y pantalla completos, pero no
     // borra oled_remota/lastSeen (heartbeat que escribe el ESP).
-    await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload });
+    // archivo: la animación comprimida, o null para borrar la anterior
+    // (se escribe en el mismo update, así nunca queda de otra versión).
+    await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
 
     return {
       exito: true,
