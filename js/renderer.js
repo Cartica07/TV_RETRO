@@ -178,7 +178,10 @@ function renderizarScroll(ctx, estado, colorFrente, scrollX) {
   const tamano = estado.tamano;
   const metrics = fontMetrics[tamano];
 
-  const x = typeof scrollX === 'number' ? scrollX : ANCHO;
+  // El desplazamiento llega con decimales (velocidad × tiempo): se redondea
+  // a un píxel entero, como en la OLED. Con decimales el canvas pintaba
+  // píxeles a medio encender y la vista previa dejaba de ser exacta.
+  const x = typeof scrollX === 'number' ? Math.round(scrollX) : ANCHO;
   // En modo manual el scroll respeta la Y elegida (la X la maneja el scroll).
   const y = estado.manual
     ? limitarPosicion(estado.y, metrics.height, ALTO)
