@@ -248,6 +248,14 @@ const VELOCIDAD_SCROLL_V = 12;   // px/segundo (vel por defecto de la herramient
 const PAUSA_INICIO_V_MS = 1000;
 const PAUSA_FIN_V_MS = 1000;
 
+// Huella de lo que cambia el dibujo del scroll además de la posición. Si ni
+// la posición (en píxeles enteros) ni esto cambiaron, el cuadro nuevo sería
+// idéntico al que ya está en pantalla y no hace falta volver a dibujarlo.
+function firmaDibujoScroll() {
+  const e = estadoActual;
+  return [e.texto, e.tamano, e.fuente, e.invertido, e.alineacionV, e.manual, e.y].join('|');
+}
+
 function iniciarScrollVertical() {
   detenerScroll();
   const bloque = medirBloqueTexto(estadoActual);
@@ -259,6 +267,7 @@ function iniciarScrollVertical() {
   const recorridoMs = distancia / VELOCIDAD_SCROLL_V * 1000;
   const cicloMs = PAUSA_INICIO_V_MS + recorridoMs + PAUSA_FIN_V_MS;
   let inicio = null;
+  let ultimoDibujado = null; // lo último que se dibujó (posición + firma)
 
   function frame(ts) {
     if (inicio === null) inicio = ts;
@@ -267,7 +276,12 @@ function iniciarScrollVertical() {
     if (t > PAUSA_INICIO_V_MS) {
       desplazamiento = Math.min(distancia, Math.floor(distancia * (t - PAUSA_INICIO_V_MS) / recorridoMs));
     }
-    dibujarOLED(elementos.canvas, estadoActual, desplazamiento);
+    // Durante las pausas (y entre dos píxeles) el cuadro no cambia: no se redibuja.
+    const clave = desplazamiento + '#' + firmaDibujoScroll();
+    if (clave !== ultimoDibujado) {
+      dibujarOLED(elementos.canvas, estadoActual, desplazamiento);
+      ultimoDibujado = clave;
+    }
     idAnimacionScroll = requestAnimationFrame(frame);
   }
 
@@ -278,21 +292,37 @@ function iniciarScroll() {
   detenerScroll();
   scrollX = ANCHO_OLED;
   ultimoTs = null;
+  let ultimoDibujado = null;   // lo último que se dibujó (posición entera + firma)
+  let anchoCalculado = null;   // { clave, valor }: el ancho solo se vuelve a medir si cambia el texto, la letra o el tamaño
 
   function frame(ts) {
     if (ultimoTs === null) ultimoTs = ts;
     const dt = (ts - ultimoTs) / 1000;
     ultimoTs = ts;
 
-    // Con fuente de ancho variable se mide con sus propios glifos.
-    const anchoTexto = esFuenteVariable(estadoActual.fuente)
-      ? anchoScrollFuente(estadoActual)
-      : calcularAnchoTexto(estadoActual.texto, estadoActual.tamano);
+    // Con fuente de ancho variable se mide con sus propios glifos. Medir
+    // recorre todo el texto: se hace una vez y se repite solo si cambia.
+    const claveAncho = estadoActual.fuente + '|' + estadoActual.tamano + '|' + estadoActual.texto;
+    if (!anchoCalculado || anchoCalculado.clave !== claveAncho) {
+      anchoCalculado = {
+        clave: claveAncho,
+        valor: esFuenteVariable(estadoActual.fuente)
+          ? anchoScrollFuente(estadoActual)
+          : calcularAnchoTexto(estadoActual.texto, estadoActual.tamano)
+      };
+    }
+    const anchoTexto = anchoCalculado.valor;
 
     scrollX -= VELOCIDAD_SCROLL * dt;
     if (scrollX < -anchoTexto) scrollX = ANCHO_OLED;
 
-    dibujarOLED(elementos.canvas, estadoActual, scrollX);
+    // El renderer redondea la posición a un píxel entero: si sigue siendo el
+    // mismo píxel (y nada más cambió), el cuadro sería idéntico. No se redibuja.
+    const clave = Math.round(scrollX) + '#' + firmaDibujoScroll();
+    if (clave !== ultimoDibujado) {
+      dibujarOLED(elementos.canvas, estadoActual, scrollX);
+      ultimoDibujado = clave;
+    }
     idAnimacionScroll = requestAnimationFrame(frame);
   }
 
