@@ -153,8 +153,8 @@ export async function cargarEstado() {
 }
 
 /**
- * Se suscribe a oled_remota/lastSeen (heartbeat que escribe el ESP8266
- * en cada chequeo exitoso, ver github.cpp V1.11).
+ * Se suscribe a oled_remota/lastSeen (heartbeat que escribe la TV cada
+ * 10 s desde la tarea de red del firmware ESP32-S3, red.cpp / latido()).
  *
  * A diferencia de cargarEstado(), esto NO es un get() de una sola vez:
  * usa onValue(), que deja una escucha en tiempo real. Así, si el
@@ -164,8 +164,8 @@ export async function cargarEstado() {
  * eso se encarga quien llama a esta función, no Firebase).
  *
  * callback recibe el timestamp (número, ms desde época) o null si el
- * dispositivo nunca escribió nada todavía (firmware viejo sin V1.11,
- * o recién configurado y todavía no hizo el primer chequeo).
+ * dispositivo nunca escribió nada todavía (recién configurado, o que
+ * todavía no mandó su primer latido).
  *
  * Devuelve la función para cancelar la suscripción (unsubscribe).
  */
@@ -183,14 +183,13 @@ export function suscribirLastSeen(callback) {
  *
  * NOTA IMPORTANTE: este catálogo vive en una ruta HERMANA de
  * "oled_remota", NO adentro. Dos motivos:
- *   1) El ESP8266 pide "oled_remota.json" completo cada 10s
- *      (TIEMPO_ACTUALIZACION) -- si el catálogo estuviera adentro,
- *      el dispositivo se bajaría todas las canciones guardadas en
- *      cada chequeo, aunque nunca las use.
- *   2) enviarEstado() más abajo hace set(ref(db,'oled_remota'), ...),
- *      que REEMPLAZA todo ese nodo. Si "canciones" fuera hijo de
- *      "oled_remota", cada "Enviar" (de texto, imagen o canción)
- *      borraría el catálogo entero. Al ser hermano, set() no lo toca.
+ *   1) El ESP8266 original pedía "oled_remota.json" completo cada 10 s:
+ *      si el catálogo estuviera adentro, se bajaría todas las canciones
+ *      guardadas aunque nunca las use. (El ESP32-S3 baja solo version,
+ *      pantalla y archivo, pero la ESP8266 sigue funcionando aparte.)
+ *   2) Un set() sobre "oled_remota" REEMPLAZA todo ese nodo y borraría un
+ *      catálogo que fuera hijo suyo. enviarEstado() hoy usa update(), pero
+ *      al ser hermano el catálogo queda a salvo de cualquier set().
  *
  * Retorna un objeto { nombre: { notas: [...], meta: {...} }, ... }
  * ({} si está vacío, null si no se pudo leer).
@@ -230,8 +229,8 @@ export async function guardarCancionCatalogo(nombre, notas, meta = {}) {
  *
  * Mismo criterio que listarCanciones(): vive en una ruta HERMANA de
  * "oled_remota", no adentro, por las mismas dos razones (el ESP8266
- * no debería bajarse el catálogo entero en cada chequeo, y enviarEstado()
- * no debe borrarlo al hacer set() sobre "oled_remota").
+ * original no debería bajarse el catálogo entero cada 10 s, y un set()
+ * sobre "oled_remota" no debe poder borrarlo).
  *
  * Retorna un objeto { nombre: { datos, ancho, alto, meta: {...} }, ... }
  * ({} si está vacío, null si no se pudo leer: así no se confunde un error

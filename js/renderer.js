@@ -1,7 +1,8 @@
 /**renderer
  * OLED Renderer
  * Dibuja pixel-perfect el bitmap real de Adafruit_GFX (glcdfont.c),
- * el mismo que usa pantalla.cpp en el ESP8266. Nada de fuentes del
+ * el mismo que usa texto.cpp en el firmware ESP32-S3 (y pantalla.cpp
+ * en el ESP8266 original). Nada de fuentes del
  * sistema ni escalas manuales: cada punto que ves acá es el mismo
  * punto que se prende en la OLED física.
  */
@@ -22,7 +23,8 @@ import { esFuenteVariable, dibujarTextoFuente, medirBloqueFuente } from './fuent
 
 const ANCHO = 128;
 const ALTO = 64;
-const AMBAR = '#4dd2ff';
+// Color de los puntos encendidos: el cian de la OLED real (#4dd2ff).
+const ACENTO_OLED = '#4dd2ff';
 const NEGRO = '#000000';
 
 /**
@@ -81,8 +83,8 @@ export function medirBloqueTexto(estado) {
 export function dibujarOLED(canvas, estado, scrollX = null) {
   const ctx = canvas.getContext('2d');
 
-  const fondo = estado.invertido ? AMBAR : NEGRO;
-  const frente = estado.invertido ? NEGRO : AMBAR;
+  const fondo = estado.invertido ? ACENTO_OLED : NEGRO;
+  const frente = estado.invertido ? NEGRO : ACENTO_OLED;
 
   ctx.fillStyle = fondo;
   ctx.fillRect(0, 0, ANCHO, ALTO);

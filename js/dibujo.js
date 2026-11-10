@@ -12,9 +12,9 @@
  * imageProcessor.js) -- reutilizando el mismo pipeline (escala de
  * grises -> umbral -> Base64) que ya procesa fotos subidas. Para el
  * dispositivo y para Firebase, un dibujo enviado es indistinguible de
- * una imagen subida: mismo tipo:"imagen", mismos campos. El ESP8266
- * no se entera de que existe un modo "Dibujo" -- no hace falta
- * flashear nada nuevo para esta función.
+ * una imagen subida: mismo tipo:"imagen", mismos campos. La TV no se
+ * entera de que existe un modo "Dibujo" -- no hace falta flashear nada
+ * nuevo para esta función.
  */
 
 import { convertirAEscalaGrises, convertirAMonocromatico, codificarBase64 } from './imageProcessor.js';

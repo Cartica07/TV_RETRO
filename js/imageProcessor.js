@@ -130,7 +130,7 @@ export function convertirAEscalaGrises(canvas) {
     const g = data[i + 1];
     const b = data[i + 2];
     
-    // Luminancia relativa (ITU-R BT.709)
+    // Luminancia (ITU-R BT.601: 0.299 R + 0.587 G + 0.114 B)
     const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
     
     data[i] = gray;

@@ -29,11 +29,11 @@ const ALTO = 64;
  *  - De ~520 KB de SRAM, con WiFi + HTTPS (TLS) quedan del orden de
  *    100-250 KB libres, pero el bloque CONTIGUO más grande suele ser
  *    bastante menor (la memoria está repartida en regiones y se fragmenta).
- *  - El ESP descarga oled_remota.json completo en cada chequeo. Si el
- *    firmware lo lee entero (getString) y después lo interpreta con
- *    ArduinoJson, necesita aprox. el doble del tamaño del JSON, y la
- *    primera copia en un solo bloque contiguo. Hay reportes de fallas con
- *    buffers de más de ~64 KB en ESP32.
+ *  - En este formato los cuadros van dentro de pantalla, y el firmware
+ *    interpreta todo ese JSON con ArduinoJson (queda entero en RAM). Si
+ *    además lo leyera entero a un String antes, necesitaría aprox. el
+ *    doble, y la primera copia en un solo bloque contiguo. Hay reportes
+ *    de fallas con buffers de más de ~64 KB en ESP32.
  *  - Cada cuadro de 128×64 ocupa ~1,4 KB en el JSON (1024 bytes en Base64
  *    + nombres de campos).
  * Por eso: hasta ~28 KB (unos 20 cuadros) es seguro; hasta ~56 KB (unos
@@ -44,7 +44,7 @@ export const PESO_RECOMENDADO_BYTES = 28 * 1024;
 export const PESO_MAXIMO_BYTES = 56 * 1024;
 
 /**
- * Estima cuánto pesa una animación dentro de oled_remota.json y la
+ * Estima cuánto pesa una animación dentro de oled_remota/pantalla y la
  * clasifica: 'ok' | 'pesado' | 'muy-pesado'.
  * @returns {{bytes: number, kb: number, cuadros: number, nivel: string, mensaje: string}}
  */

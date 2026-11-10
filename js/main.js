@@ -171,12 +171,12 @@ const geometriaImagen = { escala: 'ajustar', fondo: 'negro', rotar: 0, volteoH: 
 // ===================================================
 // Estado de conexión del DISPOSITIVO (heartbeat)
 // ===================================================
-// El ESP8266 escribe oled_remota/lastSeen en cada chequeo exitoso
-// (cada TIEMPO_ACTUALIZACION = 10s, ver github.cpp V1.11). Si pasó
+// La TV (ESP32-S3) escribe oled_remota/lastSeen cada 10 s desde su tarea
+// de red (red.cpp, latido(); TIEMPO_ACTUALIZACION en config.cpp). Si pasó
 // mucho más que eso desde el último valor visto, asumimos que el
 // dispositivo está apagado o sin WiFi -- aunque Firebase en sí responda
 // perfecto. El umbral es más alto que el intervalo real para dar
-// margen (jitter de red, chequeo que se salteó una vez, etc.).
+// margen (jitter de red, un latido que se salteó una vez, etc.).
 const UMBRAL_DESCONEXION_MS = 25000;
 const INTERVALO_CHEQUEO_CONEXION_MS = 5000;
 
@@ -223,7 +223,7 @@ function iniciarMonitoreoConexion() {
     evaluarConexionDispositivo();
   });
 
-  // lastSeen solo cambia cuando el ESP8266 escribe -- si se apaga,
+  // lastSeen solo cambia cuando la TV escribe -- si se apaga,
   // Firebase no dispara ningún evento nuevo (no hay nada que cambiar).
   // Este timer aparte es el que nota que "ya pasó demasiado tiempo"
   // aunque no haya llegado ningún dato nuevo.
@@ -538,9 +538,8 @@ function renderizar() {
     return;
   }
 
-  // V1.16: animaciones de la Galería (moods de ojos, etc.) -- se
-  // reproduce el bucle completo en la pantalla virtual principal,
-  // igual que se va a ver en la OLED real una vez reproducida ahí.
+  // Animaciones y GIF de la Galería -- se reproduce el bucle completo
+  // en la pantalla virtual principal, igual que se ve en la OLED real.
   if (estadoActual.tipo === 'animacion') {
     detenerScroll();
     iniciarAnimacionPreview();
@@ -1826,10 +1825,10 @@ async function manejarSeleccionCancion() {
   }
 }
 
-// V1.15: la carga de canciones nuevas se privatizó -- ya no vive en este
-// panel público. El dueño del dispositivo la sube por otra vía (fuera
-// de esta página), así un visitante con el link no puede subir música
-// nueva, solo elegir entre las que ya están cargadas.
+// Canciones nuevas: se importan desde este panel con el botón + de
+// Canciones (archivos .ino, ver importarCanciones) y se borran con el
+// tacho (borrarMusicalElegido). Van al catálogo musicales/.
+// (La carga en lote vive aparte, en carga-masiva.html.)
 
 // ===================================================
 // Event Listeners de Controles
@@ -2152,10 +2151,8 @@ async function cargarEstadoInicial() {
           cancion: resultado.cancionNombre || '',
           cancionRepeticiones: resultado.cancionRepeticiones || 1,
           cancionNotas: [],
-          // V1.16: el firmware todavía no manda tipo="animacion" (falta
-          // cablear github.cpp/pantalla.cpp), pero se dejan los campos
-          // acá para cuando esté conectado -- así no hace falta tocar
-          // esto de nuevo, ya está listo del lado web.
+          // Si lo último enviado fue una animación o un GIF (tipo
+          // "animacion"; cargarEstado ya descomprimió los cuadros z1).
           animacion: resultado.animacionNombre || '',
           animacionAncho: resultado.animacionAncho || 0,
           animacionAlto: resultado.animacionAlto || 0,
@@ -2255,13 +2252,13 @@ async function enviarAFirebase() {
   activarLedTransmision(elementos);
 
   try {
-    // V1.12: Dibujo -- se convierte el lienzo a bitmap recién acá, en
+    // Dibujo -- se convierte el lienzo a bitmap recién acá, en
     // el momento de enviar (siempre el dibujo más reciente, no una
     // versión vieja cacheada). Importante: se arma un payload TEMPORAL
     // con tipo forzado a "imagen" -- NO se pisa estadoActual.tipo, así
     // el usuario se queda en la pestaña Dibujo después de enviar, en
     // vez de que la UI salte sola a la pestaña Imagen. Para Firebase y
-    // el ESP8266 esto es indistinguible de una imagen subida normal.
+    // la TV esto es indistinguible de una imagen subida normal.
     if (estadoActual.tipo === 'dibujo') {
       const resultado_imagen = obtenerResultadoImagen(elementos.lienzoDibujo);
       const payloadDibujo = Object.assign({}, estadoActual, {
@@ -2303,7 +2300,7 @@ async function enviarAFirebase() {
       return;
     }
 
-    // V1.16: Animación -- a diferencia de Dibujo/Galería, acá NO hace
+    // Animación -- a diferencia de Dibujo/Galería, acá NO hace
     // falta un payload temporal con tipo forzado: estadoActual.tipo ya
     // es "animacion" de verdad (se fija así al seleccionar una del
     // catálogo, ver renderizarAnimaciones), así que cae directo en el
