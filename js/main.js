@@ -2664,6 +2664,26 @@ async function inicializar() {
   }
 }
 
+// ===================================================
+// Red de seguridad: errores que nadie atrapó
+// ===================================================
+// Si algo falla de una forma que no se previó, el cliente no debe quedarse
+// mirando una pantalla trabada sin explicación. Se muestra un mensaje simple
+// (nada técnico en la interfaz, como pide el dueño) y el detalle va a la
+// consola del navegador. Los avisos inofensivos del navegador se ignoran.
+let fallosInesperadosAvisados = 0;
+function avisarFalloInesperado(origen, detalle, mensaje = '') {
+  // ResizeObserver avisa de bucles de tamaño que no afectan a nada; "Script
+  // error." es un error de otro origen (extensiones) del que no hay datos.
+  if (/ResizeObserver loop/i.test(mensaje) || /^Script error.?$/i.test(mensaje)) return;
+  if (++fallosInesperadosAvisados <= 20) console.error(`[TV RETRO] Error inesperado (${origen}):`, detalle);
+  try {
+    if (elementos && elementos.estadoTexto) marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', elementos);
+  } catch (e) { /* si ni esto se puede, queda el detalle en la consola */ }
+}
+window.addEventListener('error', (e) => avisarFalloInesperado('error', e.error || e.message, String(e.message || '')));
+window.addEventListener('unhandledrejection', (e) => avisarFalloInesperado('promesa', e.reason, String((e.reason && e.reason.message) || e.reason || '')));
+
 // Ejecutar al cargar el DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', inicializar);
