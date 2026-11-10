@@ -575,7 +575,8 @@ function actualizarPreviewDesdeLienzo() {
     // Pudo cambiar de pestaña mientras se esperaba el frame.
     if (estadoActual.tipo !== 'dibujo') return;
 
-    const resultado = obtenerResultadoImagen(elementos.lienzoDibujo);
+    // Sin PNG: la vista previa no lo usa y se repite en cada cuadro del trazo.
+    const resultado = obtenerResultadoImagen(elementos.lienzoDibujo, false);
     dibujarOLED(elementos.canvas, Object.assign({}, estadoActual, {
       tipo: 'imagen',
       imagenData: resultado.imagenData,
@@ -2260,7 +2261,7 @@ async function enviarAFirebase() {
     // vez de que la UI salte sola a la pestaña Imagen. Para Firebase y
     // la TV esto es indistinguible de una imagen subida normal.
     if (estadoActual.tipo === 'dibujo') {
-      const resultado_imagen = obtenerResultadoImagen(elementos.lienzoDibujo);
+      const resultado_imagen = obtenerResultadoImagen(elementos.lienzoDibujo, false); // enviar no usa el PNG
       const payloadDibujo = Object.assign({}, estadoActual, {
         tipo: 'imagen',
         imagenData: resultado_imagen.imagenData,

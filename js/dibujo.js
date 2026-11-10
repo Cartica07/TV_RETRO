@@ -262,9 +262,14 @@ export function hayRehistorial() {
  * imageProcessor.js -- así enviarEstado() y guardarImagenCatalogo() lo
  * reciben sin saber (ni les importa) que vino de un dibujo y no de un
  * archivo subido.
+ *
+ * conPng: la copia PNG ("preprocesada") solo hace falta para guardar el
+ * dibujo en la galería. Generarla cuesta unos 3 ms (mucho más en un
+ * celular), así que la vista previa mientras se dibuja y el envío la
+ * piden con conPng = false.
  */
-export function obtenerResultadoImagen(canvas) {
-  const preprocesada = canvas.toDataURL('image/png');
+export function obtenerResultadoImagen(canvas, conPng = true) {
+  const preprocesada = conPng ? canvas.toDataURL('image/png') : null;
 
   // Se trabaja sobre una COPIA: convertirAEscalaGrises muta los
   // píxeles del canvas que recibe. Si operáramos sobre el lienzo
