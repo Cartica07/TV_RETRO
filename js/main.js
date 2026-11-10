@@ -1646,6 +1646,7 @@ async function poblarCatalogoCanciones() {
       // Si mientras tanto se eligió otra canción, esta ya no corresponde.
       if (turno === turnoCancion) {
         musicalCargado = m;
+        actualizarFilaRepeticiones();
         estadoActual.cancionNotas = notasParaCancion(m.grabacion);
         setAvisoCancion(describirMusical(clave, m.grabacion));
       }
@@ -1688,6 +1689,18 @@ async function cargarMusical(clave) {
   if (!datos) throw new Error('No se encontró la canción en Firebase.');
   const grabacion = await decodificarMusical(datos);
   return { clave, datos, grabacion };
+}
+
+// true si la canción cargada toca una sola vez (su .ino no repite loop()).
+function musicalNoSeRepite() {
+  return !!(musicalCargado && musicalCargado.grabacion && !musicalCargado.grabacion.repetir);
+}
+
+// La fila Repeticiones no tiene sentido en una canción que toca una sola
+// vez: se oculta (y al enviarla se manda 1, con letra y sin letra).
+function actualizarFilaRepeticiones() {
+  const fila = elementos.inputRepeticiones && elementos.inputRepeticiones.closest('.campo');
+  if (fila) fila.hidden = musicalNoSeRepite();
 }
 
 function describirMusical(clave, grab) {
@@ -1759,6 +1772,7 @@ async function borrarMusicalElegido() {
     return;
   }
   if (musicalCargado && musicalCargado.clave === clave) musicalCargado = null;
+  actualizarFilaRepeticiones();
   estadoActual.cancion = '';
   estadoActual.cancionNotas = [];
   detenerPreviewMusical();
@@ -1781,6 +1795,7 @@ async function manejarSeleccionCancion() {
     estadoActual.cancion = '';
     estadoActual.cancionNotas = [];
     musicalCargado = null;
+    actualizarFilaRepeticiones();
     detenerPreviewMusical();
   }
 
@@ -1798,6 +1813,7 @@ async function manejarSeleccionCancion() {
     const m = await cargarMusical(key);
     if (turno !== turnoCancion) return; // ya se eligió otra
     musicalCargado = m;
+    actualizarFilaRepeticiones();
     estadoActual.cancion = key;
     // Para "sin letra": las notas en el formato de las canciones de siempre.
     estadoActual.cancionNotas = notasParaCancion(m.grabacion);
@@ -2300,18 +2316,23 @@ async function enviarAFirebase() {
       }
       estadoActual.cancionRepeticiones = normalizarRepeticiones(elementos.inputRepeticiones.value);
       elementos.inputRepeticiones.value = String(estadoActual.cancionRepeticiones);
+      // Una canción que toca una sola vez se manda con 1 repetición, con
+      // letra y sin letra (antes sin letra se repetía las veces del campo,
+      // que además se veía aunque no correspondiera).
+      const repeticiones = musicalNoSeRepite() ? 1 : estadoActual.cancionRepeticiones;
 
       if (letraCanciones === 'con') {
         // Con letra: la grabación entera (tipo "musical"), reemplaza la pantalla.
         aEnviar = Object.assign({}, estadoActual, {
           tipo: 'musical',
           musicalNombre: estadoActual.cancion,
-          musicalRepeticiones: estadoActual.cancionRepeticiones,
+          musicalRepeticiones: repeticiones,
           musicalDatos: musicalCargado.datos
         });
       } else {
         // Sin letra: solo las notas, de fondo (tipo "cancion" de siempre).
         estadoActual.cancionNotas = notasParaCancion(musicalCargado.grabacion);
+        aEnviar = Object.assign({}, estadoActual, { cancionRepeticiones: repeticiones });
       }
     }
 
