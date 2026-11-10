@@ -517,13 +517,10 @@ export async function enviarEstado(estado) {
         };
       }
     } else {
-      // Texto por defecto
+      // Texto por defecto. Ya no se manda la imagen anterior (unos 1,4 KB
+      // de más en cada envío): el firmware solo lee "imagen" con tipo
+      // "imagen". Decisión del dueño, 2026-11-10.
       pantallaPayload.tipo = 'texto';
-      pantallaPayload.imagen = {
-        ancho: estado.imagenAncho,
-        alto: estado.imagenAlto,
-        datos: estado.imagenData
-      };
     }
 
     // update() (no set()): reemplaza version y pantalla completos, pero no
