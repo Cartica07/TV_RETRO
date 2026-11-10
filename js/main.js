@@ -1047,7 +1047,7 @@ async function pegarImagenDelPortapapeles() {
 // Imagen abierta: no necesita permiso. No interfiere si se está
 // escribiendo en un campo de texto.
 function manejarEventoPegar(e) {
-  if (estadoActual.tipo !== 'imagen') return;
+  if (panelBloqueado || estadoActual.tipo !== 'imagen') return;
   const destino = e.target;
   if (destino && (destino.tagName === 'INPUT' || destino.tagName === 'TEXTAREA' || destino.isContentEditable)) return;
   const datos = e.clipboardData;
@@ -1825,12 +1825,17 @@ async function poblarCatalogoCanciones() {
       const clave = estadoActual.cancion;
       elementos.seleccionCancion.value = clave;
       const turno = ++turnoCancion;
-      const m = await cargarMusical(clave);
-      // Si mientras tanto se eligió otra canción, esta ya no corresponde.
-      if (turno === turnoCancion) {
-        musicalCargado = m;
-        estadoActual.cancionNotas = notasParaCancion(m.grabacion);
-        setAvisoCancion(describirMusical(clave, m.grabacion));
+      cargandoMusical = true;
+      try {
+        const m = await cargarMusical(clave);
+        // Si mientras tanto se eligió otra canción, esta ya no corresponde.
+        if (turno === turnoCancion) {
+          musicalCargado = m;
+          estadoActual.cancionNotas = notasParaCancion(m.grabacion);
+          setAvisoCancion(describirMusical(clave, m.grabacion));
+        }
+      } finally {
+        if (turno === turnoCancion) cargandoMusical = false;
       }
     } else {
       elementos.seleccionCancion.value = '';
@@ -2373,8 +2378,10 @@ function configurarEventos() {
 const ESPERA_ARRANQUE_MS = 8000;
 const PARTES_BLOQUEABLES = ['main.controles', '.barra-accion', 'nav.nav-inferior', '#filaInvertido'];
 let arranqueVigente = true;
+let panelBloqueado = false; // los atajos del documento (pegar) también esperan
 
 function bloquearPanel(bloquear) {
+  panelBloqueado = bloquear;
   PARTES_BLOQUEABLES.forEach((selector) => {
     const el = document.querySelector(selector);
     if (el) el.inert = bloquear;
@@ -2427,22 +2434,12 @@ async function cargarEstadoInicial() {
         if (elementos.grupoLetra) marcarSegmentoActivo(elementos.grupoLetra, letraCanciones);
       }
 
-      // Catálogo de canciones y controles. Las cargas van en paralelo (antes
-      // una esperaba a la otra). Los catálogos de la Galería (imágenes y
-      // animaciones) solo se cargan al arrancar si el panel abre ahí; si no,
-      // se cargan la primera vez que se entra a la pestaña.
-      const cargas = [poblarCatalogoCanciones()];
-      // Lo último enviado fue una animación o un GIF: el panel abre en la
-      // Galería, así que su lista tiene que estar cargada (antes se veía
-      // "Todavía no hay animaciones" hasta tocar la pestaña) y la animación
-      // enviada, marcada.
-      if (estadoActual.tipo === 'animacion') {
-        animacionSeleccionActual = estadoActual.animacion || null;
-        cargas.push(poblarCatalogoImagenes(), poblarCatalogoAnimaciones());
-      }
-      await Promise.all(cargas);
-      if (!arranqueVigente) return;
+      // El estado, los controles y la pestaña se aplican JUNTOS y enseguida,
+      // antes de esperar ningún catálogo: así, si el panel se libera por lentitud
+      // (ESPERA_ARRANQUE_MS) mientras todavía bajan las canciones o la Galería,
+      // lo que se ve y lo que Enviar manda siguen siendo lo mismo.
       poblarControles(estadoActual, elementos);
+      if (estadoActual.tipo === 'animacion') animacionSeleccionActual = estadoActual.animacion || null;
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();
       actualizarControlesEdicionImagen();
@@ -2457,6 +2454,23 @@ async function cargarEstadoInicial() {
         console.info(`[TV RETRO] En la OLED ahora mismo: v${resultado.version}`);
         marcarEstado('', null, elementos);
       }
+
+      // Catálogo de canciones. Las cargas van en paralelo (antes una esperaba
+      // a la otra). Los catálogos de la Galería (imágenes y animaciones) solo
+      // se cargan al arrancar si el panel abre ahí; si no, se cargan la
+      // primera vez que se entra a la pestaña.
+      const cargas = [poblarCatalogoCanciones()];
+      // Lo último enviado fue una animación o un GIF: el panel abre en la
+      // Galería, así que su lista tiene que estar cargada (antes se veía
+      // "Todavía no hay animaciones" hasta tocar la pestaña) y la animación
+      // enviada, marcada.
+      if (estadoActual.tipo === 'animacion') {
+        cargas.push(poblarCatalogoImagenes(), poblarCatalogoAnimaciones());
+      }
+      await Promise.all(cargas);
+      // Con el catálogo ya cargado se sabe si la animación es un GIF (lista GIF)
+      // o una animación; solo si el cliente sigue ahí (no se fue a otra pestaña).
+      if (estadoActual.tipo === 'animacion') mostrarSeccionSegunTipo(estadoActual.tipo);
     } else {
       poblarControles(estadoActual, elementos);
       renderizar();
@@ -2680,6 +2694,11 @@ function avisarFalloInesperado(origen, detalle, mensaje = '') {
   try {
     if (elementos && elementos.estadoTexto) marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', elementos);
   } catch (e) { /* si ni esto se puede, queda el detalle en la consola */ }
+  // Un fallo durante el arranque nunca debe dejar el panel bloqueado para siempre.
+  if (panelBloqueado) {
+    arranqueVigente = false;
+    bloquearPanel(false);
+  }
 }
 window.addEventListener('error', (e) => avisarFalloInesperado('error', e.error || e.message, String(e.message || '')));
 window.addEventListener('unhandledrejection', (e) => avisarFalloInesperado('promesa', e.reason, String((e.reason && e.reason.message) || e.reason || '')));
