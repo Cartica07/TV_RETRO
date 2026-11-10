@@ -11,7 +11,8 @@ Proyecto Firebase: `lorenita-6ad1e`, Realtime Database: `https://lorenita-6ad1e-
 ```
 /
 ├── oled_remota/              lo que la TV muestra ahora (el ESP lo lee)
-│   ├── version               entero; sube en 1 con cada envío
+│   ├── version               entero; un número nuevo en cada envío (el ESP escucha este campo)
+│   ├── contadorVersion       entero; reserva el número del próximo envío (transacción del panel; el ESP no lo lee)
 │   ├── lastSeen              heartbeat: hora del servidor (ms, {".sv":"timestamp"}) que escribe el ESP cada 10 s; la web solo lo lee
 │   ├── pantalla/             el contenido (ver §2)
 │   └── archivo/              solo con contenido pesado (z1 o m1); si no, no existe
@@ -85,7 +86,7 @@ Es un arreglo de `[frecuencia Hz, duración ms]`, donde 0 Hz es silencio. El fir
 - Cada cuadro se comprime **por separado**, sin pérdida, con `CompressionStream('deflate-raw')`.
 - El firmware lo escribe tal cual en `/current_anim.bin` y descomprime cada cuadro al dibujarlo con `tinfl_decompress` (ROM del ESP32, `#include <miniz.h>`).
 - Si el navegador no tiene `CompressionStream`, el panel envía el formato viejo (`cuadros` dentro de `pantalla.animacion`), que el firmware sigue aceptando.
-- Avisos de peso: seguro ≤ 64 KB comprimido, rojo > 110 KB. Solo avisan.
+- Avisos de peso: sin aviso ≤ 256 KB comprimido, amarillo hasta 1 MB, rojo > 1 MB. El ESP32-S3 baja directo a LittleFS (~7,9 MB), así que el límite es el tiempo de descarga, no el espacio. Solo avisan.
 
 ## 4. Formato m1: musicales
 

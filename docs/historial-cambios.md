@@ -120,6 +120,17 @@ Revisión completa del código. Cada arreglo se probó en Chrome con un Firebase
 | `040e65a` | **Lógica, `main.js` y `ui.js`:** borrar de la Galería pide confirmación; repeticiones entre 1 y 99; al abrir se muestra la guardada. |
 | `2b168de` | Documentación: los arreglos de esta etapa y datos desactualizados. |
 
-Quedan para después (necesitan el firmware o una decisión del dueño):
-- Dos envíos casi simultáneos pueden salir con la misma `version`. Arreglarlo con una transacción haría que el ESP vea la versión nueva antes que la pantalla; hay que resolverlo junto con el firmware.
-- Los avisos de peso de GIF (64 / 110 KB) son del ESP32 con 256 KB de LittleFS; en el S3 hay ~7,9 MB. Hay que recalcularlos con el firmware.
+Además se comprobó que las 57 canciones de `Canciones-ino` se graban igual con el intérprete viejo y el nuevo: no hace falta reimportar ninguna (`6f940be`).
+
+Después, ya con el firmware a la vista:
+
+| Commit | Cambio |
+|---|---|
+| `714dc23` | **Lógica, `firebase.js`:** el número de cada envío se reserva con una transacción sobre el campo nuevo `oled_remota/contadorVersion` (aprobado por el dueño). Antes dos envíos casi simultáneos podían salir con la misma `version` y la TV ignoraba el segundo. `version` se sigue escribiendo solo en el `update()` junto con `pantalla` y `archivo`, así la TV nunca la ve antes que el contenido. El firmware no cambia. |
+| `999a64c` | **Lógica, `gif.js`:** avisos de peso del GIF comprimido calculados para el ESP32-S3: sin aviso hasta 256 KB, amarillo hasta 1 MB, rojo por encima. El S3 baja directo a la flash (~7,9 MB): el límite es el tiempo de descarga, no el espacio. |
+| `378c25d` | **Lógica, `main.js`:** `setAvisoGaleria`, `setAvisoGaleriaDibujo`, `setAvisoGaleriaNueva` y `setAvisoCancion` usan por dentro `mostrarAviso()`. |
+| `a00f912` | **Lógica, `firebase.js`:** una sola limpieza de claves (`limpiarClave`), que quita también los espacios de los bordes. Un nombre vacío se rechaza (antes la clave vacía apuntaba al catálogo entero). |
+| `6dfced9` | **Visual, `style.css`:** 26 selectores definidos dos veces, unificados. Estilo calculado de todos los elementos idéntico antes y después. |
+| firmware `be2c5b6` | **Log, `github.cpp`:** `[github] animación comprimida` y `[github] musical` dicen cuántos ms tardó la descarga. |
+
+Queda a decidir por el dueño: el umbral simple usa `>` y Atkinson `>=`. Es igual en el simulador `CancionesMiniTV`, del que se copió; unificarlo haría que el panel y el simulador difieran en el tono gris exacto del umbral.

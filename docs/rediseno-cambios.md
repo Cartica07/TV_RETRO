@@ -51,7 +51,7 @@ Las decisiones se tomaron a partir de estudios y guías publicadas (Nielsen Norm
   - fondo negro o blanco.
 - **Difuminado Atkinson**, el mismo de CancionesMiniTV. Con el anterior (Floyd-Steinberg) el umbral casi no cambiaba el resultado; con Atkinson sí aclara u oscurece la imagen.
 - **Aviso de GIF pesado:** cada cuadro ocupa unos 1,4 KB. Hasta 28 KB (unos 20 cuadros) no hay aviso. Entre 28 y 56 KB aparece un aviso amarillo, y por encima de 56 KB uno rojo, "GIF muy pesado/largo". Son límites pensados para un ESP32 común sin PSRAM; solo avisan, no bloquean el envío.
-- **Actualización:** desde el commit `73c2868` los GIF se envían **comprimidos** (formato z1, sin pérdida) y el aviso usa el tamaño comprimido: seguro hasta 64 KB, rojo por encima de 110 KB. Los límites de 28/56 KB quedan solo para navegadores sin compresión. Ver [formatos-datos.md](formatos-datos.md).
+- **Actualización:** desde el commit `73c2868` los GIF se envían **comprimidos** (formato z1, sin pérdida) y el aviso usa el tamaño comprimido: seguro hasta 64 KB, rojo por encima de 110 KB. Los límites de 28/56 KB quedan solo para navegadores sin compresión. **Actualización 2026-11-10:** con el ESP32-S3, sin aviso hasta 256 KB y rojo por encima de 1 MB (commit `999a64c`). Ver [formatos-datos.md](formatos-datos.md).
 
 ## 5. Pestaña Dibujo
 

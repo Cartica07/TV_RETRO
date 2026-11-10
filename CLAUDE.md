@@ -79,7 +79,8 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 - `oled_remota` = `{ version, lastSeen, archivo?, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto,fuente,manual,x,y,direccion}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}] | formato:"z1",cantidad} | musical{nombre,repeticiones,formato:"m1"} } }`
 - `tipo`: `texto` | `imagen` | `cancion` | `animacion` | `musical`. Dibujo y Galería se envían como `imagen`; un GIF como `animacion`.
-- `enviarEstado` usa **`update()`** sobre `oled_remota` (escribe `version`, `pantalla` y `archivo` sin borrar `lastSeen`). `version` sube en 1 en cada envío; el firmware solo descarga cuando cambia.
+- `enviarEstado` usa **`update()`** sobre `oled_remota` (escribe `version`, `pantalla` y `archivo` sin borrar `lastSeen`). `version` es un número nuevo en cada envío; el firmware solo descarga cuando cambia.
+- `oled_remota/contadorVersion` (aprobado 2026-11-10): entero que reserva el número de cada envío con una transacción (`max(contador, version) + 1`), justo antes del `update()`. Así dos envíos nunca salen con la misma `version`. `version` se sigue escribiendo solo en el `update()`, junto con `pantalla` y `archivo`. La TV no lo lee; si falta, arranca desde `version`.
 - `oled_remota/lastSeen`: heartbeat que escribe el ESP cada 10 s; la web solo lo lee (en línea si tiene menos de 25 s).
 - `config.fuente` (aprobado): `clasica` | `sans` | `sansb` | `serif` | `serifi`. Si falta = `clasica`. El panel usa `sans` por defecto.
 - `config.manual`, `config.x`, `config.y` (aprobados): posición manual del bloque de texto. `config.tamano` 1..5 (en las fuentes nuevas 6/10/12/16/18 pt).
@@ -88,7 +89,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - **Musicales `m1`** (aprobado): `pantalla.musical = {nombre, repeticiones, formato:"m1"}`; la grabación va en `oled_remota/archivo = {version, datos}`. Ver `docs/musicales.md`.
 - Con otro tipo de contenido, `archivo` se borra (`null`).
 - Fuente clásica: glcdfont en orden CP437; tildes/ñ/¿/¡ con la tabla `LATIN1_A_CP437` (igual en `fonts.js` y en `texto.cpp` del firmware).
-- Peso: el firmware ESP32-S3 baja animaciones y musicales directo a LittleFS (~7,9 MB). Aviso de GIF por tamaño comprimido: seguro ≤ 64 KB, rojo > 110 KB (`evaluarPesoComprimido`). Solo avisa, no bloquea.
+- Peso: el firmware ESP32-S3 baja animaciones y musicales directo a LittleFS (~7,9 MB). Aviso de GIF por tamaño comprimido (`evaluarPesoComprimido`): sin aviso ≤ 256 KB, amarillo hasta 1 MB, rojo > 1 MB. El límite es el tiempo de descarga (estimado 50-150 KB/s), no el espacio. Solo avisa, no bloquea. El firmware anota el tiempo real en el log `[github] … en N ms`.
 
 ### Catálogos (hermanos de `oled_remota`; el ESP no los lee)
 - `imagenes/<clave>` = `{datos, ancho, alto, meta, preprocesada?}`
@@ -109,7 +110,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - Firmware: `54dce85` grabado en la placa. Con letra, sin letra y el botón funcionan (confirmado por el dueño); 9 envíos seguidos sin fuga de memoria (heap libre estable, 96–102 KB).
   - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
-- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Sin push. Pendiente con el firmware: versión repetida si dos envíos coinciden y los avisos de peso de GIF. Después siguen la seguridad de Firebase y las optimizaciones.
+- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho. Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`, sin push). Firmware `be2c5b6`: log con el tiempo de descarga (sin grabar en la placa, sin push). En curso: detalles menores (esperan decisiones del dueño). Después siguen la seguridad de Firebase y las optimizaciones.
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases

@@ -59,7 +59,7 @@ El proyecto nació así, con un ESP8266 que consultaba Firebase. Firebase da una
 
 1. **El usuario arma el contenido** en una pestaña del panel. La tarjeta de arriba muestra una **vista previa pixel-perfect** de la OLED, con la misma fuente, los mismos cortes de línea y los mismos tiempos de scroll que el firmware.
 2. **Pulsa "Enviar a la OLED".** `main.js` arma el estado y llama a `enviarEstado()` en `firebase.js`, que:
-   - lee la `version` actual y la sube en 1;
+   - reserva un número de `version` nuevo con una transacción sobre `oled_remota/contadorVersion` (así dos envíos casi simultáneos no salen con el mismo número);
    - arma `pantalla` según el tipo;
    - si el contenido es pesado (GIF comprimido o musical), lo pone en `archivo = {version, datos}`; si no, borra `archivo` (`null`);
    - escribe todo con **un solo `update()`** sobre `oled_remota`. Usa `update` y no `set` para no borrar `lastSeen`.
