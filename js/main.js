@@ -936,15 +936,38 @@ function marcarControlesEncuadre() {
 // Dispara al elegir un archivo nuevo del disco (o al pegar una imagen del
 // portapapeles, que llega como Blob sin nombre). Si es un GIF animado
 // (más de un cuadro) queda como animación; si no, como imagen fija.
+// Las subidas procesan en segundo plano (a veces varios segundos con una
+// foto grande). Si mientras tanto el usuario se fue de la pestaña, o subió
+// otra cosa, el resultado que llega tarde NO se aplica: el estado de la
+// imagen se comparte entre pestañas y pisaría lo que está viendo o va a
+// enviar. turnoSubida identifica la subida vigente.
+let turnoSubida = 0;
+const enPestanaImagen = () => estadoActual.tipo === 'imagen';
+const enPestanaGaleria = () => estadoActual.tipo === 'galeria' || estadoActual.tipo === 'animacion';
+
+// Devuelve true si el resultado de la subida `turno` ya no corresponde y hay
+// que descartarlo. Si el usuario solo se fue de la pestaña (no hay otra
+// subida más nueva) se limpia el "Procesando…" que quedó en el estado.
+function subidaObsoleta(turno, sigueEnLaPestana) {
+  if (turno !== turnoSubida) return true; // hay una subida más nueva: ella maneja el estado
+  if (!sigueEnLaPestana()) {
+    marcarEstado('', null, elementos);
+    return true;
+  }
+  return false;
+}
+
 async function procesarYMostrarImagen(archivo = elementos.cargadorImagen.files[0], nombreSugerido = '') {
   const file = archivo;
   if (!file) return;
+  const turno = ++turnoSubida;
 
   try {
     marcarEstado('Procesando imagen…', null, elementos);
 
     const nombreBase = (file.name || nombreSugerido || 'imagen').replace(/\.[^.]+$/, '');
     const buffer = await file.arrayBuffer();
+    if (subidaObsoleta(turno, enPestanaImagen)) return;
     let leido = null;
     if (esGif(buffer)) {
       marcarEstado('Leyendo GIF…', null, elementos);
@@ -959,7 +982,9 @@ async function procesarYMostrarImagen(archivo = elementos.cargadorImagen.files[0
     } else {
       gifActual = null;
       mostrarAvisoPesoGif(elementos.avisoGaleria, { nivel: 'ok' });
-      imagenOriginal = await cargarImagenOriginal(file);
+      const original = await cargarImagenOriginal(file);
+      if (subidaObsoleta(turno, enPestanaImagen)) return;
+      imagenOriginal = original;
       aplicarImagenOriginal();
     }
 
@@ -1591,6 +1616,7 @@ async function manejarBorrarAnimacionSeleccionada() {
 async function procesarYMostrarImagenGaleria() {
   const file = elementos.cargadorImagenGaleria.files[0];
   if (!file) return;
+  const turno = ++turnoSubida;
 
   try {
     marcarEstado('Procesando imagen…', null, elementos);
@@ -1598,6 +1624,7 @@ async function procesarYMostrarImagenGaleria() {
     // GIF animado: queda como animación (se guarda en la lista GIF).
     // Sin encuadre en la Galería: se usa el encuadre por defecto.
     const buffer = await file.arrayBuffer();
+    if (subidaObsoleta(turno, enPestanaGaleria)) return;
     let leido = null;
     if (esGif(buffer)) {
       marcarEstado('Leyendo GIF…', null, elementos);
@@ -1620,6 +1647,7 @@ async function procesarYMostrarImagenGaleria() {
     const umbral = parseInt(elementos.umbralGaleria.value);
     const dithering = elementos.ditheringGaleria.checked;
     const resultado = await procesarImagen(file, 128, 64, umbral, dithering);
+    if (subidaObsoleta(turno, enPestanaGaleria)) return;
 
     estadoActual.tipo = 'galeria';
     imagenOriginal = null;
