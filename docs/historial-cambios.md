@@ -138,7 +138,7 @@ Detalles menores (decisiones del dueño del 2026-11-10):
 | Commit | Cambio |
 |---|---|
 | `576d07a` | **Visual, `index.html`:** la pestaña Música se llama Canciones. |
-| `61f009a` | **Lógica, `main.js`:** una canción que no se repite suena una vez con letra y sin letra; la fila Repeticiones se oculta mientras está elegida. |
+| `61f009a`, `4d44193` | **Lógica, `main.js`:** primero (`61f009a`) las canciones que no se repiten sonaban una vez y ocultaban Repeticiones; el dueño lo corrigió (`4d44193`): **todas** las canciones respetan Repeticiones, con letra y sin letra. Las 3 cuyo `.ino` no repite eran casos especiales de la ESP8266. Firmware `66c49c2` (`musical.cpp`): da siempre las vueltas pedidas. |
 | `c367411` | **Lógica, `main.js`:** al enviar dice "Enviado ✅ Ya va camino a la TV." (antes "La OLED lo toma en el próximo chequeo"). |
 | `7d75bac` | **Lógica, `firebase.js`:** un texto ya no manda la imagen anterior en `pantalla.imagen` (~1,4 KB por envío). |
 | `d75c579` | **Visual, `carga-masiva.html`:** la sección de canciones (subía a `canciones/`, ya borrado) queda oculta; sus funciones siguen. |

@@ -95,7 +95,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
   - la clave es el nombre del archivo sin `.ino`; si ya existe, se reemplaza;
   - el aviso muestra el progreso y cuántas canciones fallaron, con el motivo.
 - **Listar:** `listarMusicales()` lee solo `musicales/indice`, que es liviano, ordenado por nombre.
-- **Elegir:** `leerMusical(clave)` baja los datos y `decodificarMusical` los convierte. El aviso muestra "Nombre · m:ss" y "(una vez)" si no se repite.
+- **Elegir:** `leerMusical(clave)` baja los datos y `decodificarMusical` los convierte. El aviso muestra "Nombre · m:ss" (ya no avisa si el `.ino` no repite: en el ESP32-S3 no importa).
 - **Vista previa:**
   - con letra, la OLED del panel reproduce las imágenes a su tiempo (`iniciarPreviewMusical`);
   - sin letra, la pantalla no cambia: si antes se estaba viendo la vista previa con letra, se vuelve a mostrar lo que había.
@@ -104,7 +104,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
   - con letra: `tipo: "musical"`, `musicalNombre`, `musicalRepeticiones` y `musicalDatos` (m1), que van a `archivo`;
   - sin letra: `tipo: "cancion"` con `cancionNotas = notasParaCancion(grab)`;
   - si no se eligió nada: "Elige una canción.";
-  - si la canción no se repite (`repetir = false`), se manda con 1 repetición, con letra y sin letra, y la fila Repeticiones se oculta mientras está elegida (antes, sin letra, se repetía las veces del campo).
+  - **todas** las canciones se mandan con el número de Repeticiones que puso el usuario, con letra y sin letra, también las 3 cuyo `.ino` no repite (*culpable_ono*, *en_otra_vida*, *vuelvepetro*): eran casos especiales de la TV ESP8266. La fila Repeticiones se ve siempre.
 - **Al abrir el panel:** si lo último enviado fue un musical, se abre Canciones con "Con letra" y esa canción elegida.
 
 ## 6. El firmware (`musical.cpp`, commit `54dce85`)
@@ -115,7 +115,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
   - `musical_actualizar(dibujar)` en cada `loop()` avanza las notas (`tone()`/`noTone()`) y las imágenes según `millis()`;
   - las notas y la línea de tiempo están en vectores en memoria;
   - cada imagen se lee y descomprime del archivo (`tinfl`) solo cuando toca dibujarla.
-- **Repeticiones:** si el `.ino` original se repetía, da `repeticiones` vueltas; si no, una. Al terminar se queda en la última imagen.
+- **Repeticiones:** da siempre `repeticiones` vueltas, sea cual sea el `.ino` (desde el 2026-11-10; antes, si el `.ino` no repetía, daba una sola; el bit `repetir` del m1 se sigue guardando y leyendo, pero ya no limita). Al terminar se queda en la última imagen.
 - **Modos:** en reloj o pantalla apagada la música sigue sonando, pero no se dibuja. Al volver al modo contenido, `musical_redibujar()` pone la imagen que corresponde.
 - **Corte:** el botón corta el musical, igual que con las canciones. Llegar a otro contenido también lo corta (`musical_stop`).
 - **Sin pitido de "mensaje nuevo"** al llegar un musical, porque sería lo primero que suena.
