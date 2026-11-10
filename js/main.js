@@ -2268,10 +2268,27 @@ function configurarEventos() {
 // ===================================================
 // Firebase: Cargar y Enviar
 // ===================================================
+// Mientras se lee lo que muestra la TV, el panel queda bloqueado (atributo
+// "inert": no se puede pulsar, escribir ni enfocar nada). Así nadie puede
+// enviar "Hola Mundo" por encima del contenido real ni escribir algo que la
+// carga después pise. Dura normalmente menos de 1 s; si Firebase tarda más
+// de ESPERA_ARRANQUE_MS se libera y lo que llegue tarde ya no se aplica.
+const ESPERA_ARRANQUE_MS = 8000;
+const PARTES_BLOQUEABLES = ['main.controles', '.barra-accion', 'nav.nav-inferior', '#filaInvertido'];
+let arranqueVigente = true;
+
+function bloquearPanel(bloquear) {
+  PARTES_BLOQUEABLES.forEach((selector) => {
+    const el = document.querySelector(selector);
+    if (el) el.inert = bloquear;
+  });
+}
+
 async function cargarEstadoInicial() {
   try {
     const resultado = await cargarEstado();
-    
+    if (!arranqueVigente) return; // tardó demasiado: el panel ya se liberó
+
     if (resultado.exito) {
       if (!resultado.vacio) {
         // Hay datos en Firebase
@@ -2327,6 +2344,7 @@ async function cargarEstadoInicial() {
         cargas.push(poblarCatalogoImagenes(), poblarCatalogoAnimaciones());
       }
       await Promise.all(cargas);
+      if (!arranqueVigente) return;
       poblarControles(estadoActual, elementos);
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();
@@ -2529,7 +2547,20 @@ async function inicializar() {
   marcarControlesEncuadre();
   iniciarMonitoreoConexion();
 
-  await cargarEstadoInicial();
+  bloquearPanel(true);
+  let temporizador = null;
+  const limite = new Promise((resolver) => {
+    temporizador = setTimeout(() => { arranqueVigente = false; resolver('lento'); }, ESPERA_ARRANQUE_MS);
+  });
+  try {
+    const como = await Promise.race([cargarEstadoInicial().then(() => 'listo'), limite]);
+    if (como === 'lento') {
+      marcarEstado('La conexión está lenta: todavía no se pudo leer lo que muestra la TV.', 'error', elementos);
+    }
+  } finally {
+    clearTimeout(temporizador);
+    bloquearPanel(false);
+  }
 }
 
 // Ejecutar al cargar el DOM
