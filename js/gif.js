@@ -22,8 +22,10 @@ const ANCHO = 128;
 const ALTO = 64;
 
 /*
- * Límites de peso para que la animación entre en la memoria de un ESP32
- * común (ESP32-WROOM-32, sin PSRAM):
+ * Formato VIEJO, sin comprimir (los cuadros van dentro de pantalla). Solo
+ * se usa si el navegador no tiene CompressionStream (hoy casi ninguno).
+ * Los límites se pensaron para un ESP32 común (ESP32-WROOM-32, sin PSRAM)
+ * y se dejan como están: son prudentes también para el ESP32-S3.
  *  - De ~520 KB de SRAM, con WiFi + HTTPS (TLS) quedan del orden de
  *    100-250 KB libres, pero el bloque CONTIGUO más grande suele ser
  *    bastante menor (la memoria está repartida en regiones y se fragmenta).
@@ -54,25 +56,31 @@ export function evaluarPesoAnimacion(cuadros) {
   const n = lista.length;
   if (bytes > PESO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: `GIF muy pesado/largo: ${n} cuadros · ${kb} KB. Es muy probable que no entre en la memoria del ESP32 (máximo recomendado ~${Math.round(PESO_MAXIMO_BYTES / 1024)} KB). Usá un GIF más corto.` };
+      mensaje: `GIF muy pesado/largo: ${n} cuadros · ${kb} KB. Es muy probable que no entre en la memoria de la TV (máximo recomendado ~${Math.round(PESO_MAXIMO_BYTES / 1024)} KB). Conviene un GIF más corto.` };
   }
   if (bytes > PESO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB. Puede fallar si el ESP32 tiene poca memoria libre (seguro hasta ~${Math.round(PESO_RECOMENDADO_BYTES / 1024)} KB).` };
+      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB. Puede fallar si la TV tiene poca memoria libre (seguro hasta ~${Math.round(PESO_RECOMENDADO_BYTES / 1024)} KB).` };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
 
 /**
  * Límites para animaciones COMPRIMIDAS (formato "z1", js/compresion.js).
- * El firmware ya no la baja entera a la RAM: la escribe en su memoria
- * flash a medida que llega (LittleFS, 256 KB). Ahí conviven por un
- * momento la animación anterior y la nueva, más la canción, así que:
- * hasta ~64 KB comprimidos es seguro; hasta ~110 KB entra justo; más,
- * probablemente no entra.
+ * El firmware ESP32-S3 no la baja a la RAM: la decodifica de Base64 a
+ * medida que llega y la escribe en su memoria flash (LittleFS, ~7,9 MB),
+ * de a 256 bytes; al reproducir descomprime de a un cuadro. Ahí conviven
+ * por un momento la animación anterior y la nueva, más el musical y la
+ * canción, así que el espacio alcanza para varios MB.
+ * El límite real es el TIEMPO: mientras baja, la TV sigue mostrando lo
+ * anterior. El archivo viaja en Base64 (+33 %) y el ESP baja y graba del
+ * orden de 50-150 KB/s (estimado; el firmware anota el tiempo en el log
+ * "[github] animación comprimida"). Por eso: hasta ~256 KB aparece en
+ * unos segundos; hasta ~1 MB tarda más; más de 1 MB puede pasar los 15 s.
+ * Solo avisa: no bloquea el envío.
  */
-export const PESO_COMPRIMIDO_RECOMENDADO_BYTES = 64 * 1024;
-export const PESO_COMPRIMIDO_MAXIMO_BYTES = 110 * 1024;
+export const PESO_COMPRIMIDO_RECOMENDADO_BYTES = 256 * 1024;
+export const PESO_COMPRIMIDO_MAXIMO_BYTES = 1024 * 1024;
 
 /**
  * Clasifica una animación según su tamaño comprimido:
@@ -84,11 +92,11 @@ export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
   const n = cantidadCuadros || 0;
   if (bytes > PESO_COMPRIMIDO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: `GIF muy pesado: ${n} cuadros · ${kb} KB comprimido. Es muy probable que no entre en la memoria de la TV (máximo ~${Math.round(PESO_COMPRIMIDO_MAXIMO_BYTES / 1024)} KB). Usá un GIF más corto.` };
+      mensaje: `GIF muy pesado: ${n} cuadros · ${kb} KB comprimido. Puede tardar más de 15 s en aparecer en la TV (recomendado hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB). Conviene un GIF más corto.` };
   }
   if (bytes > PESO_COMPRIMIDO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB comprimido. Puede no entrar si la TV tiene además una canción guardada (seguro hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB).` };
+      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB comprimido. Va a tardar unos segundos en aparecer en la TV (rápido hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB).` };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
