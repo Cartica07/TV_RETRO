@@ -46,7 +46,7 @@
       <!-- Invertir: junto a la vista previa para ver el efecto al instante.
            Aplica a texto, imagen, dibujo y galería (display.invertDisplay en
            el firmware); main.js oculta esta fila en Canciones. -->
-      <div class="invertir-compacto" id="filaInvertido">
+      <div class="invertir-compacto" id="filaInvertido" inert>
         <label class="invertir-etiqueta" for="invertido">Invertir</label>
         <label class="switch switch-chico">
           <input type="checkbox" id="invertido" aria-label="Invertir colores" />
@@ -63,7 +63,7 @@
 
   </div>
 
-  <main class="controles">
+  <main class="controles" inert>
 
     <!-- Sección de TEXTO (mostrada por defecto) -->
     <div id="seccionTexto">
@@ -429,7 +429,7 @@
 
   <!-- Barra de acción fija: Enviar (el estado del último envío está en
        la tarjeta del dispositivo, #estadoLinea). -->
-  <div class="barra-accion">
+  <div class="barra-accion" inert>
     <div class="barra-accion-interior">
       <button id="enviar" type="button">Enviar a la OLED</button>
     </div>
@@ -437,7 +437,7 @@
 
   <!-- Navegación inferior: es el mismo selector de tipo (#grupoTipo,
        mismos data-valor) que usa main.js para cambiar de sección. -->
-  <nav class="nav-inferior" aria-label="Secciones">
+  <nav class="nav-inferior" aria-label="Secciones" inert>
     <div class="nav-pestanas" id="grupoTipo">
       <button type="button" data-valor="texto" class="activo">
         <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
