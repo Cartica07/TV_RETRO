@@ -53,6 +53,24 @@ const ESPERA_LENTA = Symbol('lenta');
 const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => setTimeout(() => r(ESPERA_LENTA), ms))]);
 
 /**
+ * Espera una escritura (guardar o borrar) como mucho ESPERA_MAXIMA_ENVIO_MS.
+ * Devuelve null si terminó a tiempo (quien llama sigue como siempre) o, si
+ * no, un resultado { exito: false, pendiente: true, escritura } donde
+ * "escritura" es una promesa que termina con { exito, ... } cuando por fin
+ * se complete (Firebase la manda sola al volver la señal). Así nadie se
+ * queda mirando "Guardando…" sin saber qué pasa.
+ */
+async function conTope(escritura, resultadoOk = { exito: true }) {
+  if (await esperarHasta(escritura, ESPERA_MAXIMA_ENVIO_MS) !== ESPERA_LENTA) return null;
+  return {
+    exito: false,
+    pendiente: true,
+    error: 'la conexión está lenta',
+    escritura: escritura.then(() => resultadoOk, (err) => ({ exito: false, error: err.message }))
+  };
+}
+
+/**
  * Lee oled_remota/pantalla y oled_remota/version y, solo si lo último
  * enviado es un GIF z1, también oled_remota/archivo. Las tres cosas tienen
  * que ser del mismo envío: si alguien envía algo (otra pestaña, otro
@@ -335,7 +353,8 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
       meta: meta
     };
     if (preprocesada) payload.preprocesada = preprocesada;
-    await set(ref(db, `imagenes/${safeKey}`), payload);
+    const lento = await conTope(set(ref(db, `imagenes/${safeKey}`), payload), { exito: true, key: safeKey });
+    if (lento) return lento;
     return { exito: true, key: safeKey };
   } catch (err) {
     console.error('Error al guardar imagen en catálogo:', err);
@@ -348,7 +367,8 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
  */
 export async function borrarImagenCatalogo(nombre) {
   try {
-    await remove(ref(db, `imagenes/${nombre}`));
+    const lento = await conTope(remove(ref(db, `imagenes/${nombre}`)));
+    if (lento) return lento;
     return { exito: true };
   } catch (err) {
     console.error('Error al borrar imagen del catálogo:', err);
@@ -402,7 +422,8 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
     const safeKey = limpiarClave(nombre);
     if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = { ancho, alto, cuadros, meta };
-    await set(ref(db, `animaciones/${safeKey}`), payload);
+    const lento = await conTope(set(ref(db, `animaciones/${safeKey}`), payload), { exito: true, key: safeKey });
+    if (lento) return lento;
     return { exito: true, key: safeKey };
   } catch (err) {
     console.error('Error al guardar animación en catálogo:', err);
@@ -415,7 +436,8 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
  */
 export async function borrarAnimacionCatalogo(nombre) {
   try {
-    await remove(ref(db, `animaciones/${nombre}`));
+    const lento = await conTope(remove(ref(db, `animaciones/${nombre}`)));
+    if (lento) return lento;
     return { exito: true };
   } catch (err) {
     console.error('Error al borrar animación del catálogo:', err);
@@ -464,10 +486,11 @@ export async function leerMusical(clave) {
 export async function guardarMusicalCatalogo(nombre, datos, meta = {}) {
   try {
     const clave = claveSegura(nombre);
-    await update(ref(db, 'musicales'), {
+    const lento = await conTope(update(ref(db, 'musicales'), {
       [`indice/${clave}`]: meta,
       [`datos/${clave}`]: datos
-    });
+    }), { exito: true, clave });
+    if (lento) return lento;
     return { exito: true, clave };
   } catch (err) {
     console.error('Error al guardar el musical:', err);
@@ -478,7 +501,8 @@ export async function guardarMusicalCatalogo(nombre, datos, meta = {}) {
 /** Borra un musical del catálogo (índice y datos). */
 export async function borrarMusicalCatalogo(clave) {
   try {
-    await update(ref(db, 'musicales'), { [`indice/${clave}`]: null, [`datos/${clave}`]: null });
+    const lento = await conTope(update(ref(db, 'musicales'), { [`indice/${clave}`]: null, [`datos/${clave}`]: null }));
+    if (lento) return lento;
     return { exito: true };
   } catch (err) {
     console.error('Error al borrar el musical:', err);

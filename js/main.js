@@ -1107,7 +1107,7 @@ async function manejarGuardarEnGaleria() {
       return;
     }
     setAvisoGaleria('Guardando…');
-    const resultadoGif = await guardarAnimacionCatalogo(
+    let resultadoGif = await guardarAnimacionCatalogo(
       nombre,
       estadoActual.animacionAncho,
       estadoActual.animacionAlto,
@@ -1119,6 +1119,7 @@ async function manejarGuardarEnGaleria() {
         fecha: Date.now()
       }, geometriaImagen)
     );
+    resultadoGif = await esperarFinal(resultadoGif, () => setAvisoGaleria(TEXTO_GUARDADO_LENTO));
     if (resultadoGif.exito) {
       await poblarCatalogoAnimaciones();
       setAvisoGaleria(`GIF guardado en la galería como "${resultadoGif.key}"`);
@@ -1139,7 +1140,7 @@ async function manejarGuardarEnGaleria() {
   }
 
   setAvisoGaleria('Guardando…');
-  const resultado = await guardarImagenCatalogo(
+  let resultado = await guardarImagenCatalogo(
     nombre,
     estadoActual.imagenData,
     estadoActual.imagenAncho,
@@ -1152,6 +1153,7 @@ async function manejarGuardarEnGaleria() {
       fecha: Date.now()
     }, imagenOriginal ? geometriaImagen : {})
   );
+  resultado = await esperarFinal(resultado, () => setAvisoGaleria(TEXTO_GUARDADO_LENTO));
 
   if (resultado.exito) {
     await poblarCatalogoImagenes();
@@ -1160,6 +1162,35 @@ async function manejarGuardarEnGaleria() {
     setAvisoGaleria('No se pudo guardar: ' + (resultado.error || ''), 'error');
   }
 }
+
+// Guardar, borrar e importar se ejecutan de a una por vez: un segundo toque
+// (o un doble clic) mientras la acción sigue en curso se ignora. Si hay un
+// botón, queda apagado mientras trabaja (así se nota que está ocupado). Los
+// botones de borrar NO se pasan: su estado lo maneja la selección.
+const accionesEnCurso = new Set();
+async function sinRepetir(clave, boton, accion) {
+  if (accionesEnCurso.has(clave)) return;
+  accionesEnCurso.add(clave);
+  if (boton) boton.disabled = true;
+  try {
+    return await accion();
+  } finally {
+    accionesEnCurso.delete(clave);
+    if (boton) boton.disabled = false;
+  }
+}
+
+// Si el guardado o borrado quedó esperando por falta de señal (ver conTope
+// en firebase.js), avisa y espera a que termine de verdad; devuelve el
+// resultado final para seguir como siempre. El botón sigue ocupado hasta
+// entonces, así nadie repite la acción creyendo que no funcionó.
+async function esperarFinal(resultado, avisarLento) {
+  if (!resultado || !resultado.pendiente || !resultado.escritura) return resultado;
+  avisarLento();
+  return await resultado.escritura;
+}
+const TEXTO_GUARDADO_LENTO = 'La conexión está lenta: se guardará solo cuando vuelva la señal.';
+const TEXTO_BORRADO_LENTO = 'La conexión está lenta: se borrará solo cuando vuelva la señal.';
 
 // Muestra (o con texto vacío, oculta) un recuadro de aviso. tipo
 // 'error' lo pinta en rojo. Quita el amarillo del aviso de peso del GIF
@@ -1199,7 +1230,7 @@ async function manejarGuardarDibujoEnGaleria() {
 
   const resultado_imagen = obtenerResultadoImagen(elementos.lienzoDibujo);
 
-  const resultado = await guardarImagenCatalogo(
+  let resultado = await guardarImagenCatalogo(
     nombre,
     resultado_imagen.imagenData,
     resultado_imagen.imagenAncho,
@@ -1207,6 +1238,7 @@ async function manejarGuardarDibujoEnGaleria() {
     resultado_imagen.preprocesada,
     { origen: 'dibujo', fecha: Date.now() }
   );
+  resultado = await esperarFinal(resultado, () => setAvisoGaleriaDibujo(TEXTO_GUARDADO_LENTO));
 
   if (resultado.exito) {
     await poblarCatalogoImagenes();
@@ -1404,7 +1436,8 @@ async function manejarBorrarGaleriaSeleccionada() {
   const key = galeriaSeleccionActual;
   // Borrar es permanente (igual que con las canciones, se pregunta antes).
   if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
-  const resultado = await borrarImagenCatalogo(key);
+  let resultado = await borrarImagenCatalogo(key);
+  resultado = await esperarFinal(resultado, () => marcarEstado(TEXTO_BORRADO_LENTO, null, elementos));
 
   if (resultado.exito) {
     galeriaSeleccionActual = null;
@@ -1599,7 +1632,8 @@ async function manejarBorrarAnimacionSeleccionada() {
 
   const key = animacionSeleccionActual;
   if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
-  const resultado = await borrarAnimacionCatalogo(key);
+  let resultado = await borrarAnimacionCatalogo(key);
+  resultado = await esperarFinal(resultado, () => marcarEstado(TEXTO_BORRADO_LENTO, null, elementos));
 
   if (resultado.exito) {
     animacionSeleccionActual = null;
@@ -1684,7 +1718,7 @@ async function manejarGuardarNuevaEnGaleria() {
       return;
     }
     setAvisoGaleriaNueva('Guardando…');
-    const resultadoGif = await guardarAnimacionCatalogo(
+    let resultadoGif = await guardarAnimacionCatalogo(
       nombreGif,
       estadoActual.animacionAncho,
       estadoActual.animacionAlto,
@@ -1696,6 +1730,7 @@ async function manejarGuardarNuevaEnGaleria() {
         fecha: Date.now()
       }, OPCIONES_GEOMETRIA_DEFECTO)
     );
+    resultadoGif = await esperarFinal(resultadoGif, () => setAvisoGaleriaNueva(TEXTO_GUARDADO_LENTO));
     if (resultadoGif.exito) {
       await poblarCatalogoAnimaciones();
       setAvisoGaleriaNueva(`GIF guardado en la lista GIF como "${resultadoGif.key}"`);
@@ -1717,7 +1752,7 @@ async function manejarGuardarNuevaEnGaleria() {
   }
 
   setAvisoGaleriaNueva('Guardando…');
-  const resultado = await guardarImagenCatalogo(
+  let resultado = await guardarImagenCatalogo(
     nombre,
     estadoActual.imagenData,
     estadoActual.imagenAncho,
@@ -1730,6 +1765,7 @@ async function manejarGuardarNuevaEnGaleria() {
       fecha: Date.now()
     }
   );
+  resultado = await esperarFinal(resultado, () => setAvisoGaleriaNueva(TEXTO_GUARDADO_LENTO));
 
   if (resultado.exito) {
     await poblarCatalogoImagenes();
@@ -1915,7 +1951,8 @@ async function importarCanciones(archivos) {
         origen: 'ino',
         fecha: Date.now()
       };
-      const r = await guardarMusicalCatalogo(clave, m.datos, meta);
+      let r = await guardarMusicalCatalogo(clave, m.datos, meta);
+      r = await esperarFinal(r, () => setAvisoCancion('La conexión está lenta: se importará solo cuando vuelva la señal.'));
       if (!r.exito) throw new Error('no se pudo guardar: ' + describirError(r.error));
       ultimaClave = r.clave;
     } catch (err) {
@@ -1938,7 +1975,8 @@ async function borrarMusicalElegido() {
   const clave = elementos.seleccionCancion.value;
   if (!clave) return;
   if (!confirm(`¿Borrar "${nombreMusical(clave)}"?`)) return;
-  const r = await borrarMusicalCatalogo(clave);
+  let r = await borrarMusicalCatalogo(clave);
+  r = await esperarFinal(r, () => setAvisoCancion(TEXTO_BORRADO_LENTO));
   if (!r.exito) {
     setAvisoCancion('No se pudo borrar: ' + describirError(r.error), 'error');
     return;
@@ -2098,7 +2136,13 @@ function configurarEventos() {
 
   // Cargador de imagen: solo procesa y muestra el preview. Guardar en
   // el catálogo es una acción aparte (botón "Añadir imagen al catálogo").
-  elementos.cargadorImagen.addEventListener('change', () => procesarYMostrarImagen());
+  // Después de tomar el archivo se limpia el campo: si el cliente elige el
+  // MISMO archivo otra vez (para reintentar), el navegador no avisa de cambios
+  // cuando el valor no cambió y parecería que no pasa nada.
+  elementos.cargadorImagen.addEventListener('change', () => {
+    procesarYMostrarImagen(); // toma files[0] al empezar, antes de limpiar
+    elementos.cargadorImagen.value = '';
+  });
 
   // Pegar imagen del portapapeles: botón Pegar y Ctrl+V en la pestaña Imagen.
   if (elementos.botonPegarImagen) {
@@ -2146,13 +2190,16 @@ function configurarEventos() {
 
   // Guardar la imagen actualmente procesada en el catálogo
   if (elementos.botonGuardarGaleria) {
-    elementos.botonGuardarGaleria.addEventListener('click', manejarGuardarEnGaleria);
+    elementos.botonGuardarGaleria.addEventListener('click', () => sinRepetir('guardar-imagen', elementos.botonGuardarGaleria, manejarGuardarEnGaleria));
   }
 
   // V1.13: sección Galería -- añadir imagen nueva, reajustar la
   // seleccionada (mismo par umbral/dithering, pero el de esta sección).
   if (elementos.cargadorImagenGaleria) {
-    elementos.cargadorImagenGaleria.addEventListener('change', () => procesarYMostrarImagenGaleria());
+    elementos.cargadorImagenGaleria.addEventListener('change', () => {
+      procesarYMostrarImagenGaleria(); // toma files[0] al empezar, antes de limpiar
+      elementos.cargadorImagenGaleria.value = '';
+    });
   }
   if (elementos.umbralGaleria) {
     elementos.umbralGaleria.addEventListener('input', (e) => {
@@ -2168,13 +2215,13 @@ function configurarEventos() {
     });
   }
   if (elementos.botonGuardarGaleriaNueva) {
-    elementos.botonGuardarGaleriaNueva.addEventListener('click', manejarGuardarNuevaEnGaleria);
+    elementos.botonGuardarGaleriaNueva.addEventListener('click', () => sinRepetir('guardar-galeria', elementos.botonGuardarGaleriaNueva, manejarGuardarNuevaEnGaleria));
   }
   if (elementos.botonBorrarGaleria) {
-    elementos.botonBorrarGaleria.addEventListener('click', manejarBorrarGaleriaSeleccionada);
+    elementos.botonBorrarGaleria.addEventListener('click', () => sinRepetir('borrar-galeria', null, manejarBorrarGaleriaSeleccionada));
   }
   if (elementos.botonBorrarAnimacion) {
-    elementos.botonBorrarAnimacion.addEventListener('click', manejarBorrarAnimacionSeleccionada);
+    elementos.botonBorrarAnimacion.addEventListener('click', () => sinRepetir('borrar-animacion', null, manejarBorrarAnimacionSeleccionada));
   }
 
   // Galería: selector Imágenes / Animaciones (solo presentación).
@@ -2225,7 +2272,7 @@ function configurarEventos() {
     });
   }
   if (elementos.botonGuardarGaleriaDibujo) {
-    elementos.botonGuardarGaleriaDibujo.addEventListener('click', manejarGuardarDibujoEnGaleria);
+    elementos.botonGuardarGaleriaDibujo.addEventListener('click', () => sinRepetir('guardar-dibujo', elementos.botonGuardarGaleriaDibujo, manejarGuardarDibujoEnGaleria));
   }
 
   // Dibujo: expandir / contraer el lienzo.
@@ -2274,13 +2321,20 @@ function configurarEventos() {
   // Canciones: importar .ino, borrar, Con letra / Sin letra
   if (elementos.cargadorMusical) {
     elementos.cargadorMusical.addEventListener('change', async (e) => {
-      const archivos = e.target.files;
-      await importarCanciones(archivos);
+      // Se copian los archivos y se limpia el campo enseguida: así elegir
+      // otra vez el MISMO archivo vuelve a funcionar. Una importación a la
+      // vez: si ya hay una en curso, se avisa en vez de mezclarlas.
+      const archivos = [...e.target.files];
       e.target.value = '';
+      if (accionesEnCurso.has('importar')) {
+        setAvisoCancion('Espera: todavía se están importando canciones.');
+        return;
+      }
+      await sinRepetir('importar', null, () => importarCanciones(archivos));
     });
   }
   if (elementos.botonBorrarMusical) {
-    elementos.botonBorrarMusical.addEventListener('click', borrarMusicalElegido);
+    elementos.botonBorrarMusical.addEventListener('click', () => sinRepetir('borrar-cancion', null, borrarMusicalElegido));
   }
   if (elementos.grupoLetra) {
     elementos.grupoLetra.addEventListener('click', (e) => {
