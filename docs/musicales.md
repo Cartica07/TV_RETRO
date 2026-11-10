@@ -1,6 +1,6 @@
 # Musicales: canciones con letra, imágenes y GIF
 
-**Estado (2026-11-10):** el panel está terminado y las 57 canciones están importadas. Falta grabar el firmware y probar en la TV (sección 8).
+**Estado (2026-11-10): terminado y probado en la TV.** Ver la sección 8.
 
 ## 1. Qué pidió el dueño
 
@@ -137,12 +137,13 @@ Hecho (2026-11-10):
 - **Las 57 canciones importadas** desde el panel, en 34 s y sin errores (777 KB en total).
 - Catálogo viejo `canciones/` (8 canciones) **respaldado** en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json` (fuera de los repos) y **borrado** de Firebase, como pidió el dueño.
 
+- **Firmware `54dce85` grabado en la placa** (arduino-cli, COM6) y probado en la TV:
+  - con letra: la letra y las imágenes van a tiempo con la música (confirmado por el dueño);
+  - sin letra: suena de fondo y la pantalla no cambia (confirmado);
+  - el botón corta la música (confirmado);
+  - monitor serie: el musical baja en ~1 s (`[musical] 271 notas, 23 imágenes, 295 cuadros, 52.7 s, repite`);
+  - 9 envíos seguidos (con y sin letra, alternados): heap libre estable entre 96 y 102 KB, sin fuga y sin reinicios.
+
 Falta:
-1. **Grabar el firmware** `54dce85` (o posterior) en la placa (Arduino IDE) y probar en la TV:
-   - con letra, que reemplaza la pantalla y va a tiempo;
-   - sin letra, que suena de fondo;
-   - repeticiones;
-   - el botón;
-   - los cambios de modo.
-2. **Push** de los dos repos cuando el dueño lo pida.
-3. **Opcional:** que la vista previa del panel también suene.
+1. **Push** de los dos repos cuando el dueño lo pida.
+2. **Opcional:** que la vista previa del panel también suene.

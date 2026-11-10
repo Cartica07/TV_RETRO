@@ -89,7 +89,7 @@ Todos los commits llevan mensaje en español y separan diseño de lógica.
 | firmware | `6d54440` | Pines del S3 (OLED 8/9, buzzer 4, botón 5, encoder 6/7 reservado), `partitions.csv` de 16 MB (2 × 4 MB de app + ~7,9 MB de LittleFS) y README con las opciones del IDE. Probado en la placa: texto, imagen, sonido, dibujo y GIF. Push hecho. |
 | panel | `d1132f0` | Docs: las fuentes, la posición manual y el scroll vertical ya están en el firmware. |
 
-## Etapa 5: musicales (9 nov 2026, en curso)
+## Etapa 5: musicales (9–10 nov 2026)
 
 | Repo | Commit | Cambio |
 |---|---|---|
@@ -101,4 +101,6 @@ Todos los commits llevan mensaje en español y separan diseño de lógica.
 | — | (2026-11-10, en Firebase) | El dueño publicó las reglas con `musicales`. |
 | panel | `22910fa` | **Lógica:** catálogo `musicales/` en `firebase.js`, IDs en `ui.js`, importar/elegir/vista previa/borrar/enviar en `main.js`. Con "Sin letra" la vista previa vuelve a lo que había en pantalla. Probado con Playwright: sin scroll y sin errores propios. |
 | — | (2026-11-10, en Firebase) | **Las 57 canciones importadas** a `musicales/` desde el panel (777 KB en total). Catálogo viejo `canciones/` respaldado en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json` y **borrado** de Firebase, a pedido del dueño. |
-| panel | *(este cambio)* | Documentación actualizada con lo anterior. |
+| panel | `d7f9790` | Documentación actualizada con lo anterior. |
+| — | (2026-11-10, en la placa) | Firmware `54dce85` grabado y **probado en la TV**: con letra, sin letra y el botón funcionan; 9 envíos seguidos sin fuga de memoria. |
+| ambos | *(este cambio)* | Documentación: musicales terminados y probados. |

@@ -104,9 +104,9 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 - Rediseño tipo app: terminado.
 - Firmware ESP32-S3: texto con todas las fuentes, imágenes, dibujos, canciones, GIF z1, tildes, streaming de Firebase, dos núcleos. Probado en la placa.
-- **Musicales: en curso.**
-  - Panel terminado y probado (`0a44f6f`, `ce77fa2`, `22910fa`); las 57 canciones están importadas en `musicales/`.
-  - Reproductor del firmware (`musical.cpp`, commit `54dce85`): compila, pero **falta grabarlo en la placa y probarlo** con y sin letra.
+- **Musicales: terminado y probado en la TV (2026-11-10).**
+  - Panel: `0a44f6f`, `ce77fa2`, `22910fa`; las 57 canciones están importadas en `musicales/`.
+  - Firmware: `54dce85` grabado en la placa. Con letra, sin letra y el botón funcionan (confirmado por el dueño); 9 envíos seguidos sin fuga de memoria (heap libre estable, 96–102 KB).
   - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
 

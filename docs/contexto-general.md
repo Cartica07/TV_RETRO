@@ -93,7 +93,7 @@ El detalle commit por commit está en [historial-cambios.md](historial-cambios.m
    - tildes;
    - z1.
 4. **9 nov 2026: cambio a ESP32-S3 N16R8** (16 MB de flash, 8 MB de PSRAM). Cambiaron los pines y la tabla de particiones. Probado en la placa: texto, imagen, sonido, dibujo y GIF funcionan.
-5. **9 nov 2026: musicales** (en curso). Se importan los `.ino` de canciones con letra del dueño, se graban en el navegador y la TV los reproduce igual que si se les grabara el `.ino`. Ver [musicales.md](musicales.md).
+5. **9–10 nov 2026: musicales** (terminado y probado en la TV). Se importan los `.ino` de canciones con letra del dueño, se graban en el navegador y la TV los reproduce igual que si se les grabara el `.ino`. Ver [musicales.md](musicales.md).
 
 ## 5. El panel por dentro
 
@@ -175,9 +175,8 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 
 ## 8. Pendientes
 
-1. **Musicales:** grabar el firmware `54dce85` en la placa y probar con y sin letra en la TV. Lo demás ya está hecho: reglas publicadas, las 57 canciones importadas y el catálogo viejo `canciones/` respaldado y borrado.
-2. **Push** de los dos repos cuando el dueño lo pida.
-3. **Más adelante:**
+1. **Push** de los dos repos cuando el dueño lo pida. Los musicales ya están terminados y probados en la TV; las reglas están publicadas, las 57 canciones importadas y el catálogo viejo `canciones/` respaldado y borrado.
+2. **Más adelante:**
    - vista previa con sonido en el panel (opcional);
    - actualización OTA;
    - login y reglas por UID;
