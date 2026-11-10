@@ -1,6 +1,6 @@
-# Fuentes de letra en el firmware (pendiente)
+# Fuentes de letra en el firmware
 
-El panel ya envía el estilo de letra, pero el ESP32 todavía no lo dibuja: hasta que se actualice el firmware, la OLED muestra la fuente clásica 5×7 con el tamaño elegido.
+Implementado en el firmware ESP32-S3 (repo Firmware-TV-RETRO, `texto.cpp` y `fuentes.cpp`). Este documento es la especificación: lo que el firmware tiene que hacer para que la OLED coincida con la vista previa.
 
 ## Qué llega por Firebase
 
