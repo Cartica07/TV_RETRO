@@ -53,6 +53,37 @@ const ESPERA_LENTA = Symbol('lenta');
 const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => setTimeout(() => r(ESPERA_LENTA), ms))]);
 
 /**
+ * Lee oled_remota/pantalla y oled_remota/version y, solo si lo último
+ * enviado es un GIF z1, también oled_remota/archivo. Las tres cosas tienen
+ * que ser del mismo envío: si alguien envía algo (otra pestaña, otro
+ * dispositivo) mientras se leen, no coinciden y se vuelve a leer, hasta 3
+ * veces (igual que hace el firmware al descargar). Devuelve archivo = null
+ * si no se pudo conseguir uno coherente.
+ */
+async function leerPantallaYArchivo() {
+  const INTENTOS = 3;
+  let ultimo = null;
+  for (let intento = 0; intento < INTENTOS; intento++) {
+    const [snapPantalla, snapVersion] = await Promise.all([
+      get(ref(db, 'oled_remota/pantalla')),
+      get(ref(db, 'oled_remota/version'))
+    ]);
+    ultimo = { snapPantalla, snapVersion, archivo: null };
+    const animacion = (snapPantalla.val() || {}).animacion || {};
+    if (!(animacion.formato === FORMATO_COMPRIMIDO && puedeComprimir())) return ultimo;
+
+    const version = Number(snapVersion.val());
+    const archivo = (await get(ref(db, 'oled_remota/archivo'))).val();
+    const versionDespues = Number((await get(ref(db, 'oled_remota/version'))).val());
+    if (archivo && typeof archivo.datos === 'string' && Number(archivo.version) === version && versionDespues === version) {
+      ultimo.archivo = archivo;
+      return ultimo;
+    }
+  }
+  return ultimo;
+}
+
+/**
  * Carga el estado actual desde Firebase
  * Retorna un objeto con la configuración actual o null si hay error
  *
@@ -64,10 +95,7 @@ const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => 
  */
 export async function cargarEstado() {
   try {
-    const [snapPantalla, snapVersion] = await Promise.all([
-      get(ref(db, 'oled_remota/pantalla')),
-      get(ref(db, 'oled_remota/version'))
-    ]);
+    const { snapPantalla, snapVersion, archivo } = await leerPantallaYArchivo();
 
     if (snapPantalla.exists() || snapVersion.exists()) {
       const pantalla = snapPantalla.val() || {};
@@ -81,17 +109,14 @@ export async function cargarEstado() {
       // oled_remota/archivo; se descomprimen para la vista previa.
       let cuadrosAnimacion = Array.isArray(animacion.cuadros) ? animacion.cuadros : [];
       if (animacion.formato === FORMATO_COMPRIMIDO && puedeComprimir()) {
-        try {
-          const archivo = (await get(ref(db, 'oled_remota/archivo'))).val();
-          // El archivo tiene que ser del mismo envío que la pantalla: si
-          // alguien envió algo entre las dos lecturas, no coinciden.
-          if (archivo && typeof archivo.datos === 'string' && Number(archivo.version) === Number(datos.version)) {
+        if (archivo) {
+          try {
             cuadrosAnimacion = await descomprimirCuadros(archivo.datos);
-          } else {
-            console.warn('[TV RETRO] El archivo de la animación no es de la versión actual: sin vista previa.');
+          } catch (err) {
+            console.error('No se pudo descomprimir la animación:', err);
           }
-        } catch (err) {
-          console.error('No se pudo descomprimir la animación:', err);
+        } else {
+          console.warn('[TV RETRO] No se pudo leer el archivo de la animación de la versión actual: sin vista previa.');
         }
       }
 
