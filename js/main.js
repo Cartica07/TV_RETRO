@@ -846,20 +846,31 @@ function aplicarGif() {
   // Se envía comprimido (js/compresion.js): el peso que importa es el
   // comprimido. Se calcula aparte; si mientras tanto se volvió a procesar
   // el GIF (umbral, encuadre), este resultado ya no corresponde.
+  //
+  // Mientras se arrastra el slider de umbral llegan muchos cambios seguidos
+  // y comprimir todos los cuadros es lo más caro: se espera a que haya
+  // ESPERA_PESO_GIF_MS de calma y se calcula una sola vez. La vista previa
+  // (arriba) sí se actualiza en cada cambio.
   const turno = ++turnoPesoGif;
-  comprimirCuadros(anim.cuadros)
-    .then(z => {
-      if (turno !== turnoPesoGif) return;
-      mostrarPeso(evaluarPesoComprimido(z.bytes, z.cantidad), ' comprimido');
-    })
-    .catch(() => {
-      if (turno !== turnoPesoGif) return;
-      mostrarPeso(evaluarPesoAnimacion(anim.cuadros), '');
-    });
+  clearTimeout(temporizadorPesoGif);
+  temporizadorPesoGif = setTimeout(() => {
+    if (turno !== turnoPesoGif) return;
+    comprimirCuadros(anim.cuadros)
+      .then(z => {
+        if (turno !== turnoPesoGif) return;
+        mostrarPeso(evaluarPesoComprimido(z.bytes, z.cantidad), ' comprimido');
+      })
+      .catch(() => {
+        if (turno !== turnoPesoGif) return;
+        mostrarPeso(evaluarPesoAnimacion(anim.cuadros), '');
+      });
+  }, ESPERA_PESO_GIF_MS);
 }
 
 // Ver aplicarGif(): descarta cálculos de peso que ya quedaron viejos.
 let turnoPesoGif = 0;
+let temporizadorPesoGif = null;
+const ESPERA_PESO_GIF_MS = 150;
 
 // Muestra (o limpia) el aviso de peso del GIF en el recuadro de aviso de
 // la pantalla correspondiente: amarillo si es pesado, rojo si es muy pesado.
