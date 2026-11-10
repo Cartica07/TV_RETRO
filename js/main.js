@@ -1093,24 +1093,28 @@ async function manejarGuardarEnGaleria() {
   }
 }
 
+// Muestra (o con texto vacío, oculta) un recuadro de aviso. tipo
+// 'error' lo pinta en rojo. Quita el amarillo del aviso de peso del GIF
+// (clase "advertencia"), que solo se pone en los avisos de la Galería.
+// La usan setAvisoGaleria, setAvisoGaleriaDibujo, setAvisoGaleriaNueva y
+// setAvisoCancion (antes cada una repetía este código).
+function mostrarAviso(el, text, tipo = null) {
+  if (!el) return;
+  el.style.display = text ? 'block' : 'none';
+  el.textContent = text || '';
+  el.classList.remove('advertencia');
+  el.classList.toggle('error', tipo === 'error');
+}
+
 function setAvisoGaleria(text, tipo = null) {
-  if (!elementos.avisoGaleria) return;
-  elementos.avisoGaleria.style.display = text ? 'block' : 'none';
-  elementos.avisoGaleria.textContent = text || '';
-  elementos.avisoGaleria.classList.remove('advertencia');
-  if (tipo === 'error') elementos.avisoGaleria.classList.add('error');
-  else elementos.avisoGaleria.classList.remove('error');
+  mostrarAviso(elementos.avisoGaleria, text, tipo);
 }
 
 // ===================================================
 // V1.12: Dibujo -- guardar en el mismo catálogo de imágenes
 // ===================================================
 function setAvisoGaleriaDibujo(text, tipo = null) {
-  if (!elementos.avisoGaleriaDibujo) return;
-  elementos.avisoGaleriaDibujo.style.display = text ? 'block' : 'none';
-  elementos.avisoGaleriaDibujo.textContent = text || '';
-  if (tipo === 'error') elementos.avisoGaleriaDibujo.classList.add('error');
-  else elementos.avisoGaleriaDibujo.classList.remove('error');
+  mostrarAviso(elementos.avisoGaleriaDibujo, text, tipo);
 }
 
 // Guarda el dibujo actual en el catálogo /imagenes -- el mismo que usa
@@ -1522,12 +1526,7 @@ async function procesarYMostrarImagenGaleria() {
 }
 
 function setAvisoGaleriaNueva(text, tipo = null) {
-  if (!elementos.avisoGaleriaNueva) return;
-  elementos.avisoGaleriaNueva.style.display = text ? 'block' : 'none';
-  elementos.avisoGaleriaNueva.textContent = text || '';
-  elementos.avisoGaleriaNueva.classList.remove('advertencia');
-  if (tipo === 'error') elementos.avisoGaleriaNueva.classList.add('error');
-  else elementos.avisoGaleriaNueva.classList.remove('error');
+  mostrarAviso(elementos.avisoGaleriaNueva, text, tipo);
 }
 
 // Guarda en el catálogo lo que esté actualmente activo en la sección
@@ -1768,11 +1767,7 @@ async function borrarMusicalElegido() {
 }
 
 function setAvisoCancion(text, tipo = null) {
-  if (!elementos.avisoCancion) return;
-  elementos.avisoCancion.style.display = text ? 'block' : 'none';
-  elementos.avisoCancion.textContent = text || '';
-  if (tipo === 'error') elementos.avisoCancion.classList.add('error');
-  else elementos.avisoCancion.classList.remove('error');
+  mostrarAviso(elementos.avisoCancion, text, tipo);
 }
 
 async function manejarSeleccionCancion() {
