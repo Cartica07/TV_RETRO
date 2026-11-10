@@ -248,9 +248,27 @@
 
       <div class="campo">
         <label class="rotulo" for="seleccionCancion">Canción</label>
-        <div class="selector">
-          <select id="seleccionCancion"></select>
-          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        <!-- Canción + importar .ino (varios a la vez) + borrar la elegida -->
+        <div class="fila-cancion">
+          <div class="selector">
+            <select id="seleccionCancion"></select>
+            <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <label class="boton-icono boton-subir" for="cargadorMusical" title="Importar canciones (.ino)">
+            <input type="file" id="cargadorMusical" accept=".ino" multiple aria-label="Importar canciones (.ino)" />
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </label>
+          <button type="button" id="botonBorrarMusical" class="boton-icono boton-icono-peligro" aria-label="Borrar la canción elegida" title="Borrar la canción elegida" disabled>
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Letra</span>
+        <div class="segmento" id="grupoLetra" role="group" aria-label="Letra">
+          <button type="button" data-valor="con" class="activo">Con letra</button>
+          <button type="button" data-valor="sin">Sin letra</button>
         </div>
       </div>
 

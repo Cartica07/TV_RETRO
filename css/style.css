@@ -1501,6 +1501,22 @@ label.fila-ajuste-titulo {
 }
 
 /* Botón de ícono que envuelve un input de archivo (Añadir imagen). */
+/* Canciones: selector + importar .ino + borrar, en una fila. */
+.fila-cancion {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.fila-cancion .selector {
+  flex: 1;
+  min-width: 0;
+}
+
+.fila-cancion .boton-icono {
+  flex-shrink: 0;
+}
+
 .boton-subir {
   position: relative;
   flex-shrink: 0;
