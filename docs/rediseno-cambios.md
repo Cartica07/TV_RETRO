@@ -51,6 +51,7 @@ Las decisiones se tomaron a partir de estudios y guías publicadas (Nielsen Norm
   - fondo negro o blanco.
 - **Difuminado Atkinson**, el mismo de CancionesMiniTV. Con el anterior (Floyd-Steinberg) el umbral casi no cambiaba el resultado; con Atkinson sí aclara u oscurece la imagen.
 - **Aviso de GIF pesado:** cada cuadro ocupa unos 1,4 KB. Hasta 28 KB (unos 20 cuadros) no hay aviso. Entre 28 y 56 KB aparece un aviso amarillo, y por encima de 56 KB uno rojo, "GIF muy pesado/largo". Son límites pensados para un ESP32 común sin PSRAM; solo avisan, no bloquean el envío.
+- **Actualización:** desde el commit `73c2868` los GIF se envían **comprimidos** (formato z1, sin pérdida) y el aviso usa el tamaño comprimido: seguro hasta 64 KB, rojo por encima de 110 KB. Los límites de 28/56 KB quedan solo para navegadores sin compresión. Ver [formatos-datos.md](formatos-datos.md).
 
 ## 5. Pestaña Dibujo
 
@@ -61,9 +62,11 @@ Las decisiones se tomaron a partir de estudios y guías publicadas (Nielsen Norm
   - Es el mismo lienzo: el dibujo se conserva.
 - **Zoom, como en WhatsApp:** pellizcar con dos dedos para acercar y alejar (hasta ×8) y arrastrar para moverse. La rueda del mouse también hace zoom. El indicador "×N" vuelve a ×1 al tocarlo. Si al pellizcar el primer dedo ya había empezado un trazo, ese trazo se descarta.
 
-## 6. Pestaña Música
+## 6. Pestaña Música (ahora Canciones)
 
 Selector de canción y número de repeticiones, en el estilo de la app. Invertir se oculta en esta pestaña, porque la pantalla no cambia mientras suena el buzzer.
+
+**Actualización (9 nov 2026):** la pestaña pasó a llamarse Canciones y usa el catálogo nuevo de **musicales** (`.ino` importados), con la opción Con letra / Sin letra. Ver [musicales.md](musicales.md).
 
 ## 7. Pestaña Galería
 
@@ -93,8 +96,10 @@ Tiene el mismo estilo que el panel: tarjetas con ícono y un botón para volver 
 
 ## 10. Pendiente
 
-- **Firmware:** dibujar las fuentes nuevas, el tamaño 5, la posición manual y el scroll vertical (ver [firmware-fuentes.md](firmware-fuentes.md)). Comprobar también que el tamaño 5 de la clásica no esté limitado a 4.
-- **Envío de GIF y archivos pesados:** optimizarlo.
+> Actualizado el 9 nov 2026. La lista viva de pendientes está en [contexto-general.md §8](contexto-general.md).
+
+- ~~**Firmware:** dibujar las fuentes nuevas, el tamaño 5, la posición manual y el scroll vertical.~~ Hecho en el firmware ESP32 / ESP32-S3.
+- ~~**Envío de GIF y archivos pesados:** optimizarlo.~~ Hecho: formato z1 comprimido, descarga directa a LittleFS.
 - **Login y reglas de seguridad de Firebase:** la pantalla de inicio de sesión ya está diseñada pero oculta. Falta conectarla y publicar las reglas.
 - **Tutorial guiado** la primera vez que se abre la app.
 - **APK con Capacitor:**
