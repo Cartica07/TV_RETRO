@@ -368,7 +368,7 @@
     async function actualizarPrevisualizacion() {
       const files = Array.from(inputArchivos.files);
       if (files.length === 0) {
-        previsualizacion.innerHTML = '<span class="previsualizacion-vacia">Elegí archivos para ver una vista previa acá</span>';
+        previsualizacion.innerHTML = '<span class="previsualizacion-vacia">Elige archivos para ver una vista previa aquí</span>';
         return;
       }
 
@@ -405,7 +405,7 @@
     boton.addEventListener('click', async () => {
       const files = Array.from(inputArchivos.files);
       if (files.length === 0) {
-        alert('Elegí uno o más archivos primero.');
+        alert('Elige uno o más archivos primero.');
         return;
       }
 
@@ -532,7 +532,7 @@
     botonCanciones.addEventListener('click', async () => {
       const files = Array.from(inputCanciones.files);
       if (files.length === 0) {
-        alert('Elegí uno o más archivos JSON primero.');
+        alert('Elige uno o más archivos JSON primero.');
         return;
       }
 
@@ -673,7 +673,7 @@
       const nuevoNombre = inputNombre.value.trim();
 
       if (!nuevoNombre) {
-        alert('Poné un nombre.');
+        alert('Pon un nombre.');
         inputNombre.value = nombreOriginal;
         return;
       }
@@ -762,7 +762,7 @@
     botonAnimaciones.addEventListener('click', async () => {
       const files = Array.from(inputAnimaciones.files);
       if (files.length === 0) {
-        alert('Elegí uno o más archivos JSON primero.');
+        alert('Elige uno o más archivos JSON primero.');
         return;
       }
 
@@ -909,7 +909,7 @@
       const nuevoNombre = inputNombre.value.trim();
 
       if (!nuevoNombre) {
-        alert('Poné un nombre.');
+        alert('Pon un nombre.');
         inputNombre.value = nombreOriginal;
         return;
       }

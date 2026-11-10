@@ -886,7 +886,7 @@ function marcarControlesEncuadre() {
   if (elementos.botonFondoImagen) {
     const blanco = geometriaImagen.fondo === 'blanco';
     elementos.botonFondoImagen.setAttribute('aria-pressed', String(blanco));
-    elementos.botonFondoImagen.title = blanco ? 'Fondo: blanco (tocá para negro)' : 'Fondo: negro (tocá para blanco)';
+    elementos.botonFondoImagen.title = blanco ? 'Fondo: blanco (toca para negro)' : 'Fondo: negro (toca para blanco)';
   }
 }
 
@@ -948,7 +948,7 @@ function nombreImagenPegada() {
 // soporte) o se niega el permiso, avisa y sugiere las otras opciones.
 async function pegarImagenDelPortapapeles() {
   if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
-    marcarEstado('Este navegador no deja leer imágenes del portapapeles. Probá Ctrl+V o elegí el archivo.', 'error', elementos);
+    marcarEstado('Este navegador no deja leer imágenes del portapapeles. Prueba Ctrl+V o elige el archivo.', 'error', elementos);
     return;
   }
   try {
@@ -961,14 +961,14 @@ async function pegarImagenDelPortapapeles() {
         return;
       }
     }
-    marcarEstado('El portapapeles no tiene una imagen. Copiá una imagen y volvé a tocar Pegar.', 'error', elementos);
+    marcarEstado('El portapapeles no tiene una imagen. Copia una imagen y vuelve a tocar Pegar.', 'error', elementos);
   } catch (error) {
     console.error('No se pudo leer el portapapeles:', error);
     const denegado = error && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
     marcarEstado(
       denegado
-        ? 'Sin permiso para leer el portapapeles. Permitilo en el navegador, o usá Ctrl+V o elegí el archivo.'
-        : 'No se pudo leer el portapapeles. Probá Ctrl+V o elegí el archivo.',
+        ? 'Sin permiso para leer el portapapeles. Permítelo en el navegador, o usa Ctrl+V o elige el archivo.'
+        : 'No se pudo leer el portapapeles. Prueba Ctrl+V o elige el archivo.',
       'error',
       elementos
     );
@@ -1035,7 +1035,7 @@ async function manejarGuardarEnGaleria() {
   // lo que lo hace aparecer en la lista GIF de la Galería.
   if (estadoActual.tipo === 'imagen' && hayGifDe('imagen')) {
     if (!nombre) {
-      setAvisoGaleria('Poné un nombre para guardar el GIF en la galería.', 'error');
+      setAvisoGaleria('Pon un nombre para guardar el GIF en la galería.', 'error');
       return;
     }
     setAvisoGaleria('Guardando…');
@@ -1061,12 +1061,12 @@ async function manejarGuardarEnGaleria() {
   }
 
   if (estadoActual.tipo !== 'imagen' || !estadoActual.imagenData) {
-    setAvisoGaleria('Primero subí y procesá una imagen para poder guardarla.', 'error');
+    setAvisoGaleria('Primero sube y procesa una imagen para poder guardarla.', 'error');
     return;
   }
 
   if (!nombre) {
-    setAvisoGaleria('Poné un nombre para guardar la imagen en la galería.', 'error');
+    setAvisoGaleria('Pon un nombre para guardar la imagen en la galería.', 'error');
     return;
   }
 
@@ -1123,7 +1123,7 @@ function setAvisoGaleriaDibujo(text, tipo = null) {
 async function manejarGuardarDibujoEnGaleria() {
   const nombre = (elementos.nombreGaleriaDibujo && elementos.nombreGaleriaDibujo.value.trim()) || '';
   if (!nombre) {
-    setAvisoGaleriaDibujo('Poné un nombre para guardar el dibujo en la galería.', 'error');
+    setAvisoGaleriaDibujo('Pon un nombre para guardar el dibujo en la galería.', 'error');
     return;
   }
 
@@ -1540,7 +1540,7 @@ async function manejarGuardarNuevaEnGaleria() {
   if (estadoActual.tipo === 'galeria' && hayGifDe('galeria')) {
     const nombreGif = (elementos.nombreGaleriaNueva && elementos.nombreGaleriaNueva.value.trim()) || '';
     if (!nombreGif) {
-      setAvisoGaleriaNueva('Poné un nombre para guardar el GIF en la galería.', 'error');
+      setAvisoGaleriaNueva('Pon un nombre para guardar el GIF en la galería.', 'error');
       return;
     }
     setAvisoGaleriaNueva('Guardando…');
@@ -1566,13 +1566,13 @@ async function manejarGuardarNuevaEnGaleria() {
   }
 
   if (estadoActual.tipo !== 'galeria' || !estadoActual.imagenData) {
-    setAvisoGaleriaNueva('Primero subí una imagen nueva o seleccioná una de la galería.', 'error');
+    setAvisoGaleriaNueva('Primero sube una imagen nueva o selecciona una de la galería.', 'error');
     return;
   }
 
   const nombre = (elementos.nombreGaleriaNueva && elementos.nombreGaleriaNueva.value.trim()) || '';
   if (!nombre) {
-    setAvisoGaleriaNueva('Poné un nombre para guardar la imagen en la galería.', 'error');
+    setAvisoGaleriaNueva('Pon un nombre para guardar la imagen en la galería.', 'error');
     return;
   }
 
@@ -1625,7 +1625,7 @@ async function poblarCatalogoCanciones() {
     elementos.seleccionCancion.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = Object.keys(musicalesCatalogo).length ? '-- Seleccioná --' : 'Importá canciones con +';
+    placeholder.textContent = Object.keys(musicalesCatalogo).length ? '-- Selecciona --' : 'Importa canciones con +';
     elementos.seleccionCancion.appendChild(placeholder);
 
     Object.keys(musicalesCatalogo)
@@ -1716,7 +1716,7 @@ async function importarCanciones(archivos) {
   const lista = [...(archivos || [])].filter(f => /\.ino$/i.test(f.name));
   if (lista.length === 0) return;
   if (!puedeComprimir()) {
-    setAvisoCancion('Este navegador no puede comprimir: usá Chrome, Edge o Safari actualizados.', 'error');
+    setAvisoCancion('Este navegador no puede comprimir: usa Chrome, Edge o Safari actualizados.', 'error');
     return;
   }
 
@@ -2313,7 +2313,7 @@ async function enviarAFirebase() {
     let aEnviar = estadoActual;
     if (estadoActual.tipo === 'cancion') {
       if (!estadoActual.cancion || !musicalCargado || musicalCargado.clave !== estadoActual.cancion) {
-        marcarEstado('Elegí una canción.', 'error', elementos);
+        marcarEstado('Elige una canción.', 'error', elementos);
         return;
       }
       estadoActual.cancionRepeticiones = normalizarRepeticiones(elementos.inputRepeticiones.value);
