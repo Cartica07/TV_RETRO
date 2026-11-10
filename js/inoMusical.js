@@ -810,6 +810,7 @@ class Interprete {
     this.pasos = 0;
     this.notas = [];
     this.cuadros = [];
+    this.tonosProgramados = []; // cortes de tone(pin, f, dur): [{ t, f: 0 }]
     this.ultimoEvento = 0;
     this.alEvento = null;
     this.pantalla = new PantallaVirtual(() => this.grabarPantalla());
@@ -836,6 +837,10 @@ class Interprete {
     if (ultima && ultima.t === this.ahora) ultima.f = f;
     else this.notas.push({ t: this.ahora, f });
     this.evento();
+  }
+  // Descarta los cortes de tone(pin, f, dur) que todavía no llegaron (ver tone()).
+  cancelarCortes() {
+    this.tonosProgramados = this.tonosProgramados.filter((x) => x.t < this.ahora);
   }
   avanzar(ms) {
     if (ms > 0) this.ahora += ms;
@@ -949,15 +954,22 @@ class Interprete {
     switch (nombre) {
       case 'millis': return this.ahora >>> 0;
       case 'micros': return (this.ahora * 1000) >>> 0;
-      case 'delay': this.avanzar(n(0)); return;
+      // delay(unsigned long): con un valor con decimales, C lo trunca (delay(266.6) espera 266 ms).
+      case 'delay': this.avanzar(Math.max(0, Math.trunc(n(0)))); return;
       case 'delayMicroseconds': return;
       case 'yield': return;
       case 'tone': {
-        this.grabarTono(n(1) > 0 ? n(1) : 0);
-        if (args.length > 2 && n(2) > 0) this.tonosProgramados.push({ t: this.ahora + n(2), f: 0 });
+        // Como en Arduino: un tone() nuevo reemplaza al que estaba sonando y
+        // anula su corte programado (tone(pin, f, dur) + delay(dur) + otro
+        // tone() es un legato: la nota nueva no se corta).
+        this.cancelarCortes();
+        const f = Math.trunc(n(1));
+        this.grabarTono(f > 0 ? f : 0);
+        const dur = args.length > 2 ? Math.trunc(n(2)) : 0;
+        if (dur > 0) this.tonosProgramados.push({ t: this.ahora + dur, f: 0 });
         return;
       }
-      case 'noTone': this.grabarTono(0); return;
+      case 'noTone': this.cancelarCortes(); this.grabarTono(0); return;
       case 'pinMode': case 'digitalWrite': case 'analogWrite': case 'randomSeed': return;
       case 'digitalRead': return 1;
       case 'analogRead': return 0;
@@ -1260,6 +1272,8 @@ export function grabarIno(texto) {
     it.ahora = 0;
     it.ultimoEvento = 0;
     it.notas = [];
+    // Un corte de tone() pedido en setup() que cae después pasa al reloj nuevo.
+    it.tonosProgramados = it.tonosProgramados.filter((x) => x.t > inicio).map((x) => ({ t: x.t - inicio, f: x.f }));
     const primerCuadro = it.cuadros.length ? it.cuadros[it.cuadros.length - 1] : null;
     it.cuadros = primerCuadro ? [{ t: 0, bitmap: primerCuadro.bitmap }] : [];
     void inicio;
