@@ -98,3 +98,118 @@ export async function descomprimirCuadros(datosBase64) {
 
   return cuadros;
 }
+
+// ===================================================================
+// Musicales (formato "m1"): canción + pantalla grabadas de un .ino
+// (ver js/inoMusical.js). Binario little-endian, en Base64 dentro de
+// oled_remota/archivo/datos y del catálogo musicales/:
+//   "M1" [uint8 versión=1] [uint8 banderas: bit0 = repetir]
+//   [uint32 duración ms]
+//   [uint32 cantidad de notas]    por nota:   [uint32 t ms][uint16 Hz] (0 = silencio)
+//   [uint32 cantidad de imágenes] por imagen: [uint16 bytes][deflate-raw del bitmap 1bpp 128×64]
+//   [uint32 cantidad de cuadros]  por cuadro: [uint32 t ms][uint16 número de imagen]
+// Cada imagen distinta se guarda una sola vez (un GIF que se repite toda la
+// canción no ocupa más). t se cuenta desde el inicio de la grabación.
+// Lo lee el firmware (musical.cpp).
+// ===================================================================
+
+export const FORMATO_MUSICAL = 'm1';
+
+function unir(partes) {
+  const total = partes.reduce((s, p) => s + p.length, 0);
+  const todo = new Uint8Array(total);
+  let pos = 0;
+  for (const p of partes) { todo.set(p, pos); pos += p.length; }
+  return todo;
+}
+
+/**
+ * Codifica una grabación {notas, cuadros, duracion, repetir}.
+ * @returns {Promise<{datos: string, bytes: number, imagenes: number}>}
+ */
+export async function codificarMusical(grabacion) {
+  const partes = [];
+  const cab = new Uint8Array(12);
+  const vc = new DataView(cab.buffer);
+  cab[0] = 0x4D; cab[1] = 0x31; cab[2] = 1; cab[3] = grabacion.repetir ? 1 : 0;
+  vc.setUint32(4, Math.max(0, Math.round(grabacion.duracion)), true);
+  vc.setUint32(8, grabacion.notas.length, true);
+  partes.push(cab);
+
+  const notas = new Uint8Array(grabacion.notas.length * 6);
+  const vn = new DataView(notas.buffer);
+  grabacion.notas.forEach((n, i) => {
+    vn.setUint32(i * 6, Math.max(0, Math.round(n.t)), true);
+    vn.setUint16(i * 6 + 4, Math.max(0, Math.min(0xFFFF, Math.round(n.f))), true);
+  });
+  partes.push(notas);
+
+  // Imágenes distintas (la clave es el bitmap en Base64).
+  const indice = new Map();
+  const imagenes = [];
+  const linea = [];
+  for (const c of grabacion.cuadros) {
+    const clave = bytesABase64(c.bitmap);
+    let k = indice.get(clave);
+    if (k === undefined) { k = imagenes.length; indice.set(clave, k); imagenes.push(c.bitmap); }
+    linea.push({ t: c.t, k });
+  }
+  if (imagenes.length > 0xFFFF) throw new Error('Demasiadas imágenes distintas');
+
+  const cantImg = new Uint8Array(4);
+  new DataView(cantImg.buffer).setUint32(0, imagenes.length, true);
+  partes.push(cantImg);
+  for (const bmp of imagenes) {
+    const z = await pasarPor(new CompressionStream('deflate-raw'), bmp);
+    const reg = new Uint8Array(2 + z.length);
+    new DataView(reg.buffer).setUint16(0, z.length, true);
+    reg.set(z, 2);
+    partes.push(reg);
+  }
+
+  const tl = new Uint8Array(4 + linea.length * 6);
+  const vt = new DataView(tl.buffer);
+  vt.setUint32(0, linea.length, true);
+  linea.forEach((c, i) => {
+    vt.setUint32(4 + i * 6, Math.max(0, Math.round(c.t)), true);
+    vt.setUint16(4 + i * 6 + 4, c.k, true);
+  });
+  partes.push(tl);
+
+  const todo = unir(partes);
+  return { datos: bytesABase64(todo), bytes: todo.length, imagenes: imagenes.length };
+}
+
+/**
+ * Lo inverso de codificarMusical (para la vista previa y para enviar
+ * "sin letra").
+ * @returns {Promise<{notas, cuadros, duracion, repetir}>}
+ */
+export async function decodificarMusical(datosBase64) {
+  const b = base64ABytes(datosBase64);
+  const v = new DataView(b.buffer);
+  if (b[0] !== 0x4D || b[1] !== 0x31) throw new Error('No es un musical (formato m1)');
+  const repetir = !!(b[3] & 1);
+  const duracion = v.getUint32(4, true);
+  const nNotas = v.getUint32(8, true);
+  let pos = 12;
+  const notas = [];
+  for (let i = 0; i < nNotas; i++, pos += 6) notas.push({ t: v.getUint32(pos, true), f: v.getUint16(pos + 4, true) });
+
+  const nImg = v.getUint32(pos, true);
+  pos += 4;
+  const imagenes = [];
+  for (let i = 0; i < nImg; i++) {
+    const largo = v.getUint16(pos, true);
+    imagenes.push(await pasarPor(new DecompressionStream('deflate-raw'), b.subarray(pos + 2, pos + 2 + largo)));
+    pos += 2 + largo;
+  }
+
+  const nCuadros = v.getUint32(pos, true);
+  pos += 4;
+  const cuadros = [];
+  for (let i = 0; i < nCuadros; i++, pos += 6) {
+    cuadros.push({ t: v.getUint32(pos, true), bitmap: imagenes[v.getUint16(pos + 4, true)] });
+  }
+  return { notas, cuadros, duracion, repetir };
+}
