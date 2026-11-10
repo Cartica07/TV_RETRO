@@ -2313,17 +2313,20 @@ async function cargarEstadoInicial() {
         if (elementos.grupoLetra) marcarSegmentoActivo(elementos.grupoLetra, letraCanciones);
       }
 
-      // poblar catálogo de canciones, catálogo de imágenes, y controles
-      await poblarCatalogoCanciones();
-      await poblarCatalogoImagenes();
+      // Catálogo de canciones y controles. Las cargas van en paralelo (antes
+      // una esperaba a la otra). Los catálogos de la Galería (imágenes y
+      // animaciones) solo se cargan al arrancar si el panel abre ahí; si no,
+      // se cargan la primera vez que se entra a la pestaña.
+      const cargas = [poblarCatalogoCanciones()];
       // Lo último enviado fue una animación o un GIF: el panel abre en la
       // Galería, así que su lista tiene que estar cargada (antes se veía
       // "Todavía no hay animaciones" hasta tocar la pestaña) y la animación
       // enviada, marcada.
       if (estadoActual.tipo === 'animacion') {
         animacionSeleccionActual = estadoActual.animacion || null;
-        await poblarCatalogoAnimaciones();
+        cargas.push(poblarCatalogoImagenes(), poblarCatalogoAnimaciones());
       }
+      await Promise.all(cargas);
       poblarControles(estadoActual, elementos);
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();

@@ -55,14 +55,23 @@ const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => 
 /**
  * Carga el estado actual desde Firebase
  * Retorna un objeto con la configuración actual o null si hay error
+ *
+ * Se leen por separado oled_remota/pantalla y oled_remota/version, y NO
+ * oled_remota entero: ahí vive "archivo" (el GIF comprimido o la
+ * grabación de un musical, hasta ~120 KB) y casi nunca hace falta. Solo se
+ * baja si lo último enviado fue un GIF z1, para mostrar su vista previa.
+ * (Un musical se vuelve a leer de su catálogo, musicales/datos.)
  */
 export async function cargarEstado() {
   try {
-    const snap = await get(ref(db, 'oled_remota'));
+    const [snapPantalla, snapVersion] = await Promise.all([
+      get(ref(db, 'oled_remota/pantalla')),
+      get(ref(db, 'oled_remota/version'))
+    ]);
 
-    if (snap.exists()) {
-      const datos = snap.val();
-      const pantalla = datos.pantalla || {};
+    if (snapPantalla.exists() || snapVersion.exists()) {
+      const pantalla = snapPantalla.val() || {};
+      const datos = { version: snapVersion.val() };
       const config = pantalla.config || {};
       const imagen = pantalla.imagen || {};
       const cancion = pantalla.cancion || {};
@@ -71,9 +80,16 @@ export async function cargarEstado() {
       // Animación comprimida (formato "z1"): los cuadros están en
       // oled_remota/archivo; se descomprimen para la vista previa.
       let cuadrosAnimacion = Array.isArray(animacion.cuadros) ? animacion.cuadros : [];
-      if (animacion.formato === FORMATO_COMPRIMIDO && datos.archivo && typeof datos.archivo.datos === 'string' && puedeComprimir()) {
+      if (animacion.formato === FORMATO_COMPRIMIDO && puedeComprimir()) {
         try {
-          cuadrosAnimacion = await descomprimirCuadros(datos.archivo.datos);
+          const archivo = (await get(ref(db, 'oled_remota/archivo'))).val();
+          // El archivo tiene que ser del mismo envío que la pantalla: si
+          // alguien envió algo entre las dos lecturas, no coinciden.
+          if (archivo && typeof archivo.datos === 'string' && Number(archivo.version) === Number(datos.version)) {
+            cuadrosAnimacion = await descomprimirCuadros(archivo.datos);
+          } else {
+            console.warn('[TV RETRO] El archivo de la animación no es de la versión actual: sin vista previa.');
+          }
         } catch (err) {
           console.error('No se pudo descomprimir la animación:', err);
         }
