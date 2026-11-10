@@ -33,6 +33,13 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - **No borrar ninguna función existente** (se puede dejar de usar, no eliminar).
 - **Mantener los IDs del DOM** que usa `js/ui.js` (`obtenerElementos`) y los `data-valor` de los botones. Un ID faltante rompe todo (`null.addEventListener`).
 - `js/firebase.js` es el **único** módulo que habla con Firebase.
+- **A prueba de usuarios impacientes** (el cliente pulsa varias veces, cambia de pestaña, corta la señal). Reglas del código:
+  - Lo asíncrono que escribe estado compartido se descarta si el usuario ya se fue de la pestaña o hizo otra cosa (turnos: `turnoSubida`, `turnoCancion`, `turnoReprocesoImagen`; `subidaObsoleta`).
+  - Guardar, borrar e importar van por `sinRepetir()` (una por vez) y esperan con `esperarFinal()`; las escrituras de `firebase.js` pasan por `conTope()` (15 s, luego "la conexión está lenta").
+  - Mientras arranca (`cargarEstadoInicial`) el panel queda `inert`.
+  - Los campos de archivo se limpian al tomar el archivo.
+  - Un error sin atrapar muestra "Algo salió mal. Vuelve a intentarlo." (nada técnico en pantalla; el detalle va a la consola).
+  - Mensajes de error para el cliente claros y con "tú"; los textos de Firebase pasan por `describirError`.
 
 ### Datos y Firebase
 - **No cambiar rutas, nombres de campos ni formato de datos en Firebase sin aprobación del dueño.** Todo campo o nodo nuevo se propone primero, se aprueba y se documenta en la sección 4 y en `docs/formatos-datos.md`.
@@ -111,7 +118,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - Firmware: `54dce85` grabado en la placa. Con letra, sin letra y el botón funcionan (confirmado por el dueño); 9 envíos seguidos sin fuga de memoria (heap libre estable, 96–102 KB).
   - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
-- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho. Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`, sin push). Firmware `be2c5b6`: log con el tiempo de descarga (sin grabar en la placa, sin push). Detalles menores (2026-11-10, sin push): pestaña Canciones, "tú" en vez de voseo, mensaje "Ya va camino a la TV", todas las canciones respetan Repeticiones (firmware `66c49c2`: sin grabar en la placa), `carga-masiva.html` sin canciones, texto sin la imagen anterior. Umbral `>` (simple) / `>=` (Atkinson): se deja como está, igual que el simulador (decidido por el dueño). Comentarios viejos del código puestos al día (`18ac19d`). La seguridad de Firebase se deja para más adelante (aún no está en producción); primero se afirma el funcionamiento. Optimizaciones hechas (`7e587dc` … `ba7f2ce`, detalle y mediciones en `docs/historial-cambios.md`): trazo del Dibujo, Galería, scroll, slider de GIF, caché de canciones y pintado de bitmaps. Galería (escucha con `onValue`, `c831dff`) y arranque (`62be6db`) también hechos, sin cambiar formatos. Pendiente de decisión: importar `.ino` en un Web Worker (el dueño lo dejó para después).
+- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho. Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`, sin push). Firmware `be2c5b6`: log con el tiempo de descarga (sin grabar en la placa, sin push). Detalles menores (2026-11-10, sin push): pestaña Canciones, "tú" en vez de voseo, mensaje "Ya va camino a la TV", todas las canciones respetan Repeticiones (firmware `66c49c2`: sin grabar en la placa), `carga-masiva.html` sin canciones, texto sin la imagen anterior. Umbral `>` (simple) / `>=` (Atkinson): se deja como está, igual que el simulador (decidido por el dueño). Comentarios viejos del código puestos al día (`18ac19d`). La seguridad de Firebase se deja para más adelante (aún no está en producción); primero se afirma el funcionamiento. Optimizaciones hechas (`7e587dc` … `ba7f2ce`, detalle y mediciones en `docs/historial-cambios.md`): trazo del Dibujo, Galería, scroll, slider de GIF, caché de canciones y pintado de bitmaps. Galería (escucha con `onValue`, `c831dff`) y arranque (`62be6db`) también hechos, sin cambiar formatos. A prueba de usuarios impacientes (`b4e672c` … `6ca421a`, detalle en `docs/historial-cambios.md`): arranque bloqueado, subidas tardías, guardar/borrar/importar sin repetirse ni colgarse, mensajes claros, red de seguridad y doble toque. Pendiente de decisión del dueño: bajar el límite de pasos del intérprete de `.ino` (400 M a 20 M); el Web Worker queda para después.
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases
@@ -125,6 +132,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - Servir por HTTP (los módulos ES no cargan con file://): `npx serve .` y abrir la URL. En esta máquina `python` es el alias de la Microsoft Store y se cuelga: no usarlo.
 - `node --check js/<archivo>.js` antes de cada commit.
 - Probar cada pestaña; consola del navegador sin errores; medir el "sin scroll" en 390×844 y 360×740.
+- Banco de pruebas (FUERA del repo, `C:Proyectospruebas-tv-retro`; Firebase simulado en memoria, no toca la base real): `pruebas-panel.mjs` (escenarios de funcionamiento), `bobos.mjs` (usuario impaciente: pulsar de más, cambiar de pestaña, sin señal, archivos malos) y `mono.mjs` (usuario al azar con semilla). Uso: `node <archivo>.mjs [nombre…]`.
 - El panel usa la base de datos REAL: Enviar y Guardar escriben en Firebase. Verificar en la consola de Firebase que `oled_remota` no cambió de forma.
 - Firmware: ver `CLAUDE.md` y `README.md` del repo del firmware (Arduino IDE o arduino-cli, puerto USB "UART", monitor serie a 115200 con logs `[wifi]`, `[red]`, `[github]`).
 

@@ -161,6 +161,20 @@ Optimizaciones (2026-11-10), cada una medida o verificada con el banco de prueba
 | `c831dff` | **Galería:** `suscribirImagenes` y `suscribirAnimaciones` (`onValue`) en `firebase.js`; `poblarCatalogoImagenes` y `poblarCatalogoAnimaciones` escuchan la primera vez y después solo redibujan. Los cambios hechos desde otro dispositivo aparecen solos. No cambia ningún formato ni ruta. | Arrancar y entrar 3 veces a la Galería: de 5 lecturas completas de imágenes y 4 de animaciones a 1 de cada una |
 | `62be6db` | **Arranque:** `cargarEstado` lee `oled_remota/pantalla` y `oled_remota/version` por separado (el archivo pesado solo si lo último fue un GIF z1, y si es de la misma versión); las cargas van en paralelo y los catálogos de la Galería solo si el panel abre ahí. | Con un musical enviado: 0 lecturas de `oled_remota` entero y del archivo, la canción 1 vez, 0 catálogos |
 
+A prueba de usuarios impacientes (2026-11-10). Se armó un banco de pruebas que se porta como un cliente impaciente (fuera del repo, `C:Proyectospruebas-tv-retro`: `bobos.mjs` y `mono.mjs`); cada problema se reprodujo primero (la prueba fallaba con el código anterior) y se arregló:
+
+| Commit | Problema del cliente | Arreglo |
+|---|---|---|
+| `b4e672c` | Si otro dispositivo enviaba un GIF mientras el panel arrancaba, se quedaba sin vista previa | `leerPantallaYArchivo`: comprueba la versión y vuelve a leer, hasta 3 veces |
+| `94810c7` | Pulsar Enviar mientras arrancaba mandaba "Hola Mundo" sobre el contenido real de la TV; lo escrito durante el arranque se perdía | El panel queda `inert` hasta leer el estado (máx. 8 s; lo tardío ya no se aplica) |
+| `7c7005a` | Subir una foto y cambiar de pestaña: Enviar mandaba la imagen aunque se viera Texto | `turnoSubida` / `subidaObsoleta`: el resultado tardío se descarta |
+| `3a77781` | Sin señal, guardar o borrar se quedaba en "Guardando…" para siempre; doble clic guardaba dos veces; importar dos veces las mezclaba; elegir el mismo archivo no hacía nada | `conTope` (15 s), `sinRepetir`, `esperarFinal`, campos de archivo limpios |
+| `49e4154` | Mensajes técnicos ("PERMISSION_DENIED", "Error: Error al cargar la imagen") y "Elige una canción" mientras cargaba | Mensajes claros; `cargandoMusical` |
+| `9e3456e` | Un error inesperado dejaba la pantalla sin explicación | `window` `error` / `unhandledrejection`: "Algo salió mal. Vuelve a intentarlo." |
+| `6ca421a` | Doble toque rápido en botones hacía zoom en el celular | **Visual:** `touch-action: manipulation` |
+
+Ya estaban bien: dibujar con dos dedos (el pellizco descarta el trazo), doble clic en Borrar (una sola pregunta), guardar canciones (un solo `update`) y un GIF de 600 cuadros (1 s). Sin cambiar: un `.ino` con bucle infinito congela la página 19-93 s (límite de 400 M pasos; las 57 canciones usan como máximo 647 mil): propuesta pendiente de bajarlo a 20 M.
+
 No se tocó el pintado del texto (`fonts.js`, `fuentesTexto.js`): mide 0,5 ms por cuadro y no lo justifica. Tampoco se carga `fuentesGfx.js` por fuente (riesgo mayor que el beneficio) ni se cambió el formato m1. Las Google Fonts ya tienen `preconnect` y `display=swap`.
 
 Decidido por el dueño (2026-11-10): **el umbral se deja como está**. El umbral simple usa `>` y Atkinson `>=`; es igual en el simulador `CancionesMiniTV`, del que se copió, y la diferencia solo afecta a los puntos con el gris exacto del umbral (127 por defecto). No unificarlo: el panel y el simulador darían un punto distinto con la misma foto.
