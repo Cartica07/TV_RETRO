@@ -1293,6 +1293,8 @@ async function manejarBorrarGaleriaSeleccionada() {
   if (!galeriaSeleccionActual) return;
 
   const key = galeriaSeleccionActual;
+  // Borrar es permanente (igual que con las canciones, se pregunta antes).
+  if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
   const resultado = await borrarImagenCatalogo(key);
 
   if (resultado.exito) {
@@ -1455,6 +1457,7 @@ async function manejarBorrarAnimacionSeleccionada() {
   if (!animacionSeleccionActual) return;
 
   const key = animacionSeleccionActual;
+  if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
   const resultado = await borrarAnimacionCatalogo(key);
 
   if (resultado.exito) {
@@ -1654,6 +1657,14 @@ async function poblarCatalogoCanciones() {
   } catch (err) {
     console.error('Error cargando catálogo de canciones:', err);
   }
+}
+
+// Repeticiones: un entero de 1 a 99 (antes se podía mandar 0, negativos o
+// decimales, que el firmware no espera).
+const MAX_REPETICIONES = 99;
+function normalizarRepeticiones(valor) {
+  const n = Math.trunc(Number(valor));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, MAX_REPETICIONES) : 1;
 }
 
 function nombreMusical(clave) {
@@ -2071,8 +2082,11 @@ function configurarEventos() {
   }
   if (elementos.inputRepeticiones) {
     elementos.inputRepeticiones.addEventListener('input', (e) => {
-      const v = Number(e.target.value) || 1;
-      estadoActual.cancionRepeticiones = v;
+      estadoActual.cancionRepeticiones = normalizarRepeticiones(e.target.value);
+    });
+    // Al salir del campo se corrige lo escrito (ej. "0", "-3", "2.5", "500").
+    elementos.inputRepeticiones.addEventListener('change', (e) => {
+      e.target.value = String(normalizarRepeticiones(e.target.value));
     });
   }
 
@@ -2289,7 +2303,8 @@ async function enviarAFirebase() {
         marcarEstado('Elegí una canción.', 'error', elementos);
         return;
       }
-      estadoActual.cancionRepeticiones = Number(elementos.inputRepeticiones.value) || Number(estadoActual.cancionRepeticiones) || 1;
+      estadoActual.cancionRepeticiones = normalizarRepeticiones(elementos.inputRepeticiones.value);
+      elementos.inputRepeticiones.value = String(estadoActual.cancionRepeticiones);
 
       if (letraCanciones === 'con') {
         // Con letra: la grabación entera (tipo "musical"), reemplaza la pantalla.

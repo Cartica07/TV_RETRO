@@ -46,6 +46,11 @@ export function poblarControles(estado, elementos) {
     });
   }
   
+  // Repeticiones de la canción (antes siempre mostraba 1 al abrir el panel).
+  if (elementos.inputRepeticiones) {
+    elementos.inputRepeticiones.value = String(estado.cancionRepeticiones || 1);
+  }
+
   // Marcar tipo de contenido
   if (elementos.grupoTipo) {
     marcarSegmentoActivo(elementos.grupoTipo, estado.tipo || 'texto');
