@@ -23,6 +23,24 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
 /**
+ * Explica en pocas palabras por qué falló una operación de Firebase
+ * (recibe el Error o su mensaje), para mostrarlo en la interfaz.
+ */
+export function describirError(error) {
+  const texto = String((error && error.message) || error || '');
+  if (/PERMISSION_DENIED|permission/i.test(texto)) return 'sin permiso (revisar las reglas de Firebase)';
+  if (/offline|network|conexi/i.test(texto)) return 'sin conexión a internet';
+  return texto || 'error desconocido';
+}
+
+// Tiempo máximo de espera de un envío. Sin señal, Firebase no da error:
+// guarda la escritura y la manda cuando vuelve la conexión, y la promesa
+// queda esperando (el botón Enviar quedaba bloqueado para siempre).
+const ESPERA_MAXIMA_ENVIO_MS = 15000;
+const ESPERA_LENTA = Symbol('lenta');
+const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => setTimeout(() => r(ESPERA_LENTA), ms))]);
+
+/**
  * Carga el estado actual desde Firebase
  * Retorna un objeto con la configuración actual o null si hay error
  */
@@ -163,6 +181,7 @@ export function suscribirLastSeen(callback) {
  *      borraría el catálogo entero. Al ser hermano, set() no lo toca.
  *
  * Retorna un objeto { nombre: { notas: [...], meta: {...} }, ... }
+ * ({} si está vacío, null si no se pudo leer).
  */
 export async function listarCanciones() {
   try {
@@ -171,7 +190,7 @@ export async function listarCanciones() {
     return snap.val();
   } catch (err) {
     console.error('Error al listar canciones:', err);
-    return {};
+    return null;
   }
 }
 
@@ -202,6 +221,8 @@ export async function guardarCancionCatalogo(nombre, notas, meta = {}) {
  * no debe borrarlo al hacer set() sobre "oled_remota").
  *
  * Retorna un objeto { nombre: { datos, ancho, alto, meta: {...} }, ... }
+ * ({} si está vacío, null si no se pudo leer: así no se confunde un error
+ * de red o de permisos con una galería vacía).
  */
 export async function listarImagenes() {
   try {
@@ -210,7 +231,7 @@ export async function listarImagenes() {
     return snap.val();
   } catch (err) {
     console.error('Error al listar imágenes:', err);
-    return {};
+    return null;
   }
 }
 
@@ -278,6 +299,7 @@ export async function borrarCancionCatalogo(nombre) {
  * Galería), no de entrada al abrir la página.
  *
  * Retorna un objeto { nombre: { ancho, alto, cuadros: [{datos, dur}, ...], meta: {...} }, ... }
+ * ({} si está vacío, null si no se pudo leer).
  */
 export async function listarAnimaciones() {
   try {
@@ -286,7 +308,7 @@ export async function listarAnimaciones() {
     return snap.val();
   } catch (err) {
     console.error('Error al listar animaciones:', err);
-    return {};
+    return null;
   }
 }
 
@@ -332,25 +354,28 @@ function claveSegura(nombre) {
   return String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_').trim() || 'cancion';
 }
 
-/** Lista liviana del catálogo: { clave: meta, ... } */
+/** Lista liviana del catálogo: { clave: meta, ... } ({} si está vacío, null si no se pudo leer). */
 export async function listarMusicales() {
   try {
     const snap = await get(ref(db, 'musicales/indice'));
     return snap.exists() ? snap.val() : {};
   } catch (err) {
     console.error('Error al listar musicales:', err);
-    return {};
+    return null;
   }
 }
 
-/** Grabación (Base64 m1) de un musical, o null. */
+/**
+ * Grabación (Base64 m1) de un musical, o null si no existe. Si no se pudo
+ * leer (red, permisos), lanza un Error que explica el motivo.
+ */
 export async function leerMusical(clave) {
   try {
     const snap = await get(ref(db, `musicales/datos/${clave}`));
     return snap.exists() ? snap.val() : null;
   } catch (err) {
     console.error('Error al leer el musical:', err);
-    return null;
+    throw new Error(describirError(err));
   }
 }
 
@@ -385,7 +410,8 @@ export async function borrarMusicalCatalogo(clave) {
  */
 export async function enviarEstado(estado) {
   try {
-    const snapVersion = await get(ref(db, 'oled_remota/version'));
+    const snapVersion = await esperarHasta(get(ref(db, 'oled_remota/version')), ESPERA_MAXIMA_ENVIO_MS);
+    if (snapVersion === ESPERA_LENTA) return { exito: false, error: 'sin conexión a internet' };
     const nuevaVersion = (snapVersion.exists() ? Number(snapVersion.val()) : 0) + 1;
 
     // El texto y su configuración se guardan SIEMPRE, sin importar qué
@@ -487,7 +513,21 @@ export async function enviarEstado(estado) {
     // borra oled_remota/lastSeen (heartbeat que escribe el ESP).
     // archivo: la animación comprimida, o null para borrar la anterior
     // (se escribe en el mismo update, así nunca queda de otra versión).
-    await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
+    const escritura = update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
+    if (await esperarHasta(escritura, ESPERA_MAXIMA_ENVIO_MS) === ESPERA_LENTA) {
+      // Firebase la manda sola cuando vuelva la señal. "escritura" avisa
+      // cuándo terminó (o si falló), para actualizar el mensaje.
+      return {
+        exito: false,
+        pendiente: true,
+        version: nuevaVersion,
+        error: 'la conexión está lenta',
+        escritura: escritura.then(
+          () => ({ exito: true, version: nuevaVersion }),
+          (err) => ({ exito: false, error: err.message })
+        )
+      };
+    }
 
     return {
       exito: true,

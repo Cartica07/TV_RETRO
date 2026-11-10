@@ -18,7 +18,8 @@ import {
   borrarImagenCatalogo,
   listarAnimaciones,
   borrarAnimacionCatalogo,
-  guardarAnimacionCatalogo
+  guardarAnimacionCatalogo,
+  describirError
 } from './firebase.js';
 import {
   procesarImagen,
@@ -1149,9 +1150,29 @@ async function manejarGuardarDibujoEnGaleria() {
 // "imagen"): la sección Galería se queda a la vista, con sus propios
 // controles de umbral/dithering para reajustar la selección ahí mismo.
 // ===================================================
+// Un catálogo de la Galería no se pudo leer (sin conexión, sin permiso).
+// No es lo mismo que estar vacío: en vez de "Todavía no hay…", se avisa.
+// Si la lista ya mostraba algo de antes, se conserva.
+function avisarCatalogoIlegible(grids, mensaje) {
+  grids.filter(Boolean).forEach((grid) => {
+    if (grid.querySelector('.item-galeria')) return;
+    grid.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'galeria-vacio';
+    p.textContent = `${mensaje}: sin conexión o sin permiso.`;
+    grid.appendChild(p);
+  });
+  marcarEstado(`${mensaje}.`, 'error', elementos);
+}
+
 async function poblarCatalogoImagenes() {
   try {
-    imagenesCatalogo = await listarImagenes() || {};
+    const lista = await listarImagenes();
+    if (lista === null) {
+      avisarCatalogoIlegible([elementos.gridGaleria], 'No se pudo leer la galería de imágenes');
+      return;
+    }
+    imagenesCatalogo = lista;
     renderizarGaleria();
   } catch (err) {
     console.error('Error cargando catálogo de imágenes:', err);
@@ -1314,7 +1335,11 @@ function normalizarCuadros(cuadros) {
 
 async function poblarCatalogoAnimaciones() {
   try {
-    const crudo = await listarAnimaciones() || {};
+    const crudo = await listarAnimaciones();
+    if (crudo === null) {
+      avisarCatalogoIlegible([elementos.gridAnimaciones, elementos.gridGifs], 'No se pudieron leer las animaciones');
+      return;
+    }
     const claves = Object.keys(crudo);
     console.log(`[animaciones] Firebase devolvió ${claves.length} clave(s):`, claves);
 
@@ -1578,7 +1603,21 @@ async function manejarGuardarNuevaEnGaleria() {
 async function poblarCatalogoCanciones() {
   try {
     // Las canciones son las importadas de .ino (catálogo musicales/).
-    musicalesCatalogo = (await listarMusicales()) || {};
+    const lista = await listarMusicales();
+    if (lista === null) {
+      // No se pudo leer (sin conexión, sin permiso): no es lo mismo que no
+      // tener canciones, así que no se muestra "Importá canciones con +".
+      if (!elementos.seleccionCancion.options.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No se pudo leer la lista';
+        elementos.seleccionCancion.appendChild(opt);
+      }
+      setAvisoCancion('No se pudo leer la lista de canciones: sin conexión o sin permiso.', 'error');
+      actualizarBotonBorrarMusical();
+      return;
+    }
+    musicalesCatalogo = lista;
 
     // Limpiar select
     elementos.seleccionCancion.innerHTML = '';
@@ -1682,7 +1721,7 @@ async function importarCanciones(archivos) {
         fecha: Date.now()
       };
       const r = await guardarMusicalCatalogo(clave, m.datos, meta);
-      if (!r.exito) throw new Error(r.error || 'no se pudo guardar');
+      if (!r.exito) throw new Error('no se pudo guardar: ' + describirError(r.error));
       ultimaClave = r.clave;
     } catch (err) {
       console.error('Error importando', archivo.name, err);
@@ -1706,7 +1745,7 @@ async function borrarMusicalElegido() {
   if (!confirm(`¿Borrar "${nombreMusical(clave)}"?`)) return;
   const r = await borrarMusicalCatalogo(clave);
   if (!r.exito) {
-    setAvisoCancion('No se pudo borrar: ' + (r.error || ''), 'error');
+    setAvisoCancion('No se pudo borrar: ' + describirError(r.error), 'error');
     return;
   }
   if (musicalCargado && musicalCargado.clave === clave) musicalCargado = null;
@@ -2157,7 +2196,33 @@ function textoEnviado(version) {
   return 'Enviado ✅ La OLED lo toma en el próximo chequeo.';
 }
 
+// Sube en 1 con cada envío: el aviso de un envío viejo que termina tarde
+// (conexión lenta) no pisa el resultado de uno más nuevo.
+let turnoEnvio = 0;
+
+// Muestra el resultado de enviarEstado(): enviado, pendiente (la conexión
+// está lenta y Firebase lo manda solo cuando vuelva la señal) o el motivo
+// del error (sin conexión, sin permiso...).
+function mostrarResultadoEnvio(resultado) {
+  const turno = turnoEnvio; // lo sube enviarAFirebase al empezar cada envío
+  if (resultado.exito) {
+    marcarEstado(textoEnviado(resultado.version), 'ok', elementos);
+    return;
+  }
+  if (resultado.pendiente && resultado.escritura) {
+    marcarEstado('La conexión está lenta: se enviará solo cuando vuelva la señal.', null, elementos);
+    resultado.escritura.then((final) => {
+      if (turno !== turnoEnvio) return;
+      if (final.exito) marcarEstado(textoEnviado(final.version), 'ok', elementos);
+      else marcarEstado(`No se pudo enviar: ${describirError(final.error)}.`, 'error', elementos);
+    });
+    return;
+  }
+  marcarEstado(`No se pudo enviar: ${describirError(resultado.error)}.`, 'error', elementos);
+}
+
 async function enviarAFirebase() {
+  turnoEnvio++;
   setBotonEnviarEstado(false, elementos);
   marcarEstado('Enviando…', null, elementos);
   activarLedTransmision(elementos);
@@ -2181,15 +2246,7 @@ async function enviarAFirebase() {
 
       const resultado = await enviarEstado(payloadDibujo);
 
-      if (resultado.exito) {
-        marcarEstado(
-          textoEnviado(resultado.version),
-          'ok',
-          elementos
-        );
-      } else {
-        marcarEstado('Error al enviar. Revisar conexión.', 'error', elementos);
-      }
+      mostrarResultadoEnvio(resultado);
       return;
     }
 
@@ -2202,15 +2259,7 @@ async function enviarAFirebase() {
       const payloadGif = Object.assign({}, estadoActual, { tipo: 'animacion' });
       const resultado = await enviarEstado(payloadGif);
 
-      if (resultado.exito) {
-        marcarEstado(
-          textoEnviado(resultado.version),
-          'ok',
-          elementos
-        );
-      } else {
-        marcarEstado('Error al enviar. Revisar conexión.', 'error', elementos);
-      }
+      mostrarResultadoEnvio(resultado);
       return;
     }
 
@@ -2223,15 +2272,7 @@ async function enviarAFirebase() {
       const payloadGaleria = Object.assign({}, estadoActual, { tipo: 'imagen' });
       const resultado = await enviarEstado(payloadGaleria);
 
-      if (resultado.exito) {
-        marcarEstado(
-          textoEnviado(resultado.version),
-          'ok',
-          elementos
-        );
-      } else {
-        marcarEstado('Error al enviar. Revisar conexión.', 'error', elementos);
-      }
+      mostrarResultadoEnvio(resultado);
       return;
     }
 
@@ -2265,16 +2306,7 @@ async function enviarAFirebase() {
     }
 
     const resultado = await enviarEstado(aEnviar);
-
-    if (resultado.exito) {
-      marcarEstado(
-        textoEnviado(resultado.version),
-        'ok',
-        elementos
-      );
-    } else {
-      marcarEstado('Error al enviar. Revisar conexión.', 'error', elementos);
-    }
+    mostrarResultadoEnvio(resultado);
   } catch (err) {
     console.error('Error al enviar:', err);
     marcarEstado('Error desconocido al enviar.', 'error', elementos);
