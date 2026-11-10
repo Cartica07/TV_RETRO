@@ -174,7 +174,15 @@ A prueba de usuarios impacientes (2026-11-10). Se armó un banco de pruebas que 
 | `6ca421a` | Doble toque rápido en botones hacía zoom en el celular | **Visual:** `touch-action: manipulation` |
 | `8f36a99` | Si el arranque era lento en la segunda fase (canción o catálogo de GIF), el panel liberado mostraba los controles por defecto con el estado interno de Firebase | El estado, los controles y la pestaña se aplican juntos antes de esperar los catálogos |
 
-Ya estaban bien: dibujar con dos dedos (el pellizco descarta el trazo), doble clic en Borrar (una sola pregunta), guardar canciones (un solo `update`) y un GIF de 600 cuadros (1 s). Notas: (1) `carga-masiva.html` (herramienta del dueño) recibe ahora `pendiente` de las escrituras lentas y lo muestra como "no se pudo" aunque después se complete. (2) Entre que el HTML aparece y se carga el JS (1-2 s en datos móviles) el panel todavía no está `inert`: lo que se escriba ahí lo pisa el primer `poblarControles`. Se cerraría con `inert` fijo en `index.html` (cambio visual); si el JS no carga, la app no sirve de todos modos. Decisión del dueño, no hecha. Sin cambiar: un `.ino` con bucle infinito congela la página 19-93 s (límite de 400 M pasos; las 57 canciones usan como máximo 647 mil): propuesta pendiente de bajarlo a 20 M.
+Ya estaban bien: dibujar con dos dedos (el pellizco descarta el trazo), doble clic en Borrar (una sola pregunta), guardar canciones (un solo `update`) y un GIF de 600 cuadros (1 s). Notas: (1) `carga-masiva.html` (herramienta del dueño) recibe ahora `pendiente` de las escrituras lentas y lo muestra como "no se pudo" aunque después se complete. (2) Entre que el HTML aparece y se carga el JS (1-2 s en datos móviles) el panel no estaba `inert`: lo que se escribiera ahí lo pisaba el primer `poblarControles`.
+
+Cerrado después, con OK del dueño (2026-11-10):
+
+| Commit | Qué | Cómo |
+|---|---|---|
+| `eeeeb54` | Un `.ino` con bucle infinito congelaba la página 19-93 s | Límite de pasos de 400 M a 20 M: se rinde en 1,5 s (`while(1){}`) a 7 s (`for` gigante). Las 57 canciones graban idéntico (la más pesada usa 647 mil pasos) |
+| `ebc30ee` | (lógica) La red de seguridad libera el panel aunque el fallo ocurra antes de que `inicializar()` lo bloquee | Prepara el `inert` fijo: nunca queda inerte para siempre |
+| `defdcab` | (visual) `index.html` trae `inert` en `main.controles`, `.barra-accion`, `nav.nav-inferior` y `#filaInvertido` | Cierra la ventana anterior al JS. Si el JS no carga, el panel queda inútil (la app no serviría de todos modos) |
 
 No se tocó el pintado del texto (`fonts.js`, `fuentesTexto.js`): mide 0,5 ms por cuadro y no lo justifica. Tampoco se carga `fuentesGfx.js` por fuente (riesgo mayor que el beneficio) ni se cambió el formato m1. Las Google Fonts ya tienen `preconnect` y `display=swap`.
 
