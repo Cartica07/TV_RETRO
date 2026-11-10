@@ -2694,8 +2694,10 @@ function avisarFalloInesperado(origen, detalle, mensaje = '') {
   try {
     if (elementos && elementos.estadoTexto) marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', elementos);
   } catch (e) { /* si ni esto se puede, queda el detalle en la consola */ }
-  // Un fallo durante el arranque nunca debe dejar el panel bloqueado para siempre.
-  if (panelBloqueado) {
+  // Un fallo durante el arranque nunca debe dejar el panel bloqueado para
+  // siempre. index.html lo trae `inert` desde el principio, así que se libera
+  // aunque el fallo ocurra antes de que inicializar() lo bloquee por código.
+  if (panelBloqueado || document.querySelector('main.controles[inert]')) {
     arranqueVigente = false;
     bloquearPanel(false);
   }
