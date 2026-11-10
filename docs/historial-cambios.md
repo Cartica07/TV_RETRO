@@ -111,13 +111,14 @@ Revisión completa del código. Cada arreglo se probó en Chrome con un Firebase
 
 | Commit | Cambio |
 |---|---|
-| `c0095fd` | **Lógica, `inoMusical.js`:** un `tone()` nuevo (o `noTone`) anula el corte programado de un `tone(pin, f, dur)` anterior, como en Arduino. Antes, en un legato `tone(f, d)` + `delay(d)` solo sonaba la primera nota. `delay()` y la duración de `tone()` truncan los decimales. Las canciones con pausa entre notas se graban igual que antes. |
-| `fc91db3` | **Lógica, `dibujo.js`:** el trazo se pinta en píxeles enteros, sin suavizado. Con grosor 1, una diagonal de 102 puntos llegaba a la OLED con 64. Solo el botón principal dibuja. |
-| `b71be8a` | **Lógica, `renderer.js`:** el scroll horizontal con la fuente clásica avanza de a píxel entero (antes había píxeles a medio encender en la vista previa). |
-| `82b79d1` | **Lógica, `main.js`:** si lo último enviado fue una animación o un GIF, la Galería abre con su lista cargada y la animación marcada. |
-| `2c36234` | **Lógica, `main.js`:** una canción que termina de cargar tarde ya no reemplaza a la elegida (antes se podía enviar otra canción que la del selector, o la anterior si la nueva fallaba). Un reajuste viejo del umbral ya no pisa la imagen recién elegida en la Galería. |
-| `b90fcdd` | **Lógica, `firebase.js` y `main.js`:** `listarMusicales/Imagenes/Animaciones/Canciones` devuelven `null` si no se pudieron leer (antes `{}`, y un error se veía como catálogo vacío). Los errores dicen el motivo (`describirError`). Sin señal, el envío avisa a los 15 s y libera el botón (antes quedaba bloqueado). |
-| `ab3d75a` | **Lógica, `main.js` y `ui.js`:** borrar de la Galería pide confirmación; repeticiones entre 1 y 99; al abrir se muestra la guardada. |
+| `2f6c37b` | **Lógica, `inoMusical.js`:** un `tone()` nuevo (o `noTone`) anula el corte programado de un `tone(pin, f, dur)` anterior, como en Arduino. Antes, en un legato `tone(f, d)` + `delay(d)` solo sonaba la primera nota. `delay()` y la duración de `tone()` truncan los decimales. Las canciones con pausa entre notas se graban igual que antes. |
+| `06605df` | **Lógica, `dibujo.js`:** el trazo se pinta en píxeles enteros, sin suavizado. Con grosor 1, una diagonal de 102 puntos llegaba a la OLED con 64. Solo el botón principal dibuja. |
+| `119743f` | **Lógica, `renderer.js`:** el scroll horizontal con la fuente clásica avanza de a píxel entero (antes había píxeles a medio encender en la vista previa). |
+| `b7b2091` | **Lógica, `main.js`:** si lo último enviado fue una animación o un GIF, la Galería abre con su lista cargada y la animación marcada. |
+| `ed52cf7` | **Lógica, `main.js`:** una canción que termina de cargar tarde ya no reemplaza a la elegida (antes se podía enviar otra canción que la del selector, o la anterior si la nueva fallaba). Un reajuste viejo del umbral ya no pisa la imagen recién elegida en la Galería. |
+| `f3aaebe` | **Lógica, `firebase.js` y `main.js`:** `listarMusicales/Imagenes/Animaciones/Canciones` devuelven `null` si no se pudieron leer (antes `{}`, y un error se veía como catálogo vacío). Los errores dicen el motivo (`describirError`). Sin señal, el envío avisa a los 15 s y libera el botón (antes quedaba bloqueado). |
+| `040e65a` | **Lógica, `main.js` y `ui.js`:** borrar de la Galería pide confirmación; repeticiones entre 1 y 99; al abrir se muestra la guardada. |
+| `2b168de` | Documentación: los arreglos de esta etapa y datos desactualizados. |
 
 Quedan para después (necesitan el firmware o una decisión del dueño):
 - Dos envíos casi simultáneos pueden salir con la misma `version`. Arreglarlo con una transacción haría que el ESP vea la versión nueva antes que la pantalla; hay que resolverlo junto con el firmware.

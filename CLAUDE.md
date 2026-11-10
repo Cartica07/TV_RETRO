@@ -109,7 +109,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - Firmware: `54dce85` grabado en la placa. Con letra, sin letra y el botón funcionan (confirmado por el dueño); 9 envíos seguidos sin fuga de memoria (heap libre estable, 96–102 KB).
   - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
-- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`c0095fd` … `ab3d75a`, detalle en `docs/historial-cambios.md`, etapa 6). Sin push. Pendiente con el firmware: versión repetida si dos envíos coinciden y los avisos de peso de GIF. Después siguen la seguridad de Firebase y las optimizaciones.
+- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Sin push. Pendiente con el firmware: versión repetida si dos envíos coinciden y los avisos de peso de GIF. Después siguen la seguridad de Firebase y las optimizaciones.
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases

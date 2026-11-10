@@ -57,7 +57,7 @@ La TV solo reproduce esa grabación. El resultado es idéntico al `.ino`, sea cu
   - `nombreDelIno(texto)` lee el nombre de la primera línea (`// "nombre" -- generado con ...`);
   - `notasParaCancion(grab)` → `[[Hz, ms], ...]`, para enviar sin letra.
 - **Saltos de línea de Windows (CRLF):** se normalizan al principio, porque si no, `#define` fallaba.
-- **`tone()` como en Arduino** (commit `c0095fd`): un `tone()` nuevo o `noTone()` anula el corte programado de un `tone(pin, f, dur)` anterior, así un legato `tone(f, d)` + `delay(d)` suena entero. `delay()` y la duración de `tone()` truncan los decimales, como en C. Las canciones importadas antes de este cambio que usen legato con `tone(pin, f, dur)` o `delay()` con decimales hay que **importarlas de nuevo** para que se graben bien.
+- **`tone()` como en Arduino** (commit `2f6c37b`): un `tone()` nuevo o `noTone()` anula el corte programado de un `tone(pin, f, dur)` anterior, así un legato `tone(f, d)` + `delay(d)` suena entero. `delay()` y la duración de `tone()` truncan los decimales, como en C. Las canciones importadas antes de este cambio que usen legato con `tone(pin, f, dur)` o `delay()` con decimales hay que **importarlas de nuevo** para que se graben bien. Comprobado el 2026-11-10: las 57 canciones de `Canciones-ino` se graban igual con el intérprete viejo y el nuevo (tocan con `tone(pin, f)` sin duración, y la única con `tone(pin, f, dur)`, `tv_lanavedelolvido`, hace `noTone()` justo al terminar cada nota), así que no hace falta reimportar ninguna.
 
 ### Verificado
 - **Las 57 canciones se graban sin errores.** Las duraciones coinciden con lo esperado:
