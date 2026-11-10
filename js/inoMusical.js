@@ -35,7 +35,7 @@ const ESPERA_QUIETO_MS = 15000;
 // Tope de seguridad: una canción no dura más que esto.
 const DURACION_MAXIMA_MS = 30 * 60 * 1000;
 // Tope de pasos del intérprete (evita colgar la página con un .ino raro).
-const PASOS_MAXIMOS = 400_000_000;
+const PASOS_MAXIMOS = 20_000_000;
 
 class ErrorIno extends Error {}
 class Parar { constructor(motivo) { this.motivo = motivo; } }
