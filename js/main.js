@@ -1205,6 +1205,7 @@ function renderizarGaleria() {
 
     const item = document.createElement('div');
     item.className = 'item-galeria';
+    item.dataset.clave = key;
     if (estadoActual.tipo === 'galeria' && galeriaSeleccionActual === key) {
       item.classList.add('activo');
     }
@@ -1267,7 +1268,7 @@ function renderizarGaleria() {
       // aparte alcanza con cambiar el nombre antes de guardar.
       if (elementos.nombreGaleriaNueva) elementos.nombreGaleriaNueva.value = key;
 
-      renderizarGaleria(); // re-dibuja el grid para mover el resaltado "activo"
+      actualizarResaltadoGaleria(); // solo mueve el resaltado "activo" (no reconstruye el grid)
       renderizar();
       actualizarControlesEdicionImagen();
       marcarEstado(`Imagen "${key}" cargada desde la galería`, 'ok', elementos);
@@ -1278,6 +1279,20 @@ function renderizarGaleria() {
     grid.appendChild(item);
   });
 
+  actualizarBotonBorrarGaleria();
+}
+
+// Mueve la marca "activo" de la grilla de imágenes sin reconstruirla:
+// renderizarGaleria() vuelve a crear y pintar todas las miniaturas, y para
+// cambiar de elemento marcado basta con cambiar una clase. La condición es
+// la misma que usa renderizarGaleria() al crear cada elemento.
+function actualizarResaltadoGaleria() {
+  const grid = elementos.gridGaleria;
+  if (grid) {
+    grid.querySelectorAll('.item-galeria').forEach((item) => {
+      item.classList.toggle('activo', estadoActual.tipo === 'galeria' && galeriaSeleccionActual === item.dataset.clave);
+    });
+  }
   actualizarBotonBorrarGaleria();
 }
 
@@ -1400,6 +1415,7 @@ function renderizarAnimaciones() {
 
     const item = document.createElement('div');
     item.className = 'item-galeria';
+    item.dataset.clave = key;
     if (estadoActual.tipo === 'animacion' && animacionSeleccionActual === key) {
       item.classList.add('activo');
     }
@@ -1434,7 +1450,7 @@ function renderizarAnimaciones() {
       // (comparten animacionCuadros).
       gifActual = null;
 
-      renderizarAnimaciones(); // re-dibuja el grid para mover el resaltado "activo"
+      actualizarResaltadoAnimaciones(); // solo mueve el resaltado "activo" (no reconstruye los grids)
       renderizar(); // arranca el preview en bucle en la pantalla de arriba
       actualizarBotonBorrarAnimacion();
       const queEs = esAnimacionDeGif(entry) ? 'GIF' : 'Animación';
@@ -1448,6 +1464,17 @@ function renderizarAnimaciones() {
 
   ponerVacio(gridAnim, 'Todavía no hay animaciones guardadas.');
   ponerVacio(gridGif, 'Todavía no hay GIF guardados.');
+  actualizarBotonBorrarAnimacion();
+}
+
+// Igual que actualizarResaltadoGaleria(), para las dos listas (Animaciones y GIF).
+function actualizarResaltadoAnimaciones() {
+  [elementos.gridAnimaciones, elementos.gridGifs].forEach((grid) => {
+    if (!grid) return;
+    grid.querySelectorAll('.item-galeria').forEach((item) => {
+      item.classList.toggle('activo', estadoActual.tipo === 'animacion' && animacionSeleccionActual === item.dataset.clave);
+    });
+  });
   actualizarBotonBorrarAnimacion();
 }
 
@@ -1498,7 +1525,7 @@ async function procesarYMostrarImagenGaleria() {
       imagenFuenteActual = null;
       gifActual = { buffer, leido, nombre: file.name.replace(/\.[^.]+$/, ''), origen: 'galeria' };
       aplicarGif();
-      renderizarGaleria(); // por si había una entrada seleccionada, sacarle el resaltado
+      actualizarResaltadoGaleria(); // por si había una entrada seleccionada, sacarle el resaltado
       if (elementos.nombreGaleriaNueva && !elementos.nombreGaleriaNueva.value) {
         elementos.nombreGaleriaNueva.value = gifActual.nombre;
       }
@@ -1514,7 +1541,7 @@ async function procesarYMostrarImagenGaleria() {
     gifActual = null;
     mostrarAvisoPesoGif(elementos.avisoGaleriaNueva, { nivel: 'ok' });
     aplicarResultadoImagen(resultado);
-    renderizarGaleria(); // por si había una entrada seleccionada, sacarle el resaltado
+    actualizarResaltadoGaleria(); // por si había una entrada seleccionada, sacarle el resaltado
 
     if (elementos.nombreGaleriaNueva && !elementos.nombreGaleriaNueva.value) {
       elementos.nombreGaleriaNueva.value = file.name.replace(/\.[^.]+$/, '');
