@@ -1750,12 +1750,41 @@ let turnoCancion = 0;
 
 // Baja y decodifica la grabación de una canción del catálogo. No la deja
 // elegida: eso lo hace quien llama, si la carga sigue correspondiendo.
+// Últimas canciones bajadas (clave -> { clave, datos, grabacion, fecha }), de
+// la más vieja a la más nueva. Volver a una canción ya escuchada no la baja
+// ni la decodifica otra vez (puede pesar ~120 KB). Cada una guarda la fecha
+// de su entrada en el índice: si la canción se reimporta, la fecha cambia y
+// la copia guardada deja de valer.
+const CANCIONES_EN_MEMORIA = 4;
+const cancionesBajadas = new Map();
+
+function fechaDeMusical(clave) {
+  const meta = musicalesCatalogo[clave];
+  return meta && meta.fecha !== undefined ? meta.fecha : null;
+}
+
+// true si la copia en memoria sigue siendo la que está en el catálogo.
+function musicalVigente(m, clave) {
+  return !!m && m.clave === clave && m.fecha === fechaDeMusical(clave);
+}
+
 async function cargarMusical(clave) {
-  if (musicalCargado && musicalCargado.clave === clave) return musicalCargado;
+  if (musicalVigente(musicalCargado, clave)) return musicalCargado;
+  const guardada = cancionesBajadas.get(clave);
+  if (musicalVigente(guardada, clave)) {
+    cancionesBajadas.delete(clave); // pasa a ser la más reciente
+    cancionesBajadas.set(clave, guardada);
+    return guardada;
+  }
+  cancionesBajadas.delete(clave);
+  const fecha = fechaDeMusical(clave); // antes de bajar: si cambia mientras tanto, no vale
   const datos = await leerMusical(clave);
   if (!datos) throw new Error('No se encontró la canción en Firebase.');
   const grabacion = await decodificarMusical(datos);
-  return { clave, datos, grabacion };
+  const m = { clave, datos, grabacion, fecha };
+  cancionesBajadas.set(clave, m);
+  while (cancionesBajadas.size > CANCIONES_EN_MEMORIA) cancionesBajadas.delete(cancionesBajadas.keys().next().value);
+  return m;
 }
 
 // YA NO SE USA (decisión del dueño, 2026-11-10): en el ESP32-S3 todas las
@@ -1842,6 +1871,7 @@ async function borrarMusicalElegido() {
     setAvisoCancion('No se pudo borrar: ' + describirError(r.error), 'error');
     return;
   }
+  cancionesBajadas.delete(clave);
   if (musicalCargado && musicalCargado.clave === clave) musicalCargado = null;
   estadoActual.cancion = '';
   estadoActual.cancionNotas = [];
