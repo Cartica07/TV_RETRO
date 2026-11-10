@@ -33,6 +33,18 @@ export function describirError(error) {
   return texto || 'error desconocido';
 }
 
+/**
+ * Convierte un nombre en una clave válida de Firebase: cambia por "_" los
+ * caracteres que Firebase no admite en una clave (. $ # [ ] /) y quita
+ * los espacios del principio y del final. Puede quedar vacía: quien la
+ * use tiene que comprobarlo (una clave vacía apuntaría al catálogo entero).
+ * La usan guardarCancionCatalogo, guardarImagenCatalogo,
+ * guardarAnimacionCatalogo y claveSegura (antes cada una la repetía).
+ */
+function limpiarClave(nombre) {
+  return String(nombre ?? '').replace(/[.$#[\]/]/g, '_').trim();
+}
+
 // Tiempo máximo de espera de un envío. Sin señal, Firebase no da error:
 // guarda la escritura y la manda cuando vuelve la conexión, y la promesa
 // queda esperando (el botón Enviar quedaba bloqueado para siempre).
@@ -200,7 +212,8 @@ export async function listarCanciones() {
  */
 export async function guardarCancionCatalogo(nombre, notas, meta = {}) {
   try {
-    const safeKey = String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_');
+    const safeKey = limpiarClave(nombre);
+    if (!safeKey) return { exito: false, error: 'falta el nombre' };
     await set(ref(db, `canciones/${safeKey}`), {
       notas: notas,
       meta: meta
@@ -247,7 +260,8 @@ export async function listarImagenes() {
  */
 export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preprocesada = null, meta = {}) {
   try {
-    const safeKey = String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_');
+    const safeKey = limpiarClave(nombre);
+    if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = {
       datos: datos,
       ancho: ancho,
@@ -319,7 +333,8 @@ export async function listarAnimaciones() {
  */
 export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, meta = {}) {
   try {
-    const safeKey = String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_');
+    const safeKey = limpiarClave(nombre);
+    if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = { ancho, alto, cuadros, meta };
     await set(ref(db, `animaciones/${safeKey}`), payload);
     return { exito: true, key: safeKey };
@@ -351,7 +366,7 @@ export async function borrarAnimacionCatalogo(nombre) {
 // ===================================================
 
 function claveSegura(nombre) {
-  return String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_').trim() || 'cancion';
+  return limpiarClave(nombre) || 'cancion';
 }
 
 /** Lista liviana del catálogo: { clave: meta, ... } ({} si está vacío, null si no se pudo leer). */
