@@ -995,15 +995,23 @@ function manejarEventoPegar(e) {
 // par de la sección Imagen, o el de la sección Galería) -- se le pasa
 // explícitamente de cuál par leer, para no mezclar los valores de una
 // sección con el resultado de la otra.
+// Sube en 1 con cada reproceso: si al terminar ya hay uno más nuevo, o la
+// imagen activa cambió (se eligió otra de la galería, se subió otra), el
+// resultado viejo se descarta en vez de pisar lo que se está viendo.
+let turnoReprocesoImagen = 0;
+
 async function reprocesarImagenFuenteActual(umbralEl, ditheringEl) {
   if (!imagenFuenteActual) return;
+  const turno = ++turnoReprocesoImagen;
+  const fuente = imagenFuenteActual;
 
   try {
     marcarEstado('Procesando imagen…', null, elementos);
 
     const umbral = parseInt(umbralEl.value);
     const dithering = ditheringEl.checked;
-    const resultado = await procesarImagenDesdeDataURL(imagenFuenteActual, 128, 64, umbral, dithering);
+    const resultado = await procesarImagenDesdeDataURL(fuente, 128, 64, umbral, dithering);
+    if (turno !== turnoReprocesoImagen || fuente !== imagenFuenteActual) return;
 
     aplicarResultadoImagen(resultado);
   } catch (error) {
@@ -1199,6 +1207,7 @@ function renderizarGaleria() {
       estadoActual.imagenAncho = entry.ancho || 128;
       estadoActual.imagenAlto = entry.alto || 64;
       galeriaSeleccionActual = key;
+      turnoReprocesoImagen++; // un reproceso de la imagen anterior ya no corresponde
       // La imagen activa pasa a ser esta: lo subido en la pestaña Imagen
       // (original o GIF) deja de ser la fuente de los reajustes.
       imagenOriginal = null;
@@ -1589,8 +1598,16 @@ async function poblarCatalogoCanciones() {
 
     // Si estadoActual.cancion ya tiene valor, seleccionarlo
     if (estadoActual.cancion && musicalesCatalogo[estadoActual.cancion]) {
-      elementos.seleccionCancion.value = estadoActual.cancion;
-      await cargarMusical(estadoActual.cancion);
+      const clave = estadoActual.cancion;
+      elementos.seleccionCancion.value = clave;
+      const turno = ++turnoCancion;
+      const m = await cargarMusical(clave);
+      // Si mientras tanto se eligió otra canción, esta ya no corresponde.
+      if (turno === turnoCancion) {
+        musicalCargado = m;
+        estadoActual.cancionNotas = notasParaCancion(m.grabacion);
+        setAvisoCancion(describirMusical(clave, m.grabacion));
+      }
     } else {
       elementos.seleccionCancion.value = '';
     }
@@ -1609,14 +1626,19 @@ function actualizarBotonBorrarMusical() {
   if (elementos.botonBorrarMusical) elementos.botonBorrarMusical.disabled = !elementos.seleccionCancion.value;
 }
 
-// Baja y decodifica la grabación de una canción del catálogo.
+// Cada vez que se elige una canción sube en 1: una carga que termina
+// cuando ya se eligió otra se descarta (si no, una canción lenta que
+// llegaba tarde reemplazaba a la elegida después).
+let turnoCancion = 0;
+
+// Baja y decodifica la grabación de una canción del catálogo. No la deja
+// elegida: eso lo hace quien llama, si la carga sigue correspondiendo.
 async function cargarMusical(clave) {
   if (musicalCargado && musicalCargado.clave === clave) return musicalCargado;
   const datos = await leerMusical(clave);
   if (!datos) throw new Error('No se encontró la canción en Firebase.');
   const grabacion = await decodificarMusical(datos);
-  musicalCargado = { clave, datos, grabacion };
-  return musicalCargado;
+  return { clave, datos, grabacion };
 }
 
 function describirMusical(clave, grab) {
@@ -1704,14 +1726,22 @@ function setAvisoCancion(text, tipo = null) {
 }
 
 async function manejarSeleccionCancion() {
+  const turno = ++turnoCancion;
   const key = elementos.seleccionCancion.value;
   actualizarBotonBorrarMusical();
-  if (!key) {
+
+  // Mientras la nueva carga (o si falla), no queda elegida la anterior:
+  // así "Enviar" nunca manda otra canción que la que se ve en el selector.
+  if (!musicalCargado || musicalCargado.clave !== key) {
     estadoActual.cancion = '';
     estadoActual.cancionNotas = [];
     musicalCargado = null;
     detenerPreviewMusical();
+  }
+
+  if (!key) {
     setAvisoCancion('');
+    renderizar();
     return;
   }
   if (!musicalesCatalogo[key]) {
@@ -1721,12 +1751,15 @@ async function manejarSeleccionCancion() {
   try {
     setAvisoCancion('Cargando…');
     const m = await cargarMusical(key);
+    if (turno !== turnoCancion) return; // ya se eligió otra
+    musicalCargado = m;
     estadoActual.cancion = key;
     // Para "sin letra": las notas en el formato de las canciones de siempre.
     estadoActual.cancionNotas = notasParaCancion(m.grabacion);
     setAvisoCancion(describirMusical(key, m.grabacion));
     renderizar();
   } catch (err) {
+    if (turno !== turnoCancion) return;
     console.error('Error cargando la canción:', err);
     setAvisoCancion('No se pudo cargar la canción: ' + err.message, 'error');
   }
