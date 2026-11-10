@@ -28,7 +28,7 @@ export const db = getDatabase(app);
  */
 export function describirError(error) {
   const texto = String((error && error.message) || error || '');
-  if (/PERMISSION_DENIED|permission/i.test(texto)) return 'sin permiso (revisar las reglas de Firebase)';
+  if (/PERMISSION_DENIED|permission/i.test(texto)) return 'sin permiso';
   if (/offline|network|conexi/i.test(texto)) return 'sin conexión a internet';
   return texto || 'error desconocido';
 }

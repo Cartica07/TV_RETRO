@@ -898,7 +898,7 @@ function reprocesarPestanaImagen() {
     else reprocesarImagenFuenteActual(elementos.umbral, elementos.dithering);
   } catch (error) {
     console.error('Error reprocesando:', error);
-    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    marcarEstado(mensajeDeArchivo(error), 'error', elementos);
   }
 }
 
@@ -911,7 +911,7 @@ function cambiarGeometriaImagen(cambios) {
     if (hayGifDe('imagen')) gifActual.leido = leerGif(gifActual.buffer, geometriaImagen);
   } catch (error) {
     console.error('Error releyendo el GIF:', error);
-    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    marcarEstado(mensajeDeArchivo(error), 'error', elementos);
     return;
   }
   if (hayGifDe('imagen') || imagenOriginal) reprocesarPestanaImagen();
@@ -996,7 +996,7 @@ async function procesarYMostrarImagen(archivo = elementos.cargadorImagen.files[0
     }
   } catch (error) {
     console.error('Error procesando imagen:', error);
-    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    marcarEstado(mensajeDeArchivo(error), 'error', elementos);
   }
 }
 
@@ -1085,7 +1085,7 @@ async function reprocesarImagenFuenteActual(umbralEl, ditheringEl) {
     aplicarResultadoImagen(resultado);
   } catch (error) {
     console.error('Error reprocesando imagen:', error);
-    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    marcarEstado(mensajeDeArchivo(error), 'error', elementos);
   }
 }
 
@@ -1124,7 +1124,7 @@ async function manejarGuardarEnGaleria() {
       await poblarCatalogoAnimaciones();
       setAvisoGaleria(`GIF guardado en la galería como "${resultadoGif.key}"`);
     } else {
-      setAvisoGaleria('No se pudo guardar: ' + (resultadoGif.error || ''), 'error');
+      setAvisoGaleria('No se pudo guardar: ' + describirError(resultadoGif.error), 'error');
     }
     return;
   }
@@ -1159,8 +1159,15 @@ async function manejarGuardarEnGaleria() {
     await poblarCatalogoImagenes();
     setAvisoGaleria(`Guardada en la galería como "${resultado.key}"`);
   } else {
-    setAvisoGaleria('No se pudo guardar: ' + (resultado.error || ''), 'error');
+    setAvisoGaleria('No se pudo guardar: ' + describirError(resultado.error), 'error');
   }
+}
+
+// Mensaje para el cliente cuando un archivo subido no se puede procesar.
+// El detalle técnico queda en la consola (console.error en quien llama).
+function mensajeDeArchivo(error) {
+  if (/GIF/i.test(String((error && error.message) || ''))) return 'No se pudo leer ese GIF. Prueba con otro.';
+  return 'No se pudo leer ese archivo como imagen. Prueba con un PNG, JPG o GIF.';
 }
 
 // Guardar, borrar e importar se ejecutan de a una por vez: un segundo toque
@@ -1244,7 +1251,7 @@ async function manejarGuardarDibujoEnGaleria() {
     await poblarCatalogoImagenes();
     setAvisoGaleriaDibujo(`Guardado en la galería como "${resultado.key}"`);
   } else {
-    setAvisoGaleriaDibujo('No se pudo guardar: ' + (resultado.error || ''), 'error');
+    setAvisoGaleriaDibujo('No se pudo guardar: ' + describirError(resultado.error), 'error');
   }
 }
 
@@ -1444,7 +1451,7 @@ async function manejarBorrarGaleriaSeleccionada() {
     await poblarCatalogoImagenes();
     marcarEstado(`Imagen "${key}" borrada de la galería.`, 'ok', elementos);
   } else {
-    marcarEstado('No se pudo borrar la imagen: ' + (resultado.error || ''), 'error', elementos);
+    marcarEstado('No se pudo borrar la imagen: ' + describirError(resultado.error), 'error', elementos);
   }
 }
 
@@ -1640,7 +1647,7 @@ async function manejarBorrarAnimacionSeleccionada() {
     await poblarCatalogoAnimaciones();
     marcarEstado(`Animación "${key}" borrada de la galería.`, 'ok', elementos);
   } else {
-    marcarEstado('No se pudo borrar la animación: ' + (resultado.error || ''), 'error', elementos);
+    marcarEstado('No se pudo borrar la animación: ' + describirError(resultado.error), 'error', elementos);
   }
 }
 
@@ -1695,7 +1702,7 @@ async function procesarYMostrarImagenGaleria() {
     }
   } catch (error) {
     console.error('Error procesando imagen:', error);
-    marcarEstado(`Error: ${error.message}`, 'error', elementos);
+    marcarEstado(mensajeDeArchivo(error), 'error', elementos);
   }
 }
 
@@ -1735,7 +1742,7 @@ async function manejarGuardarNuevaEnGaleria() {
       await poblarCatalogoAnimaciones();
       setAvisoGaleriaNueva(`GIF guardado en la lista GIF como "${resultadoGif.key}"`);
     } else {
-      setAvisoGaleriaNueva('No se pudo guardar: ' + (resultadoGif.error || ''), 'error');
+      setAvisoGaleriaNueva('No se pudo guardar: ' + describirError(resultadoGif.error), 'error');
     }
     return;
   }
@@ -1771,7 +1778,7 @@ async function manejarGuardarNuevaEnGaleria() {
     await poblarCatalogoImagenes();
     setAvisoGaleriaNueva(`Guardada en la galería como "${resultado.key}"`);
   } else {
-    setAvisoGaleriaNueva('No se pudo guardar: ' + (resultado.error || ''), 'error');
+    setAvisoGaleriaNueva('No se pudo guardar: ' + describirError(resultado.error), 'error');
   }
 }
 
@@ -1855,6 +1862,10 @@ function actualizarBotonBorrarMusical() {
 // cuando ya se eligió otra se descarta (si no, una canción lenta que
 // llegaba tarde reemplazaba a la elegida después).
 let turnoCancion = 0;
+// true mientras se baja la canción recién elegida (ver manejarSeleccionCancion):
+// si el cliente pulsa Enviar en ese momento se le pide esperar, en vez de
+// decirle "Elige una canción" cuando ya la eligió.
+let cargandoMusical = false;
 
 // Baja y decodifica la grabación de una canción del catálogo. No la deja
 // elegida: eso lo hace quien llama, si la carga sigue correspondiendo.
@@ -1996,6 +2007,7 @@ function setAvisoCancion(text, tipo = null) {
 
 async function manejarSeleccionCancion() {
   const turno = ++turnoCancion;
+  cargandoMusical = false; // una carga anterior queda abandonada
   const key = elementos.seleccionCancion.value;
   actualizarBotonBorrarMusical();
 
@@ -2019,8 +2031,10 @@ async function manejarSeleccionCancion() {
   }
   try {
     setAvisoCancion('Cargando…');
+    cargandoMusical = true;
     const m = await cargarMusical(key);
     if (turno !== turnoCancion) return; // ya se eligió otra
+    cargandoMusical = false;
     musicalCargado = m;
     estadoActual.cancion = key;
     // Para "sin letra": las notas en el formato de las canciones de siempre.
@@ -2029,6 +2043,7 @@ async function manejarSeleccionCancion() {
     renderizar();
   } catch (err) {
     if (turno !== turnoCancion) return;
+    cargandoMusical = false;
     console.error('Error cargando la canción:', err);
     setAvisoCancion('No se pudo cargar la canción: ' + err.message, 'error');
   }
@@ -2555,6 +2570,10 @@ async function enviarAFirebase() {
     // asegurar que el estadoActual tiene campos de canción cuando corresponda
     let aEnviar = estadoActual;
     if (estadoActual.tipo === 'cancion') {
+      if (cargandoMusical) {
+        marcarEstado('Espera: la canción todavía se está cargando.', null, elementos);
+        return;
+      }
       if (!estadoActual.cancion || !musicalCargado || musicalCargado.clave !== estadoActual.cancion) {
         marcarEstado('Elige una canción.', 'error', elementos);
         return;
