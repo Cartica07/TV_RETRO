@@ -239,7 +239,7 @@
       </a>
     </header>
 
-    <p class="intro">Esta página no está enlazada desde el panel: solo entra quien tenga esta URL. Acá subís imágenes, canciones y animaciones nuevas a la galería; el panel principal (<a href="index.html">index.html</a>) solo elige entre lo que ya está guardado.</p>
+    <p class="intro">Esta página no está enlazada desde el panel: solo entra quien tenga esta URL. Acá subís imágenes y animaciones nuevas a la galería; el panel principal (<a href="index.html">index.html</a>) solo elige entre lo que ya está guardado.</p>
 
     <!-- ===== Imágenes ===== -->
     <section class="tarjeta">
@@ -282,29 +282,35 @@
       <ul id="listaResultados"></ul>
     </section>
 
-    <!-- ===== Canciones ===== -->
-    <section class="tarjeta">
-      <div class="tarjeta-cabecera">
-        <span class="tarjeta-icono"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
-        <h2>Canciones</h2>
-      </div>
-      <p class="tarjeta-desc">Subí uno o más archivos JSON, cada uno con <code>{"nombre": "...", "notas": [[frecuencia, duraciónMs], ...]}</code>. El nombre es opcional: si falta, se usa el del archivo. Frecuencia 0 = silencio.</p>
+    <!-- ===== Canciones (oculto) =====
+         El catálogo canciones/ se borró el 2026-11-10 y el panel ya no lo
+         lee: las canciones se importan como musicales desde el panel (+ de
+         Canciones). Se oculta en vez de borrarse: el <script> de abajo
+         sigue usando estos IDs. -->
+    <div hidden>
+      <section class="tarjeta">
+        <div class="tarjeta-cabecera">
+          <span class="tarjeta-icono"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+          <h2>Canciones</h2>
+        </div>
+        <p class="tarjeta-desc">Subí uno o más archivos JSON, cada uno con <code>{"nombre": "...", "notas": [[frecuencia, duraciónMs], ...]}</code>. El nombre es opcional: si falta, se usa el del archivo. Frecuencia 0 = silencio.</p>
 
-      <label class="rotulo" for="archivosCancion">Canciones a guardar (JSON)</label>
-      <input type="file" id="archivosCancion" accept="application/json" multiple />
+        <label class="rotulo" for="archivosCancion">Canciones a guardar (JSON)</label>
+        <input type="file" id="archivosCancion" accept="application/json" multiple />
 
-      <button type="button" id="botonSubirCanciones" class="boton-primario">Subir todas a la galería</button>
+        <button type="button" id="botonSubirCanciones" class="boton-primario">Subir todas a la galería</button>
 
-      <ul id="listaResultadosCanciones"></ul>
-    </section>
+        <ul id="listaResultadosCanciones"></ul>
+      </section>
 
-    <h2 class="subtitulo-seccion">Canciones guardadas</h2>
-    <section class="tarjeta">
-      <p class="tarjeta-desc">Reproducí para confirmar cómo suena, descargá el JSON para editarla y volver a subirla, cambiale el nombre o borrala.</p>
-      <ul id="listaCancionesGuardadas" class="lista-guardadas">
-        <li class="vacio">Cargando…</li>
-      </ul>
-    </section>
+      <h2 class="subtitulo-seccion">Canciones guardadas</h2>
+      <section class="tarjeta">
+        <p class="tarjeta-desc">Reproducí para confirmar cómo suena, descargá el JSON para editarla y volver a subirla, cambiale el nombre o borrala.</p>
+        <ul id="listaCancionesGuardadas" class="lista-guardadas">
+          <li class="vacio">Cargando…</li>
+        </ul>
+      </section>
+    </div>
 
     <!-- ===== Animaciones ===== -->
     <section class="tarjeta">
