@@ -253,6 +253,9 @@ export function obtenerElementos() {
     seleccionCancion: document.getElementById('seleccionCancion'),
     inputRepeticiones: document.getElementById('inputRepeticiones'),
     avisoCancion: document.getElementById('avisoCancion'),
+    cargadorMusical: document.getElementById('cargadorMusical'),
+    botonBorrarMusical: document.getElementById('botonBorrarMusical'),
+    grupoLetra: document.getElementById('grupoLetra'),
 
     // Controles de dibujo
     lienzoDibujo: document.getElementById('lienzoDibujo'),

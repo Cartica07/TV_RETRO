@@ -5,7 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
-import { FORMATO_COMPRIMIDO, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
+import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -82,6 +82,9 @@ export async function cargarEstado() {
         animacionAncho: Number(animacion.ancho) || 0,
         animacionAlto: Number(animacion.alto) || 0,
         animacionCuadros: cuadrosAnimacion,
+        // Musical (canción con letra): clave del catálogo musicales/.
+        musicalNombre: (pantalla.musical && typeof pantalla.musical.nombre === 'string') ? pantalla.musical.nombre : '',
+        musicalRepeticiones: (pantalla.musical && Number(pantalla.musical.repeticiones)) || 1,
         version: Number(datos.version) || 0,
         exito: true
       };
@@ -317,6 +320,66 @@ export async function borrarAnimacionCatalogo(nombre) {
   }
 }
 
+// ===================================================
+// Musicales: canciones con letra, imágenes y GIF importadas de .ino
+// (catálogo musicales/, aprobado por el dueño). Dos partes, para que la
+// lista cargue rápido:
+//   musicales/indice/<clave> = { nombre, archivo, duracion, repetir, imagenes, bytes, fecha, origen }
+//   musicales/datos/<clave>  = grabación en formato m1 (Base64, ver compresion.js)
+// ===================================================
+
+function claveSegura(nombre) {
+  return String(nombre).replace(/\./g, '_').replace(/\$/g, '_').replace(/[#\[\]/]/g, '_').trim() || 'cancion';
+}
+
+/** Lista liviana del catálogo: { clave: meta, ... } */
+export async function listarMusicales() {
+  try {
+    const snap = await get(ref(db, 'musicales/indice'));
+    return snap.exists() ? snap.val() : {};
+  } catch (err) {
+    console.error('Error al listar musicales:', err);
+    return {};
+  }
+}
+
+/** Grabación (Base64 m1) de un musical, o null. */
+export async function leerMusical(clave) {
+  try {
+    const snap = await get(ref(db, `musicales/datos/${clave}`));
+    return snap.exists() ? snap.val() : null;
+  } catch (err) {
+    console.error('Error al leer el musical:', err);
+    return null;
+  }
+}
+
+/** Guarda (o reemplaza, si la clave ya existe) un musical. */
+export async function guardarMusicalCatalogo(nombre, datos, meta = {}) {
+  try {
+    const clave = claveSegura(nombre);
+    await update(ref(db, 'musicales'), {
+      [`indice/${clave}`]: meta,
+      [`datos/${clave}`]: datos
+    });
+    return { exito: true, clave };
+  } catch (err) {
+    console.error('Error al guardar el musical:', err);
+    return { exito: false, error: err.message };
+  }
+}
+
+/** Borra un musical del catálogo (índice y datos). */
+export async function borrarMusicalCatalogo(clave) {
+  try {
+    await update(ref(db, 'musicales'), { [`indice/${clave}`]: null, [`datos/${clave}`]: null });
+    return { exito: true };
+  } catch (err) {
+    console.error('Error al borrar el musical:', err);
+    return { exito: false, error: err.message };
+  }
+}
+
 /**
  * Envía la configuración actualizada a Firebase
  */
@@ -374,6 +437,16 @@ export async function enviarEstado(estado) {
         repeticiones: Number(estado.cancionRepeticiones || 1),
         notas: estado.cancionNotas || []
       };
+    } else if (estado.tipo === 'musical') {
+      // Canción "con letra": la grabación del .ino (formato m1) va en
+      // oled_remota/archivo, igual que las animaciones comprimidas.
+      pantallaPayload.tipo = 'musical';
+      pantallaPayload.musical = {
+        nombre: estado.musicalNombre || '',
+        repeticiones: Number(estado.musicalRepeticiones || 1),
+        formato: FORMATO_MUSICAL
+      };
+      archivo = { version: nuevaVersion, datos: estado.musicalDatos || '' };
     } else if (estado.tipo === 'animacion') {
       pantallaPayload.tipo = 'animacion';
       if (puedeComprimir()) {

@@ -8,6 +8,10 @@ import {
   cargarEstado,
   enviarEstado,
   listarCanciones,
+  listarMusicales,
+  leerMusical,
+  guardarMusicalCatalogo,
+  borrarMusicalCatalogo,
   suscribirLastSeen,
   listarImagenes,
   guardarImagenCatalogo,
@@ -24,7 +28,8 @@ import {
   procesarImagenConOpciones
 } from './imageProcessor.js';
 import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido } from './gif.js';
-import { puedeComprimir, comprimirCuadros } from './compresion.js';
+import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical } from './compresion.js';
+import { grabarIno, nombreDelIno, notasParaCancion } from './inoMusical.js';
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
 import {
   inicializarDibujo,
@@ -102,6 +107,14 @@ const ANCHO_OLED = 128;
 
 // Catálogo de canciones cargado desde Firebase
 let cancionesCatalogo = {};
+
+// Canciones importadas de .ino (catálogo musicales/): clave -> meta.
+let musicalesCatalogo = {};
+// La canción elegida: { clave, datos (Base64 m1), grabacion (decodificada) }.
+let musicalCargado = null;
+// "con" = con letra (tipo musical: reemplaza la pantalla);
+// "sin" = sin letra (tipo cancion: solo suena, de fondo).
+let letraCanciones = 'con';
 
 // Catálogo de imágenes guardadas cargado desde Firebase (/imagenes)
 let imagenesCatalogo = {};
@@ -335,6 +348,91 @@ function iniciarAnimacionPreview() {
 }
 
 // ===================================================
+// Vista previa de una canción con letra (grabación de un .ino): cada
+// cuadro aparece en su milisegundo, igual que en la TV. Si el .ino se
+// repetía, vuelve a empezar; si no, se queda en la última imagen.
+// ===================================================
+let idPreviewMusical = null;
+let tokenPreviewMusical = 0;
+// Lo que mostraba la OLED antes de la vista previa con letra: al pasar a
+// "Sin letra" se vuelve a mostrar, porque sin letra la pantalla no cambia.
+let pantallaAntesDelMusical = null;
+const base64DeBitmap = new WeakMap();
+
+function bitmapABase64(bitmap) {
+  let b64 = base64DeBitmap.get(bitmap);
+  if (!b64) {
+    let s = '';
+    for (let i = 0; i < bitmap.length; i++) s += String.fromCharCode(bitmap[i]);
+    b64 = btoa(s);
+    base64DeBitmap.set(bitmap, b64);
+  }
+  return b64;
+}
+
+function detenerPreviewMusical() {
+  if (idPreviewMusical !== null) {
+    clearTimeout(idPreviewMusical);
+    idPreviewMusical = null;
+  }
+  tokenPreviewMusical++;
+}
+
+function guardarPantallaAntesDelMusical() {
+  if (pantallaAntesDelMusical) return;
+  const c = elementos.canvas;
+  try { pantallaAntesDelMusical = c.getContext('2d').getImageData(0, 0, c.width, c.height); } catch (_) { pantallaAntesDelMusical = null; }
+}
+
+function restaurarPantallaAntesDelMusical() {
+  if (!pantallaAntesDelMusical) return;
+  const c = elementos.canvas;
+  if (c.width === pantallaAntesDelMusical.width && c.height === pantallaAntesDelMusical.height) {
+    c.getContext('2d').putImageData(pantallaAntesDelMusical, 0, 0);
+  }
+  pantallaAntesDelMusical = null;
+}
+
+function iniciarPreviewMusical(grab) {
+  detenerPreviewMusical();
+  if (!grab || !grab.cuadros || grab.cuadros.length === 0) return;
+  guardarPantallaAntesDelMusical();
+
+  const miToken = tokenPreviewMusical;
+  const inicio = performance.now();
+  const duracion = Math.max(1, grab.duracion);
+  let dibujado = -1;
+
+  function paso() {
+    if (miToken !== tokenPreviewMusical) return;
+    let t = performance.now() - inicio;
+    if (grab.repetir) t %= duracion;
+    else t = Math.min(t, duracion);
+
+    // Último cuadro con t <= ahora.
+    let k = 0;
+    while (k + 1 < grab.cuadros.length && grab.cuadros[k + 1].t <= t) k++;
+
+    if (k !== dibujado) {
+      dibujado = k;
+      dibujarOLED(elementos.canvas, Object.assign({}, estadoActual, {
+        tipo: 'imagen',
+        invertido: false,
+        imagenData: bitmapABase64(grab.cuadros[k].bitmap),
+        imagenAncho: 128,
+        imagenAlto: 64
+      }));
+    }
+
+    if (!grab.repetir && t >= duracion) return; // terminó: queda la última imagen
+    const siguiente = k + 1 < grab.cuadros.length ? grab.cuadros[k + 1].t : duracion;
+    idPreviewMusical = setTimeout(paso, Math.max(10, Math.min(250, siguiente - t)));
+  }
+
+  paso();
+}
+
+// ===================================================
 // Posición del texto: automática (alineación) o manual (sliders X/Y)
 // ===================================================
 
@@ -385,8 +483,18 @@ function renderizar() {
   if (estadoActual.tipo === 'cancion') {
     detenerScroll();
     detenerAnimacionPreview();
+    // Con letra, la canción sí cambia la pantalla: se reproduce su
+    // grabación (letra, imágenes, GIF) en la vista previa.
+    if (letraCanciones === 'con' && musicalCargado) iniciarPreviewMusical(musicalCargado.grabacion);
+    else {
+      detenerPreviewMusical();
+      restaurarPantallaAntesDelMusical();
+    }
     return;
   }
+  detenerPreviewMusical();
+  // Las demás pestañas dibujan su propio contenido.
+  pantallaAntesDelMusical = null;
 
   // V1.13: "Dibujo" también refleja en vivo la pantalla virtual
   // principal de arriba, igual que Texto/Imagen -- antes se apoyaba
@@ -547,7 +655,7 @@ function mostrarSeccionSegunTipo(tipo) {
   // imágenes seleccionadas se quedan en tipo "galeria" en vez de
   // saltar a "imagen". Para elegir qué sección mostrar, se trata igual
   // que "galeria".
-  const tipoSeccion = (tipo === 'animacion') ? 'galeria' : tipo;
+  const tipoSeccion = (tipo === 'animacion') ? 'galeria' : (tipo === 'musical' ? 'cancion' : tipo);
 
   // Si lo activo es una animación, la Galería abre en esa lista.
   if (tipo === 'animacion') {
@@ -1460,34 +1568,131 @@ async function manejarGuardarNuevaEnGaleria() {
 // ===================================================
 async function poblarCatalogoCanciones() {
   try {
-    const listado = await listarCanciones();
-    cancionesCatalogo = listado || {};
+    // Las canciones son las importadas de .ino (catálogo musicales/).
+    musicalesCatalogo = (await listarMusicales()) || {};
 
     // Limpiar select
     elementos.seleccionCancion.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = '-- Seleccioná --';
+    placeholder.textContent = Object.keys(musicalesCatalogo).length ? '-- Seleccioná --' : 'Importá canciones con +';
     elementos.seleccionCancion.appendChild(placeholder);
 
-    Object.keys(cancionesCatalogo).forEach(key => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      // mostrar nombre legible si meta tiene nombre, si no usar key
-      const entry = cancionesCatalogo[key] || {};
-      let label = key;
-      if (entry.meta && entry.meta.titulo) label = entry.meta.titulo;
-      opt.textContent = label;
-      elementos.seleccionCancion.appendChild(opt);
-    });
+    Object.keys(musicalesCatalogo)
+      .sort((a, b) => nombreMusical(a).localeCompare(nombreMusical(b), 'es', { sensitivity: 'base' }))
+      .forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = nombreMusical(key);
+        elementos.seleccionCancion.appendChild(opt);
+      });
 
     // Si estadoActual.cancion ya tiene valor, seleccionarlo
-    if (estadoActual.cancion) {
+    if (estadoActual.cancion && musicalesCatalogo[estadoActual.cancion]) {
       elementos.seleccionCancion.value = estadoActual.cancion;
+      await cargarMusical(estadoActual.cancion);
+    } else {
+      elementos.seleccionCancion.value = '';
     }
+    actualizarBotonBorrarMusical();
   } catch (err) {
     console.error('Error cargando catálogo de canciones:', err);
   }
+}
+
+function nombreMusical(clave) {
+  const meta = musicalesCatalogo[clave] || {};
+  return meta.nombre || clave;
+}
+
+function actualizarBotonBorrarMusical() {
+  if (elementos.botonBorrarMusical) elementos.botonBorrarMusical.disabled = !elementos.seleccionCancion.value;
+}
+
+// Baja y decodifica la grabación de una canción del catálogo.
+async function cargarMusical(clave) {
+  if (musicalCargado && musicalCargado.clave === clave) return musicalCargado;
+  const datos = await leerMusical(clave);
+  if (!datos) throw new Error('No se encontró la canción en Firebase.');
+  const grabacion = await decodificarMusical(datos);
+  musicalCargado = { clave, datos, grabacion };
+  return musicalCargado;
+}
+
+function describirMusical(clave, grab) {
+  const seg = Math.round(grab.duracion / 1000);
+  const min = Math.floor(seg / 60), s = String(seg % 60).padStart(2, '0');
+  const fin = grab.repetir ? '' : ' · se queda en la última imagen';
+  return `${nombreMusical(clave)} · ${min}:${s}${fin}`;
+}
+
+// Importa uno o varios .ino: cada uno se ejecuta (inoMusical.js), se graba
+// y se guarda en musicales/. Con el mismo nombre, reemplaza la anterior.
+async function importarCanciones(archivos) {
+  const lista = [...(archivos || [])].filter(f => /\.ino$/i.test(f.name));
+  if (lista.length === 0) return;
+  if (!puedeComprimir()) {
+    setAvisoCancion('Este navegador no puede comprimir: usá Chrome, Edge o Safari actualizados.', 'error');
+    return;
+  }
+
+  const errores = [];
+  let ultimaClave = null;
+  for (let i = 0; i < lista.length; i++) {
+    const archivo = lista[i];
+    setAvisoCancion(`Importando ${i + 1} de ${lista.length}: ${archivo.name}…`);
+    // Deja que la página se actualice antes de cada canción (grabar lleva un rato).
+    await new Promise(r => setTimeout(r, 30));
+    try {
+      const texto = await archivo.text();
+      const grab = grabarIno(texto);
+      const m = await codificarMusical(grab);
+      const nombre = nombreDelIno(texto) || archivo.name.replace(/\.ino$/i, '').replace(/\.ino$/i, '');
+      const clave = archivo.name.replace(/\.ino$/i, '').replace(/\.ino$/i, '');
+      const meta = {
+        nombre,
+        archivo: archivo.name,
+        duracion: grab.duracion,
+        repetir: grab.repetir,
+        imagenes: m.imagenes,
+        bytes: m.bytes,
+        origen: 'ino',
+        fecha: Date.now()
+      };
+      const r = await guardarMusicalCatalogo(clave, m.datos, meta);
+      if (!r.exito) throw new Error(r.error || 'no se pudo guardar');
+      ultimaClave = r.clave;
+    } catch (err) {
+      console.error('Error importando', archivo.name, err);
+      errores.push(`${archivo.name}: ${err.message}`);
+    }
+  }
+
+  const bien = lista.length - errores.length;
+  await poblarCatalogoCanciones();
+  if (ultimaClave && lista.length === 1 && !errores.length) {
+    elementos.seleccionCancion.value = ultimaClave;
+    await manejarSeleccionCancion();
+  }
+  if (errores.length) setAvisoCancion(`${bien} importada(s), ${errores.length} con error: ${errores.join(' · ')}`, 'error');
+  else if (lista.length > 1) setAvisoCancion(`${bien} canciones importadas.`);
+}
+
+async function borrarMusicalElegido() {
+  const clave = elementos.seleccionCancion.value;
+  if (!clave) return;
+  if (!confirm(`¿Borrar "${nombreMusical(clave)}"?`)) return;
+  const r = await borrarMusicalCatalogo(clave);
+  if (!r.exito) {
+    setAvisoCancion('No se pudo borrar: ' + (r.error || ''), 'error');
+    return;
+  }
+  if (musicalCargado && musicalCargado.clave === clave) musicalCargado = null;
+  estadoActual.cancion = '';
+  estadoActual.cancionNotas = [];
+  detenerPreviewMusical();
+  await poblarCatalogoCanciones();
+  setAvisoCancion('');
 }
 
 function setAvisoCancion(text, tipo = null) {
@@ -1500,24 +1705,31 @@ function setAvisoCancion(text, tipo = null) {
 
 async function manejarSeleccionCancion() {
   const key = elementos.seleccionCancion.value;
+  actualizarBotonBorrarMusical();
   if (!key) {
     estadoActual.cancion = '';
     estadoActual.cancionNotas = [];
+    musicalCargado = null;
+    detenerPreviewMusical();
+    setAvisoCancion('');
     return;
   }
-  const entry = cancionesCatalogo[key];
-  if (!entry) {
+  if (!musicalesCatalogo[key]) {
     setAvisoCancion('No se encontró la canción en la galería.', 'error');
     return;
   }
-  estadoActual.cancion = key;
-  estadoActual.cancionNotas = entry.notas || [];
-  // si el catálogo incluye meta.repeticiones la usamos; si no mantener input
-  if (entry.meta && entry.meta.repeticiones) {
-    estadoActual.cancionRepeticiones = Number(entry.meta.repeticiones) || 1;
-    elementos.inputRepeticiones.value = String(estadoActual.cancionRepeticiones);
+  try {
+    setAvisoCancion('Cargando…');
+    const m = await cargarMusical(key);
+    estadoActual.cancion = key;
+    // Para "sin letra": las notas en el formato de las canciones de siempre.
+    estadoActual.cancionNotas = notasParaCancion(m.grabacion);
+    setAvisoCancion(describirMusical(key, m.grabacion));
+    renderizar();
+  } catch (err) {
+    console.error('Error cargando la canción:', err);
+    setAvisoCancion('No se pudo cargar la canción: ' + err.message, 'error');
   }
-  setAvisoCancion(`Canción cargada: ${key}`);
 }
 
 // V1.15: la carga de canciones nuevas se privatizó -- ya no vive en este
@@ -1791,6 +2003,27 @@ function configurarEventos() {
       estadoActual.cancionRepeticiones = v;
     });
   }
+
+  // Canciones: importar .ino, borrar, Con letra / Sin letra
+  if (elementos.cargadorMusical) {
+    elementos.cargadorMusical.addEventListener('change', async (e) => {
+      const archivos = e.target.files;
+      await importarCanciones(archivos);
+      e.target.value = '';
+    });
+  }
+  if (elementos.botonBorrarMusical) {
+    elementos.botonBorrarMusical.addEventListener('click', borrarMusicalElegido);
+  }
+  if (elementos.grupoLetra) {
+    elementos.grupoLetra.addEventListener('click', (e) => {
+      const boton = e.target.closest('button[data-valor]');
+      if (!boton) return;
+      letraCanciones = boton.dataset.valor === 'sin' ? 'sin' : 'con';
+      marcarSegmentoActivo(elementos.grupoLetra, letraCanciones);
+      renderizar();
+    });
+  }
 }
 
 // ===================================================
@@ -1831,6 +2064,16 @@ async function cargarEstadoInicial() {
           animacionAlto: resultado.animacionAlto || 0,
           animacionCuadros: resultado.animacionCuadros || []
         };
+        // Lo último enviado fue una canción con letra: se abre en Canciones.
+        if (resultado.tipo === 'musical') {
+          estadoActual.tipo = 'cancion';
+          estadoActual.cancion = resultado.musicalNombre || '';
+          estadoActual.cancionRepeticiones = resultado.musicalRepeticiones || 1;
+          letraCanciones = 'con';
+        } else if (resultado.tipo === 'cancion') {
+          letraCanciones = 'sin';
+        }
+        if (elementos.grupoLetra) marcarSegmentoActivo(elementos.grupoLetra, letraCanciones);
       }
 
       // poblar catálogo de canciones, catálogo de imágenes, y controles
@@ -1958,19 +2201,29 @@ async function enviarAFirebase() {
     // enviarEstado(estadoActual) genérico de más abajo.
 
     // asegurar que el estadoActual tiene campos de canción cuando corresponda
+    let aEnviar = estadoActual;
     if (estadoActual.tipo === 'cancion') {
-      // si el usuario eligió una canción del catálogo pero no cargó notas en memoria,
-      // intenta rellenarlas desde el catálogo
-      if ((!estadoActual.cancionNotas || estadoActual.cancionNotas.length === 0) && estadoActual.cancion) {
-        const entry = cancionesCatalogo[estadoActual.cancion];
-        if (entry && entry.notas) {
-          estadoActual.cancionNotas = entry.notas;
-        }
+      if (!estadoActual.cancion || !musicalCargado || musicalCargado.clave !== estadoActual.cancion) {
+        marcarEstado('Elegí una canción.', 'error', elementos);
+        return;
       }
       estadoActual.cancionRepeticiones = Number(elementos.inputRepeticiones.value) || Number(estadoActual.cancionRepeticiones) || 1;
+
+      if (letraCanciones === 'con') {
+        // Con letra: la grabación entera (tipo "musical"), reemplaza la pantalla.
+        aEnviar = Object.assign({}, estadoActual, {
+          tipo: 'musical',
+          musicalNombre: estadoActual.cancion,
+          musicalRepeticiones: estadoActual.cancionRepeticiones,
+          musicalDatos: musicalCargado.datos
+        });
+      } else {
+        // Sin letra: solo las notas, de fondo (tipo "cancion" de siempre).
+        estadoActual.cancionNotas = notasParaCancion(musicalCargado.grabacion);
+      }
     }
 
-    const resultado = await enviarEstado(estadoActual);
+    const resultado = await enviarEstado(aEnviar);
 
     if (resultado.exito) {
       marcarEstado(
