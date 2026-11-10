@@ -144,4 +144,4 @@ Detalles menores (decisiones del dueño del 2026-11-10):
 | `d75c579` | **Visual, `carga-masiva.html`:** la sección de canciones (subía a `canciones/`, ya borrado) queda oculta; sus funciones siguen. |
 | `f6e1a23`, `30d8b61` | **Visual y lógica:** todos los textos con "tú" en vez de voseo (unas 33 frases en `index.html`, `main.js` y `carga-masiva.html`). |
 
-Queda a decidir por el dueño: el umbral simple usa `>` y Atkinson `>=`. Es igual en el simulador `CancionesMiniTV`, del que se copió; unificarlo haría que el panel y el simulador difieran en el tono gris exacto del umbral.
+Decidido por el dueño (2026-11-10): **el umbral se deja como está**. El umbral simple usa `>` y Atkinson `>=`; es igual en el simulador `CancionesMiniTV`, del que se copió, y la diferencia solo afecta a los puntos con el gris exacto del umbral (127 por defecto). No unificarlo: el panel y el simulador darían un punto distinto con la misma foto.
