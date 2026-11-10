@@ -59,6 +59,58 @@ function coordenadasDesdeEvento(canvas, evento) {
   };
 }
 
+// El trazo se pinta en píxeles ENTEROS, sin suavizado: el lienzo es la
+// OLED en tamaño real (128×64) y cada punto que se ve es un punto que se
+// prende. Con el suavizado del canvas, un trazo fino quedaba en píxeles
+// grises a medio pintar que al pasar a blanco y negro (umbral 127) se
+// perdían: con grosor 1, una diagonal llegaba a la OLED cortada.
+const mascarasPincel = new Map();
+
+// Puntos de un pincel redondo de "d" píxeles de diámetro (d = 1, 2: un
+// punto o un cuadrado de 2×2; desde 4, redondeado).
+function mascaraPincel(d) {
+  let m = mascarasPincel.get(d);
+  if (!m) {
+    m = [];
+    const c = (d - 1) / 2, r2 = (d / 2) * (d / 2);
+    for (let j = 0; j < d; j++) {
+      for (let i = 0; i < d; i++) {
+        if ((i - c) * (i - c) + (j - c) * (j - c) <= r2) m.push([i, j]);
+      }
+    }
+    mascarasPincel.set(d, m);
+  }
+  return m;
+}
+
+// Apoya el pincel con su centro en el píxel (x, y).
+function estampar(x, y) {
+  const d = Math.max(1, Math.round(grosorActual));
+  const o = Math.floor((d - 1) / 2);
+  ctx.fillStyle = COLOR_TRAZO;
+  for (const [i, j] of mascaraPincel(d)) ctx.fillRect(x - o + i, y - o + j, 1, 1);
+}
+
+// Línea de píxel a píxel (Bresenham), apoyando el pincel en cada punto.
+function trazarLinea(x0, y0, x1, y1) {
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    estampar(x0, y0);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+
+// Píxel del lienzo bajo el puntero.
+function pixelDesdeEvento(canvas, evento) {
+  const p = coordenadasDesdeEvento(canvas, evento);
+  return { x: Math.floor(p.x), y: Math.floor(p.y) };
+}
+
 function guardarSnapshot(canvas) {
   historial.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
   if (historial.length > TOPE_HISTORIAL) historial.shift();
@@ -100,18 +152,17 @@ export function inicializarDibujo(canvas, onCambio = null) {
   canvas.style.touchAction = 'none';
 
   canvas.addEventListener('pointerdown', (e) => {
+    // Solo el botón principal (dedo, lápiz o clic izquierdo) dibuja.
+    if (e.button !== 0) return;
     dibujando = true;
     guardarSnapshot(canvas);
 
-    const p = coordenadasDesdeEvento(canvas, e);
+    const p = pixelDesdeEvento(canvas, e);
     ultimoX = p.x;
     ultimoY = p.y;
 
     // Punto simple (tap sin arrastre) igual deja una marca.
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
-    ctx.fillStyle = COLOR_TRAZO;
-    ctx.fill();
+    estampar(p.x, p.y);
 
     if (notificarCambio) notificarCambio();
 
@@ -120,12 +171,10 @@ export function inicializarDibujo(canvas, onCambio = null) {
 
   canvas.addEventListener('pointermove', (e) => {
     if (!dibujando) return;
-    const p = coordenadasDesdeEvento(canvas, e);
+    const p = pixelDesdeEvento(canvas, e);
+    if (p.x === ultimoX && p.y === ultimoY) return;
 
-    ctx.beginPath();
-    ctx.moveTo(ultimoX, ultimoY);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
+    trazarLinea(ultimoX, ultimoY, p.x, p.y);
 
     if (notificarCambio) notificarCambio();
 
