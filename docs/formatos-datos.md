@@ -19,7 +19,7 @@ Proyecto Firebase: `lorenita-6ad1e`, Realtime Database: `https://lorenita-6ad1e-
 │       └── datos             Base64 del binario
 ├── imagenes/<clave>          catálogo de la Galería (el ESP no lo lee)
 ├── animaciones/<clave>       catálogo de animaciones y GIF (el ESP no lo lee)
-├── canciones/<clave>         catálogo viejo de canciones de solo ritmo (se va a borrar)
+├── canciones/<clave>         catálogo viejo de canciones de solo ritmo (borrado el 2026-11-10; solo lo usa carga-masiva.html)
 └── musicales/                catálogo de canciones con letra (nuevo)
     ├── indice/<clave>        metadatos livianos (para listar rápido)
     └── datos/<clave>         grabación m1 en Base64
@@ -149,7 +149,7 @@ La tarea de red escribe en la ruta "nueva" y el `loop()` la mueve a la "actual" 
 }
 ```
 
-- `musicales` es nuevo. **El dueño tiene que publicarlo** en Firebase → Realtime Database → Reglas. Sin eso, importar o leer musicales da `PERMISSION_DENIED`.
+- `musicales` lo publicó el dueño el 2026-11-10. Sin esa regla, importar o leer musicales da `PERMISSION_DENIED` (el panel lo muestra como "sin permiso").
 - Plan futuro, pendiente:
   - login con email y contraseña;
   - `oled_remota` con lectura pública para el ESP;

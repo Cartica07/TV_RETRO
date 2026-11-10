@@ -103,4 +103,22 @@ Todos los commits llevan mensaje en español y separan diseño de lógica.
 | — | (2026-11-10, en Firebase) | **Las 57 canciones importadas** a `musicales/` desde el panel (777 KB en total). Catálogo viejo `canciones/` respaldado en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json` y **borrado** de Firebase, a pedido del dueño. |
 | panel | `d7f9790` | Documentación actualizada con lo anterior. |
 | — | (2026-11-10, en la placa) | Firmware `54dce85` grabado y **probado en la TV**: con letra, sin letra y el botón funcionan; 9 envíos seguidos sin fuga de memoria. |
-| ambos | *(este cambio)* | Documentación: musicales terminados y probados. |
+| panel | `4d72efd` | Documentación: musicales terminados y probados. |
+
+## Etapa 6: auditoría y arreglo de bugs del panel (10 nov 2026)
+
+Revisión completa del código. Cada arreglo se probó en Chrome con un Firebase simulado en memoria (sin tocar la base real): la prueba fallaba con el código anterior y pasa con el nuevo.
+
+| Commit | Cambio |
+|---|---|
+| `c0095fd` | **Lógica, `inoMusical.js`:** un `tone()` nuevo (o `noTone`) anula el corte programado de un `tone(pin, f, dur)` anterior, como en Arduino. Antes, en un legato `tone(f, d)` + `delay(d)` solo sonaba la primera nota. `delay()` y la duración de `tone()` truncan los decimales. Las canciones con pausa entre notas se graban igual que antes. |
+| `fc91db3` | **Lógica, `dibujo.js`:** el trazo se pinta en píxeles enteros, sin suavizado. Con grosor 1, una diagonal de 102 puntos llegaba a la OLED con 64. Solo el botón principal dibuja. |
+| `b71be8a` | **Lógica, `renderer.js`:** el scroll horizontal con la fuente clásica avanza de a píxel entero (antes había píxeles a medio encender en la vista previa). |
+| `82b79d1` | **Lógica, `main.js`:** si lo último enviado fue una animación o un GIF, la Galería abre con su lista cargada y la animación marcada. |
+| `2c36234` | **Lógica, `main.js`:** una canción que termina de cargar tarde ya no reemplaza a la elegida (antes se podía enviar otra canción que la del selector, o la anterior si la nueva fallaba). Un reajuste viejo del umbral ya no pisa la imagen recién elegida en la Galería. |
+| `b90fcdd` | **Lógica, `firebase.js` y `main.js`:** `listarMusicales/Imagenes/Animaciones/Canciones` devuelven `null` si no se pudieron leer (antes `{}`, y un error se veía como catálogo vacío). Los errores dicen el motivo (`describirError`). Sin señal, el envío avisa a los 15 s y libera el botón (antes quedaba bloqueado). |
+| `ab3d75a` | **Lógica, `main.js` y `ui.js`:** borrar de la Galería pide confirmación; repeticiones entre 1 y 99; al abrir se muestra la guardada. |
+
+Quedan para después (necesitan el firmware o una decisión del dueño):
+- Dos envíos casi simultáneos pueden salir con la misma `version`. Arreglarlo con una transacción haría que el ESP vea la versión nueva antes que la pantalla; hay que resolverlo junto con el firmware.
+- Los avisos de peso de GIF (64 / 110 KB) son del ESP32 con 256 KB de LittleFS; en el S3 hay ~7,9 MB. Hay que recalcularlos con el firmware.

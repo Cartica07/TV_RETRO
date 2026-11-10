@@ -57,6 +57,7 @@ La TV solo reproduce esa grabación. El resultado es idéntico al `.ino`, sea cu
   - `nombreDelIno(texto)` lee el nombre de la primera línea (`// "nombre" -- generado con ...`);
   - `notasParaCancion(grab)` → `[[Hz, ms], ...]`, para enviar sin letra.
 - **Saltos de línea de Windows (CRLF):** se normalizan al principio, porque si no, `#define` fallaba.
+- **`tone()` como en Arduino** (commit `c0095fd`): un `tone()` nuevo o `noTone()` anula el corte programado de un `tone(pin, f, dur)` anterior, así un legato `tone(f, d)` + `delay(d)` suena entero. `delay()` y la duración de `tone()` truncan los decimales, como en C. Las canciones importadas antes de este cambio que usen legato con `tone(pin, f, dur)` o `delay()` con decimales hay que **importarlas de nuevo** para que se graben bien.
 
 ### Verificado
 - **Las 57 canciones se graban sin errores.** Las duraciones coinciden con lo esperado:
@@ -118,7 +119,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 - **Corte:** el botón corta el musical, igual que con las canciones. Llegar a otro contenido también lo corta (`musical_stop`).
 - **Sin pitido de "mensaje nuevo"** al llegar un musical, porque sería lo primero que suena.
 - **`pantalla.cpp`:** con `tipo == "musical"` se quita `invertDisplay` y se redibuja; `actualizarPantalla` no interviene.
-- **Compilado para el S3:** 1.399.982 bytes. **Todavía no se grabó en la placa.**
+- **Compilado para el S3:** 1.399.982 bytes. Grabado en la placa y probado (ver la sección 8).
 
 ## 7. Pines (ESP32-S3)
 
