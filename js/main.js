@@ -1646,7 +1646,6 @@ async function poblarCatalogoCanciones() {
       // Si mientras tanto se eligió otra canción, esta ya no corresponde.
       if (turno === turnoCancion) {
         musicalCargado = m;
-        actualizarFilaRepeticiones();
         estadoActual.cancionNotas = notasParaCancion(m.grabacion);
         setAvisoCancion(describirMusical(clave, m.grabacion));
       }
@@ -1691,13 +1690,16 @@ async function cargarMusical(clave) {
   return { clave, datos, grabacion };
 }
 
-// true si la canción cargada toca una sola vez (su .ino no repite loop()).
+// YA NO SE USA (decisión del dueño, 2026-11-10): en el ESP32-S3 todas las
+// canciones respetan Repeticiones. Se conserva por la regla de no borrar
+// funciones. true si el .ino de la canción cargada no repite loop() (eso
+// solo importa en la TV ESP8266).
 function musicalNoSeRepite() {
   return !!(musicalCargado && musicalCargado.grabacion && !musicalCargado.grabacion.repetir);
 }
 
-// La fila Repeticiones no tiene sentido en una canción que toca una sola
-// vez: se oculta (y al enviarla se manda 1, con letra y sin letra).
+// YA NO SE USA: ocultaba la fila Repeticiones en las canciones que no
+// repiten. Ahora la fila se ve siempre.
 function actualizarFilaRepeticiones() {
   const fila = elementos.inputRepeticiones && elementos.inputRepeticiones.closest('.campo');
   if (fila) fila.hidden = musicalNoSeRepite();
@@ -1706,7 +1708,8 @@ function actualizarFilaRepeticiones() {
 function describirMusical(clave, grab) {
   const seg = Math.round(grab.duracion / 1000);
   const min = Math.floor(seg / 60), s = String(seg % 60).padStart(2, '0');
-  const fin = grab.repetir ? '' : ' · se queda en la última imagen';
+  // (grab.repetir ya no se muestra: el ESP32-S3 da siempre las vueltas de Repeticiones.)
+  const fin = '';
   return `${nombreMusical(clave)} · ${min}:${s}${fin}`;
 }
 
@@ -1772,7 +1775,6 @@ async function borrarMusicalElegido() {
     return;
   }
   if (musicalCargado && musicalCargado.clave === clave) musicalCargado = null;
-  actualizarFilaRepeticiones();
   estadoActual.cancion = '';
   estadoActual.cancionNotas = [];
   detenerPreviewMusical();
@@ -1795,7 +1797,6 @@ async function manejarSeleccionCancion() {
     estadoActual.cancion = '';
     estadoActual.cancionNotas = [];
     musicalCargado = null;
-    actualizarFilaRepeticiones();
     detenerPreviewMusical();
   }
 
@@ -1813,7 +1814,6 @@ async function manejarSeleccionCancion() {
     const m = await cargarMusical(key);
     if (turno !== turnoCancion) return; // ya se eligió otra
     musicalCargado = m;
-    actualizarFilaRepeticiones();
     estadoActual.cancion = key;
     // Para "sin letra": las notas en el formato de las canciones de siempre.
     estadoActual.cancionNotas = notasParaCancion(m.grabacion);
@@ -2318,10 +2318,9 @@ async function enviarAFirebase() {
       }
       estadoActual.cancionRepeticiones = normalizarRepeticiones(elementos.inputRepeticiones.value);
       elementos.inputRepeticiones.value = String(estadoActual.cancionRepeticiones);
-      // Una canción que toca una sola vez se manda con 1 repetición, con
-      // letra y sin letra (antes sin letra se repetía las veces del campo,
-      // que además se veía aunque no correspondiera).
-      const repeticiones = musicalNoSeRepite() ? 1 : estadoActual.cancionRepeticiones;
+      // Todas las canciones se mandan con las repeticiones que puso el
+      // usuario, con letra y sin letra (el ESP32-S3 las respeta siempre).
+      const repeticiones = estadoActual.cancionRepeticiones;
 
       if (letraCanciones === 'con') {
         // Con letra: la grabación entera (tipo "musical"), reemplaza la pantalla.
