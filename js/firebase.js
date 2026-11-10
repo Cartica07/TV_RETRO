@@ -179,6 +179,32 @@ export function suscribirLastSeen(callback) {
 }
 
 /**
+ * Escucha en tiempo real un catálogo completo (imagenes/ o animaciones/).
+ * Se baja entero la primera vez y después Firebase solo manda lo que
+ * cambia (lo que se guarda o borra desde este panel u otro dispositivo),
+ * en vez de bajar todo cada vez que se entra a la Galería. callback recibe
+ * el objeto del catálogo ({} si está vacío); alError se llama si no se
+ * pudo leer (sin permiso o sin conexión) y la escucha termina.
+ * Devuelve la función para cancelarla.
+ */
+function suscribirCatalogo(ruta, callback, alError) {
+  return onValue(ref(db, ruta), (snap) => {
+    callback(snap.exists() ? snap.val() : {});
+  }, (err) => {
+    console.error('Error al escuchar ' + ruta + ':', err);
+    if (alError) alError(err);
+  });
+}
+
+export function suscribirImagenes(callback, alError) {
+  return suscribirCatalogo('imagenes', callback, alError);
+}
+
+export function suscribirAnimaciones(callback, alError) {
+  return suscribirCatalogo('animaciones', callback, alError);
+}
+
+/**
  * Lista las canciones disponibles en el catálogo (/canciones)
  *
  * NOTA IMPORTANTE: este catálogo vive en una ruta HERMANA de

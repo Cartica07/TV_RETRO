@@ -14,6 +14,8 @@ import {
   borrarMusicalCatalogo,
   suscribirLastSeen,
   listarImagenes,
+  suscribirImagenes,
+  suscribirAnimaciones,
   guardarImagenCatalogo,
   borrarImagenCatalogo,
   listarAnimaciones,
@@ -1210,15 +1212,37 @@ function avisarCatalogoIlegible(grids, mensaje) {
   marcarEstado(`${mensaje}.`, 'error', elementos);
 }
 
+// Los catálogos de la Galería se ESCUCHAN (onValue) en vez de bajarse
+// completos cada vez que se entra: la primera vez baja todo y después solo
+// llegan los cambios (lo que se guarda o borra desde este panel u otro
+// dispositivo). Las funciones poblarCatalogo* mantienen su nombre y su uso:
+// la primera vez empiezan a escuchar y esperan los datos; las siguientes
+// solo vuelven a dibujar lo que ya está en memoria. listarImagenes() y
+// listarAnimaciones() se conservan (las usa carga-masiva.html).
+const ESPERA_PRIMERA_LECTURA_MS = 10000;
+const esperarPrimeraLectura = (promesa) => Promise.race([promesa, new Promise((r) => setTimeout(r, ESPERA_PRIMERA_LECTURA_MS))]);
+let escuchaImagenes = null;      // promesa de la primera lectura (null = no se está escuchando)
+let escuchaAnimaciones = null;
+
 async function poblarCatalogoImagenes() {
   try {
-    const lista = await listarImagenes();
-    if (lista === null) {
-      avisarCatalogoIlegible([elementos.gridGaleria], 'No se pudo leer la galería de imágenes');
+    if (escuchaImagenes) {
+      await esperarPrimeraLectura(escuchaImagenes);
+      renderizarGaleria();
       return;
     }
-    imagenesCatalogo = lista;
-    renderizarGaleria();
+    escuchaImagenes = new Promise((resolver) => {
+      suscribirImagenes((lista) => {
+        imagenesCatalogo = lista;
+        renderizarGaleria();
+        resolver();
+      }, () => {
+        escuchaImagenes = null; // la escucha terminó: la próxima vez se vuelve a intentar
+        avisarCatalogoIlegible([elementos.gridGaleria], 'No se pudo leer la galería de imágenes');
+        resolver();
+      });
+    });
+    await esperarPrimeraLectura(escuchaImagenes);
   } catch (err) {
     console.error('Error cargando catálogo de imágenes:', err);
   }
@@ -1395,13 +1419,33 @@ function normalizarCuadros(cuadros) {
   return [];
 }
 
+// Ver poblarCatalogoImagenes(): mismo criterio (se escucha una sola vez).
 async function poblarCatalogoAnimaciones() {
   try {
-    const crudo = await listarAnimaciones();
-    if (crudo === null) {
-      avisarCatalogoIlegible([elementos.gridAnimaciones, elementos.gridGifs], 'No se pudieron leer las animaciones');
+    if (escuchaAnimaciones) {
+      await esperarPrimeraLectura(escuchaAnimaciones);
+      renderizarAnimaciones();
       return;
     }
+    escuchaAnimaciones = new Promise((resolver) => {
+      suscribirAnimaciones((crudo) => {
+        aplicarCatalogoAnimaciones(crudo);
+        resolver();
+      }, () => {
+        escuchaAnimaciones = null; // la escucha terminó: la próxima vez se vuelve a intentar
+        avisarCatalogoIlegible([elementos.gridAnimaciones, elementos.gridGifs], 'No se pudieron leer las animaciones');
+        resolver();
+      });
+    });
+    await esperarPrimeraLectura(escuchaAnimaciones);
+  } catch (err) {
+    console.error('Error cargando catálogo de animaciones:', err);
+  }
+}
+
+// Convierte lo que llegó de Firebase en animacionesCatalogo y lo dibuja.
+function aplicarCatalogoAnimaciones(crudo) {
+  try {
     const claves = Object.keys(crudo);
     console.log(`[animaciones] Firebase devolvió ${claves.length} clave(s):`, claves);
 
