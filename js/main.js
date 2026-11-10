@@ -2079,6 +2079,14 @@ async function cargarEstadoInicial() {
       // poblar catálogo de canciones, catálogo de imágenes, y controles
       await poblarCatalogoCanciones();
       await poblarCatalogoImagenes();
+      // Lo último enviado fue una animación o un GIF: el panel abre en la
+      // Galería, así que su lista tiene que estar cargada (antes se veía
+      // "Todavía no hay animaciones" hasta tocar la pestaña) y la animación
+      // enviada, marcada.
+      if (estadoActual.tipo === 'animacion') {
+        animacionSeleccionActual = estadoActual.animacion || null;
+        await poblarCatalogoAnimaciones();
+      }
       poblarControles(estadoActual, elementos);
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();
