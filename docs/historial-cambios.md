@@ -133,4 +133,15 @@ Después, ya con el firmware a la vista:
 | `6dfced9` | **Visual, `style.css`:** 26 selectores definidos dos veces, unificados. Estilo calculado de todos los elementos idéntico antes y después. |
 | firmware `be2c5b6` | **Log, `github.cpp`:** `[github] animación comprimida` y `[github] musical` dicen cuántos ms tardó la descarga. |
 
+Detalles menores (decisiones del dueño del 2026-11-10):
+
+| Commit | Cambio |
+|---|---|
+| `576d07a` | **Visual, `index.html`:** la pestaña Música se llama Canciones. |
+| `61f009a` | **Lógica, `main.js`:** una canción que no se repite suena una vez con letra y sin letra; la fila Repeticiones se oculta mientras está elegida. |
+| `c367411` | **Lógica, `main.js`:** al enviar dice "Enviado ✅ Ya va camino a la TV." (antes "La OLED lo toma en el próximo chequeo"). |
+| `7d75bac` | **Lógica, `firebase.js`:** un texto ya no manda la imagen anterior en `pantalla.imagen` (~1,4 KB por envío). |
+| `d75c579` | **Visual, `carga-masiva.html`:** la sección de canciones (subía a `canciones/`, ya borrado) queda oculta; sus funciones siguen. |
+| `f6e1a23`, `30d8b61` | **Visual y lógica:** todos los textos con "tú" en vez de voseo (unas 33 frases en `index.html`, `main.js` y `carga-masiva.html`). |
+
 Queda a decidir por el dueño: el umbral simple usa `>` y Atkinson `>=`. Es igual en el simulador `CancionesMiniTV`, del que se copió; unificarlo haría que el panel y el simulador difieran en el tono gris exacto del umbral.

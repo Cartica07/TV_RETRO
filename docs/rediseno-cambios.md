@@ -10,7 +10,7 @@ Todo el trabajo está en la rama `rediseno-app`. Este documento resume, por áre
   - el estado de conexión (en línea o desconectado) con la hora de la última señal ("hace 4 s", o fecha y hora si pasó más de un día);
   - el interruptor **Invertir**, siempre a la vista;
   - el resultado del último envío.
-- **Navegación inferior** con ícono y texto: Texto, Imagen, Dibujo, Música y Galería. Al cambiar de pestaña, la página vuelve arriba.
+- **Navegación inferior** con ícono y texto: Texto, Imagen, Dibujo, Música (desde el 2026-11-10, "Canciones") y Galería. Al cambiar de pestaña, la página vuelve arriba.
 - **Botón "Enviar a la OLED"** fijo abajo, en la zona del pulgar.
 - **Escritorio** (desde 900 px de ancho): dos columnas. La OLED queda fija a la izquierda, con Enviar abajo; las pestañas y el contenido van a la derecha.
 - **Celular en horizontal:** la cabecera deja de quedar fija para que se pueda llegar a todos los controles.

@@ -57,7 +57,7 @@ El panel escribe con **un solo `update()`** sobre `oled_remota`: `{version, pant
 }
 ```
 
-Solo va el sub-objeto del `tipo` actual (`imagen`, `cancion`, `animacion` o `musical`).
+Solo va el sub-objeto del `tipo` actual (`imagen`, `cancion`, `animacion` o `musical`). Un texto no lleva ninguno: hasta el 2026-11-10 llevaba también la última imagen en `imagen`, que el firmware no lee con tipo `texto`.
 
 | Campo | Desde | Notas |
 |---|---|---|

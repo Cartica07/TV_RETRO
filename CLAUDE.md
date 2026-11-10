@@ -48,6 +48,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 ### Interfaz
 - Nombre visible: **TV RETRO**. Es solo el nombre visible: la ruta `oled_remota` y demás nombres de datos **no se renombran**.
 - **Sin textos explicativos** en las pestañas (habrá un tutorial guiado más adelante).
+- **Textos con "tú"** ("Elige", "Pon", "Prueba"), nunca voseo ("Elegí", "Poné"): el dueño vende en Colombia (decidido el 2026-11-10). La pestaña de música se llama **Canciones**.
 - **Cada pestaña (salvo las grillas de Galería) entra SIN scroll** en celulares de 390×844 y 360×740. Se mide comparando el final de `main.controles` con el borde superior de `.barra-accion`.
 - La vista previa de la OLED en el panel debe ser **pixel-perfect** con lo que dibuja el firmware (mismas fuentes, mismos cortes de línea, mismos tiempos de scroll).
 
@@ -78,7 +79,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 - `oled_remota` = `{ version, lastSeen, archivo?, pantalla: { tipo, texto, config{tamano,alineacion,alineacionV,invertido,modoTexto,fuente,manual,x,y,direccion}, imagen{ancho,alto,datos} | cancion{nombre,repeticiones,notas} | animacion{nombre,ancho,alto,cuadros[{datos,dur}] | formato:"z1",cantidad} | musical{nombre,repeticiones,formato:"m1"} } }`
-- `tipo`: `texto` | `imagen` | `cancion` | `animacion` | `musical`. Dibujo y Galería se envían como `imagen`; un GIF como `animacion`.
+- `tipo`: `texto` | `imagen` | `cancion` | `animacion` | `musical`. Solo va el sub-objeto del tipo actual: desde el 2026-11-10 un texto ya no lleva la imagen anterior (`pantalla.imagen`). Dibujo y Galería se envían como `imagen`; un GIF como `animacion`.
 - `enviarEstado` usa **`update()`** sobre `oled_remota` (escribe `version`, `pantalla` y `archivo` sin borrar `lastSeen`). `version` es un número nuevo en cada envío; el firmware solo descarga cuando cambia.
 - `oled_remota/contadorVersion` (aprobado 2026-11-10): entero que reserva el número de cada envío con una transacción (`max(contador, version) + 1`), justo antes del `update()`. Así dos envíos nunca salen con la misma `version`. `version` se sigue escribiendo solo en el `update()`, junto con `pantalla` y `archivo`. La TV no lo lee; si falta, arranca desde `version`.
 - `oled_remota/lastSeen`: heartbeat que escribe el ESP cada 10 s; la web solo lo lee (en línea si tiene menos de 25 s).
@@ -94,7 +95,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 ### Catálogos (hermanos de `oled_remota`; el ESP no los lee)
 - `imagenes/<clave>` = `{datos, ancho, alto, meta, preprocesada?}`
 - `animaciones/<clave>` = `{ancho, alto, cuadros, meta}`; los GIF llevan `meta.origen: "gif"` (lista GIF de la Galería).
-- `canciones/<clave>` = `{notas, meta}`: catálogo viejo de canciones de solo ritmo. **Borrado el 2026-11-10** a pedido del dueño; el respaldo está en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json`. Las funciones de `firebase.js` que lo usan se conservan (regla: no borrar funciones). `carga-masiva.html` todavía sube canciones ahí.
+- `canciones/<clave>` = `{notas, meta}`: catálogo viejo de canciones de solo ritmo. **Borrado el 2026-11-10** a pedido del dueño; el respaldo está en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json`. Las funciones de `firebase.js` que lo usan se conservan (regla: no borrar funciones). La sección de canciones de `carga-masiva.html` está oculta (sus funciones siguen).
 - `musicales/indice/<clave>` = `{nombre, archivo, duracion, repetir, imagenes, bytes, origen:"ino", fecha}` y `musicales/datos/<clave>` = Base64 m1 (aprobado). La clave es el nombre del archivo sin `.ino`.
 
 ### Reglas de Firebase
@@ -110,7 +111,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - Firmware: `54dce85` grabado en la placa. Con letra, sin letra y el botón funcionan (confirmado por el dueño); 9 envíos seguidos sin fuga de memoria (heap libre estable, 96–102 KB).
   - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
-- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho. Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`, sin push). Firmware `be2c5b6`: log con el tiempo de descarga (sin grabar en la placa, sin push). En curso: detalles menores (esperan decisiones del dueño). Después siguen la seguridad de Firebase y las optimizaciones.
+- **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho. Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`, sin push). Firmware `be2c5b6`: log con el tiempo de descarga (sin grabar en la placa, sin push). Detalles menores (2026-11-10, sin push): pestaña Canciones, "tú" en vez de voseo, mensaje "Ya va camino a la TV", canción que no se repite suena una vez, `carga-masiva.html` sin canciones, texto sin la imagen anterior. Pendiente de decisión: umbral `>` / `>=`. Después siguen la seguridad de Firebase y las optimizaciones.
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases

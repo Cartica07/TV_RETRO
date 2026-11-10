@@ -103,7 +103,8 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 - **Enviar:**
   - con letra: `tipo: "musical"`, `musicalNombre`, `musicalRepeticiones` y `musicalDatos` (m1), que van a `archivo`;
   - sin letra: `tipo: "cancion"` con `cancionNotas = notasParaCancion(grab)`;
-  - si no se eligió nada: "Elegí una canción.".
+  - si no se eligió nada: "Elige una canción.";
+  - si la canción no se repite (`repetir = false`), se manda con 1 repetición, con letra y sin letra, y la fila Repeticiones se oculta mientras está elegida (antes, sin letra, se repetía las veces del campo).
 - **Al abrir el panel:** si lo último enviado fue un musical, se abre Canciones con "Con letra" y esa canción elegida.
 
 ## 6. El firmware (`musical.cpp`, commit `54dce85`)
