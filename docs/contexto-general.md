@@ -164,7 +164,7 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 | Lo pesado va en `oled_remota/archivo` y no dentro de `pantalla` | El ESP baja `pantalla` (liviano) y después el archivo **en streaming a LittleFS**, sin cargarlo entero en la RAM. |
 | Compresión deflate **sin pérdida**, por cuadro (z1) | Se ve exactamente igual. Cada cuadro aparte permite descomprimir solo el que se dibuja. El ESP32 tiene el descompresor `tinfl` en la ROM. |
 | Musicales **grabados** en el navegador (no interpretar el `.ino` en el ESP) | Los `.ino` son programas en C. En vez de portarlos, el panel los ejecuta en una máquina virtual con tiempo virtual y graba qué suena y qué se ve. La TV solo reproduce la grabación. Sale idéntico, sin importar qué versión del simulador generó el `.ino`. |
-| Imágenes deduplicadas en m1 | Un GIF que se repite toda la canción se guarda una vez (1965 KB → 777 KB en la canción más grande). |
+| Imágenes deduplicadas en m1 | Un GIF que se repite toda la canción se guarda una vez (las 57 canciones pasaron de 1965 KB a 777 KB en total; la más pesada ocupa 89 KB). |
 | Dos núcleos en el ESP32 | La red (TLS, esperas) nunca congela la pantalla ni el buzzer. |
 | Archivos temporales + mover | Nunca se reproduce un archivo a medio descargar. |
 | OTA reservada (dos slots de 4 MB) | El dueño quiere poder actualizar por Wi-Fi las TV vendidas sin perder funciones. |
@@ -175,11 +175,9 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 
 ## 8. Pendientes
 
-1. **Reglas de Firebase:** agregar `musicales` en la consola. Lo hace el dueño; el texto está en `database.rules.json`.
-2. **Musicales:** probar importación y vista previa, commitear la lógica del panel, importar las 57 canciones, grabar el firmware `54dce85` y probar con y sin letra en la TV.
-3. **Catálogo viejo `canciones/`:** respaldarlo a un archivo fuera de los repos y borrarlo cuando la lista nueva funcione (pedido del dueño).
-4. **Push** de los dos repos cuando el dueño lo pida.
-5. **Más adelante:**
+1. **Musicales:** grabar el firmware `54dce85` en la placa y probar con y sin letra en la TV. Lo demás ya está hecho: reglas publicadas, las 57 canciones importadas y el catálogo viejo `canciones/` respaldado y borrado.
+2. **Push** de los dos repos cuando el dueño lo pida.
+3. **Más adelante:**
    - vista previa con sonido en el panel (opcional);
    - actualización OTA;
    - login y reglas por UID;

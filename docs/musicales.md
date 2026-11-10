@@ -1,6 +1,6 @@
 # Musicales: canciones con letra, imágenes y GIF
 
-**Estado (2026-11-09): en curso.** Ver la sección 8.
+**Estado (2026-11-10):** el panel está terminado y las 57 canciones están importadas. Falta grabar el firmware y probar en la TV (sección 8).
 
 ## 1. Qué pidió el dueño
 
@@ -73,7 +73,7 @@ La TV solo reproduce esa grabación. El resultado es idéntico al `.ino`, sea cu
 Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 
 - Las notas y la línea de tiempo de imágenes van sin comprimir.
-- Cada imagen distinta va en deflate-raw. Al deduplicar las imágenes, la canción más pesada bajó de 1965 KB a 777 KB.
+- Cada imagen distinta va en deflate-raw. Al deduplicar las imágenes, las 57 canciones pasaron de 1965 KB a **777 KB en total**; la más pesada ocupa 89 KB.
 - `codificarMusical(grab)` → `{datos (Base64), bytes, imagenes}`; `decodificarMusical(base64)` → `{notas, cuadros:[{t, bitmap}], duracion, repetir}`.
 
 ## 5. El panel: pestaña Canciones
@@ -87,7 +87,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 - las repeticiones;
 - el aviso `#avisoCancion`.
 
-**Lógica** (`main.js`, `firebase.js`, `ui.js`; **todavía sin commit**):
+**Lógica** (`main.js`, `firebase.js`, `ui.js`; commit `22910fa`):
 - **Importar:**
   - se eligen uno o varios `.ino`;
   - cada uno pasa por `grabarIno`, luego por `codificarMusical`, y se guarda con `guardarMusicalCatalogo`, en un solo `update()` sobre `musicales` con `indice/<clave>` y `datos/<clave>`;
@@ -97,7 +97,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 - **Elegir:** `leerMusical(clave)` baja los datos y `decodificarMusical` los convierte. El aviso muestra "Nombre · m:ss" y "(una vez)" si no se repite.
 - **Vista previa:**
   - con letra, la OLED del panel reproduce las imágenes a su tiempo (`iniciarPreviewMusical`);
-  - sin letra, la pantalla no cambia.
+  - sin letra, la pantalla no cambia: si antes se estaba viendo la vista previa con letra, se vuelve a mostrar lo que había.
 - **Borrar:** el tacho, con confirmación, borra `indice` y `datos` de esa clave.
 - **Enviar:**
   - con letra: `tipo: "musical"`, `musicalNombre`, `musicalRepeticiones` y `musicalDatos` (m1), que van a `archivo`;
@@ -129,22 +129,20 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 
 En el ESP8266 eran otros, pero da igual: los `.ino` se ejecutan en el navegador y la grabación no depende de los pines.
 
-## 8. Qué falta
+## 8. Estado y qué falta
 
-1. **Reglas de Firebase:** el dueño tiene que agregar `"musicales": { ".read": true, ".write": true }` en la consola (está en `database.rules.json`). Hoy, importar da `PERMISSION_DENIED`.
-2. **Probar en el panel:**
-   - importar, elegir, vista previa con y sin letra;
-   - que la pestaña entre sin scroll;
-   - consola sin errores.
-   
-   Después, commitear la lógica (un commit de lógica aparte).
-3. **Importar las 57 canciones**, desde la app con **+** eligiéndolas todas.
-4. **Grabar el firmware** `54dce85` en la placa (Arduino IDE) y probar en la TV:
+Hecho (2026-11-10):
+- Reglas de Firebase con `musicales`, publicadas por el dueño.
+- Panel probado: importar, elegir, vista previa con y sin letra, la pestaña entra sin scroll (390×844) y la consola no muestra errores propios (solo un 404 de un recurso externo).
+- **Las 57 canciones importadas** desde el panel, en 34 s y sin errores (777 KB en total).
+- Catálogo viejo `canciones/` (8 canciones) **respaldado** en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json` (fuera de los repos) y **borrado** de Firebase, como pidió el dueño.
+
+Falta:
+1. **Grabar el firmware** `54dce85` (o posterior) en la placa (Arduino IDE) y probar en la TV:
    - con letra, que reemplaza la pantalla y va a tiempo;
    - sin letra, que suena de fondo;
    - repeticiones;
    - el botón;
    - los cambios de modo.
-5. **Catálogo viejo `canciones/`:** respaldarlo a un JSON fuera de los repos y borrarlo cuando todo lo anterior funcione.
-6. **Push** de los dos repos cuando el dueño lo pida.
-7. **Opcional:** que la vista previa del panel también suene.
+2. **Push** de los dos repos cuando el dueño lo pida.
+3. **Opcional:** que la vista previa del panel también suene.

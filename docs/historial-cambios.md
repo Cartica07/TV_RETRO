@@ -96,5 +96,9 @@ Todos los commits llevan mensaje en español y separan diseño de lógica.
 | panel | `0a44f6f` | **Lógica:** `js/inoMusical.js` (intérprete de `.ino`, graba notas y pantallas) y formato **m1** en `js/compresion.js`. |
 | panel | `ce77fa2` | **Diseño:** pestaña Canciones con importar `.ino`, borrar y Con letra / Sin letra. |
 | firmware | `54dce85` | Reproductor de musicales (`musical.cpp/.h`), descarga en `github.cpp`, integración en `.ino` y `pantalla.cpp`. **Sin push.** |
-| panel | *(sin commit)* | **Lógica:** catálogo `musicales/` en `firebase.js`, IDs en `ui.js`, importar/elegir/vista previa/borrar/enviar en `main.js`. Espera a que se publiquen las reglas de Firebase para probarlo. |
-| panel | *(este cambio)* | Documentación completa: `CLAUDE.md` (reglas del dueño), `docs/contexto-general.md`, `docs/formatos-datos.md`, `docs/musicales.md`, este historial y `database.rules.json`. |
+| panel | `23711fe` | Documentación completa: `CLAUDE.md` (reglas del dueño), `docs/contexto-general.md`, `docs/formatos-datos.md`, `docs/musicales.md`, este historial y `database.rules.json`. |
+| firmware | `7bf71e7` | `CLAUDE.md` del firmware (reglas y arquitectura) y README con musicales. |
+| — | (2026-11-10, en Firebase) | El dueño publicó las reglas con `musicales`. |
+| panel | `22910fa` | **Lógica:** catálogo `musicales/` en `firebase.js`, IDs en `ui.js`, importar/elegir/vista previa/borrar/enviar en `main.js`. Con "Sin letra" la vista previa vuelve a lo que había en pantalla. Probado con Playwright: sin scroll y sin errores propios. |
+| — | (2026-11-10, en Firebase) | **Las 57 canciones importadas** a `musicales/` desde el panel (777 KB en total). Catálogo viejo `canciones/` respaldado en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json` y **borrado** de Firebase, a pedido del dueño. |
+| panel | *(este cambio)* | Documentación actualizada con lo anterior. |

@@ -93,22 +93,21 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 ### Catálogos (hermanos de `oled_remota`; el ESP no los lee)
 - `imagenes/<clave>` = `{datos, ancho, alto, meta, preprocesada?}`
 - `animaciones/<clave>` = `{ancho, alto, cuadros, meta}`; los GIF llevan `meta.origen: "gif"` (lista GIF de la Galería).
-- `canciones/<clave>` = `{notas, meta}` — catálogo viejo (8 canciones de solo ritmo). **El dueño pidió borrarlo**: primero se respalda a un archivo fuera de los repos y se borra cuando la lista nueva funcione.
+- `canciones/<clave>` = `{notas, meta}`: catálogo viejo de canciones de solo ritmo. **Borrado el 2026-11-10** a pedido del dueño; el respaldo está en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json`. Las funciones de `firebase.js` que lo usan se conservan (regla: no borrar funciones). `carga-masiva.html` todavía sube canciones ahí.
 - `musicales/indice/<clave>` = `{nombre, archivo, duracion, repetir, imagenes, bytes, origen:"ino", fecha}` y `musicales/datos/<clave>` = Base64 m1 (aprobado). La clave es el nombre del archivo sin `.ino`.
 
 ### Reglas de Firebase
-- Hoy todo está abierto (`.read`/`.write` = true) en `oled_remota`, `canciones`, `imagenes`, `animaciones` y `musicales`. `musicales` hay que agregarlo en la consola (si no, "PERMISSION_DENIED").
+- Hoy todo está abierto (`.read`/`.write` = true) en `oled_remota`, `canciones`, `imagenes`, `animaciones` y `musicales` (publicado por el dueño el 2026-11-10).
 - Plan futuro (pendiente): login con Firebase Auth (email/contraseña; la pantalla ya está diseñada y oculta) y reglas por UID del dueño: lectura pública de `oled_remota` para el ESP, `lastSeen` escribible por el ESP, todo lo demás solo el dueño.
 
-## 5. Estado actual (2026-11-09)
+## 5. Estado actual (2026-11-10)
 
 - Rediseño tipo app: terminado.
 - Firmware ESP32-S3: texto con todas las fuentes, imágenes, dibujos, canciones, GIF z1, tildes, streaming de Firebase, dos núcleos. Probado en la placa.
 - **Musicales: en curso.**
-  - Hecho y commiteado: `inoMusical.js` + `compresion.js` (m1), el diseño de la pestaña Canciones y el reproductor del firmware (`musical.cpp`, commit `54dce85`, sin push).
-  - Sin commitear: la lógica del panel (`firebase.js`, `ui.js`, `main.js`).
-  - Bloqueado: falta que el dueño agregue `musicales` a las reglas.
-  - Falta: importar las 57 canciones, probar la vista previa, grabar el firmware y probar con y sin letra en la TV.
+  - Panel terminado y probado (`0a44f6f`, `ce77fa2`, `22910fa`); las 57 canciones están importadas en `musicales/`.
+  - Reproductor del firmware (`musical.cpp`, commit `54dce85`): compila, pero **falta grabarlo en la placa y probarlo** con y sin letra.
+  - Sin push en ninguno de los dos repos desde estos commits.
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
 
 ## 6. Fases
