@@ -12,6 +12,19 @@
   display: none !important;
 }
 
+/* Un doble toque rápido en un botón o control (alguien impaciente) no debe
+   hacer zoom en el celular ni esperar el retraso del doble toque.
+   "manipulation" deja el desplazamiento y el pellizco como siempre. El
+   lienzo de Dibujo y su visor ya usan "touch-action: none" aparte. */
+button,
+select,
+input,
+textarea,
+label,
+.item-galeria {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
