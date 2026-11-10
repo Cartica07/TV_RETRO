@@ -2218,7 +2218,9 @@ async function cargarEstadoInicial() {
 // muestra en la interfaz por ahora: queda en la consola para depurar.
 function textoEnviado(version) {
   console.info(`[TV RETRO] Enviado: v${version}`);
-  return 'Enviado ✅ La OLED lo toma en el próximo chequeo.';
+  // La TV escucha los cambios por streaming: le llega al instante (antes
+  // consultaba cada 10 s, de ahí el viejo "en el próximo chequeo").
+  return 'Enviado ✅ Ya va camino a la TV.';
 }
 
 // Sube en 1 con cada envío: el aviso de un envío viejo que termina tarde
