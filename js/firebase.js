@@ -4,7 +4,7 @@
  */
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, remove, onValue } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
 import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
@@ -412,7 +412,9 @@ export async function enviarEstado(estado) {
   try {
     const snapVersion = await esperarHasta(get(ref(db, 'oled_remota/version')), ESPERA_MAXIMA_ENVIO_MS);
     if (snapVersion === ESPERA_LENTA) return { exito: false, error: 'sin conexión a internet' };
-    const nuevaVersion = (snapVersion.exists() ? Number(snapVersion.val()) : 0) + 1;
+    const versionLeida = snapVersion.exists() ? (Number(snapVersion.val()) || 0) : 0;
+    // El número definitivo se reserva justo antes de escribir (ver abajo).
+    let nuevaVersion = versionLeida + 1;
 
     // El texto y su configuración se guardan SIEMPRE, sin importar qué
     // tipo esté activo ahora. Antes solo se guardaban cuando tipo ===
@@ -513,7 +515,25 @@ export async function enviarEstado(estado) {
     // borra oled_remota/lastSeen (heartbeat que escribe el ESP).
     // archivo: la animación comprimida, o null para borrar la anterior
     // (se escribe en el mismo update, así nunca queda de otra versión).
-    const escritura = update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
+    //
+    // El número de versión se reserva antes con una transacción sobre
+    // oled_remota/contadorVersion (la TV no lo lee). Así dos envíos casi
+    // simultáneos nunca salen con el mismo número: antes los dos leían
+    // "version" y escribían el mismo valor, y la TV ignoraba el segundo.
+    // "version" en sí se sigue escribiendo solo en este update(), junto
+    // con pantalla y archivo: la TV escucha "version" y no puede verla
+    // cambiar antes de que esté el contenido. Si el contador no existe (o
+    // quedó atrás de "version"), arranca desde "version".
+    // Reserva y escritura van encadenadas: con la red lenta, las dos
+    // siguen solas cuando vuelve la señal.
+    const escritura = (async () => {
+      const reserva = await runTransaction(ref(db, 'oled_remota/contadorVersion'),
+        (actual) => Math.max(Number(actual) || 0, versionLeida) + 1);
+      if (!reserva.committed) throw new Error('no se pudo reservar el número de envío');
+      nuevaVersion = Number(reserva.snapshot.val());
+      if (archivo) archivo.version = nuevaVersion;
+      await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
+    })();
     if (await esperarHasta(escritura, ESPERA_MAXIMA_ENVIO_MS) === ESPERA_LENTA) {
       // Firebase la manda sola cuando vuelva la señal. "escritura" avisa
       // cuándo terminó (o si falló), para actualizar el mensaje.
@@ -522,6 +542,7 @@ export async function enviarEstado(estado) {
         pendiente: true,
         version: nuevaVersion,
         error: 'la conexión está lenta',
+        // nuevaVersion ya es la reservada cuando termina la escritura.
         escritura: escritura.then(
           () => ({ exito: true, version: nuevaVersion }),
           (err) => ({ exito: false, error: err.message })
