@@ -148,4 +148,17 @@ Detalles menores (decisiones del dueño del 2026-11-10):
 |---|---|
 | `18ac19d` | **Lógica (solo comentarios), varios archivos de `js/`:** comentarios de la época del ESP8266 puestos al día (latido cada 10 s desde `red.cpp`, `update()` en vez de `set()`, importar y borrar canciones desde el panel, el firmware sí maneja `animacion`, BT.601 en `imageProcessor.js`). La constante `AMBAR` de `renderer.js` (que es cian) pasa a `ACENTO_OLED`. |
 
+Optimizaciones (2026-11-10), cada una medida o verificada con el banco de pruebas (Edge, Firebase simulado):
+
+| Commit | Cambio | Medido |
+|---|---|---|
+| `7e587dc` | **Dibujo:** el trazo ya no genera un PNG en cada cuadro (`obtenerResultadoImagen(canvas, conPng)`; solo guardar en la galería lo pide). | 3,5 ms -> 0,46 ms por cuadro |
+| `5161c28` | **Galería:** tocar una miniatura solo mueve la marca "activo" (`actualizarResaltadoGaleria` / `actualizarResaltadoAnimaciones`), sin reconstruir el grid. | Los mismos elementos sobreviven al clic |
+| `5b4ccf4` | **Scroll:** el ancho del texto se mide una vez y solo se redibuja si cambia el cuadro (posición entera o firma del dibujo). | Horizontal ~57 -> ~38 dibujos/s; vertical ~58 -> ~8. 160 fotogramas idénticos antes y después (5 casos) |
+| `041d873` | **GIF:** el peso comprimido se calcula tras 150 ms de calma al mover el slider de umbral. | 10 movimientos: 10 cálculos -> 1 |
+| `0f392f0` | **Canciones:** las últimas 4 se guardan en memoria; la copia vale mientras no cambie la `fecha` de su entrada en el índice (reimportar o borrar la descarta). Corrige que reimportar la canción cargada devolvía la vieja. | A, B, A, B, A: 5 lecturas -> 2 |
+| `ba7f2ce` | **Bitmaps:** `dibujarPreviewImagen` usa un `ImageData` en vez de un `fillRect` por punto. | 3,0 ms -> 0,17 ms; 0 diferencias en 1792 combinaciones |
+
+No se tocó el pintado del texto (`fonts.js`, `fuentesTexto.js`): mide 0,5 ms por cuadro y no lo justifica. Tampoco se carga `fuentesGfx.js` por fuente (riesgo mayor que el beneficio) ni se cambió el formato m1. Las Google Fonts ya tienen `preconnect` y `display=swap`.
+
 Decidido por el dueño (2026-11-10): **el umbral se deja como está**. El umbral simple usa `>` y Atkinson `>=`; es igual en el simulador `CancionesMiniTV`, del que se copió, y la diferencia solo afecta a los puntos con el gris exacto del umbral (127 por defecto). No unificarlo: el panel y el simulador darían un punto distinto con la misma foto.
