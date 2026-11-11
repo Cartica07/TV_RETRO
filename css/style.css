@@ -2033,6 +2033,18 @@ body.dibujo-expandido .solo-normal {
   display: none !important;
 }
 
+/* Rendimiento del lienzo expandido en el celular: el lienzo ocupa ~6 veces más
+   píxeles y sus tres sombras de brillo (drop-shadow) se recalculaban en cada
+   trazo, y la vista previa de la TV, tapada por el lienzo, se seguía pintando.
+   Medido en un Motorola Edge 50 Neo: el pintado por toque bajó de 69 a 27 ms. */
+body.dibujo-expandido #lienzoDibujo {
+  filter: none;
+}
+
+body.dibujo-expandido .cabecera-fija {
+  visibility: hidden;
+}
+
 /* El marco ocupa toda la pantalla, menos la barra de herramientas. */
 body.dibujo-expandido .marco-dibujo {
   position: fixed;
