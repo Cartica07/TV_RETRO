@@ -43,7 +43,7 @@ Cada paso dice quién lo hace. Mientras no se publiquen las reglas nuevas (paso 
 
 ## Paso 8: límites por cuenta y biblioteca predeterminada (puesta en marcha)
 
-Código y reglas listos y probados (`database.rules.propuesta.json`, 166 casos; `cuotas.mjs`, 11 escenarios). Orden, para no dejar nada sin funcionar:
+Código y reglas listos y probados (`database.rules.propuesta.json`, 190 casos; `cuotas.mjs`, 15 escenarios). Tope: 25 elementos en total y máximo 10 GIF; el administrador sin límite y puede borrar las predeterminadas. Orden, para no dejar nada sin funcionar:
 
 1. **Dueño:** genera una clave de servicio nueva (Configuración del proyecto > Cuentas de servicio > Generar nueva clave privada), la guarda en `C:\Proyectos\claves\` y avisa la ruta.
 2. **Claude:** `herramientas/mover-a-biblioteca.cjs --correo <correo del dueño>` COPIA las imágenes y animaciones del catálogo personal a `biblioteca/` (con respaldo). Aún no se quita nada.
