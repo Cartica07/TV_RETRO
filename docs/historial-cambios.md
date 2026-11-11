@@ -187,3 +187,9 @@ Cerrado después, con OK del dueño (2026-11-10):
 No se tocó el pintado del texto (`fonts.js`, `fuentesTexto.js`): mide 0,5 ms por cuadro y no lo justifica. Tampoco se carga `fuentesGfx.js` por fuente (riesgo mayor que el beneficio) ni se cambió el formato m1. Las Google Fonts ya tienen `preconnect` y `display=swap`.
 
 Decidido por el dueño (2026-11-10): **el umbral se deja como está**. El umbral simple usa `>` y Atkinson `>=`; es igual en el simulador `CancionesMiniTV`, del que se copió, y la diferencia solo afecta a los puntos con el gris exacto del umbral (127 por defecto). No unificarlo: el panel y el simulador darían un punto distinto con la misma foto.
+
+### Scroll de la página a 360×740 (2026-11-10)
+
+| Commit | Problema | Arreglo |
+|---|---|---|
+| `91593e8` | La regla "sin scroll" se cumplía (hueco de 13 px en Texto y 25 px en Dibujo sobre la barra de Enviar), pero la página entera se movía 19 px en Texto y 7 px en Dibujo a 360×740: el `padding-bottom` del `body` (+16 px) y el margen de `.controles` (16 px) sumaban aire de más | `body` reserva solo Enviar + navegación; `.controles` baja a 12 px de margen. Sin scroll en las 4 pestañas a 390×844 y 360×740; los huecos no cambian. A 375×667 no entra (fuera de la regla) |
