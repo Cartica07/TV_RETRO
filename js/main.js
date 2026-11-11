@@ -2766,11 +2766,12 @@ async function inicializar() {
 // ===================================================
 // Cuentas: pantalla de inicio de sesión
 // ===================================================
-// MODO CUENTAS (paso 2 del plan de seguridad, ver docs/formatos-datos.md sección 6).
-// Mientras no se migre la base (paso 7) el panel funciona SIN login, como
-// siempre; el modo cuentas solo se activa con ?cuentas=1 en la dirección. Al
-// migrar se cambia esta constante a true.
-const USAR_CUENTAS = new URLSearchParams(location.search).has('cuentas');
+// MODO CUENTAS (ver docs/formatos-datos.md sección 6). Desde la migración del
+// 2026-11-11 es el modo normal: login, TV vinculada y rutas por cuenta. El modo
+// viejo (sin login, rutas oled_remota/…) queda SOLO para las pruebas locales:
+// se activa con ?sincuentas=1 en la dirección. En producción las reglas de
+// Firebase ya no dejan usar las rutas viejas.
+const USAR_CUENTAS = !new URLSearchParams(location.search).has('sincuentas');
 
 let modoLogin = 'entrar'; // 'entrar' | 'crear'
 let avisoPostLogin = '';  // se muestra en la línea de estado al terminar de arrancar
