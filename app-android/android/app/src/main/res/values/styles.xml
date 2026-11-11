@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Detrás de las barras del sistema se ve el fondo del panel (#0B0F14). -->
+        <item name="android:windowBackground">@color/fondoPanel</item>
     </style>
 
 
