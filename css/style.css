@@ -963,6 +963,29 @@ input[type="range"] {
   height: 20px;
 }
 
+/* Enviar del modo expandido: ícono relleno con el acento. Al terminar el envío
+   se le pone .enviado y por un momento muestra la palomita en vez del avión. */
+.boton-icono-enviar {
+  background: var(--acento-relleno);
+  color: var(--sobre-acento);
+  border-color: transparent;
+}
+
+.boton-icono-enviar:hover:not(:disabled) {
+  color: var(--sobre-acento);
+  border-color: transparent;
+  filter: brightness(1.08);
+}
+
+.boton-icono-enviar .icono-ok,
+.boton-icono-enviar.enviado .icono-enviar {
+  display: none;
+}
+
+.boton-icono-enviar.enviado .icono-ok {
+  display: block;
+}
+
 .marco-dibujo {
   background: var(--superficie-hundida);
   box-shadow:
@@ -2095,6 +2118,14 @@ body.dibujo-expandido .herramientas-dibujo .acciones-lienzo {
 body.dibujo-expandido .herramientas-dibujo .boton-icono {
   width: 44px;
   height: 40px;
+}
+
+/* Pantallas muy bajas en horizontal: con el botón de enviar son 7 botones en
+   columna; se achican un poco para que quepan sin scroll. */
+@media (orientation: landscape) and (max-height: 380px) {
+  body.dibujo-expandido .herramientas-dibujo .boton-icono {
+    height: 34px;
+  }
 }
 
 /* Teléfono en vertical (sin poder bloquear la rotación): herramientas

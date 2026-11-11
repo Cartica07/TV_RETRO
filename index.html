@@ -322,6 +322,11 @@
             <button id="botonContraerDibujo" type="button" class="boton-icono solo-expandido" aria-label="Contraer el lienzo" title="Contraer">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
             </button>
+            <!-- Solo en modo expandido: enviar sin tener que contraer. -->
+            <button id="botonEnviarDibujoExpandido" type="button" class="boton-icono boton-icono-enviar solo-expandido" aria-label="Enviar a la OLED" title="Enviar a la OLED">
+              <svg class="icono icono-enviar" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              <svg class="icono icono-ok" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
             <!-- Solo en modo normal: expandir a pantalla completa. -->
             <button id="botonExpandirDibujo" type="button" class="boton-icono solo-normal" aria-label="Expandir el lienzo" title="Expandir (pantalla completa)">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
