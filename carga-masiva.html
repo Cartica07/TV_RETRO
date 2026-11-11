@@ -391,7 +391,8 @@
     import {
       guardarImagenCatalogo,
       guardarCancionCatalogo, listarCanciones, borrarCancionCatalogo,
-      guardarAnimacionCatalogo, listarAnimaciones, borrarAnimacionCatalogo
+      guardarAnimacionCatalogo, listarAnimaciones, borrarAnimacionCatalogo,
+      escucharSesion, iniciarSesion, cerrarSesion, usarCuenta
     } from './js/firebase.js';
 
     const inputArchivos = document.getElementById('archivos');
@@ -750,7 +751,7 @@
       await cargarCancionesGuardadas();
     }
 
-    cargarCancionesGuardadas();
+    // (Las canciones viejas ya no se leen al abrir: ese catálogo se borró y la sección está oculta.)
 
     // ===================================================
     // Animaciones: subir uno o más JSON, guardar en la galería.
@@ -986,7 +987,61 @@
       await cargarAnimacionesGuardadas();
     }
 
-    cargarAnimacionesGuardadas();
+    // ---- Sesión ----
+    // Desde las reglas con cuentas, el catálogo es de cada usuario (usuarios/{uid}/...):
+    // sin sesión esta página no puede leer ni guardar nada, así que el contenido queda
+    // bloqueado (inert) hasta entrar con la cuenta del dueño.
+    const contenidoProtegido = document.getElementById('contenidoProtegido');
+    const formSesion = document.getElementById('formSesion');
+    const botonSesion = document.getElementById('botonSesion');
+    const botonSalirSesion = document.getElementById('botonSalirSesion');
+    const sesionError = document.getElementById('sesionError');
+
+    function mostrarErrorSesion(texto) {
+      sesionError.textContent = texto;
+      sesionError.hidden = !texto;
+    }
+
+    formSesion.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      mostrarErrorSesion('');
+      const correo = document.getElementById('sesionCorreo').value.trim();
+      const clave = document.getElementById('sesionClave').value;
+      if (!correo) return mostrarErrorSesion('Escribe tu correo.');
+      if (!clave) return mostrarErrorSesion('Escribe tu contraseña.');
+      botonSesion.disabled = true;
+      const r = await iniciarSesion(correo, clave);
+      botonSesion.disabled = false;
+      if (!r.exito) return mostrarErrorSesion(r.error);
+      document.getElementById('sesionClave').value = '';
+    });
+
+    botonSalirSesion.addEventListener('click', async () => {
+      await cerrarSesion();
+      location.reload(); // no queda nada del usuario en memoria
+    });
+
+    let listadosCargados = false;
+    escucharSesion((usuario) => {
+      if (!usuario) {
+        contenidoProtegido.inert = true;
+        formSesion.hidden = false;
+        botonSalirSesion.hidden = true;
+        document.getElementById('sesionTitulo').textContent = 'Inicia sesión';
+        document.getElementById('sesionDescripcion').textContent = 'Entra con la cuenta del dueño: lo que subas se guarda en su galería.';
+        return;
+      }
+      usarCuenta(usuario.uid, ''); // solo se usan los catálogos, no una TV
+      contenidoProtegido.inert = false;
+      formSesion.hidden = true;
+      botonSalirSesion.hidden = false;
+      document.getElementById('sesionTitulo').textContent = 'Sesión iniciada';
+      document.getElementById('sesionDescripcion').textContent = usuario.email + ': lo que subas se guarda en su galería.';
+      if (!listadosCargados) {
+        listadosCargados = true;
+        cargarAnimacionesGuardadas();
+      }
+    });
   </script>
 </body>
 </html>
