@@ -107,7 +107,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 ### Reglas de Firebase
 - Hoy todo está abierto (`.read`/`.write` = true) en `oled_remota`, `canciones`, `imagenes`, `animaciones` y `musicales` (publicado por el dueño el 2026-11-10).
-- **Seguridad y cuentas (EN CURSO, aprobado por el dueño):** estructura nueva con cuentas (`dispositivos/{id}`, `usuarios/{uid}`, `emparejamiento/{codigo}`, `administradores`) descrita en `docs/formatos-datos.md` sección 6; reglas en `database.rules.propuesta.json` (sin publicar; `database.rules.json` sigue siendo lo publicado). Pruebas de reglas con el emulador en `C:Proyectospruebas-tv-retroeglas.mjs` (necesita Node 22 y JDK 21; Node 26 se cae con firebase-tools). El panel mantiene el modo viejo (sin login) hasta migrar: no cambiar rutas en producción hasta el paso 7.
+- **Seguridad y cuentas (EN CURSO, aprobado por el dueño):** estructura nueva con cuentas (`dispositivos/{id}`, `usuarios/{uid}`, `emparejamiento/{codigo}`, `administradores`) descrita en `docs/formatos-datos.md` sección 6; reglas en `database.rules.propuesta.json` (sin publicar; `database.rules.json` sigue siendo lo publicado). Pruebas de reglas con el emulador en `C:Proyectospruebas-tv-retroeglas.mjs` (necesita Node 22 y JDK 21; Node 26 se cae con firebase-tools). El panel mantiene el modo viejo (sin login) hasta migrar: el modo cuentas solo se activa con `?cuentas=1` (`USAR_CUENTAS` en `main.js`); no cambiar rutas en producción hasta el paso 7. Hechos los pasos 1-4 (reglas, login, Mi TV, rutas por cuenta); faltan 5 (script de fabricación), 6 (firmware), 7 (migración) y 8 (límites). Pruebas nuevas: `login.mjs`, `tv.mjs`, `reglas.mjs`.
 
 ## 5. Estado actual (2026-11-10)
 

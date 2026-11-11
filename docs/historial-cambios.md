@@ -208,3 +208,17 @@ La APK es el MISMO panel (HTML/CSS/JS) empaquetado en un WebView de Android; viv
 | `ef4c43b` (visual) | Pedido del dueño: vista previa de la OLED más grande | Celulares altos: de 120 a 144 px de alto (+20%, 288×144), con `clamp(120px, calc(100vh - 685px), 144px)` para que en pantallas medianas crezca menos y no aparezca scroll. Los celulares bajos (≤780 px de alto) quedan igual. Medido en 12 tamaños: ningún scroll nuevo (el que hay en 390×740, 426×740 y 426×800 en Dibujo ya existía) |
 
 Cómo compilar (Windows): `cd app-android`, `npm run copiar-web`, `npx cap sync android`, y en `app-android/android` `gradlew assembleDebug` con **JDK 21** (Gradle 8.14 no funciona con el Java 25 de este Android Studio; en Android Studio elegir Gradle JDK 21). La APK queda en `app/build/outputs/apk/debug/app-debug.apk`; instalar con `adb install -r`.
+
+## Etapa 8: seguridad y cuentas de Firebase (10-11 nov 2026, en curso)
+
+Plan aprobado por el dueño (sin Blaze: todo con el plan gratis). Estructura, reglas y flujo en `docs/formatos-datos.md` sección 6. **Nada de esto está publicado ni migrado:** `database.rules.json` sigue siendo lo publicado y el panel funciona SIN login hasta el paso 7.
+
+| Paso | Commit | Qué |
+|---|---|---|
+| 1 | `09ee1c5`, `6b24425` | `database.rules.propuesta.json`, probado con el emulador de Firebase (74 casos en `C:Proyectospruebas-tv-retroeglas.mjs`). Tras una revisión de seguridad: el código de emparejamiento usa `creado` = hora del servidor y su `id` debe ser siempre el de la TV que lo escribe |
+| 2 | `1faa297` (visual), `c726c2a` (lógica) | Login: entrar, crear cuenta (con correo de verificación), olvidé mi contraseña, cerrar sesión. Solo con `?cuentas=1` en la dirección (constante `USAR_CUENTAS` en `main.js`; al migrar pasa a true) |
+| 3 y 4 | (visual), (lógica) | Pantalla Mi TV: "Añade tu TV" con el código, lista de TV, usar otra, desvincular. `firebase.js` usa `dispositivos/{id}/oled_remota` y `usuarios/{uid}/imagenes|animaciones` en modo cuentas (`usarCuenta`) |
+
+Pruebas (fuera del repo, con Auth y base falsos): `login.mjs` (12), `tv.mjs` (12), `reglas.mjs` (74, con el emulador). **Para correrlas usar Node 22 portátil**: Node 26 se cae (segmentation fault) con Playwright y firebase-tools en este equipo.
+
+Pendiente: 5 (script de fabricación de TV con el Admin SDK), 6 (firmware: iniciar sesión, rutas nuevas, mostrar el código al mantener pulsado el botón), 7 (migrar la TV del dueño y publicar las reglas), 8 (límites por cuenta).
