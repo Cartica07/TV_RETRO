@@ -89,6 +89,25 @@
     .descripcion { font-size: var(--texto-xs); color: var(--texto-2); margin: var(--esp-2) 0 0; line-height: 1.45; }
     .campo { margin-top: var(--esp-4); }
 
+    /* ----- Sesión (el contenido de abajo queda bloqueado hasta iniciar sesión) ----- */
+    .campo-texto {
+      width: 100%; min-height: 48px; padding: 0 var(--esp-4);
+      background: var(--superficie-hundida); color: var(--texto);
+      border: 1px solid var(--borde); border-radius: var(--radio-md);
+      font-family: var(--fuente-ui); font-size: var(--texto-md);
+    }
+    .campo-texto::placeholder { color: var(--texto-3); }
+    .aviso {
+      margin-top: var(--esp-3); padding: 10px 12px; border-radius: 8px; font-size: 12px;
+      background: var(--error-fondo); border: 1px solid var(--error); color: var(--error-texto);
+    }
+    .boton-enlace {
+      min-height: 44px; padding: 0; background: none; border: none; color: var(--acento);
+      font-family: var(--fuente-ui); font-size: var(--texto-sm); cursor: pointer;
+    }
+    .boton-enlace:hover { text-decoration: underline; }
+    #contenidoProtegido[inert] { opacity: .4; }
+
     /* ----- Selector de archivos ----- */
     input[type="file"] {
       width: 100%; min-height: 52px; padding: var(--esp-2);
@@ -241,6 +260,32 @@
 
     <p class="intro">Esta página no está enlazada desde el panel: solo entra quien tenga esta URL. Aquí subes imágenes y animaciones nuevas a la galería; el panel principal (<a href="index.html">index.html</a>) solo elige entre lo que ya está guardado.</p>
 
+    <!-- ===== Sesión ===== -->
+    <section class="tarjeta" id="tarjetaSesion">
+      <div class="tarjeta-cabecera">
+        <span class="tarjeta-icono"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <h2 id="sesionTitulo">Inicia sesión</h2>
+      </div>
+      <p class="tarjeta-desc" id="sesionDescripcion">Entra con la cuenta del dueño: lo que subas se guarda en su galería.</p>
+
+      <form id="formSesion" novalidate>
+        <div class="campo">
+          <label class="rotulo" for="sesionCorreo">Correo electrónico</label>
+          <input type="email" id="sesionCorreo" class="campo-texto" autocomplete="username" inputmode="email" placeholder="tu@correo.com" />
+        </div>
+        <div class="campo">
+          <label class="rotulo" for="sesionClave">Contraseña</label>
+          <input type="password" id="sesionClave" class="campo-texto" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <div id="sesionError" class="aviso" role="alert" hidden></div>
+        <button type="submit" id="botonSesion" class="boton-primario">Entrar</button>
+      </form>
+      <button type="button" id="botonSalirSesion" class="boton-enlace" hidden>Cerrar sesión</button>
+    </section>
+
+    <!-- Todo lo de abajo queda bloqueado (inert) hasta que se inicie sesión. -->
+    <div id="contenidoProtegido" inert>
+
     <!-- ===== Imágenes ===== -->
     <section class="tarjeta">
       <div class="tarjeta-cabecera">
@@ -335,6 +380,8 @@
         <li class="vacio">Cargando…</li>
       </ul>
     </section>
+
+    </div>
 
     <footer>TV RETRO · Firebase Realtime Database · <a href="index.html">Volver al panel</a></footer>
   </div>
