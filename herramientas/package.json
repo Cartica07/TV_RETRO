@@ -1,0 +1,9 @@
+{
+  "name": "tv-retro-herramientas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Herramientas de administración (migración de datos). Requieren Node 22.",
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
