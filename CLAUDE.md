@@ -125,8 +125,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 1. HECHO: rediseño visual tipo app IoT.
 2. EN CURSO: firmware ESP32-S3 al día con el panel + musicales.
 3. PENDIENTE: login + reglas por UID, tutorial guiado, actualización por Wi-Fi (OTA; la tabla de particiones ya la deja preparada), APK Android con Capacitor.
-   - APK: el lienzo expandido de Dibujo bloquea la rotación con `screen.orientation.lock('landscape')` (solo en pantalla completa); en la APK usar el plugin de orientación de Capacitor.
-   - APK: pegar del portapapeles (`navigator.clipboard.read()`) no anda en el WebView de Android: hace falta un plugin nativo.
+   - APK (en curso, `app-android/`): ver `docs/historial-cambios.md`, etapa 7. En la web el lienzo expandido usa pantalla completa y `screen.orientation.lock`; dentro de la APK (`enApp()` / `pluginNativo()` en `main.js`) se usan los plugins `ScreenOrientation` y el propio `PortapapelesImagen`. `copiar-web.mjs` quita `viewport-fit=cover` de la copia de la APK (no del `index.html`).
 
 ## 7. Cómo probar
 - Servir por HTTP (los módulos ES no cargan con file://): `npx serve .` y abrir la URL. En esta máquina `python` es el alias de la Microsoft Store y se cuelga: no usarlo.

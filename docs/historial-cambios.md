@@ -193,3 +193,16 @@ Decidido por el dueño (2026-11-10): **el umbral se deja como está**. El umbral
 | Commit | Problema | Arreglo |
 |---|---|---|
 | `91593e8` | La regla "sin scroll" se cumplía (hueco de 13 px en Texto y 25 px en Dibujo sobre la barra de Enviar), pero la página entera se movía 19 px en Texto y 7 px en Dibujo a 360×740: el `padding-bottom` del `body` (+16 px) y el margen de `.controles` (16 px) sumaban aire de más | `body` reserva solo Enviar + navegación; `.controles` baja a 12 px de margen. Sin scroll en las 4 pestañas a 390×844 y 360×740; los huecos no cambian. A 375×667 no entra (fuera de la regla) |
+
+## Etapa 7: APK Android con Capacitor (10 nov 2026)
+
+La APK es el MISMO panel (HTML/CSS/JS) empaquetado en un WebView de Android; vive en `app-android/` y no toca `index.html`, `css/` ni `js/` salvo lo indicado abajo. Probada en un Motorola Edge 50 Neo.
+
+| Commit | Qué |
+|---|---|
+| `63617e2`, `860e0f9`, `2dcdbc3` | Carpeta `app-android/` (Capacitor 8, nombre "TV RETRO", paquete `com.tvretro.app`, **provisionales**: confirmar antes de publicar en Play Store), script `copiar-web.mjs` (copia el panel a `www/`) y proyecto Android generado |
+| `415ffa6`, `3b04769` | Pegar: `@capacitor/clipboard` solo lee texto en Android, así que hay un plugin propio `PortapapelesImagenPlugin.java`. Lógica: dentro de la APK, Pegar lo usa; Expandir ya no pide pantalla completa web y bloquea la rotación con `@capacitor/screen-orientation` |
+| `dbd5f39` | Expandir/Contraer dejaba el panel debajo de los botones de Inicio/Recientes y la página arrastrable. Causa: con `viewport-fit=cover` Capacitor pasa los márgenes del sistema a la página y el WebView los pierde al girar. Arreglo: `copiar-web.mjs` quita `viewport-fit=cover` solo de la copia de la APK (el `index.html` del repo lo conserva) y Capacitor aplica márgenes nativos; fondo de las barras `#0B0F14` e íconos claros |
+| `590dc3d` (visual), `85b9516` (lógica) | Botón de enviar (solo ícono) en la barra del lienzo expandido: envía igual que "Enviar a la OLED", muestra una palomita 1,5 s y, si falla o la conexión está lenta, contrae el lienzo para que se lea el aviso |
+
+Cómo compilar (Windows): `cd app-android`, `npm run copiar-web`, `npx cap sync android`, y en `app-android/android` `gradlew assembleDebug` con **JDK 21** (Gradle 8.14 no funciona con el Java 25 de este Android Studio; en Android Studio elegir Gradle JDK 21). La APK queda en `app/build/outputs/apk/debug/app-debug.apk`; instalar con `adb install -r`.
