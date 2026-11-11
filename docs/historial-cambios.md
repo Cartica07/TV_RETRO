@@ -231,4 +231,6 @@ Pasos 5 a 7 (preparación), hechos y probados con los emuladores de Firebase, SI
 
 **Puesta en marcha hecha el 2026-11-11:** habilitado el ingreso con correo y contraseña, cuenta del dueño creada, TV fabricada (`rt3gkm4u6j`), datos migrados con respaldo (29 imágenes, 9 animaciones y el contenido de la TV), reglas publicadas por el dueño, firmware con modo cuentas grabado (`9f37ef6`) y credenciales enviadas por el puerto serie. Comprobado: la TV inicia sesión, su streaming y su latido usan la ruta nueva, y el dueño entra al panel, ve su TV y le envía contenido. Commits del panel: `cdedb44` (`USAR_CUENTAS` por defecto; el modo viejo solo con `?sincuentas=1`) y `30063de` (`database.rules.json` = lo publicado; las abiertas, en `database.rules.antiguas.json`). El archivo de credenciales de la TV se borró tras enviarlo; la clave de servicio del proyecto está en `C:\Proyectos\claves` (fuera de los repositorios) y debe borrarse o revocarse al terminar.
 
-Pendiente: paso 8 (límites por cuenta), adaptar `carga-masiva.html` (usa las rutas viejas) y publicar el panel nuevo y la APK.
+`carga-masiva.html` adaptado a cuentas (visual `f3a7484`, lógica en el commit siguiente): inicio de sesión, contenido bloqueado sin sesión y guardado en el catálogo de la cuenta.
+
+Pendiente: paso 8 (límites por cuenta).

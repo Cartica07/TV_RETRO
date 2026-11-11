@@ -111,7 +111,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - **Publicadas el 2026-11-11 (con cuentas):** `database.rules.json` es la copia de lo publicado. Estructura: `dispositivos/{id}` (`dueno`, `codigoUsado`, `oled_remota`), `usuarios/{uid}` (`dispositivos`, `imagenes`, `animaciones`), `emparejamiento/{codigo}`, `administradores/{uid}` y `musicales` (lee quien tenga sesión, escribe un administrador). Cada cuenta solo ve lo suyo; la TV tiene su propia cuenta con el claim `dispositivo`. Las reglas abiertas anteriores están en `database.rules.antiguas.json` (para volver atrás).
 - **Cómo se vincula una TV:** mantener el botón 2 s en la TV (sin dueño) muestra un código de 6 caracteres (`A-HJ-NP-Z2-9`, vence a los 10 min); el cliente lo escribe en Mi TV. Las TV nuevas se fabrican con `herramientas/fabricar-tv.cjs` del repo del firmware; los datos viejos se migraron con `herramientas/migrar-datos.cjs`. Guía y plan de vuelta atrás: `docs/seguridad-puesta-en-marcha.md`.
 - El panel usa cuentas por defecto (`USAR_CUENTAS` en `main.js`); el modo viejo solo existe para las pruebas locales (`?sincuentas=1`). Pruebas de reglas con el emulador de Firebase en `C:\Proyectos\pruebas-tv-retro` (`reglas.mjs`, `simular-tv.cjs`, `probar-migracion.cjs`); necesitan **Node 22** y JDK 21 (Node 26 se cae en este equipo).
-- `carga-masiva.html` (herramienta del dueño) usa las rutas viejas: ya no funciona con las reglas nuevas hasta que se adapte (necesita sesión de administrador).
+- `carga-masiva.html` (herramienta del dueño) pide iniciar sesión y guarda en el catálogo de esa cuenta (`usuarios/{uid}/imagenes|animaciones`); sin sesión el contenido queda bloqueado. Prueba: `carga-masiva-cuentas.mjs`.
 
 ## 5. Estado actual (2026-11-10)
 
