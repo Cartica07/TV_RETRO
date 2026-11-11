@@ -423,6 +423,13 @@ button#enviar:disabled {
   color: var(--error-texto);
 }
 
+/* Éxito (ej. correo enviado): verde. */
+.aviso.ok {
+  background: rgba(61, 220, 132, .08);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
 /* Advertencia (ej. GIF pesado): amarillo, menos grave que error. */
 .aviso.advertencia {
   background: rgba(255, 176, 32, .08);
@@ -1927,11 +1934,33 @@ label.fila-ajuste-titulo {
   margin: 0 0 var(--esp-4);
 }
 
-.login-pie {
-  margin: var(--esp-5) 0 0;
-  text-align: center;
-  font-size: var(--texto-xs);
-  color: var(--texto-3);
+.login-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--esp-2) var(--esp-4);
+  margin-top: var(--esp-4);
+}
+
+/* Botón con aspecto de enlace (objetivo táctil de 44 px de alto). */
+.boton-enlace {
+  min-height: 44px;
+  padding: 0 var(--esp-1);
+  background: none;
+  border: none;
+  color: var(--acento);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-sm);
+  cursor: pointer;
+}
+
+.boton-enlace:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.boton-enlace:disabled {
+  opacity: .5;
+  cursor: wait;
 }
 
 

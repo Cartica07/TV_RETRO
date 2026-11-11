@@ -469,9 +469,9 @@
 
 </div>
 
-<!-- Pantalla de inicio de sesión (Firebase Auth, email y contraseña).
-     Oculta por ahora: la lógica que la muestra se conecta en un paso
-     aparte. Mientras tanto el panel funciona igual que antes. -->
+<!-- Pantalla de inicio de sesión y de crear cuenta (Firebase Auth, correo y
+     contraseña). La lógica la muestra solo en modo cuentas; mientras tanto
+     el panel funciona igual que antes. -->
 <div class="pantalla-login" id="pantallaLogin" hidden>
   <div class="login-tarjeta">
     <div class="login-marca">
@@ -479,7 +479,7 @@
         <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="7" y1="21" x2="17" y2="21"/><polyline points="7 10 10 13 7 16"/><line x1="12" y1="16" x2="16" y2="16"/></svg>
       </span>
       <h1 class="login-titulo">TV RETRO</h1>
-      <p class="login-subtitulo">Inicia sesión para controlar tu pantalla.</p>
+      <p class="login-subtitulo" id="loginSubtitulo">Inicia sesión para controlar tu pantalla.</p>
     </div>
 
     <form class="login-form" id="formLogin" novalidate>
@@ -493,12 +493,22 @@
         <input type="password" id="loginPassword" class="campo-texto" autocomplete="current-password" placeholder="••••••••" required />
       </div>
 
+      <!-- Solo al crear una cuenta. -->
+      <div class="campo" id="campoLoginConfirmar" hidden>
+        <label class="rotulo" for="loginPassword2">Repite la contraseña</label>
+        <input type="password" id="loginPassword2" class="campo-texto" autocomplete="new-password" placeholder="••••••••" />
+      </div>
+
       <div id="loginError" class="aviso error" role="alert" hidden></div>
+      <div id="loginAviso" class="aviso ok" role="status" hidden></div>
 
       <button type="submit" id="botonLogin" class="boton-primario">Entrar</button>
     </form>
 
-    <p class="login-pie">Solo el dueño del dispositivo puede entrar.</p>
+    <div class="login-enlaces">
+      <button type="button" id="botonLoginOlvide" class="boton-enlace">¿Olvidaste tu contraseña?</button>
+      <button type="button" id="botonLoginModo" class="boton-enlace">Crear cuenta</button>
+    </div>
   </div>
 </div>
 
