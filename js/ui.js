@@ -282,6 +282,21 @@ export function obtenerElementos() {
     botonZoomMenosDibujo: document.getElementById('botonZoomMenosDibujo'),
     avisoGaleriaDibujo: document.getElementById('avisoGaleriaDibujo'),
     
+    // Cuentas: pantalla de inicio de sesión
+    pantallaLogin: document.getElementById('pantallaLogin'),
+    formLogin: document.getElementById('formLogin'),
+    loginSubtitulo: document.getElementById('loginSubtitulo'),
+    loginEmail: document.getElementById('loginEmail'),
+    loginPassword: document.getElementById('loginPassword'),
+    loginPassword2: document.getElementById('loginPassword2'),
+    campoLoginConfirmar: document.getElementById('campoLoginConfirmar'),
+    loginError: document.getElementById('loginError'),
+    loginAviso: document.getElementById('loginAviso'),
+    botonLogin: document.getElementById('botonLogin'),
+    botonLoginOlvide: document.getElementById('botonLoginOlvide'),
+    botonLoginModo: document.getElementById('botonLoginModo'),
+    botonCerrarSesion: document.getElementById('botonCerrarSesion'),
+
     // Botón enviar
     botonEnviar: document.getElementById('enviar'),
     

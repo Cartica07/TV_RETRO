@@ -5,6 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
 import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
@@ -21,6 +22,7 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
+const auth = getAuth(app);
 
 /**
  * Explica en pocas palabras por qué falló una operación de Firebase
@@ -31,6 +33,93 @@ export function describirError(error) {
   if (/PERMISSION_DENIED|permission/i.test(texto)) return 'sin permiso';
   if (/offline|network|conexi/i.test(texto)) return 'sin conexión a internet';
   return texto || 'error desconocido';
+}
+
+// ===================================================
+// Cuentas (Firebase Auth, correo y contraseña)
+// ===================================================
+// Las funciones devuelven { exito: true, ... } o { exito: false, error } con el
+// texto ya listo para mostrar al cliente (con "tú", nada técnico).
+
+/**
+ * Traduce un error de Firebase Auth a un mensaje claro para el cliente.
+ */
+export function describirErrorAuth(error) {
+  const codigo = String((error && error.code) || '');
+  switch (codigo) {
+    case 'auth/invalid-email': return 'Ese correo no es válido.';
+    case 'auth/missing-email': return 'Escribe tu correo.';
+    case 'auth/missing-password': return 'Escribe tu contraseña.';
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+    case 'auth/invalid-login-credentials': return 'Correo o contraseña incorrectos.';
+    case 'auth/email-already-in-use': return 'Ese correo ya tiene una cuenta. Inicia sesión.';
+    case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/too-many-requests': return 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.';
+    case 'auth/network-request-failed': return 'No hay conexión a internet.';
+    case 'auth/user-disabled': return 'Esta cuenta está desactivada.';
+    default: return 'No se pudo completar. Vuelve a intentarlo.';
+  }
+}
+
+/**
+ * Avisa cada vez que cambia la sesión: callback(usuario | null) con
+ * { uid, email, emailVerified }. Se llama una vez al empezar, cuando Firebase
+ * ya recuperó la sesión guardada. Devuelve la función para dejar de escuchar.
+ */
+export function escucharSesion(callback) {
+  return onAuthStateChanged(auth, (u) => {
+    callback(u ? { uid: u.uid, email: u.email, emailVerified: !!u.emailVerified } : null);
+  });
+}
+
+/** Usuario con sesión iniciada ahora mismo, o null. */
+export function usuarioActual() {
+  const u = auth.currentUser;
+  return u ? { uid: u.uid, email: u.email, emailVerified: !!u.emailVerified } : null;
+}
+
+export async function iniciarSesion(email, password) {
+  try {
+    await signInWithEmailAndPassword(auth, String(email || '').trim(), String(password || ''));
+    return { exito: true };
+  } catch (error) {
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+}
+
+/**
+ * Crea la cuenta (y deja la sesión iniciada). Manda el correo de verificación
+ * sin esperar ni fallar si no se puede: la cuenta ya quedó creada.
+ */
+export async function crearCuenta(email, password) {
+  try {
+    const r = await createUserWithEmailAndPassword(auth, String(email || '').trim(), String(password || ''));
+    let correoEnviado = true;
+    try { await sendEmailVerification(r.user); } catch (e) { correoEnviado = false; }
+    return { exito: true, correoEnviado };
+  } catch (error) {
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+}
+
+export async function cerrarSesion() {
+  try {
+    await signOut(auth);
+    return { exito: true };
+  } catch (error) {
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+}
+
+export async function recuperarContrasena(email) {
+  try {
+    await sendPasswordResetEmail(auth, String(email || '').trim());
+    return { exito: true };
+  } catch (error) {
+    return { exito: false, error: describirErrorAuth(error) };
+  }
 }
 
 /**

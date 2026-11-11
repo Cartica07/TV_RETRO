@@ -21,7 +21,12 @@ import {
   listarAnimaciones,
   borrarAnimacionCatalogo,
   guardarAnimacionCatalogo,
-  describirError
+  describirError,
+  escucharSesion,
+  iniciarSesion,
+  crearCuenta,
+  cerrarSesion,
+  recuperarContrasena
 } from './firebase.js';
 import {
   procesarImagen,
@@ -2727,6 +2732,11 @@ async function inicializar() {
   marcarControlesEncuadre();
   iniciarMonitoreoConexion();
 
+  if (USAR_CUENTAS) {
+    configurarLogin();
+    await requerirSesion();
+  }
+
   bloquearPanel(true);
   let temporizador = null;
   const limite = new Promise((resolver) => {
@@ -2741,6 +2751,118 @@ async function inicializar() {
     clearTimeout(temporizador);
     bloquearPanel(false);
   }
+  if (avisoPostLogin) {
+    marcarEstado(avisoPostLogin, 'ok', elementos);
+    avisoPostLogin = '';
+  }
+}
+
+// ===================================================
+// Cuentas: pantalla de inicio de sesión
+// ===================================================
+// MODO CUENTAS (paso 2 del plan de seguridad, ver docs/formatos-datos.md sección 6).
+// Mientras no se migre la base (paso 7) el panel funciona SIN login, como
+// siempre; el modo cuentas solo se activa con ?cuentas=1 en la dirección. Al
+// migrar se cambia esta constante a true.
+const USAR_CUENTAS = new URLSearchParams(location.search).has('cuentas');
+
+let modoLogin = 'entrar'; // 'entrar' | 'crear'
+let avisoPostLogin = '';  // se muestra en la línea de estado al terminar de arrancar
+
+function mostrarErrorLogin(texto) {
+  elementos.loginError.textContent = texto;
+  elementos.loginError.hidden = !texto;
+  if (texto) elementos.loginAviso.hidden = true;
+}
+
+function mostrarAvisoLogin(texto) {
+  elementos.loginAviso.textContent = texto;
+  elementos.loginAviso.hidden = !texto;
+  if (texto) elementos.loginError.hidden = true;
+}
+
+function cambiarModoLogin(modo) {
+  modoLogin = modo;
+  const crear = modo === 'crear';
+  elementos.loginSubtitulo.textContent = crear ? 'Crea tu cuenta para controlar tu pantalla.' : 'Inicia sesión para controlar tu pantalla.';
+  elementos.botonLogin.textContent = crear ? 'Crear cuenta' : 'Entrar';
+  elementos.botonLoginModo.textContent = crear ? 'Ya tengo una cuenta' : 'Crear cuenta';
+  elementos.campoLoginConfirmar.hidden = !crear;
+  elementos.botonLoginOlvide.hidden = crear;
+  elementos.loginPassword.autocomplete = crear ? 'new-password' : 'current-password';
+  elementos.loginPassword2.value = '';
+  mostrarErrorLogin('');
+  mostrarAvisoLogin('');
+}
+
+async function enviarFormularioLogin(e) {
+  e.preventDefault();
+  await sinRepetir('login', elementos.botonLogin, async () => {
+    mostrarErrorLogin('');
+    mostrarAvisoLogin('');
+    const email = elementos.loginEmail.value.trim();
+    const clave = elementos.loginPassword.value;
+    if (!email) return mostrarErrorLogin('Escribe tu correo.');
+    if (!clave) return mostrarErrorLogin('Escribe tu contraseña.');
+    if (modoLogin === 'crear') {
+      if (clave.length < 6) return mostrarErrorLogin('La contraseña debe tener al menos 6 caracteres.');
+      if (clave !== elementos.loginPassword2.value) return mostrarErrorLogin('Las contraseñas no coinciden.');
+      const r = await crearCuenta(email, clave);
+      if (!r.exito) return mostrarErrorLogin(r.error);
+      avisoPostLogin = r.correoEnviado ? 'Te enviamos un correo para confirmar tu cuenta.' : '';
+    } else {
+      const r = await iniciarSesion(email, clave);
+      if (!r.exito) return mostrarErrorLogin(r.error);
+    }
+    // Si salió bien, escucharSesion (requerirSesion) oculta esta pantalla.
+    elementos.loginPassword.value = '';
+    elementos.loginPassword2.value = '';
+  });
+}
+
+async function manejarOlvideContrasena() {
+  await sinRepetir('olvide', elementos.botonLoginOlvide, async () => {
+    mostrarErrorLogin('');
+    mostrarAvisoLogin('');
+    const email = elementos.loginEmail.value.trim();
+    if (!email) return mostrarErrorLogin('Escribe tu correo arriba y vuelve a tocar "¿Olvidaste tu contraseña?".');
+    const r = await recuperarContrasena(email);
+    if (!r.exito) return mostrarErrorLogin(r.error);
+    mostrarAvisoLogin('Si ese correo tiene una cuenta, te enviamos un enlace para cambiar la contraseña.');
+  });
+}
+
+function configurarLogin() {
+  elementos.formLogin.addEventListener('submit', enviarFormularioLogin);
+  elementos.botonLoginOlvide.addEventListener('click', manejarOlvideContrasena);
+  elementos.botonLoginModo.addEventListener('click', () => cambiarModoLogin(modoLogin === 'entrar' ? 'crear' : 'entrar'));
+  elementos.botonCerrarSesion.addEventListener('click', () => sinRepetir('salir', elementos.botonCerrarSesion, () => cerrarSesion()));
+}
+
+// Espera a que haya una sesión iniciada. Mientras no la haya muestra la pantalla
+// de login (el panel, que nace inert, queda debajo). Si la sesión se cierra
+// después (botón de cerrar sesión), recarga: así no queda en memoria nada del
+// usuario anterior.
+function requerirSesion() {
+  return new Promise((resolver) => {
+    let entro = false;
+    escucharSesion((usuario) => {
+      if (usuario) {
+        elementos.pantallaLogin.hidden = true;
+        elementos.botonCerrarSesion.hidden = false;
+        if (!entro) {
+          entro = true;
+          resolver(usuario);
+        }
+        return;
+      }
+      if (entro) {
+        location.reload();
+        return;
+      }
+      elementos.pantallaLogin.hidden = false;
+    });
+  });
 }
 
 // ===================================================
