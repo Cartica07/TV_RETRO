@@ -36,11 +36,12 @@ body {
   justify-content: center;
   /* Zonas seguras: notch / barra de estado arriba, barra de gestos abajo
      (requiere viewport-fit=cover en index.html). Abajo se deja lugar
-     para la barra de Enviar y la navegación, que son fijas. */
+     justo para la barra de Enviar y la navegación, que son fijas (el aire
+     entre el contenido y Enviar lo da el margen de .controles). */
   padding:
     0
     calc(16px + env(safe-area-inset-right, 0px))
-    calc(var(--alto-nav) + var(--alto-accion) + 16px + env(safe-area-inset-bottom, 0px))
+    calc(var(--alto-nav) + var(--alto-accion) + env(safe-area-inset-bottom, 0px))
     calc(16px + env(safe-area-inset-left, 0px));
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -503,7 +504,7 @@ button#enviar:disabled {
   border: 1px solid var(--metal-borde);
   border-radius: var(--radio-lg);
   padding: 22px;
-  margin-bottom: var(--esp-4);
+  margin-bottom: 12px;
 }
 
 .barra-accion {
