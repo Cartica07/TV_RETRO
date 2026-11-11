@@ -1,0 +1,14 @@
+{
+  "name": "tv-retro-app-android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contenedor Capacitor (APK Android) del panel TV RETRO",
+  "scripts": {
+    "copiar-web": "node copiar-web.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  }
+}

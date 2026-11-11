@@ -1,0 +1,3 @@
+node_modules/
+# Se genera con: npm run copiar-web
+www/
