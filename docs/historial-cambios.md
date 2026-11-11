@@ -221,4 +221,12 @@ Plan aprobado por el dueño (sin Blaze: todo con el plan gratis). Estructura, re
 
 Pruebas (fuera del repo, con Auth y base falsos): `login.mjs` (12), `tv.mjs` (12), `reglas.mjs` (74, con el emulador). **Para correrlas usar Node 22 portátil**: Node 26 se cae (segmentation fault) con Playwright y firebase-tools en este equipo.
 
-Pendiente: 5 (script de fabricación de TV con el Admin SDK), 6 (firmware: iniciar sesión, rutas nuevas, mostrar el código al mantener pulsado el botón), 7 (migrar la TV del dueño y publicar las reglas), 8 (límites por cuenta).
+Pasos 5 a 7 (preparación), hechos y probados con los emuladores de Firebase, SIN publicar ni grabar nada:
+
+| Paso | Dónde | Qué |
+|---|---|---|
+| 5 | firmware `29d7afd`, `28e20e3` | `herramientas/fabricar-tv.cjs`: crea la cuenta de la TV (claim `dispositivo`) y le manda las credenciales por el puerto serie. La clave nunca se imprime |
+| 6 | firmware `d4af76a` | Modo cuentas del firmware: `cuenta.cpp` (credenciales en la NVS, inicio de sesión y renovación del token por REST), rutas y token dinámicos en `red.cpp`/`github.cpp`, el streaming se reabre antes de que venza el token, y `emparejar.cpp`: pulsado largo de 2 s = código de 6 caracteres en la OLED. Sin credenciales funciona como siempre. Compilado (1,4 MB, sin grabar). El protocolo exacto de la TV se probó con `simular-tv.cjs` contra los emuladores (19 casos) |
+| 7 (prep.) | panel `4859bf1` | `herramientas/migrar-datos.cjs` (respaldo y copia de los datos a las rutas por cuenta, sin borrar nada; 12 casos) y `docs/seguridad-puesta-en-marcha.md` (el orden, lo que hace el dueño en la consola y cómo volver atrás) |
+
+Pendiente: la puesta en marcha (paso 7: habilitar Correo/Contraseña y bajar la clave de servicio en la consola de Firebase, grabar la placa, migrar, publicar las reglas) y el paso 8 (límites por cuenta).
