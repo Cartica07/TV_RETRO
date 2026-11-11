@@ -1654,7 +1654,7 @@ label.fila-ajuste-titulo {
   .marco-pantalla canvas {
     width: auto;
     max-width: 100%;
-    height: min(120px, 16vh);
+    height: clamp(120px, calc(100vh - 685px), 144px);
     margin: 0 auto;
   }
 
