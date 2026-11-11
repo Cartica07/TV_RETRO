@@ -30,7 +30,8 @@ import {
   usarCuenta,
   listarMisDispositivos,
   reclamarDispositivo,
-  desvincularDispositivo
+  desvincularDispositivo,
+  esAdministrador
 } from './firebase.js';
 import {
   procesarImagen,
@@ -1474,8 +1475,8 @@ function actualizarResaltadoGaleria() {
 function actualizarBotonBorrarGaleria() {
   if (!elementos.botonBorrarGaleria) return;
   const entrada = galeriaSeleccionActual ? imagenesCatalogo[galeriaSeleccionActual] : null;
-  // Las predeterminadas (de la biblioteca común) se pueden usar pero no borrar.
-  elementos.botonBorrarGaleria.disabled = !entrada || !!entrada.predeterminada;
+  // Las predeterminadas (de la biblioteca común) las puede borrar solo un administrador.
+  elementos.botonBorrarGaleria.disabled = !entrada || (!!entrada.predeterminada && !esAdmin);
 }
 
 // Borra la imagen actualmente seleccionada en la Galería (ver
@@ -1484,13 +1485,17 @@ async function manejarBorrarGaleriaSeleccionada() {
   if (!galeriaSeleccionActual) return;
 
   const key = galeriaSeleccionActual;
-  if (imagenesCatalogo[key] && imagenesCatalogo[key].predeterminada) {
+  const predeterminada = !!(imagenesCatalogo[key] && imagenesCatalogo[key].predeterminada);
+  if (predeterminada && !esAdmin) {
     marcarEstado('Esa imagen es predeterminada: se puede usar, pero no se puede borrar.', null, elementos);
     return;
   }
   // Borrar es permanente (igual que con las canciones, se pregunta antes).
-  if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
-  let resultado = await borrarImagenCatalogo(key);
+  const pregunta = predeterminada
+    ? `¿Borrar "${key}" de las predeterminadas? Dejará de verse en TODAS las cuentas. No se puede deshacer.`
+    : `¿Borrar "${key}" de la galería? No se puede deshacer.`;
+  if (!confirm(pregunta)) return;
+  let resultado = await borrarImagenCatalogo(key, { predeterminada });
   resultado = await esperarFinal(resultado, () => marcarEstado(TEXTO_BORRADO_LENTO, null, elementos));
 
   if (resultado.exito) {
@@ -1678,20 +1683,24 @@ function actualizarResaltadoAnimaciones() {
 function actualizarBotonBorrarAnimacion() {
   if (!elementos.botonBorrarAnimacion) return;
   const entrada = animacionSeleccionActual ? animacionesCatalogo[animacionSeleccionActual] : null;
-  // Las predeterminadas (de la biblioteca común) se pueden usar pero no borrar.
-  elementos.botonBorrarAnimacion.disabled = !entrada || !!entrada.predeterminada;
+  // Las predeterminadas (de la biblioteca común) las puede borrar solo un administrador.
+  elementos.botonBorrarAnimacion.disabled = !entrada || (!!entrada.predeterminada && !esAdmin);
 }
 
 async function manejarBorrarAnimacionSeleccionada() {
   if (!animacionSeleccionActual) return;
 
   const key = animacionSeleccionActual;
-  if (animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada) {
+  const predeterminada = !!(animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada);
+  if (predeterminada && !esAdmin) {
     marcarEstado('Esa animación es predeterminada: se puede usar, pero no se puede borrar.', null, elementos);
     return;
   }
-  if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
-  let resultado = await borrarAnimacionCatalogo(key);
+  const pregunta = predeterminada
+    ? `¿Borrar "${key}" de las predeterminadas? Dejará de verse en TODAS las cuentas. No se puede deshacer.`
+    : `¿Borrar "${key}" de la galería? No se puede deshacer.`;
+  if (!confirm(pregunta)) return;
+  let resultado = await borrarAnimacionCatalogo(key, { predeterminada });
   resultado = await esperarFinal(resultado, () => marcarEstado(TEXTO_BORRADO_LENTO, null, elementos));
 
   if (resultado.exito) {
@@ -2749,6 +2758,7 @@ async function inicializar() {
     sesionActual = await requerirSesion();
     // Desde acá todo va a la TV y al catálogo de esta cuenta (firebase.js, usarCuenta).
     usarCuenta(sesionActual.uid, await resolverDispositivo(sesionActual));
+    esAdmin = await esAdministrador();
     elementos.botonMiTV.hidden = false;
   }
   iniciarMonitoreoConexion();
@@ -2854,6 +2864,7 @@ async function manejarOlvideContrasena() {
 // recuerda en este equipo). Para cambiar de TV o desvincular se recarga: así
 // no queda en memoria nada de la TV anterior.
 let sesionActual = null;             // { uid, email, emailVerified }
+let esAdmin = false;                 // la cuenta es administradora (sin límite; puede borrar las predeterminadas)
 let misTV = [];                      // ids de las TV de la cuenta
 let tvEnUso = null;                  // id de la TV que usa el panel
 let alVincularPrimera = null;        // resolver de la espera de la primera TV

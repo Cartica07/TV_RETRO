@@ -142,31 +142,50 @@ const rutaCatalogo = (nombre) => (contexto ? `usuarios/${contexto.uid}/${nombre}
 // Límite de elementos por cuenta (modo cuentas)
 // ===================================================
 // Cada cuenta puede guardar hasta LIMITE_BASE_POR_DEFECTO elementos entre imágenes y
-// animaciones JUNTAS (config/limites/total lo cambia un administrador; usuarios/{uid}/cuotas/extra
-// suma más). Las de la biblioteca predeterminada (biblioteca/) NO cuentan. Un administrador no
-// tiene límite. Lo hacen cumplir las reglas de Firebase: el contador usuarios/{uid}/cuotas/usados
-// se actualiza EN LA MISMA escritura que crea o borra el elemento, con cuotas/ultimo = "i:clave"
-// (imagen) o "a:clave" (animación). Ver docs/formatos-datos.md sección 6.
+// animaciones JUNTAS, y de ellos como máximo LIMITE_GIF_POR_DEFECTO animaciones (GIF).
+// config/limites/{total, animaciones} los cambia un administrador; usuarios/{uid}/cuotas/{extra,
+// extraAnimaciones} suman más. Las de la biblioteca predeterminada (biblioteca/) NO cuentan. Un
+// administrador no tiene límite. Lo hacen cumplir las reglas de Firebase: los contadores
+// usuarios/{uid}/cuotas/usados (total) y /gifs (solo animaciones) se actualizan EN LA MISMA
+// escritura que crea o borra el elemento, con cuotas/ultimo = "i:clave" (imagen) o "a:clave"
+// (animación). Ver docs/formatos-datos.md sección 6.
 const LIMITE_BASE_POR_DEFECTO = 25;
+const LIMITE_GIF_POR_DEFECTO = 10;
 const LARGO_MAXIMO_CLAVE = 80;
 
+const mensajeLimiteGif = (limite) => `llegaste al límite de ${limite} GIF (animaciones) guardados; borra alguno para guardar otro`;
 const mensajeLimite = (limite) => `llegaste al límite de ${limite} elementos guardados (imágenes y GIF juntos); borra alguno para guardar otro`;
 const esPermisoDenegado = (err) => /PERMISSION_DENIED|permission/i.test(String((err && err.message) || err || ''));
 
 async function leerCuota() {
   const uid = contexto.uid;
-  const [admin, usados, base, extra] = await Promise.all([
+  const [admin, usados, gifs, base, baseGif, extra, extraGif] = await Promise.all([
     get(ref(db, `administradores/${uid}`)),
     get(ref(db, `usuarios/${uid}/cuotas/usados`)),
+    get(ref(db, `usuarios/${uid}/cuotas/gifs`)),
     get(ref(db, 'config/limites/total')),
-    get(ref(db, `usuarios/${uid}/cuotas/extra`))
+    get(ref(db, 'config/limites/animaciones')),
+    get(ref(db, `usuarios/${uid}/cuotas/extra`)),
+    get(ref(db, `usuarios/${uid}/cuotas/extraAnimaciones`))
   ]);
   const numero = (s, defecto) => (s.exists() && Number.isFinite(Number(s.val())) ? Number(s.val()) : defecto);
   return {
     admin: admin.val() === true,
     usados: numero(usados, 0),
-    limite: numero(base, LIMITE_BASE_POR_DEFECTO) + numero(extra, 0)
+    gifs: numero(gifs, 0),
+    limite: numero(base, LIMITE_BASE_POR_DEFECTO) + numero(extra, 0),
+    limiteGif: numero(baseGif, LIMITE_GIF_POR_DEFECTO) + numero(extraGif, 0)
   };
+}
+
+/** true si la cuenta con sesión es administradora (no tiene límite y puede borrar las predeterminadas). */
+export async function esAdministrador() {
+  if (!contexto) return false;
+  try {
+    return (await get(ref(db, `administradores/${contexto.uid}`))).val() === true;
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
@@ -189,12 +208,17 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
       return lento || { exito: true, key: safeKey };
     }
     const cuota = await leerCuota();
-    if (!cuota.admin && cuota.usados + 1 > cuota.limite) return { exito: false, error: mensajeLimite(cuota.limite) };
+    const esGif = tipo === 'animaciones';
+    if (!cuota.admin) {
+      if (esGif && cuota.gifs + 1 > cuota.limiteGif) return { exito: false, error: mensajeLimiteGif(cuota.limiteGif) };
+      if (cuota.usados + 1 > cuota.limite) return { exito: false, error: mensajeLimite(cuota.limite) };
+    }
     const cambios = {
       [`${base}/${safeKey}`]: payload,
       [`usuarios/${contexto.uid}/cuotas/usados`]: cuota.usados + 1,
       [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${safeKey}`
     };
+    if (esGif) cambios[`usuarios/${contexto.uid}/cuotas/gifs`] = cuota.gifs + 1;
     try {
       const lento = await conTope(update(ref(db), cambios), { exito: true, key: safeKey });
       return lento || { exito: true, key: safeKey };
@@ -207,8 +231,16 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
   return { exito: false, error: 'sin permiso' };
 }
 
-/** Borra un elemento del catálogo de la cuenta y le resta 1 al contador (en la misma escritura). */
-async function borrarDeCatalogo(tipo, nombre) {
+/**
+ * Borra un elemento del catálogo de la cuenta y le resta 1 al contador (en la misma escritura; si es
+ * una animación, también al de GIF). Con { predeterminada: true } borra de la biblioteca
+ * predeterminada (solo un administrador; no hay contadores).
+ */
+async function borrarDeCatalogo(tipo, nombre, { predeterminada = false } = {}) {
+  if (predeterminada) {
+    const lento = await conTope(remove(ref(db, `biblioteca/${tipo}/${nombre}`)));
+    return lento || { exito: true };
+  }
   const base = rutaCatalogo(tipo);
   const refItem = ref(db, `${base}/${nombre}`);
   if (!contexto) {
@@ -218,16 +250,26 @@ async function borrarDeCatalogo(tipo, nombre) {
   const prefijo = tipo === 'imagenes' ? 'i' : 'a';
   for (let intento = 0; intento < 2; intento++) {
     if (!(await get(refItem)).exists()) return { exito: true }; // ya no estaba
-    const usadosSnap = await get(ref(db, `usuarios/${contexto.uid}/cuotas/usados`));
+    const esGif = tipo === 'animaciones';
+    const [usadosSnap, gifsSnap] = await Promise.all([
+      get(ref(db, `usuarios/${contexto.uid}/cuotas/usados`)),
+      get(ref(db, `usuarios/${contexto.uid}/cuotas/gifs`))
+    ]);
     const usados = usadosSnap.exists() ? Number(usadosSnap.val()) || 0 : 0;
+    const gifs = gifsSnap.exists() ? Number(gifsSnap.val()) || 0 : 0;
     try {
-      const escritura = usados > 0
-        ? update(ref(db), {
+      let escritura;
+      if (usados > 0 && (!esGif || gifs > 0)) {
+        const cambios = {
           [`${base}/${nombre}`]: null,
           [`usuarios/${contexto.uid}/cuotas/usados`]: usados - 1,
           [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${nombre}`
-        })
-        : remove(refItem); // sin contador (cosa de administrador): se borra a secas
+        };
+        if (esGif) cambios[`usuarios/${contexto.uid}/cuotas/gifs`] = gifs - 1;
+        escritura = update(ref(db), cambios);
+      } else {
+        escritura = remove(refItem); // sin contador (cosa de administrador): se borra a secas
+      }
       const lento = await conTope(escritura);
       return lento || { exito: true };
     } catch (err) {
@@ -664,9 +706,9 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
 /**
  * Borra una imagen del catálogo (/imagenes/<nombre>)
  */
-export async function borrarImagenCatalogo(nombre) {
+export async function borrarImagenCatalogo(nombre, opciones = {}) {
   try {
-    return await borrarDeCatalogo('imagenes', nombre);
+    return await borrarDeCatalogo('imagenes', nombre, opciones);
   } catch (err) {
     console.error('Error al borrar imagen del catálogo:', err);
     return { exito: false, error: err.message };
@@ -729,9 +771,9 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
 /**
  * Borra una animación del catálogo (/animaciones/<nombre>)
  */
-export async function borrarAnimacionCatalogo(nombre) {
+export async function borrarAnimacionCatalogo(nombre, opciones = {}) {
   try {
-    return await borrarDeCatalogo('animaciones', nombre);
+    return await borrarDeCatalogo('animaciones', nombre, opciones);
   } catch (err) {
     console.error('Error al borrar animación del catálogo:', err);
     return { exito: false, error: err.message };
