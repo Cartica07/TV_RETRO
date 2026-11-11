@@ -157,9 +157,9 @@ La tarea de red escribe en la ruta "nueva" y el `loop()` la mueve a la "actual" 
   - `lastSeen` escribible por el ESP;
   - todo lo demás, lectura y escritura, solo con el UID del dueño. Con la `apiKey` pública cualquiera podría crearse una cuenta, así que `auth != null` no alcanza.
 
-### Estructura con cuentas (PROPUESTA, aprobada el 2026-11-10; sin publicar ni migrar)
+### Estructura con cuentas (PUBLICADA y migrada el 2026-11-11)
 
-Archivo: `database.rules.propuesta.json` (la copia publicada sigue siendo `database.rules.json`). Probada con el emulador de Firebase (71 casos). Las reglas viejas y esta estructura NO conviven: al publicarlas se cierran las rutas viejas, por eso primero se migra (paso 7 del plan).
+Archivo: `database.rules.json` (lo publicado). Las reglas abiertas anteriores están en `database.rules.antiguas.json`. Probadas con el emulador de Firebase (74 casos en `reglas.mjs`). Las rutas viejas (`oled_remota`, `imagenes`, `animaciones` en la raíz) quedaron cerradas; sus datos siguen en la base como respaldo hasta que el dueño decida borrarlos.
 
 ```
 dispositivos/{id}/

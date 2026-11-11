@@ -1,5 +1,7 @@
 # Seguridad y cuentas: puesta en marcha (paso 7)
 
+> **HECHA el 2026-11-11.** Se siguió este orden y funcionó: cuenta del dueño, TV fabricada, datos migrados (con respaldo en `herramientas/salida/`, fuera de git), reglas publicadas, credenciales enviadas por COM6 y prueba del dueño. Esta guía queda para fabricar TV nuevas y como plan de vuelta atrás.
+
 Guía para pasar la TV y el panel del dueño de las rutas abiertas de hoy a la estructura con cuentas. Todo el código ya está hecho y probado (ver `docs/historial-cambios.md`, etapa 8). Lo único que falta es esta puesta en marcha, que toca la consola de Firebase y la placa.
 
 **Idea central:** primero se copian los datos a las rutas nuevas y se prepara la TV; las reglas nuevas se publican al final. Lo viejo nunca se borra, así que siempre se puede volver atrás.
@@ -22,14 +24,14 @@ Cada paso dice quién lo hace. Mientras no se publiquen las reglas nuevas (paso 
 2. **Dueño:** abre el panel en modo cuentas, `http://localhost:3000/?cuentas=1`, toca "Crear cuenta" y crea su cuenta (correo y contraseña). Quedará en "No se pudo cargar tus TV: sin permiso": es lo esperado, todavía no están las reglas ni los datos nuevos.
 3. **Claude:** fabrica la cuenta de la TV (`fabricar-tv.cjs --archivo`) y obtiene su `id`. No se toca la placa todavía.
 4. **Claude:** migra los datos (`migrar-datos.cjs --correo <correo del dueño> --tv <id>`): hace un respaldo completo y COPIA `oled_remota`, `imagenes` y `animaciones` a las rutas nuevas, y deja a la cuenta del dueño como dueña de la TV y administradora. Lo viejo queda intacto.
-5. **Dueño:** en Realtime Database > Reglas, pega el contenido de `database.rules.propuesta.json` y pulsa Publicar. **Desde este momento las rutas viejas se cierran** (la TV y el panel de hoy dejan de funcionar hasta los pasos 6 y 7).
+5. **Dueño:** en Realtime Database > Reglas, pega el contenido de `database.rules.json` y pulsa Publicar. **Desde este momento las rutas viejas se cierran** (la TV y el panel de hoy dejan de funcionar hasta los pasos 6 y 7).
 6. **Claude:** manda las credenciales a la TV por el puerto serie (`fabricar-tv.cjs --enviar-archivo ... --puerto COM6`). La TV reinicia, inicia sesión y usa su ruta nueva. Se comprueba en el monitor serie: `[cuenta] modo cuentas`, `[cuenta] sesión iniciada`, `[red] streaming conectado`.
 7. **Ambos:** en `http://localhost:3000/?cuentas=1` el dueño entra con su cuenta; debe aparecer su TV y todo lo de siempre (texto, imagen, dibujo, canciones, galería). Enviar algo y verlo en la TV.
 8. **Claude:** cambia `USAR_CUENTAS` a `true` en `js/main.js` (commit aparte), prueba, reconstruye la APK y hace el push cuando el dueño lo pida.
 
 ## Cómo volver atrás
 
-- **Reglas:** en la consola, publicar el contenido de `database.rules.json` (son las reglas abiertas de siempre; ese archivo no se modifica).
+- **Reglas:** en la consola, publicar el contenido de `database.rules.antiguas.json` (las reglas abiertas de antes de la migración). `database.rules.json` es lo publicado con cuentas.
 - **TV:** por el puerto serie, la línea `TVRETRO_BORRAR_CREDENCIALES` borra las credenciales y la TV vuelve a las rutas viejas.
 - **Datos:** el respaldo completo queda en `herramientas/salida/respaldo-<fecha>.json` (se guarda fuera de git). Las rutas viejas nunca se borran.
 
