@@ -107,7 +107,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 ### Reglas de Firebase
 - Hoy todo está abierto (`.read`/`.write` = true) en `oled_remota`, `canciones`, `imagenes`, `animaciones` y `musicales` (publicado por el dueño el 2026-11-10).
-- Plan futuro (pendiente): login con Firebase Auth (email/contraseña; la pantalla ya está diseñada y oculta) y reglas por UID del dueño: lectura pública de `oled_remota` para el ESP, `lastSeen` escribible por el ESP, todo lo demás solo el dueño.
+- **Seguridad y cuentas (EN CURSO, aprobado por el dueño):** estructura nueva con cuentas (`dispositivos/{id}`, `usuarios/{uid}`, `emparejamiento/{codigo}`, `administradores`) descrita en `docs/formatos-datos.md` sección 6; reglas en `database.rules.propuesta.json` (sin publicar; `database.rules.json` sigue siendo lo publicado). Pruebas de reglas con el emulador en `C:Proyectospruebas-tv-retroeglas.mjs` (necesita Node 22 y JDK 21; Node 26 se cae con firebase-tools). El panel mantiene el modo viejo (sin login) hasta migrar: no cambiar rutas en producción hasta el paso 7.
 
 ## 5. Estado actual (2026-11-10)
 

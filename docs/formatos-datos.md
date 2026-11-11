@@ -156,3 +156,27 @@ La tarea de red escribe en la ruta "nueva" y el `loop()` la mueve a la "actual" 
   - `oled_remota` con lectura pública para el ESP;
   - `lastSeen` escribible por el ESP;
   - todo lo demás, lectura y escritura, solo con el UID del dueño. Con la `apiKey` pública cualquiera podría crearse una cuenta, así que `auth != null` no alcanza.
+
+### Estructura con cuentas (PROPUESTA, aprobada el 2026-11-10; sin publicar ni migrar)
+
+Archivo: `database.rules.propuesta.json` (la copia publicada sigue siendo `database.rules.json`). Probada con el emulador de Firebase (71 casos). Las reglas viejas y esta estructura NO conviven: al publicarlas se cierran las rutas viejas, por eso primero se migra (paso 7 del plan).
+
+```
+dispositivos/{id}/
+   dueno: <uid>                  quién es el dueño; ausente = TV sin dueño
+   codigoUsado: "K7M2QX"         el código con el que se reclamó (se escribe junto con dueno)
+   oled_remota/{version, contadorVersion, lastSeen, archivo, pantalla}   MISMO formato que hoy
+usuarios/{uid}/
+   dispositivos/{id}: true       lista de TV del usuario
+   imagenes/{clave}, animaciones/{clave}   catálogos privados (mismo formato que hoy)
+emparejamiento/{codigo}: { id, creado }   código de 6 caracteres que muestra la TV
+musicales/indice/{clave}, musicales/datos/{clave}   biblioteca común (lee quien tenga sesión; escribe un administrador)
+administradores/{uid}: true      solo se edita desde la consola o el Admin SDK
+```
+
+- **Cuentas:** Firebase Auth con correo y contraseña. Correo de verificación y de restablecer contraseña: los manda Firebase (gratis). Sin "Entrar con Google" por ahora.
+- **La TV tiene su propia cuenta** de Firebase Auth con el claim `dispositivo: "<id>"` (lo pone un script de fabricación con el Admin SDK). Solo lee su nodo, escribe `lastSeen` y sus códigos de emparejamiento.
+- **Código de emparejamiento:** 6 caracteres de `A-HJ-NP-Z2-9` (sin 0, O, 1, I). La TV lo genera al mantener pulsado el botón y lo escribe en `emparejamiento/{codigo}` con `creado` = hora del servidor (`{".sv":"timestamp"}`; no depende del reloj de la TV). Se puede reclamar durante 10 minutos. El usuario lo escribe en la app: la app lee `emparejamiento/{codigo}` (solo se puede leer conociendo el código, no listar) para saber el `id`, y escribe `dueno` y `codigoUsado` en un solo `update`; después, en una segunda escritura, agrega la TV a su lista. La TV borra su código en cuanto ve que `dueno` apareció. Desvincular = borrar `dueno`.
+- **Límites de tamaño** en las reglas: `pantalla.texto` ≤ 5000 caracteres, `pantalla.imagen.datos` ≤ 100.000, `archivo.datos` ≤ 10.000.000 (Firebase no admite textos de más de 10 MB), imágenes del catálogo ≤ 100.000.
+- **Firmware:** al migrar, la TV usa `auth=<idToken>` en sus peticiones REST y en el stream, renueva el token cada hora (el stream avisa con `auth_revoked`) y cambia las rutas a `dispositivos/{id}/oled_remota/…`.
+- **Migración (paso 7):** mover `oled_remota` a `dispositivos/{id}/oled_remota` y `imagenes`/`animaciones` a `usuarios/{uid del dueño}/`; `musicales` queda donde está.
