@@ -233,4 +233,6 @@ Pasos 5 a 7 (preparación), hechos y probados con los emuladores de Firebase, SI
 
 `carga-masiva.html` adaptado a cuentas (visual `f3a7484`, lógica en el commit siguiente): inicio de sesión, contenido bloqueado sin sesión y guardado en el catálogo de la cuenta.
 
-Pendiente: paso 8 (límites por cuenta).
+**Paso 8, límites por cuenta (2026-11-11, hecho y probado, SIN publicar):** reglas propuestas `76b995a` (166 casos en el emulador, incluidas las 38 piezas reales del dueño) y lógica del panel `e871659`: tope de 25 elementos (imágenes y GIF juntos) por cuenta con contador atómico en las reglas, el administrador sin límite, biblioteca predeterminada común que no cuenta, y tamaño y forma de lo guardado acotados. `herramientas/mover-a-biblioteca.cjs` pasa las piezas del dueño a la biblioteca. Decisiones del dueño: 25 entre imágenes y GIF, lo que ya existe es la biblioteca por defecto y no cuenta, administrador sin límite, anuncios para después. Puesta en marcha: `docs/seguridad-puesta-en-marcha.md`, sección "Paso 8".
+
+Pendiente: puesta en marcha del paso 8 y desbloqueos con anuncios (servidor de verificación, después).

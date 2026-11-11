@@ -40,3 +40,18 @@ Cada paso dice quién lo hace. Mientras no se publiquen las reglas nuevas (paso 
 - Borrar la clave de servicio descargada (o guardarla muy bien).
 - Más adelante, cuando todo esté estable, se pueden borrar de la base las rutas viejas (`oled_remota`, `imagenes`, `animaciones`).
 - Pendiente del plan: paso 8, límites por cuenta (imágenes y GIF).
+
+## Paso 8: límites por cuenta y biblioteca predeterminada (puesta en marcha)
+
+Código y reglas listos y probados (`database.rules.propuesta.json`, 166 casos; `cuotas.mjs`, 11 escenarios). Orden, para no dejar nada sin funcionar:
+
+1. **Dueño:** genera una clave de servicio nueva (Configuración del proyecto > Cuentas de servicio > Generar nueva clave privada), la guarda en `C:\Proyectos\claves\` y avisa la ruta.
+2. **Claude:** `herramientas/mover-a-biblioteca.cjs --correo <correo del dueño>` COPIA las imágenes y animaciones del catálogo personal a `biblioteca/` (con respaldo). Aún no se quita nada.
+3. **Dueño:** publica en la consola el contenido de `database.rules.propuesta.json`.
+4. **Claude:** comprueba con el Admin SDK que todo quedó bien y, con OK del dueño, corre el mismo script con `--borrar-personales` para que las predeterminadas no estén duplicadas en el catálogo personal. Renombra los archivos de reglas (`database.rules.json` = publicado; las anteriores a `database.rules.antiguas.json`).
+5. **Dueño:** push a `main` del panel y **Claude** reconstruye la APK. El panel nuevo es el que muestra las predeterminadas y respeta el límite.
+6. **Dueño:** borra la clave de servicio.
+
+Mientras el paso 5 no se haga, el panel publicado (versión anterior) funciona para el administrador (sin límite) pero una cuenta normal no podría guardar (las reglas nuevas exigen el contador).
+
+**Volver atrás:** publicar las reglas anteriores (`database.rules.json` en ese momento). Los datos de `biblioteca/` y `cuotas/` no estorban a las reglas anteriores.
