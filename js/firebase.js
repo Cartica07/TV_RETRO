@@ -139,6 +139,106 @@ const rutaOled = (sub = '') => (contexto ? `dispositivos/${contexto.dispositivo}
 const rutaCatalogo = (nombre) => (contexto ? `usuarios/${contexto.uid}/${nombre}` : nombre);
 
 // ===================================================
+// Límite de elementos por cuenta (modo cuentas)
+// ===================================================
+// Cada cuenta puede guardar hasta LIMITE_BASE_POR_DEFECTO elementos entre imágenes y
+// animaciones JUNTAS (config/limites/total lo cambia un administrador; usuarios/{uid}/cuotas/extra
+// suma más). Las de la biblioteca predeterminada (biblioteca/) NO cuentan. Un administrador no
+// tiene límite. Lo hacen cumplir las reglas de Firebase: el contador usuarios/{uid}/cuotas/usados
+// se actualiza EN LA MISMA escritura que crea o borra el elemento, con cuotas/ultimo = "i:clave"
+// (imagen) o "a:clave" (animación). Ver docs/formatos-datos.md sección 6.
+const LIMITE_BASE_POR_DEFECTO = 25;
+const LARGO_MAXIMO_CLAVE = 80;
+
+const mensajeLimite = (limite) => `llegaste al límite de ${limite} elementos guardados (imágenes y GIF juntos); borra alguno para guardar otro`;
+const esPermisoDenegado = (err) => /PERMISSION_DENIED|permission/i.test(String((err && err.message) || err || ''));
+
+async function leerCuota() {
+  const uid = contexto.uid;
+  const [admin, usados, base, extra] = await Promise.all([
+    get(ref(db, `administradores/${uid}`)),
+    get(ref(db, `usuarios/${uid}/cuotas/usados`)),
+    get(ref(db, 'config/limites/total')),
+    get(ref(db, `usuarios/${uid}/cuotas/extra`))
+  ]);
+  const numero = (s, defecto) => (s.exists() && Number.isFinite(Number(s.val())) ? Number(s.val()) : defecto);
+  return {
+    admin: admin.val() === true,
+    usados: numero(usados, 0),
+    limite: numero(base, LIMITE_BASE_POR_DEFECTO) + numero(extra, 0)
+  };
+}
+
+/**
+ * Guarda un elemento en el catálogo de la cuenta ('imagenes' | 'animaciones').
+ * Reemplazar uno que ya existe no cambia el contador; uno nuevo lo suma (si cabe).
+ */
+async function guardarEnCatalogo(tipo, safeKey, payload) {
+  const base = rutaCatalogo(tipo);
+  if (!contexto) {
+    const lento = await conTope(set(ref(db, `${base}/${safeKey}`), payload), { exito: true, key: safeKey });
+    return lento || { exito: true, key: safeKey };
+  }
+  if (safeKey.length > LARGO_MAXIMO_CLAVE) return { exito: false, error: `el nombre es demasiado largo (máximo ${LARGO_MAXIMO_CLAVE} caracteres)` };
+
+  const refItem = ref(db, `${base}/${safeKey}`);
+  const prefijo = tipo === 'imagenes' ? 'i' : 'a';
+  for (let intento = 0; intento < 2; intento++) {
+    if ((await get(refItem)).exists()) {
+      const lento = await conTope(set(refItem, payload), { exito: true, key: safeKey });
+      return lento || { exito: true, key: safeKey };
+    }
+    const cuota = await leerCuota();
+    if (!cuota.admin && cuota.usados + 1 > cuota.limite) return { exito: false, error: mensajeLimite(cuota.limite) };
+    const cambios = {
+      [`${base}/${safeKey}`]: payload,
+      [`usuarios/${contexto.uid}/cuotas/usados`]: cuota.usados + 1,
+      [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${safeKey}`
+    };
+    try {
+      const lento = await conTope(update(ref(db), cambios), { exito: true, key: safeKey });
+      return lento || { exito: true, key: safeKey };
+    } catch (err) {
+      // Otro dispositivo cambió el contador al mismo tiempo: se vuelve a leer y se reintenta una vez.
+      if (intento === 0 && esPermisoDenegado(err)) continue;
+      throw err;
+    }
+  }
+  return { exito: false, error: 'sin permiso' };
+}
+
+/** Borra un elemento del catálogo de la cuenta y le resta 1 al contador (en la misma escritura). */
+async function borrarDeCatalogo(tipo, nombre) {
+  const base = rutaCatalogo(tipo);
+  const refItem = ref(db, `${base}/${nombre}`);
+  if (!contexto) {
+    const lento = await conTope(remove(refItem));
+    return lento || { exito: true };
+  }
+  const prefijo = tipo === 'imagenes' ? 'i' : 'a';
+  for (let intento = 0; intento < 2; intento++) {
+    if (!(await get(refItem)).exists()) return { exito: true }; // ya no estaba
+    const usadosSnap = await get(ref(db, `usuarios/${contexto.uid}/cuotas/usados`));
+    const usados = usadosSnap.exists() ? Number(usadosSnap.val()) || 0 : 0;
+    try {
+      const escritura = usados > 0
+        ? update(ref(db), {
+          [`${base}/${nombre}`]: null,
+          [`usuarios/${contexto.uid}/cuotas/usados`]: usados - 1,
+          [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${nombre}`
+        })
+        : remove(refItem); // sin contador (cosa de administrador): se borra a secas
+      const lento = await conTope(escritura);
+      return lento || { exito: true };
+    } catch (err) {
+      if (intento === 0 && esPermisoDenegado(err)) continue;
+      throw err;
+    }
+  }
+  return { exito: false, error: 'sin permiso' };
+}
+
+// ===================================================
 // Dispositivos: vincular una TV con el código que muestra su pantalla
 // ===================================================
 const CODIGO_TV = /^[A-HJ-NP-Z2-9]{6}$/;
@@ -433,12 +533,35 @@ function suscribirCatalogo(ruta, callback, alError) {
   });
 }
 
+/**
+ * Catálogo de la cuenta + biblioteca predeterminada (biblioteca/, la misma para todas las cuentas
+ * y que no cuenta en el límite). Las predeterminadas llegan marcadas con predeterminada: true (no
+ * se pueden borrar); si una de la cuenta tiene el mismo nombre, gana la de la cuenta. Si la
+ * biblioteca no se puede leer, se sigue con lo de la cuenta. Solo en modo cuentas.
+ */
+function suscribirCatalogoConBiblioteca(tipo, callback, alError) {
+  if (!contexto) return suscribirCatalogo(tipo, callback, alError);
+
+  let propio = null;
+  let predeterminadas = null;
+  const emitir = () => {
+    if (propio === null || predeterminadas === null) return;
+    const mezcla = {};
+    for (const [clave, valor] of Object.entries(predeterminadas)) mezcla[clave] = Object.assign({}, valor, { predeterminada: true });
+    for (const [clave, valor] of Object.entries(propio)) mezcla[clave] = valor;
+    callback(mezcla);
+  };
+  const cancelarPropio = suscribirCatalogo(rutaCatalogo(tipo), (obj) => { propio = obj; emitir(); }, alError);
+  const cancelarBiblioteca = suscribirCatalogo(`biblioteca/${tipo}`, (obj) => { predeterminadas = obj; emitir(); }, () => { predeterminadas = {}; emitir(); });
+  return () => { cancelarPropio(); cancelarBiblioteca(); };
+}
+
 export function suscribirImagenes(callback, alError) {
-  return suscribirCatalogo(rutaCatalogo('imagenes'), callback, alError);
+  return suscribirCatalogoConBiblioteca('imagenes', callback, alError);
 }
 
 export function suscribirAnimaciones(callback, alError) {
-  return suscribirCatalogo(rutaCatalogo('animaciones'), callback, alError);
+  return suscribirCatalogoConBiblioteca('animaciones', callback, alError);
 }
 
 /**
@@ -531,9 +654,7 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
       meta: meta
     };
     if (preprocesada) payload.preprocesada = preprocesada;
-    const lento = await conTope(set(ref(db, `${rutaCatalogo('imagenes')}/${safeKey}`), payload), { exito: true, key: safeKey });
-    if (lento) return lento;
-    return { exito: true, key: safeKey };
+    return await guardarEnCatalogo('imagenes', safeKey, payload);
   } catch (err) {
     console.error('Error al guardar imagen en catálogo:', err);
     return { exito: false, error: err.message };
@@ -545,9 +666,7 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
  */
 export async function borrarImagenCatalogo(nombre) {
   try {
-    const lento = await conTope(remove(ref(db, `${rutaCatalogo('imagenes')}/${nombre}`)));
-    if (lento) return lento;
-    return { exito: true };
+    return await borrarDeCatalogo('imagenes', nombre);
   } catch (err) {
     console.error('Error al borrar imagen del catálogo:', err);
     return { exito: false, error: err.message };
@@ -600,9 +719,7 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
     const safeKey = limpiarClave(nombre);
     if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = { ancho, alto, cuadros, meta };
-    const lento = await conTope(set(ref(db, `${rutaCatalogo('animaciones')}/${safeKey}`), payload), { exito: true, key: safeKey });
-    if (lento) return lento;
-    return { exito: true, key: safeKey };
+    return await guardarEnCatalogo('animaciones', safeKey, payload);
   } catch (err) {
     console.error('Error al guardar animación en catálogo:', err);
     return { exito: false, error: err.message };
@@ -614,9 +731,7 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
  */
 export async function borrarAnimacionCatalogo(nombre) {
   try {
-    const lento = await conTope(remove(ref(db, `${rutaCatalogo('animaciones')}/${nombre}`)));
-    if (lento) return lento;
-    return { exito: true };
+    return await borrarDeCatalogo('animaciones', nombre);
   } catch (err) {
     console.error('Error al borrar animación del catálogo:', err);
     return { exito: false, error: err.message };

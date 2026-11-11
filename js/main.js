@@ -1473,8 +1473,9 @@ function actualizarResaltadoGaleria() {
 // tanto).
 function actualizarBotonBorrarGaleria() {
   if (!elementos.botonBorrarGaleria) return;
-  const haySeleccion = !!galeriaSeleccionActual && !!imagenesCatalogo[galeriaSeleccionActual];
-  elementos.botonBorrarGaleria.disabled = !haySeleccion;
+  const entrada = galeriaSeleccionActual ? imagenesCatalogo[galeriaSeleccionActual] : null;
+  // Las predeterminadas (de la biblioteca común) se pueden usar pero no borrar.
+  elementos.botonBorrarGaleria.disabled = !entrada || !!entrada.predeterminada;
 }
 
 // Borra la imagen actualmente seleccionada en la Galería (ver
@@ -1483,6 +1484,10 @@ async function manejarBorrarGaleriaSeleccionada() {
   if (!galeriaSeleccionActual) return;
 
   const key = galeriaSeleccionActual;
+  if (imagenesCatalogo[key] && imagenesCatalogo[key].predeterminada) {
+    marcarEstado('Esa imagen es predeterminada: se puede usar, pero no se puede borrar.', null, elementos);
+    return;
+  }
   // Borrar es permanente (igual que con las canciones, se pregunta antes).
   if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
   let resultado = await borrarImagenCatalogo(key);
@@ -1672,14 +1677,19 @@ function actualizarResaltadoAnimaciones() {
 
 function actualizarBotonBorrarAnimacion() {
   if (!elementos.botonBorrarAnimacion) return;
-  const haySeleccion = !!animacionSeleccionActual && !!animacionesCatalogo[animacionSeleccionActual];
-  elementos.botonBorrarAnimacion.disabled = !haySeleccion;
+  const entrada = animacionSeleccionActual ? animacionesCatalogo[animacionSeleccionActual] : null;
+  // Las predeterminadas (de la biblioteca común) se pueden usar pero no borrar.
+  elementos.botonBorrarAnimacion.disabled = !entrada || !!entrada.predeterminada;
 }
 
 async function manejarBorrarAnimacionSeleccionada() {
   if (!animacionSeleccionActual) return;
 
   const key = animacionSeleccionActual;
+  if (animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada) {
+    marcarEstado('Esa animación es predeterminada: se puede usar, pero no se puede borrar.', null, elementos);
+    return;
+  }
   if (!confirm(`¿Borrar "${key}" de la galería? No se puede deshacer.`)) return;
   let resultado = await borrarAnimacionCatalogo(key);
   resultado = await esperarFinal(resultado, () => marcarEstado(TEXTO_BORRADO_LENTO, null, elementos));
