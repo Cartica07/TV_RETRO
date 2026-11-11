@@ -14,7 +14,7 @@
         ".read": "auth != null && (data.child('dueno').val() === auth.uid || auth.token.dispositivo === $id)",
 
         "dueno": {
-          ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('id').val() === $id && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('expira').val() > now) || (data.val() === auth.uid && !newData.exists()))",
+          ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('id').val() === $id && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('creado').val() > now - 600000) || (data.val() === auth.uid && !newData.exists()))",
           ".validate": "newData.isString() && newData.val().length <= 128"
         },
 
@@ -65,9 +65,9 @@
       "$codigo": {
         ".read": "auth != null",
         ".write": "auth != null && ((!data.exists() && newData.child('id').val() === auth.token.dispositivo) || (data.exists() && data.child('id').val() === auth.token.dispositivo))",
-        ".validate": "$codigo.matches(/^[A-HJ-NP-Z2-9]{6}$/) && newData.hasChildren(['id', 'expira']) && newData.child('id').isString() && newData.child('expira').isNumber() && newData.child('expira').val() <= now + 900000",
+        ".validate": "$codigo.matches(/^[A-HJ-NP-Z2-9]{6}$/) && newData.hasChildren(['id', 'creado']) && newData.child('id').isString() && newData.child('id').val() === auth.token.dispositivo && newData.child('creado').isNumber() && newData.child('creado').val() === now",
         "id": {},
-        "expira": {},
+        "creado": {},
         "$otro": {
           ".validate": false
         }
