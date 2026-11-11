@@ -122,6 +122,95 @@ export async function recuperarContrasena(email) {
   }
 }
 
+// ===================================================
+// Rutas: modo viejo (sin cuentas) y modo cuentas
+// ===================================================
+// Modo viejo (hasta migrar, paso 7): oled_remota/…, imagenes/…, animaciones/….
+// Modo cuentas (usarCuenta): dispositivos/{id}/oled_remota/… y usuarios/{uid}/imagenes|animaciones/…
+// El resto (musicales, canciones) no cambia. Ver docs/formatos-datos.md sección 6.
+let contexto = null; // null = modo viejo; { uid, dispositivo } = modo cuentas
+
+/** Pasa a modo cuentas: de acá en adelante todo va a la TV y al catálogo de este usuario. */
+export function usarCuenta(uid, dispositivo) {
+  contexto = { uid, dispositivo };
+}
+
+const rutaOled = (sub = '') => (contexto ? `dispositivos/${contexto.dispositivo}/oled_remota` : 'oled_remota') + (sub ? '/' + sub : '');
+const rutaCatalogo = (nombre) => (contexto ? `usuarios/${contexto.uid}/${nombre}` : nombre);
+
+// ===================================================
+// Dispositivos: vincular una TV con el código que muestra su pantalla
+// ===================================================
+const CODIGO_TV = /^[A-HJ-NP-Z2-9]{6}$/;
+
+/** Deja solo letras y números, en mayúsculas ("k7m-2qx" -> "K7M2QX"). */
+export function normalizarCodigo(texto) {
+  return String(texto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/** Ids de las TV vinculadas a este usuario: { exito, dispositivos: [id…] }. */
+export async function listarMisDispositivos(uid) {
+  try {
+    const snap = await esperarHasta(get(ref(db, `usuarios/${uid}/dispositivos`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true, dispositivos: snap.exists() ? Object.keys(snap.val()).sort() : [] };
+  } catch (error) {
+    console.error('Error al listar las TV:', error);
+    return { exito: false, error: 'No se pudo leer tu lista de TV: ' + describirError(error) + '.' };
+  }
+}
+
+/**
+ * Vincula la TV que mostró este código. 1) lee el código (solo se puede leer
+ * conociéndolo) para saber qué TV es; 2) se pone como dueño con el código;
+ * 3) la agrega a su lista. Las reglas de Firebase comprueban que el código no
+ * haya vencido (10 minutos) y que la TV no tenga dueño.
+ */
+export async function reclamarDispositivo(uid, codigoTexto) {
+  const codigo = normalizarCodigo(codigoTexto);
+  if (codigo.length !== 6) return { exito: false, error: 'Escribe los 6 caracteres del código que muestra tu TV.' };
+  if (!CODIGO_TV.test(codigo)) return { exito: false, error: 'Ese código no es válido. Revisa que no confundas 0 con O ni 1 con I.' };
+  try {
+    const snap = await esperarHasta(get(ref(db, `emparejamiento/${codigo}`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    const id = snap.exists() ? snap.val().id : null;
+    if (!id) return { exito: false, error: 'Ese código no existe o ya venció. Mantén pulsado el botón de tu TV para ver uno nuevo.' };
+
+    try {
+      const paso = await esperarHasta(update(ref(db, `dispositivos/${id}`), { dueno: uid, codigoUsado: codigo }), ESPERA_MAXIMA_ENVIO_MS);
+      if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    } catch (error) {
+      if (/PERMISSION_DENIED|permission/i.test(String((error && error.message) || error))) {
+        return { exito: false, error: 'No se pudo vincular: el código venció o esa TV ya tiene dueño. Pide uno nuevo en la TV.' };
+      }
+      throw error;
+    }
+
+    const lista = await esperarHasta(set(ref(db, `usuarios/${uid}/dispositivos/${id}`), true), ESPERA_MAXIMA_ENVIO_MS);
+    if (lista === ESPERA_LENTA) return { exito: false, error: 'La TV quedó vinculada, pero la conexión está lenta. Vuelve a abrir la app.' };
+    return { exito: true, id };
+  } catch (error) {
+    console.error('Error al vincular la TV:', error);
+    return { exito: false, error: 'No se pudo vincular: ' + describirError(error) + '.' };
+  }
+}
+
+/** Desvincula la TV: deja de tener dueño (mostrará un código nuevo) y sale de la lista. */
+export async function desvincularDispositivo(uid, id) {
+  try {
+    const paso = await esperarHasta(update(ref(db), {
+      [`dispositivos/${id}/dueno`]: null,
+      [`dispositivos/${id}/codigoUsado`]: null,
+      [`usuarios/${uid}/dispositivos/${id}`]: null
+    }), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true };
+  } catch (error) {
+    console.error('Error al desvincular la TV:', error);
+    return { exito: false, error: 'No se pudo desvincular: ' + describirError(error) + '.' };
+  }
+}
+
 /**
  * Convierte un nombre en una clave válida de Firebase: cambia por "_" los
  * caracteres que Firebase no admite en una clave (. $ # [ ] /) y quita
@@ -172,16 +261,16 @@ async function leerPantallaYArchivo() {
   let ultimo = null;
   for (let intento = 0; intento < INTENTOS; intento++) {
     const [snapPantalla, snapVersion] = await Promise.all([
-      get(ref(db, 'oled_remota/pantalla')),
-      get(ref(db, 'oled_remota/version'))
+      get(ref(db, rutaOled('pantalla'))),
+      get(ref(db, rutaOled('version')))
     ]);
     ultimo = { snapPantalla, snapVersion, archivo: null };
     const animacion = (snapPantalla.val() || {}).animacion || {};
     if (!(animacion.formato === FORMATO_COMPRIMIDO && puedeComprimir())) return ultimo;
 
     const version = Number(snapVersion.val());
-    const archivo = (await get(ref(db, 'oled_remota/archivo'))).val();
-    const versionDespues = Number((await get(ref(db, 'oled_remota/version'))).val());
+    const archivo = (await get(ref(db, rutaOled('archivo')))).val();
+    const versionDespues = Number((await get(ref(db, rutaOled('version')))).val());
     if (archivo && typeof archivo.datos === 'string' && Number(archivo.version) === version && versionDespues === version) {
       ultimo.archivo = archivo;
       return ultimo;
@@ -318,7 +407,7 @@ export async function cargarEstado() {
  * Devuelve la función para cancelar la suscripción (unsubscribe).
  */
 export function suscribirLastSeen(callback) {
-  return onValue(ref(db, 'oled_remota/lastSeen'), (snap) => {
+  return onValue(ref(db, rutaOled('lastSeen')), (snap) => {
     callback(snap.exists() ? Number(snap.val()) : null);
   }, (err) => {
     console.error('Error al suscribirse a lastSeen:', err);
@@ -345,11 +434,11 @@ function suscribirCatalogo(ruta, callback, alError) {
 }
 
 export function suscribirImagenes(callback, alError) {
-  return suscribirCatalogo('imagenes', callback, alError);
+  return suscribirCatalogo(rutaCatalogo('imagenes'), callback, alError);
 }
 
 export function suscribirAnimaciones(callback, alError) {
-  return suscribirCatalogo('animaciones', callback, alError);
+  return suscribirCatalogo(rutaCatalogo('animaciones'), callback, alError);
 }
 
 /**
@@ -412,7 +501,7 @@ export async function guardarCancionCatalogo(nombre, notas, meta = {}) {
  */
 export async function listarImagenes() {
   try {
-    const snap = await get(ref(db, 'imagenes'));
+    const snap = await get(ref(db, rutaCatalogo('imagenes')));
     if (!snap.exists()) return {};
     return snap.val();
   } catch (err) {
@@ -442,7 +531,7 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
       meta: meta
     };
     if (preprocesada) payload.preprocesada = preprocesada;
-    const lento = await conTope(set(ref(db, `imagenes/${safeKey}`), payload), { exito: true, key: safeKey });
+    const lento = await conTope(set(ref(db, `${rutaCatalogo('imagenes')}/${safeKey}`), payload), { exito: true, key: safeKey });
     if (lento) return lento;
     return { exito: true, key: safeKey };
   } catch (err) {
@@ -456,7 +545,7 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
  */
 export async function borrarImagenCatalogo(nombre) {
   try {
-    const lento = await conTope(remove(ref(db, `imagenes/${nombre}`)));
+    const lento = await conTope(remove(ref(db, `${rutaCatalogo('imagenes')}/${nombre}`)));
     if (lento) return lento;
     return { exito: true };
   } catch (err) {
@@ -492,7 +581,7 @@ export async function borrarCancionCatalogo(nombre) {
  */
 export async function listarAnimaciones() {
   try {
-    const snap = await get(ref(db, 'animaciones'));
+    const snap = await get(ref(db, rutaCatalogo('animaciones')));
     if (!snap.exists()) return {};
     return snap.val();
   } catch (err) {
@@ -511,7 +600,7 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
     const safeKey = limpiarClave(nombre);
     if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = { ancho, alto, cuadros, meta };
-    const lento = await conTope(set(ref(db, `animaciones/${safeKey}`), payload), { exito: true, key: safeKey });
+    const lento = await conTope(set(ref(db, `${rutaCatalogo('animaciones')}/${safeKey}`), payload), { exito: true, key: safeKey });
     if (lento) return lento;
     return { exito: true, key: safeKey };
   } catch (err) {
@@ -525,7 +614,7 @@ export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, met
  */
 export async function borrarAnimacionCatalogo(nombre) {
   try {
-    const lento = await conTope(remove(ref(db, `animaciones/${nombre}`)));
+    const lento = await conTope(remove(ref(db, `${rutaCatalogo('animaciones')}/${nombre}`)));
     if (lento) return lento;
     return { exito: true };
   } catch (err) {
@@ -604,7 +693,7 @@ export async function borrarMusicalCatalogo(clave) {
  */
 export async function enviarEstado(estado) {
   try {
-    const snapVersion = await esperarHasta(get(ref(db, 'oled_remota/version')), ESPERA_MAXIMA_ENVIO_MS);
+    const snapVersion = await esperarHasta(get(ref(db, rutaOled('version'))), ESPERA_MAXIMA_ENVIO_MS);
     if (snapVersion === ESPERA_LENTA) return { exito: false, error: 'sin conexión a internet' };
     const versionLeida = snapVersion.exists() ? (Number(snapVersion.val()) || 0) : 0;
     // El número definitivo se reserva justo antes de escribir (ver abajo).
@@ -718,12 +807,12 @@ export async function enviarEstado(estado) {
     // Reserva y escritura van encadenadas: con la red lenta, las dos
     // siguen solas cuando vuelve la señal.
     const escritura = (async () => {
-      const reserva = await runTransaction(ref(db, 'oled_remota/contadorVersion'),
+      const reserva = await runTransaction(ref(db, rutaOled('contadorVersion')),
         (actual) => Math.max(Number(actual) || 0, versionLeida) + 1);
       if (!reserva.committed) throw new Error('no se pudo reservar el número de envío');
       nuevaVersion = Number(reserva.snapshot.val());
       if (archivo) archivo.version = nuevaVersion;
-      await update(ref(db, 'oled_remota'), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
+      await update(ref(db, rutaOled()), { version: nuevaVersion, pantalla: pantallaPayload, archivo });
     })();
     if (await esperarHasta(escritura, ESPERA_MAXIMA_ENVIO_MS) === ESPERA_LENTA) {
       // Firebase la manda sola cuando vuelva la señal. "escritura" avisa

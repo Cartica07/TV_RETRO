@@ -297,6 +297,20 @@ export function obtenerElementos() {
     botonLoginModo: document.getElementById('botonLoginModo'),
     botonCerrarSesion: document.getElementById('botonCerrarSesion'),
 
+    // Cuentas: pantalla Mi TV (vincular, elegir, desvincular)
+    botonMiTV: document.getElementById('botonMiTV'),
+    pantallaTV: document.getElementById('pantallaTV'),
+    tvTitulo: document.getElementById('tvTitulo'),
+    tvSubtitulo: document.getElementById('tvSubtitulo'),
+    listaTV: document.getElementById('listaTV'),
+    formTV: document.getElementById('formTV'),
+    codigoTV: document.getElementById('codigoTV'),
+    tvError: document.getElementById('tvError'),
+    tvAviso: document.getElementById('tvAviso'),
+    botonVincularTV: document.getElementById('botonVincularTV'),
+    botonTVVolver: document.getElementById('botonTVVolver'),
+    botonTVSalir: document.getElementById('botonTVSalir'),
+
     // Botón enviar
     botonEnviar: document.getElementById('enviar'),
     

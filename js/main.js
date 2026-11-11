@@ -26,7 +26,11 @@ import {
   iniciarSesion,
   crearCuenta,
   cerrarSesion,
-  recuperarContrasena
+  recuperarContrasena,
+  usarCuenta,
+  listarMisDispositivos,
+  reclamarDispositivo,
+  desvincularDispositivo
 } from './firebase.js';
 import {
   procesarImagen,
@@ -2730,12 +2734,14 @@ async function inicializar() {
 
   configurarEventos();
   marcarControlesEncuadre();
-  iniciarMonitoreoConexion();
-
   if (USAR_CUENTAS) {
     configurarLogin();
-    await requerirSesion();
+    sesionActual = await requerirSesion();
+    // Desde acá todo va a la TV y al catálogo de esta cuenta (firebase.js, usarCuenta).
+    usarCuenta(sesionActual.uid, await resolverDispositivo(sesionActual));
+    elementos.botonMiTV.hidden = false;
   }
+  iniciarMonitoreoConexion();
 
   bloquearPanel(true);
   let temporizador = null;
@@ -2832,11 +2838,166 @@ async function manejarOlvideContrasena() {
   });
 }
 
+// ---- Mi TV: vincular una TV con su código, elegir cuál usar, desvincular ----
+// Una cuenta puede tener varias TV (el panel usa una a la vez; la elegida se
+// recuerda en este equipo). Para cambiar de TV o desvincular se recarga: así
+// no queda en memoria nada de la TV anterior.
+let sesionActual = null;             // { uid, email, emailVerified }
+let misTV = [];                      // ids de las TV de la cuenta
+let tvEnUso = null;                  // id de la TV que usa el panel
+let alVincularPrimera = null;        // resolver de la espera de la primera TV
+const claveTVGuardada = (uid) => 'tvretro.dispositivo.' + uid;
+
+function leerTVGuardada(uid) {
+  try { return localStorage.getItem(claveTVGuardada(uid)); } catch (e) { return null; }
+}
+
+function guardarTVElegida(uid, id) {
+  try { localStorage.setItem(claveTVGuardada(uid), id); } catch (e) { /* sin almacenamiento: se usará la primera */ }
+}
+
+function mostrarErrorTV(texto) {
+  elementos.tvError.textContent = texto;
+  elementos.tvError.hidden = !texto;
+  if (texto) elementos.tvAviso.hidden = true;
+}
+
+function dibujarListaTV() {
+  const lista = elementos.listaTV;
+  lista.textContent = '';
+  lista.hidden = misTV.length === 0;
+  misTV.forEach((id, i) => {
+    const fila = document.createElement('div');
+    fila.className = 'fila-tv' + (id === tvEnUso ? ' en-uso' : '');
+    const nombre = document.createElement('span');
+    nombre.className = 'nombre-tv';
+    nombre.textContent = 'TV ' + (i + 1);
+    fila.appendChild(nombre);
+    if (id === tvEnUso) {
+      const marca = document.createElement('span');
+      marca.className = 'marca-en-uso';
+      marca.textContent = 'En uso';
+      fila.appendChild(marca);
+    } else {
+      const usar = document.createElement('button');
+      usar.type = 'button';
+      usar.className = 'boton-enlace';
+      usar.textContent = 'Usar';
+      usar.addEventListener('click', () => {
+        guardarTVElegida(sesionActual.uid, id);
+        location.reload();
+      });
+      fila.appendChild(usar);
+    }
+    const desvincular = document.createElement('button');
+    desvincular.type = 'button';
+    desvincular.className = 'boton-enlace peligro';
+    desvincular.textContent = 'Desvincular';
+    desvincular.addEventListener('click', () => manejarDesvincularTV(id, i + 1));
+    fila.appendChild(desvincular);
+    lista.appendChild(fila);
+  });
+}
+
+// modo: 'primera' (la cuenta no tiene TV), 'gestionar' (abierta con el botón Mi TV)
+// o 'error' (no se pudo leer la lista de TV: solo se puede reintentar).
+function mostrarPantallaTV(modo, error = '') {
+  const el = elementos;
+  el.pantallaTV.hidden = false;
+  el.tvAviso.hidden = true;
+  mostrarErrorTV(modo === 'error' ? '' : error);
+  el.codigoTV.value = '';
+  if (modo === 'error') {
+    el.tvTitulo.textContent = 'No se pudo cargar tus TV';
+    el.tvSubtitulo.textContent = error;
+    el.listaTV.hidden = true;
+    el.formTV.hidden = true;
+    el.botonTVVolver.textContent = 'Reintentar';
+    el.botonTVVolver.hidden = false;
+    return;
+  }
+  el.formTV.hidden = false;
+  if (modo === 'primera') {
+    el.tvTitulo.textContent = 'Añade tu TV';
+    el.tvSubtitulo.textContent = 'Escribe el código que muestra la pantalla de tu TV.';
+    el.botonTVVolver.hidden = true;
+  } else {
+    el.tvTitulo.textContent = 'Mis TV';
+    el.tvSubtitulo.textContent = 'Elige cuál usar o añade otra con su código.';
+    el.botonTVVolver.textContent = 'Volver';
+    el.botonTVVolver.hidden = false;
+  }
+  dibujarListaTV();
+}
+
+async function enviarFormularioTV(e) {
+  e.preventDefault();
+  await sinRepetir('vincular', elementos.botonVincularTV, async () => {
+    mostrarErrorTV('');
+    const r = await reclamarDispositivo(sesionActual.uid, elementos.codigoTV.value);
+    if (!r.exito) return mostrarErrorTV(r.error);
+    guardarTVElegida(sesionActual.uid, r.id);
+    if (alVincularPrimera) {
+      // Primer arranque: sigue el arranque con esta TV (no hace falta recargar).
+      const seguir = alVincularPrimera;
+      alVincularPrimera = null;
+      elementos.pantallaTV.hidden = true;
+      seguir(r.id);
+    } else {
+      location.reload();
+    }
+  });
+}
+
+async function manejarDesvincularTV(id, numero) {
+  if (!window.confirm('¿Desvincular la TV ' + numero + '? Dejará de ser tuya y mostrará un código nuevo.')) return;
+  await sinRepetir('desvincular', null, async () => {
+    mostrarErrorTV('');
+    const r = await desvincularDispositivo(sesionActual.uid, id);
+    if (!r.exito) return mostrarErrorTV(r.error);
+    location.reload();
+  });
+}
+
+// Lee las TV de la cuenta y devuelve la que usará el panel. Si la cuenta no
+// tiene ninguna, muestra "Añade tu TV" y espera a que se vincule una.
+async function resolverDispositivo(sesion) {
+  for (;;) {
+    const r = await listarMisDispositivos(sesion.uid);
+    if (r.exito) {
+      misTV = r.dispositivos;
+      break;
+    }
+    // Sin lista no se puede seguir: se muestra el error y se espera "Reintentar".
+    mostrarPantallaTV('error', r.error);
+    await new Promise((resolver) => {
+      elementos.botonTVVolver.addEventListener('click', resolver, { once: true });
+    });
+  }
+  if (misTV.length === 0) {
+    mostrarPantallaTV('primera');
+    tvEnUso = await new Promise((resolver) => { alVincularPrimera = resolver; });
+    misTV = [tvEnUso];
+    return tvEnUso;
+  }
+  const guardada = leerTVGuardada(sesion.uid);
+  tvEnUso = misTV.includes(guardada) ? guardada : misTV[0];
+  return tvEnUso;
+}
+
 function configurarLogin() {
   elementos.formLogin.addEventListener('submit', enviarFormularioLogin);
   elementos.botonLoginOlvide.addEventListener('click', manejarOlvideContrasena);
   elementos.botonLoginModo.addEventListener('click', () => cambiarModoLogin(modoLogin === 'entrar' ? 'crear' : 'entrar'));
-  elementos.botonCerrarSesion.addEventListener('click', () => sinRepetir('salir', elementos.botonCerrarSesion, () => cerrarSesion()));
+  const salir = (boton) => () => sinRepetir('salir', boton, () => cerrarSesion());
+  elementos.botonCerrarSesion.addEventListener('click', salir(elementos.botonCerrarSesion));
+  elementos.botonTVSalir.addEventListener('click', salir(elementos.botonTVSalir));
+  elementos.formTV.addEventListener('submit', enviarFormularioTV);
+  elementos.botonMiTV.addEventListener('click', () => mostrarPantallaTV('gestionar'));
+  elementos.botonTVVolver.addEventListener('click', () => {
+    if (elementos.formTV.hidden) return; // en modo "error" lo maneja resolverDispositivo
+    elementos.pantallaTV.hidden = true;
+  });
 }
 
 // Espera a que haya una sesión iniciada. Mientras no la haya muestra la pantalla
