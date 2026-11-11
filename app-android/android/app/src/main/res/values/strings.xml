@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TV RETRO</string>
+    <string name="title_activity_main">TV RETRO</string>
+    <string name="package_name">com.tvretro.app</string>
+    <string name="custom_url_scheme">com.tvretro.app</string>
+</resources>
