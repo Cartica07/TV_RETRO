@@ -23,7 +23,10 @@
   <header class="barra-superior">
     <h1 class="marca">TV RETRO</h1>
     <div class="barra-superior-derecha">
-      <!-- Cerrar sesión: oculto hasta que se conecte el login (paso de lógica). -->
+      <!-- Mi TV (vincular, usar o desvincular) y cerrar sesión: solo en modo cuentas. -->
+      <button type="button" id="botonMiTV" class="boton-icono" aria-label="Mi TV" title="Mi TV" hidden>
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      </button>
       <button type="button" id="botonCerrarSesion" class="boton-icono" aria-label="Cerrar sesión" title="Cerrar sesión" hidden>
         <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
@@ -508,6 +511,39 @@
     <div class="login-enlaces">
       <button type="button" id="botonLoginOlvide" class="boton-enlace">¿Olvidaste tu contraseña?</button>
       <button type="button" id="botonLoginModo" class="boton-enlace">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mi TV: vincular una TV con el código que muestra su pantalla, elegir cuál
+     usar y desvincularla. Solo en modo cuentas. -->
+<div class="pantalla-login" id="pantallaTV" hidden>
+  <div class="login-tarjeta">
+    <div class="login-marca">
+      <span class="login-logo" aria-hidden="true">
+        <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      </span>
+      <h1 class="login-titulo" id="tvTitulo">Añade tu TV</h1>
+      <p class="login-subtitulo" id="tvSubtitulo">Escribe el código que muestra la pantalla de tu TV.</p>
+    </div>
+
+    <div class="lista-tv" id="listaTV" hidden></div>
+
+    <form class="login-form" id="formTV" novalidate>
+      <div class="campo">
+        <label class="rotulo" for="codigoTV">Código de la TV</label>
+        <input type="text" id="codigoTV" class="campo-texto campo-codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="7" placeholder="K7M2QX" />
+      </div>
+
+      <div id="tvError" class="aviso error" role="alert" hidden></div>
+      <div id="tvAviso" class="aviso ok" role="status" hidden></div>
+
+      <button type="submit" id="botonVincularTV" class="boton-primario">Vincular</button>
+    </form>
+
+    <div class="login-enlaces">
+      <button type="button" id="botonTVVolver" class="boton-enlace" hidden>Volver</button>
+      <button type="button" id="botonTVSalir" class="boton-enlace">Cerrar sesión</button>
     </div>
   </div>
 </div>

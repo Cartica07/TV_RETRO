@@ -1934,6 +1934,54 @@ label.fila-ajuste-titulo {
   margin: 0 0 var(--esp-4);
 }
 
+/* Código de la TV: 6 caracteres grandes, centrados y espaciados. */
+.campo-codigo {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .35em;
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xl);
+  font-weight: 700;
+}
+
+/* Lista de TV vinculadas (pantalla Mi TV). */
+.lista-tv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+  margin-bottom: var(--esp-4);
+}
+
+.fila-tv {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--esp-1) var(--esp-3);
+  padding: var(--esp-2) var(--esp-3);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+}
+
+.fila-tv.en-uso {
+  border-color: var(--acento);
+}
+
+.fila-tv .nombre-tv {
+  flex: 1 1 auto;
+  font-size: var(--texto-md);
+  color: var(--texto);
+}
+
+.fila-tv .marca-en-uso {
+  font-size: var(--texto-xs);
+  color: var(--acento);
+}
+
+.boton-enlace.peligro {
+  color: var(--error-texto);
+}
+
 .login-enlaces {
   display: flex;
   flex-wrap: wrap;
