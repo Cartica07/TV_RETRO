@@ -2335,6 +2335,9 @@ function configurarEventos() {
   if (elementos.botonContraerDibujo) {
     elementos.botonContraerDibujo.addEventListener('click', () => contraerDibujo());
   }
+  if (elementos.botonEnviarDibujoExpandido) {
+    elementos.botonEnviarDibujoExpandido.addEventListener('click', enviarDesdeDibujoExpandido);
+  }
   if (elementos.botonZoomMasDibujo) {
     elementos.botonZoomMasDibujo.addEventListener('click', () => { if (zoomDibujo) zoomDibujo.acercar(); });
   }
@@ -2535,8 +2538,13 @@ let turnoEnvio = 0;
 // Muestra el resultado de enviarEstado(): enviado, pendiente (la conexión
 // está lenta y Firebase lo manda solo cuando vuelva la señal) o el motivo
 // del error (sin conexión, sin permiso...).
+// true si el último envío terminó bien al instante (lo lee el botón de enviar del
+// lienzo expandido para mostrar la palomita).
+let ultimoEnvioExitoso = false;
+
 function mostrarResultadoEnvio(resultado) {
   const turno = turnoEnvio; // lo sube enviarAFirebase al empezar cada envío
+  ultimoEnvioExitoso = !!resultado.exito;
   if (resultado.exito) {
     marcarEstado(textoEnviado(resultado.version), 'ok', elementos);
     return;
@@ -2551,6 +2559,30 @@ function mostrarResultadoEnvio(resultado) {
     return;
   }
   marcarEstado(`No se pudo enviar: ${describirError(resultado.error)}.`, 'error', elementos);
+}
+
+// Botón de enviar del lienzo expandido: hace lo mismo que "Enviar a la OLED".
+// En modo expandido la línea de estado no se ve, así que si el envío sale bien
+// el botón muestra una palomita un momento, y si no (error o conexión lenta) se
+// contrae el lienzo para que se lea el aviso.
+let temporizadorPalomita = null;
+async function enviarDesdeDibujoExpandido() {
+  const boton = elementos.botonEnviarDibujoExpandido;
+  if (!boton || boton.disabled || elementos.botonEnviar.disabled || panelBloqueado) return;
+  boton.disabled = true;
+  ultimoEnvioExitoso = false;
+  try {
+    await enviarAFirebase();
+  } finally {
+    boton.disabled = false;
+  }
+  if (ultimoEnvioExitoso) {
+    boton.classList.add('enviado');
+    clearTimeout(temporizadorPalomita);
+    temporizadorPalomita = setTimeout(() => boton.classList.remove('enviado'), 1500);
+  } else if (dibujoExpandido) {
+    contraerDibujo();
+  }
 }
 
 async function enviarAFirebase() {

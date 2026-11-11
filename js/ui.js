@@ -277,6 +277,7 @@ export function obtenerElementos() {
     indicadorZoomDibujo: document.getElementById('indicadorZoomDibujo'),
     botonExpandirDibujo: document.getElementById('botonExpandirDibujo'),
     botonContraerDibujo: document.getElementById('botonContraerDibujo'),
+    botonEnviarDibujoExpandido: document.getElementById('botonEnviarDibujoExpandido'),
     botonZoomMasDibujo: document.getElementById('botonZoomMasDibujo'),
     botonZoomMenosDibujo: document.getElementById('botonZoomMenosDibujo'),
     avisoGaleriaDibujo: document.getElementById('avisoGaleriaDibujo'),
