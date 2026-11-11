@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "oled_remota": {
+      ".read": true,
+      ".write": true
+    },
+    "canciones": {
+      ".read": true,
+      ".write": true
+    },
+    "imagenes": {
+      ".read": true,
+      ".write": true
+    },
+    "animaciones": {
+      ".read": true,
+      ".write": true
+    },
+    "musicales": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
