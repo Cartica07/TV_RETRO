@@ -627,6 +627,15 @@ function actualizarPreviewDesdeLienzo() {
 // pide pantalla completa y se bloquea la rotación en horizontal (Chrome
 // en Android); si no (iPhone, escritorio), queda igual de grande y en
 // vertical se muestra "Girá el teléfono".
+// Dentro de la APK (Capacitor) el panel corre en un WebView de Android. Ahí la
+// pantalla completa del navegador y el bloqueo de rotación web no sirven (al
+// contraer, el WebView queda con el tamaño roto y tapa los botones del
+// sistema), así que se usan los plugins nativos. En el navegador todo sigue
+// igual. Los plugins se leen de window.Capacitor.Plugins: el panel no usa
+// bundler, no puede importarlos.
+const enApp = () => !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+const pluginNativo = (nombre) => (enApp() && window.Capacitor.Plugins && window.Capacitor.Plugins[nombre]) || null;
+
 let dibujoExpandido = false;
 let zoomDibujo = null;              // control de zoom del lienzo (lienzoZoom.js)
 let pantallaCompletaPropia = false; // true si la pantalla completa la pidió el panel
@@ -638,8 +647,9 @@ async function expandirDibujo() {
   // Para que el botón Atrás de Android contraiga en vez de salir.
   try { history.pushState({ dibujoExpandido: true }, ''); } catch (e) { /* sin historial: no pasa nada */ }
 
+  const orientacionNativa = pluginNativo('ScreenOrientation');
   try {
-    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+    if (!orientacionNativa && document.documentElement.requestFullscreen && !document.fullscreenElement) {
       await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
       pantallaCompletaPropia = true;
     }
@@ -647,7 +657,8 @@ async function expandirDibujo() {
     pantallaCompletaPropia = false; // no permitido (iPhone, permisos): se sigue sin pantalla completa
   }
   try {
-    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+    if (orientacionNativa) await orientacionNativa.lock({ orientation: 'landscape' });
+    else if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
   } catch (e) {
     // Bloquear la rotación solo anda en pantalla completa y en algunos
     // navegadores; si no, el CSS se acomoda al girar el teléfono.
@@ -659,7 +670,11 @@ function contraerDibujo({ desdeHistorial = false } = {}) {
   dibujoExpandido = false;
   document.body.classList.remove('dibujo-expandido');
 
-  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) { /* nada */ }
+  try {
+    const orientacionNativa = pluginNativo('ScreenOrientation');
+    if (orientacionNativa) orientacionNativa.unlock().catch(() => {});
+    else if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+  } catch (e) { /* nada */ }
   if (pantallaCompletaPropia && document.fullscreenElement && document.exitFullscreen) {
     document.exitFullscreen().catch(() => {});
   }
@@ -1015,6 +1030,24 @@ function nombreImagenPegada() {
 // Android). Si no está disponible (Firefox, WebView de Android sin
 // soporte) o se niega el permiso, avisa y sugiere las otras opciones.
 async function pegarImagenDelPortapapeles() {
+  // En la APK el WebView no deja leer el portapapeles: se usa el plugin propio
+  // PortapapelesImagen (android/.../PortapapelesImagenPlugin.java).
+  const portapapelesNativo = pluginNativo('PortapapelesImagen');
+  if (portapapelesNativo) {
+    try {
+      const r = await portapapelesNativo.leer();
+      if (!r || !r.hayImagen) {
+        marcarEstado('El portapapeles no tiene una imagen. Copia una imagen y vuelve a tocar Pegar.', 'error', elementos);
+        return;
+      }
+      const bytes = Uint8Array.from(atob(r.datos), (c) => c.charCodeAt(0));
+      await procesarYMostrarImagen(new Blob([bytes], { type: r.tipo }), nombreImagenPegada());
+    } catch (error) {
+      console.error('No se pudo leer el portapapeles (app):', error);
+      marcarEstado('No se pudo leer el portapapeles. Elige el archivo.', 'error', elementos);
+    }
+    return;
+  }
   if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
     marcarEstado('Este navegador no deja leer imágenes del portapapeles. Prueba Ctrl+V o elige el archivo.', 'error', elementos);
     return;
