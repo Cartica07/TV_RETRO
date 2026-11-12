@@ -319,7 +319,7 @@ export async function reclamarDispositivo(uid, codigoTexto) {
     const snap = await esperarHasta(get(ref(db, `emparejamiento/${codigo}`)), ESPERA_MAXIMA_ENVIO_MS);
     if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
     const id = snap.exists() ? snap.val().id : null;
-    if (!id) return { exito: false, error: 'Ese código no existe o ya venció. Mantén pulsado el botón de tu TV para ver uno nuevo.' };
+    if (!id) return { exito: false, error: 'Ese código no existe o ya venció. Revisa el código que muestra tu TV (se renueva solo).' };
 
     try {
       const paso = await esperarHasta(update(ref(db, `dispositivos/${id}`), { dueno: uid, codigoUsado: codigo }), ESPERA_MAXIMA_ENVIO_MS);
