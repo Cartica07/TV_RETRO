@@ -43,7 +43,7 @@ Cada paso dice quién lo hace. Mientras no se publiquen las reglas nuevas (paso 
 
 ## Paso 8: límites por cuenta y biblioteca predeterminada (puesta en marcha)
 
-> **Avance (2026-11-12):** hechos los pasos 1 a 3 (clave nueva, piezas copiadas a `biblioteca/` con respaldo, reglas publicadas y verificadas: idénticas al archivo). `database.rules.json` ya es lo publicado; las anteriores quedaron en `database.rules.sin-limites.json` (cuentas sin límites) y `database.rules.antiguas.json` (abiertas). Faltan los pasos 4 (quitar copias personales, con OK), 5 (push y APK) y 6 (borrar la clave).
+> **Avance (2026-11-12):** hechos los pasos 1 a 3 (clave nueva, piezas copiadas a `biblioteca/` con respaldo, reglas publicadas y verificadas: idénticas al archivo). `database.rules.json` ya es lo publicado; las anteriores quedaron en `database.rules.sin-limites.json` (cuentas sin límites) y `database.rules.antiguas.json` (abiertas). Paso 4 hecho el mismo día (copias personales quitadas con el OK del dueño; catálogo personal en 0 y biblioteca con 29 imágenes y 9 animaciones). Faltan los pasos 5 (push a `main` y APK nueva) y 6 (borrar la clave de servicio).
 
 Código y reglas listos y probados (`database.rules.propuesta.json`, 190 casos; `cuotas.mjs`, 15 escenarios). Tope: 25 elementos en total y máximo 10 GIF; el administrador sin límite y puede borrar las predeterminadas. Orden, para no dejar nada sin funcionar:
 

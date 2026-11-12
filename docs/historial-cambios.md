@@ -237,4 +237,6 @@ Pasos 5 a 7 (preparación), hechos y probados con los emuladores de Firebase, SI
 
 **Puesta en marcha del paso 8 (2026-11-12):** el dueño publicó las reglas con límites (verificadas contra la consola con el Admin SDK: idénticas a `database.rules.json`); 29 imágenes y 9 animaciones copiadas a `biblioteca/` con respaldo. Un problema del equipo: la hora de Windows estaba 5 horas adelantada (servicio de hora detenido) y Google rechazaba la firma de la clave de servicio ("Token must be a short-lived token"); se resolvió sincronizando la hora.
 
-Pendiente: quitar las copias personales, push del panel a `main`, APK nueva, y desbloqueos con anuncios (servidor de verificación, después).
+Copias personales quitadas del catálogo del dueño (con respaldo; contador de usados en 0).
+
+Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléfono conectado), y desbloqueos con anuncios (servidor de verificación, después).
