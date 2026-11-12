@@ -285,6 +285,9 @@ async function borrarDeCatalogo(tipo, nombre, { predeterminada = false } = {}) {
 // ===================================================
 const CODIGO_TV = /^[A-HJ-NP-Z2-9]{6}$/;
 
+/** Valor de oled_remota/version que significa "esta TV fue desvinculada" (la TV escucha esa ruta). Una versión real nunca es negativa. */
+export const VERSION_DESVINCULADA = -2;
+
 /** Deja solo letras y números, en mayúsculas ("k7m-2qx" -> "K7M2QX"). */
 export function normalizarCodigo(texto) {
   return String(texto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -339,8 +342,8 @@ export async function reclamarDispositivo(uid, codigoTexto) {
 
 /**
  * Desvincula la TV: deja de tener dueño, se quita a las personas con quienes
- * estaba compartida y sale de la lista. Deja la señal `oled_remota/desvinculada`
- * para que la TV se entere al instante y muestre un código nuevo (la TV la borra).
+ * estaba compartida y sale de la lista. Deja `oled_remota/version = -2` (VERSION_DESVINCULADA):
+ * la TV escucha esa ruta y, al verlo, muestra un código nuevo al instante.
  */
 export async function desvincularDispositivo(uid, id) {
   try {
@@ -348,7 +351,7 @@ export async function desvincularDispositivo(uid, id) {
       [`dispositivos/${id}/dueno`]: null,
       [`dispositivos/${id}/codigoUsado`]: null,
       [`dispositivos/${id}/miembros`]: null,
-      [`dispositivos/${id}/oled_remota/desvinculada`]: true,
+      [`dispositivos/${id}/oled_remota/version`]: VERSION_DESVINCULADA,
       [`usuarios/${uid}/dispositivos/${id}`]: null
     }), ESPERA_MAXIMA_ENVIO_MS);
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };

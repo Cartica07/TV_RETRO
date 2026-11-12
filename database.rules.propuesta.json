@@ -51,10 +51,6 @@
             "datos": {
               ".validate": "newData.isString() && newData.val().length <= 10000000"
             }
-          },
-          "desvinculada": {
-            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || auth.token.dispositivo === $id)",
-            ".validate": "newData.val() === true"
           }
         },
         "miembros": {
