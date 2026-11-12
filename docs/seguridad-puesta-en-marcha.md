@@ -57,3 +57,15 @@ Código y reglas listos y probados (`database.rules.propuesta.json`, 190 casos; 
 Mientras el paso 5 no se haga, el panel publicado (versión anterior) funciona para el administrador (sin límite) pero una cuenta normal no podría guardar (las reglas nuevas exigen el contador).
 
 **Volver atrás:** publicar las reglas anteriores (`database.rules.json` en ese momento). Los datos de `biblioteca/` y `cuotas/` no estorban a las reglas anteriores.
+
+## Paso 9: compartir una TV y vinculación automática (puesta en marcha)
+
+Código listo y probado (`database.rules.propuesta.json`, 244 casos; `compartir.mjs`, 8 escenarios). Orden, para no romper nada:
+
+1. **Dueño:** publica en la consola el contenido de `database.rules.propuesta.json`. Sirve para el panel y el firmware de hoy (solo agrega nodos nuevos y deja más lecturas/escrituras a los miembros).
+2. **Claude:** graba el firmware nuevo (COM6) y comprueba por el monitor serie `[emparejar]`: con dueño no muestra nada; sin dueño muestra el código.
+3. **Ambos:** probar con el panel local (`npx serve .`): Compartir, entrar con otra cuenta, Quitar, Salir y Desvincular (la TV debe mostrar un código nuevo sola; volver a vincularla con él).
+4. **Claude:** renombra los archivos de reglas (`database.rules.json` = publicado; las anteriores a `database.rules.sin-miembros.json`) y cambia el texto del panel que aún habla de mantener el botón.
+5. **Dueño:** push del panel a `main`; **Claude** reconstruye la APK.
+
+**Volver atrás:** publicar las reglas anteriores (`database.rules.json` actual). Los nodos `miembros` e `invitaciones` no estorban a las reglas anteriores.

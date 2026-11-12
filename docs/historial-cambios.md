@@ -240,3 +240,11 @@ Pasos 5 a 7 (preparación), hechos y probados con los emuladores de Firebase, SI
 Copias personales quitadas del catálogo del dueño (con respaldo; contador de usados en 0).
 
 Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléfono conectado), y desbloqueos con anuncios (servidor de verificación, después).
+
+**Compartir una TV y vinculación automática (2026-11-12, hecho y probado, SIN publicar las reglas):**
+
+- Idea del dueño: regalar una TV y mandarle mensajes desde otra casa. Con un solo dueño por TV no servía; ahora una TV tiene un dueño y hasta 5 miembros que entran con un código de invitación (10 min, un solo uso). Un miembro envía contenido; solo el dueño desvincula, invita y quita. Contrato en `docs/formatos-datos.md`, sección 6 ("Compartir una TV").
+- Reglas propuestas: `6650119` y `a582e73` (244 casos en el emulador con `REGLAS_ARCHIVO=…database.rules.propuesta.json`; también pasan `simular-tv.cjs`, `probar-migracion.cjs` y `probar-biblioteca.cjs`). La señal de desvinculación es `oled_remota/version = -2`: no se agregó ningún campo para eso.
+- Panel: visual `dfefc28` (espacio para el código y las personas) y lógica `8d283bf` (Compartir, Salir, Quitar, código de TV nueva o de invitación en el mismo campo, limpieza de TV que ya no dejan entrar). Pruebas nuevas: `compartir.mjs` (8) y `tv.mjs` (12) al día.
+- Firmware: `20a25f4` (entrada unificada: botón A, botón de la rueda y rueda en `entrada.cpp`) y `bfba58b` (vinculación automática: la TV muestra sola el código si no tiene dueño, 2 códigos de 10 min y luego un aviso de reiniciar que rebota; sin el gesto de pulsado largo; entiende `version = -2`).
+- Pendiente: que el dueño publique `database.rules.propuesta.json` (renombrar al publicar: lo publicado pasa a `database.rules.json`), grabar el firmware y probar de punta a punta (desvincular desde la app y ver el código nuevo en la TV), cambiar el texto "Mantén pulsado el botón de tu TV" del panel, push a `main` y APK nueva.
