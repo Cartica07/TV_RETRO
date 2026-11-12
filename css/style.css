@@ -1982,6 +1982,44 @@ label.fila-ajuste-titulo {
   color: var(--error-texto);
 }
 
+/* Compartir una TV (pantalla Mi TV): código de invitación y personas con acceso. */
+.compartir-tv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-4);
+}
+
+.compartir-codigo {
+  padding: var(--esp-4) var(--esp-3);
+  text-align: center;
+  background: var(--superficie-hundida);
+  border: 1px solid var(--acento);
+  border-radius: var(--radio-md);
+  color: var(--acento);
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xl);
+  font-weight: 700;
+  letter-spacing: .35em;
+  text-indent: .35em;
+}
+
+.compartir-vence {
+  margin: 0;
+  text-align: center;
+  font-size: var(--texto-xs);
+  color: var(--texto-2);
+}
+
+.compartir-tv .campo {
+  margin: 0;
+}
+
+.fila-tv .tag-persona {
+  font-size: var(--texto-xs);
+  color: var(--texto-2);
+}
+
 .login-enlaces {
   display: flex;
   flex-wrap: wrap;

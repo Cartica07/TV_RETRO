@@ -529,6 +529,17 @@
 
     <div class="lista-tv" id="listaTV" hidden></div>
 
+    <div class="compartir-tv" id="compartirTV" hidden>
+      <div class="compartir-codigo" id="compartirCodigo" aria-live="polite">······</div>
+      <p class="compartir-vence" id="compartirVence"></p>
+      <button type="button" id="botonCompartirCopiar" class="boton-secundario">Copiar código</button>
+      <div class="campo">
+        <span class="rotulo">Personas con acceso</span>
+        <div class="lista-tv" id="listaMiembros"></div>
+      </div>
+      <div id="compartirError" class="aviso error" role="alert" hidden></div>
+    </div>
+
     <form class="login-form" id="formTV" novalidate>
       <div class="campo">
         <label class="rotulo" for="codigoTV">Código de la TV</label>
