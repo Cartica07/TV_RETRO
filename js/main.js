@@ -31,6 +31,13 @@ import {
   listarMisDispositivos,
   reclamarDispositivo,
   desvincularDispositivo,
+  usarCodigoTV,
+  rolEnTV,
+  quitarTVDeMiLista,
+  listarMiembros,
+  crearInvitacion,
+  quitarMiembro,
+  salirDeTV,
   esAdministrador
 } from './firebase.js';
 import {
@@ -2866,6 +2873,7 @@ async function manejarOlvideContrasena() {
 let sesionActual = null;             // { uid, email, emailVerified }
 let esAdmin = false;                 // la cuenta es administradora (sin límite; puede borrar las predeterminadas)
 let misTV = [];                      // ids de las TV de la cuenta
+let rolesTV = {};                    // id -> 'dueno' | 'miembro' (los miembros solo envían: no comparten ni desvinculan)
 let tvEnUso = null;                  // id de la TV que usa el panel
 let alVincularPrimera = null;        // resolver de la espera de la primera TV
 const claveTVGuardada = (uid) => 'tvretro.dispositivo.' + uid;
@@ -2911,12 +2919,31 @@ function dibujarListaTV() {
       });
       fila.appendChild(usar);
     }
-    const desvincular = document.createElement('button');
-    desvincular.type = 'button';
-    desvincular.className = 'boton-enlace peligro';
-    desvincular.textContent = 'Desvincular';
-    desvincular.addEventListener('click', () => manejarDesvincularTV(id, i + 1));
-    fila.appendChild(desvincular);
+    if (rolesTV[id] === 'miembro') {
+      const etiqueta = document.createElement('span');
+      etiqueta.className = 'tag-persona';
+      etiqueta.textContent = 'Compartida contigo';
+      nombre.after(etiqueta);
+      const salir = document.createElement('button');
+      salir.type = 'button';
+      salir.className = 'boton-enlace peligro';
+      salir.textContent = 'Salir';
+      salir.addEventListener('click', () => manejarSalirDeTV(id, i + 1));
+      fila.appendChild(salir);
+    } else {
+      const compartir = document.createElement('button');
+      compartir.type = 'button';
+      compartir.className = 'boton-enlace';
+      compartir.textContent = 'Compartir';
+      compartir.addEventListener('click', () => abrirCompartir(id, i + 1));
+      fila.appendChild(compartir);
+      const desvincular = document.createElement('button');
+      desvincular.type = 'button';
+      desvincular.className = 'boton-enlace peligro';
+      desvincular.textContent = 'Desvincular';
+      desvincular.addEventListener('click', () => manejarDesvincularTV(id, i + 1));
+      fila.appendChild(desvincular);
+    }
     lista.appendChild(fila);
   });
 }
@@ -2925,6 +2952,9 @@ function dibujarListaTV() {
 // o 'error' (no se pudo leer la lista de TV: solo se puede reintentar).
 function mostrarPantallaTV(modo, error = '') {
   const el = elementos;
+  detenerRelojCompartir();
+  compartirVista = null;
+  el.compartirTV.hidden = true;
   el.pantallaTV.hidden = false;
   el.tvAviso.hidden = true;
   mostrarErrorTV(modo === 'error' ? '' : error);
@@ -2956,7 +2986,7 @@ async function enviarFormularioTV(e) {
   e.preventDefault();
   await sinRepetir('vincular', elementos.botonVincularTV, async () => {
     mostrarErrorTV('');
-    const r = await reclamarDispositivo(sesionActual.uid, elementos.codigoTV.value);
+    const r = await usarCodigoTV(sesionActual.uid, elementos.codigoTV.value);
     if (!r.exito) return mostrarErrorTV(r.error);
     guardarTVElegida(sesionActual.uid, r.id);
     if (alVincularPrimera) {
@@ -2972,13 +3002,155 @@ async function enviarFormularioTV(e) {
 }
 
 async function manejarDesvincularTV(id, numero) {
-  if (!window.confirm('¿Desvincular la TV ' + numero + '? Dejará de ser tuya y mostrará un código nuevo.')) return;
+  if (!window.confirm('¿Desvincular la TV ' + numero + '? Dejará de ser tuya, se quitará el acceso a quienes la comparten contigo y mostrará un código nuevo.')) return;
   await sinRepetir('desvincular', null, async () => {
     mostrarErrorTV('');
     const r = await desvincularDispositivo(sesionActual.uid, id);
     if (!r.exito) return mostrarErrorTV(r.error);
     location.reload();
   });
+}
+
+async function manejarSalirDeTV(id, numero) {
+  if (!window.confirm('¿Salir de la TV ' + numero + '? Dejarás de poder enviarle contenido; sigue siendo de su dueño.')) return;
+  await sinRepetir('salir-tv', null, async () => {
+    mostrarErrorTV('');
+    const r = await salirDeTV(sesionActual.uid, id);
+    if (!r.exito) return mostrarErrorTV(r.error);
+    location.reload();
+  });
+}
+
+// ---- Compartir una TV: código de invitación (10 min, un solo uso) y personas con acceso ----
+let compartirVista = null;           // { id, codigo, venceEn } mientras se ve la pantalla de compartir
+let relojCompartir = null;
+
+function detenerRelojCompartir() {
+  if (relojCompartir) {
+    clearInterval(relojCompartir);
+    relojCompartir = null;
+  }
+}
+
+function mostrarErrorCompartir(texto) {
+  elementos.compartirError.textContent = texto;
+  elementos.compartirError.hidden = !texto;
+}
+
+function pintarVenceCompartir() {
+  const v = compartirVista;
+  if (!v || !v.codigo) return;
+  const resto = v.venceEn - Date.now();
+  if (resto <= 0) {
+    elementos.compartirCodigo.textContent = '······';
+    elementos.compartirVence.textContent = 'El código venció.';
+    elementos.botonCompartirCopiar.textContent = 'Crear otro código';
+    return;
+  }
+  const seg = Math.ceil(resto / 1000);
+  elementos.compartirVence.textContent = 'Vence en ' + Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0');
+}
+
+async function generarCodigoCompartir() {
+  const v = compartirVista;
+  mostrarErrorCompartir('');
+  const r = await crearInvitacion(v.id);
+  if (compartirVista !== v) return false; // ya se fue de esta pantalla
+  if (!r.exito) {
+    mostrarErrorCompartir(r.error);
+    return false;
+  }
+  v.codigo = r.codigo;
+  v.venceEn = r.venceEn;
+  elementos.compartirCodigo.textContent = r.codigo;
+  elementos.botonCompartirCopiar.textContent = 'Copiar código';
+  pintarVenceCompartir();
+  return true;
+}
+
+async function pintarMiembros(id) {
+  const r = await listarMiembros(id);
+  if (!compartirVista || compartirVista.id !== id) return;
+  const lista = elementos.listaMiembros;
+  lista.textContent = '';
+  if (!r.exito) return mostrarErrorCompartir(r.error);
+  if (r.miembros.length === 0) {
+    const vacio = document.createElement('div');
+    vacio.className = 'fila-tv';
+    const texto = document.createElement('span');
+    texto.className = 'tag-persona';
+    texto.textContent = 'Nadie más por ahora';
+    vacio.appendChild(texto);
+    lista.appendChild(vacio);
+    return;
+  }
+  r.miembros.forEach((uidMiembro, i) => {
+    const fila = document.createElement('div');
+    fila.className = 'fila-tv';
+    const nombre = document.createElement('span');
+    nombre.className = 'nombre-tv';
+    nombre.textContent = 'Persona ' + (i + 1);
+    fila.appendChild(nombre);
+    const quitar = document.createElement('button');
+    quitar.type = 'button';
+    quitar.className = 'boton-enlace peligro';
+    quitar.textContent = 'Quitar';
+    quitar.addEventListener('click', () => manejarQuitarMiembro(id, uidMiembro));
+    fila.appendChild(quitar);
+    lista.appendChild(fila);
+  });
+}
+
+async function manejarQuitarMiembro(id, uidMiembro) {
+  if (!window.confirm('¿Quitar el acceso a esta persona? Dejará de poder enviarle contenido a tu TV.')) return;
+  await sinRepetir('quitar-miembro', null, async () => {
+    mostrarErrorCompartir('');
+    const r = await quitarMiembro(id, uidMiembro);
+    if (!r.exito) return mostrarErrorCompartir(r.error);
+    await pintarMiembros(id);
+  });
+}
+
+async function abrirCompartir(id, numero) {
+  const el = elementos;
+  detenerRelojCompartir();
+  const vista = { id, codigo: '', venceEn: 0 };
+  compartirVista = vista;
+  mostrarErrorTV('');
+  mostrarErrorCompartir('');
+  el.listaTV.hidden = true;
+  el.formTV.hidden = true;
+  el.compartirTV.hidden = false;
+  el.tvTitulo.textContent = 'Compartir TV ' + numero;
+  el.tvSubtitulo.textContent = 'La otra persona escribe este código en Mi TV.';
+  el.botonTVVolver.textContent = 'Listo';
+  el.botonTVVolver.hidden = false;
+  el.compartirCodigo.textContent = '······';
+  el.compartirVence.textContent = '';
+  el.botonCompartirCopiar.textContent = 'Copiar código';
+  el.listaMiembros.textContent = '';
+  relojCompartir = setInterval(pintarVenceCompartir, 1000);
+  await sinRepetir('compartir', el.botonCompartirCopiar, async () => {
+    await generarCodigoCompartir();
+    if (compartirVista === vista) await pintarMiembros(id);
+  });
+}
+
+async function manejarCopiarCodigoCompartir() {
+  const v = compartirVista;
+  if (!v) return;
+  const boton = elementos.botonCompartirCopiar;
+  if (!v.codigo || v.venceEn <= Date.now()) {
+    await sinRepetir('compartir', boton, () => generarCodigoCompartir());
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(v.codigo);
+    boton.textContent = 'Copiado';
+    setTimeout(() => { if (compartirVista === v && v.venceEn > Date.now()) boton.textContent = 'Copiar código'; }, 1500);
+  } catch (e) {
+    mostrarErrorCompartir('No se pudo copiar. Escribe el código a mano.');
+  }
 }
 
 // Lee las TV de la cuenta y devuelve la que usará el panel. Si la cuenta no
@@ -2996,10 +3168,25 @@ async function resolverDispositivo(sesion) {
       elementos.botonTVVolver.addEventListener('click', resolver, { once: true });
     });
   }
+  // Qué es la cuenta en cada TV. Las que ya no dejan entrar (la desvincularon o la
+  // quitaron de las personas con acceso) se sacan de la lista.
+  rolesTV = {};
+  const roles = await Promise.all(misTV.map(async (id) => ({ id, r: await rolEnTV(sesion.uid, id) })));
+  misTV = [];
+  for (const { id, r } of roles) {
+    if (r.exito && r.rol === null) {
+      quitarTVDeMiLista(sesion.uid, id);
+      continue;
+    }
+    rolesTV[id] = r.exito ? r.rol : 'miembro';
+    misTV.push(id);
+  }
   if (misTV.length === 0) {
     mostrarPantallaTV('primera');
     tvEnUso = await new Promise((resolver) => { alVincularPrimera = resolver; });
     misTV = [tvEnUso];
+    const rolNueva = await rolEnTV(sesion.uid, tvEnUso);
+    rolesTV[tvEnUso] = rolNueva.exito && rolNueva.rol ? rolNueva.rol : 'miembro';
     return tvEnUso;
   }
   const guardada = leerTVGuardada(sesion.uid);
@@ -3016,7 +3203,12 @@ function configurarLogin() {
   elementos.botonTVSalir.addEventListener('click', salir(elementos.botonTVSalir));
   elementos.formTV.addEventListener('submit', enviarFormularioTV);
   elementos.botonMiTV.addEventListener('click', () => mostrarPantallaTV('gestionar'));
+  elementos.botonCompartirCopiar.addEventListener('click', manejarCopiarCodigoCompartir);
   elementos.botonTVVolver.addEventListener('click', () => {
+    if (!elementos.compartirTV.hidden) {
+      mostrarPantallaTV('gestionar'); // de compartir vuelve a la lista
+      return;
+    }
     if (elementos.formTV.hidden) return; // en modo "error" lo maneja resolverDispositivo
     elementos.pantallaTV.hidden = true;
   });

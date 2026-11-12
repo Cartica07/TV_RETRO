@@ -337,12 +337,18 @@ export async function reclamarDispositivo(uid, codigoTexto) {
   }
 }
 
-/** Desvincula la TV: deja de tener dueño (mostrará un código nuevo) y sale de la lista. */
+/**
+ * Desvincula la TV: deja de tener dueño, se quita a las personas con quienes
+ * estaba compartida y sale de la lista. Deja la señal `oled_remota/desvinculada`
+ * para que la TV se entere al instante y muestre un código nuevo (la TV la borra).
+ */
 export async function desvincularDispositivo(uid, id) {
   try {
     const paso = await esperarHasta(update(ref(db), {
       [`dispositivos/${id}/dueno`]: null,
       [`dispositivos/${id}/codigoUsado`]: null,
+      [`dispositivos/${id}/miembros`]: null,
+      [`dispositivos/${id}/oled_remota/desvinculada`]: true,
       [`usuarios/${uid}/dispositivos/${id}`]: null
     }), ESPERA_MAXIMA_ENVIO_MS);
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
@@ -350,6 +356,167 @@ export async function desvincularDispositivo(uid, id) {
   } catch (error) {
     console.error('Error al desvincular la TV:', error);
     return { exito: false, error: 'No se pudo desvincular: ' + describirError(error) + '.' };
+  }
+}
+
+// ===================================================
+// Compartir una TV: el dueño invita a otras cuentas (miembros)
+// ===================================================
+// Un miembro puede enviar contenido a la TV; solo el dueño la desvincula, invita
+// y quita a otros. Se invita con un código de 6 caracteres de un solo uso que vence
+// a los 10 minutos (`invitaciones/{codigo}`); el invitado lo escribe en Mi TV.
+export const MAXIMO_MIEMBROS = 5;
+const VIGENCIA_INVITACION_MS = 10 * 60 * 1000;
+const ALFABETO_CODIGO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 caracteres: sin 0, O, 1, I
+
+function codigoAleatorio() {
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => ALFABETO_CODIGO[b % ALFABETO_CODIGO.length]).join('');
+}
+
+/**
+ * Qué es esta cuenta para esa TV: { exito, rol: 'dueno' | 'miembro' | null }.
+ * null = ya no tiene acceso (la desvincularon o la quitaron).
+ */
+export async function rolEnTV(uid, id) {
+  try {
+    const snap = await esperarHasta(get(ref(db, `dispositivos/${id}/dueno`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    if (!snap.exists()) return { exito: true, rol: null };
+    return { exito: true, rol: snap.val() === uid ? 'dueno' : 'miembro' };
+  } catch (error) {
+    if (esPermisoDenegado(error)) return { exito: true, rol: null };
+    console.error('Error al leer el rol en la TV:', error);
+    return { exito: false, error: 'No se pudo leer tu TV: ' + describirError(error) + '.' };
+  }
+}
+
+/** Quita una TV de la lista de esta cuenta (por ejemplo, si ya no tiene acceso). */
+export async function quitarTVDeMiLista(uid, id) {
+  try {
+    const paso = await esperarHasta(remove(ref(db, `usuarios/${uid}/dispositivos/${id}`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true };
+  } catch (error) {
+    console.error('Error al quitar la TV de la lista:', error);
+    return { exito: false, error: 'No se pudo quitar la TV: ' + describirError(error) + '.' };
+  }
+}
+
+/** Quién más tiene acceso a la TV: { exito, miembros: [uid…] } (lo lee el dueño o un miembro). */
+export async function listarMiembros(id) {
+  try {
+    const snap = await esperarHasta(get(ref(db, `dispositivos/${id}/miembros`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true, miembros: snap.exists() ? Object.keys(snap.val()).sort() : [] };
+  } catch (error) {
+    console.error('Error al listar las personas con acceso:', error);
+    return { exito: false, error: 'No se pudo leer quién tiene acceso: ' + describirError(error) + '.' };
+  }
+}
+
+/**
+ * El dueño crea un código de invitación para su TV: { exito, codigo, venceEn }
+ * (venceEn en ms desde época, aproximado con el reloj de este equipo).
+ */
+export async function crearInvitacion(id) {
+  try {
+    const actuales = await listarMiembros(id);
+    if (!actuales.exito) return actuales;
+    if (actuales.miembros.length >= MAXIMO_MIEMBROS) {
+      return { exito: false, error: 'Esta TV ya tiene ' + MAXIMO_MIEMBROS + ' personas con acceso. Quita a alguien para invitar a otra.' };
+    }
+    for (let intento = 0; intento < 5; intento++) {
+      const codigo = codigoAleatorio();
+      try {
+        const paso = await esperarHasta(set(ref(db, `invitaciones/${codigo}`), { id, creado: { '.sv': 'timestamp' } }), ESPERA_MAXIMA_ENVIO_MS);
+        if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+        return { exito: true, codigo, venceEn: Date.now() + VIGENCIA_INVITACION_MS };
+      } catch (error) {
+        // Código ya vigente (casi imposible): se prueba con otro.
+        if (!esPermisoDenegado(error)) throw error;
+      }
+    }
+    return { exito: false, error: 'No se pudo crear el código. Vuelve a intentarlo.' };
+  } catch (error) {
+    console.error('Error al crear la invitación:', error);
+    return { exito: false, error: 'No se pudo crear el código: ' + describirError(error) + '.' };
+  }
+}
+
+/** El dueño quita a una persona de su TV. */
+export async function quitarMiembro(id, uidMiembro) {
+  try {
+    const paso = await esperarHasta(remove(ref(db, `dispositivos/${id}/miembros/${uidMiembro}`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true };
+  } catch (error) {
+    console.error('Error al quitar a una persona:', error);
+    return { exito: false, error: 'No se pudo quitar el acceso: ' + describirError(error) + '.' };
+  }
+}
+
+/** Un miembro deja de tener acceso a la TV (la TV sigue siendo de su dueño). */
+export async function salirDeTV(uid, id) {
+  try {
+    const paso = await esperarHasta(update(ref(db), {
+      [`dispositivos/${id}/miembros/${uid}`]: null,
+      [`usuarios/${uid}/dispositivos/${id}`]: null
+    }), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true };
+  } catch (error) {
+    console.error('Error al salir de la TV:', error);
+    return { exito: false, error: 'No se pudo salir de la TV: ' + describirError(error) + '.' };
+  }
+}
+
+/** Entra a una TV compartida con el código de invitación: { exito, id }. */
+async function unirseATV(uid, codigo) {
+  const snap = await esperarHasta(get(ref(db, `invitaciones/${codigo}`)), ESPERA_MAXIMA_ENVIO_MS);
+  if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+  const id = snap.exists() ? snap.val().id : null;
+  if (!id) return { exito: false, error: 'Ese código no existe, ya se usó o venció. Revisa que esté bien escrito o pide uno nuevo.' };
+
+  const rol = await rolEnTV(uid, id);
+  if (!rol.exito) return rol;
+  if (rol.rol === 'dueno') return { exito: false, error: 'Esa TV ya es tuya.' };
+  if (rol.rol === 'miembro') return { exito: false, error: 'Ya tienes acceso a esa TV.' };
+
+  try {
+    // Se entra y se gasta la invitación en el mismo paso: así solo sirve una vez.
+    const paso = await esperarHasta(update(ref(db), {
+      [`dispositivos/${id}/miembros/${uid}`]: codigo,
+      [`invitaciones/${codigo}`]: null
+    }), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+  } catch (error) {
+    if (esPermisoDenegado(error)) return { exito: false, error: 'No se pudo entrar: el código venció, ya se usó o esa TV ya no está compartida.' };
+    throw error;
+  }
+  const lista = await esperarHasta(set(ref(db, `usuarios/${uid}/dispositivos/${id}`), true), ESPERA_MAXIMA_ENVIO_MS);
+  if (lista === ESPERA_LENTA) return { exito: false, error: 'Ya tienes acceso a la TV, pero la conexión está lenta. Vuelve a abrir la app.' };
+  return { exito: true, id };
+}
+
+/**
+ * Lo que se escribe en Mi TV: sirve el código que muestra una TV nueva (la vincula
+ * como dueño) o el código de invitación de alguien que comparte su TV (entra como
+ * miembro). Devuelve { exito, id } o { exito: false, error }.
+ */
+export async function usarCodigoTV(uid, codigoTexto) {
+  const codigo = normalizarCodigo(codigoTexto);
+  if (codigo.length !== 6) return { exito: false, error: 'Escribe los 6 caracteres del código.' };
+  if (!CODIGO_TV.test(codigo)) return { exito: false, error: 'Ese código no es válido. Revisa que no confundas 0 con O ni 1 con I.' };
+  try {
+    const snap = await esperarHasta(get(ref(db, `emparejamiento/${codigo}`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    if (snap.exists()) return await reclamarDispositivo(uid, codigo);
+    return await unirseATV(uid, codigo);
+  } catch (error) {
+    console.error('Error al usar el código:', error);
+    return { exito: false, error: 'No se pudo usar el código: ' + describirError(error) + '.' };
   }
 }
 
