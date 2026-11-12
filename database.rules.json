@@ -9,7 +9,7 @@
     },
     "dispositivos": {
       "$id": {
-        ".read": "auth != null && (data.child('dueno').val() === auth.uid || auth.token.dispositivo === $id)",
+        ".read": "auth != null && (data.child('dueno').val() === auth.uid || data.child('miembros').child(auth.uid).exists() || auth.token.dispositivo === $id)",
         "dueno": {
           ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('id').val() === $id && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('creado').val() > now - 600000) || (data.val() === auth.uid && !newData.exists()))",
           ".validate": "newData.isString() && newData.val().length <= 128"
@@ -24,15 +24,15 @@
             ".validate": "newData.isNumber()"
           },
           "version": {
-            ".write": "auth != null && root.child('dispositivos').child($id).child('dueno').val() === auth.uid",
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
             ".validate": "newData.isNumber()"
           },
           "contadorVersion": {
-            ".write": "auth != null && root.child('dispositivos').child($id).child('dueno').val() === auth.uid",
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
             ".validate": "newData.isNumber()"
           },
           "pantalla": {
-            ".write": "auth != null && root.child('dispositivos').child($id).child('dueno').val() === auth.uid",
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
             ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical')",
             "texto": {
               ".validate": "newData.isString() && newData.val().length <= 5000"
@@ -44,13 +44,20 @@
             }
           },
           "archivo": {
-            ".write": "auth != null && root.child('dispositivos').child($id).child('dueno').val() === auth.uid",
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
             "version": {
               ".validate": "newData.isNumber()"
             },
             "datos": {
               ".validate": "newData.isString() && newData.val().length <= 10000000"
             }
+          }
+        },
+        "miembros": {
+          ".write": "auth != null && !newData.exists() && data.parent().child('dueno').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && ((data.parent().parent().child('dueno').val() === auth.uid && !newData.exists()) || (auth.uid === $uid && !newData.exists()) || (auth.uid === $uid && !data.exists() && newData.isString() && root.child('invitaciones').child(newData.val()).child('id').val() === $id && root.child('invitaciones').child(newData.val()).child('creado').val() > now - 600000 && data.parent().parent().child('dueno').exists() && data.parent().parent().child('dueno').val() !== auth.uid && !newData.parent().parent().parent().parent().child('invitaciones').child(newData.val()).exists()))",
+            ".validate": "newData.isString() && newData.val().matches(/^[A-HJ-NP-Z2-9]{6}$/)"
           }
         }
       }
@@ -67,12 +74,24 @@
         }
       }
     },
+    "invitaciones": {
+      "$codigo": {
+        ".read": "auth != null",
+        ".write": "auth != null && (((!data.exists() || data.child('creado').val() < now - 600000) && newData.exists() && root.child('dispositivos').child(newData.child('id').val()).child('dueno').val() === auth.uid) || (data.exists() && !newData.exists() && (root.child('dispositivos').child(data.child('id').val()).child('dueno').val() === auth.uid || newData.parent().parent().child('dispositivos').child(data.child('id').val()).child('miembros').child(auth.uid).val() === $codigo)))",
+        ".validate": "$codigo.matches(/^[A-HJ-NP-Z2-9]{6}$/) && newData.hasChildren(['id', 'creado']) && newData.child('id').isString() && newData.child('creado').isNumber() && newData.child('creado').val() === now",
+        "id": {},
+        "creado": {},
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
     "usuarios": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "dispositivos": {
           "$id": {
-            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || root.child('dispositivos').child($id).child('dueno').val() === $uid)",
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || root.child('dispositivos').child($id).child('dueno').val() === $uid || root.child('dispositivos').child($id).child('miembros').child($uid).exists())",
             ".validate": "newData.val() === true"
           }
         },

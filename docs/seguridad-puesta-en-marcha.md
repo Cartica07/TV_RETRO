@@ -69,3 +69,5 @@ Código listo y probado (`database.rules.propuesta.json`, 244 casos; `compartir.
 5. **Dueño:** push del panel a `main`; **Claude** reconstruye la APK.
 
 **Volver atrás:** publicar las reglas anteriores (`database.rules.json` actual). Los nodos `miembros` e `invitaciones` no estorban a las reglas anteriores.
+
+> **Hecho el 2026-11-12:** reglas publicadas por el dueño, firmware grabado, desvincular/vincular con la TV real y compartir con una segunda cuenta (ambas envían). `database.rules.json` es ahora lo publicado; las anteriores quedaron en `database.rules.sin-miembros.json`.
