@@ -285,3 +285,17 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pruebas en el emulador con las reglas propuestas: `reglas.mjs` 244/244, `simular-tv` 19, `probar-migracion` 12, `probar-biblioteca` 5, `reglas-atomico.mjs` 10, `reglas-etapa2.mjs` 30 y `reglas-envios-reales.mjs` (los 6 envíos reales del panel —texto, GIF, dibujo, canción con y sin letra, musical— pasan como dueño y como miembro). Panel: `verificacion.mjs` 6, `login-google.mjs` 7 y todas las anteriores sin cambios.
 - **Para el dueño (en este orden):** 1) publicar `database.rules.propuesta.json` en la consola (renombrar al publicar: lo publicado pasa a `database.rules.json` y las anteriores a `database.rules.sin-etapa2.json`); 2) Firebase > Authentication > Método de acceso > activar **Google** (correo de asistencia del proyecto) y comprobar que el dominio donde está el panel figura en "Dominios autorizados"; 3) probar con una cuenta nueva: crear cuenta con correo, intentar guardar en la Galería (debe pedir confirmar el correo) y entrar con Google.
 - Al publicar las reglas, las cuentas existentes **sin correo verificado** dejarán de poder guardar en la Galería hasta confirmarlo (envían y borran igual).
+
+**Etapa 3 de arreglos: APK (2026-11-12):**
+
+| Commit | Qué |
+|---|---|
+| `126182f` | **APK (H-10):** el SDK de Firebase y las fuentes van dentro de la app (`copiar-web.mjs` empaqueta con esbuild; fuentes de `@fontsource`): abre sin internet. Dependencias nuevas de `app-android`: `@capacitor/app`, `firebase` 12.15.0, `esbuild`, `@fontsource/*`. |
+| `5a4ea2b` | **APK (H-17):** botón Atrás: cierra el lienzo expandido, Compartir y Mi TV antes de salir (`cerrarCapaSuperior`, `configurarBotonAtras` en `main.js`). |
+| `87f7fcf` | **APK (H-17):** versión desde `package.json` (0.2.0 → código 200), firma leída de `android/keystore.properties` (ignorado por git), `allowBackup="false"`. |
+
+- Pruebas: `apk-sin-internet.mjs` (la copia de la APK abre sin internet, con el SDK real, sin pedir nada afuera y con las fuentes locales), `atras.mjs` (5 escenarios con Capacitor simulado) y todas las anteriores sin cambios. Compilados `assembleDebug` y `assembleRelease` (firmado, `apksigner verify` OK); el contenido del APK se revisó (sin referencias a gstatic ni a Google Fonts, `allowBackup=0`).
+- **No se probó en un teléfono** (no había ninguno conectado por adb): falta instalar la APK nueva y comprobar el botón Atrás y el arranque sin red en el dispositivo real.
+- `npm audit` de `app-android`: 4 avisos altos, todos en dependencias de Firestore/gRPC del paquete `firebase`, que no se usan ni se empaquetan (solo app, database y auth).
+- Clave de subida creada en `C:\Proyectos\TV_RETRO-claves\` (la copia de seguridad queda a cargo del dueño). Guía completa, entorno de compilación (JDK 25 de Android Studio + Gradle 9.5 de la caché; el JDK 21 portátil se cae) y pendientes para Play en `docs/apk-publicacion.md`.
+- Pendiente de la etapa: **entrar con Google en la APK** (necesita que el dueño registre la app Android en Firebase con las huellas SHA-1 y entregue `google-services.json`).
