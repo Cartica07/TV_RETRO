@@ -47,7 +47,7 @@ import {
   cargarImagenOriginal,
   procesarImagenConOpciones
 } from './imageProcessor.js';
-import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido } from './gif.js';
+import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido, comprobarTamanoArchivo, ArchivoDemasiadoGrande } from './gif.js';
 import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical } from './compresion.js';
 import { grabarIno, nombreDelIno, notasParaCancion } from './inoMusical.js';
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
@@ -997,6 +997,7 @@ async function procesarYMostrarImagen(archivo = elementos.cargadorImagen.files[0
   try {
     marcarEstado('Procesando imagen…', null, elementos);
 
+    comprobarTamanoArchivo(file);
     const nombreBase = (file.name || nombreSugerido || 'imagen').replace(/\.[^.]+$/, '');
     const buffer = await file.arrayBuffer();
     if (subidaObsoleta(turno, enPestanaImagen)) return;
@@ -1216,6 +1217,7 @@ async function manejarGuardarEnGaleria() {
 // Mensaje para el cliente cuando un archivo subido no se puede procesar.
 // El detalle técnico queda en la consola (console.error en quien llama).
 function mensajeDeArchivo(error) {
+  if (error instanceof ArchivoDemasiadoGrande) return error.message;
   if (/GIF/i.test(String((error && error.message) || ''))) return 'No se pudo leer ese GIF. Prueba con otro.';
   return 'No se pudo leer ese archivo como imagen. Prueba con un PNG, JPG o GIF.';
 }
@@ -1729,6 +1731,8 @@ async function procesarYMostrarImagenGaleria() {
 
   try {
     marcarEstado('Procesando imagen…', null, elementos);
+
+    comprobarTamanoArchivo(file);
 
     // GIF animado: queda como animación (se guarda en la lista GIF).
     // Sin encuadre en la Galería: se usa el encuadre por defecto.

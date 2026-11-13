@@ -101,6 +101,28 @@ export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
 
+// Topes de lo que se acepta de un archivo del cliente (un archivo enorme congelaría
+// la pestaña o cerraría el WebView). 1000 cuadros es también lo que admiten las
+// reglas de Firebase para una animación guardada.
+export const LIMITE_ARCHIVO_BYTES = 25 * 1024 * 1024;
+export const LIMITE_GIF_LADO = 2048;
+export const LIMITE_GIF_CUADROS = 1000;
+
+/** Error con un mensaje ya listo para mostrar al cliente (con "tú"). */
+export class ArchivoDemasiadoGrande extends Error {
+  constructor(mensaje) {
+    super(mensaje);
+    this.name = 'ArchivoDemasiadoGrande';
+  }
+}
+
+/** Lanza ArchivoDemasiadoGrande si el archivo pesa más de LIMITE_ARCHIVO_BYTES. */
+export function comprobarTamanoArchivo(archivo) {
+  if (archivo && archivo.size > LIMITE_ARCHIVO_BYTES) {
+    throw new ArchivoDemasiadoGrande('Ese archivo es demasiado grande (máximo ' + Math.round(LIMITE_ARCHIVO_BYTES / (1024 * 1024)) + ' MB). Prueba con uno más pequeño.');
+  }
+}
+
 /** true si los primeros bytes son la firma de un GIF. */
 export function esGif(buffer) {
   const d = new Uint8Array(buffer, 0, Math.min(6, buffer.byteLength));
@@ -120,6 +142,7 @@ export function decodificarGif(buffer, porCuadro) {
   p = 6;
   const W = leer16(), H = leer16(), banderas = d[p++]; p += 2; // color de fondo + relación de aspecto: no se usan
   if (!W || !H) throw new Error('GIF con tamaño 0');
+  if (W > LIMITE_GIF_LADO || H > LIMITE_GIF_LADO) throw new ArchivoDemasiadoGrande('Ese GIF es demasiado grande en píxeles (máximo ' + LIMITE_GIF_LADO + ' por lado). Prueba con uno más pequeño.');
   let paletaGlobal = null;
   if (banderas & 0x80) { const n = 2 << (banderas & 7); paletaGlobal = d.subarray(p, p + n * 3); p += n * 3; }
   const lienzo = new Uint8ClampedArray(W * H * 4);   // transparente al inicio
@@ -139,6 +162,7 @@ export function decodificarGif(buffer, porCuadro) {
       continue;
     }
     if (b !== 0x2C) continue;                           // byte raro: se ignora
+    if (n >= LIMITE_GIF_CUADROS) throw new ArchivoDemasiadoGrande('Ese GIF tiene demasiados cuadros (máximo ' + LIMITE_GIF_CUADROS + '). Prueba con uno más corto.');
     const fx = leer16(), fy = leer16(), fw = leer16(), fh = leer16(), fl = d[p++];
     let paleta = paletaGlobal;
     if (fl & 0x80) { const nn = 2 << (fl & 7); paleta = d.subarray(p, p + nn * 3); p += nn * 3; }
