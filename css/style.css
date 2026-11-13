@@ -1934,6 +1934,67 @@ label.fila-ajuste-titulo {
   margin: 0 0 var(--esp-4);
 }
 
+/* Entrar con Google: separador "o" y botón con el logo de Google. */
+.login-google {
+  margin-top: var(--esp-4);
+}
+
+.login-separador {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-4);
+  color: var(--texto-2);
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+.login-separador::before,
+.login-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--borde);
+}
+
+.boton-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-3);
+  width: 100%;
+  min-height: 52px;
+  background: var(--superficie-hundida);
+  color: var(--texto);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-weight: 600;
+  font-size: var(--texto-md);
+  cursor: pointer;
+  transition: background .12s ease, transform .05s ease;
+}
+
+.boton-google:hover:not(:disabled) {
+  background: var(--superficie-alta);
+}
+
+.boton-google:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.boton-google:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.icono-google {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 /* Código de la TV: 6 caracteres grandes, centrados y espaciados. */
 .campo-codigo {
   text-align: center;
