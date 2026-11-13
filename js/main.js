@@ -2767,6 +2767,13 @@ async function inicializar() {
     usarCuenta(sesionActual.uid, await resolverDispositivo(sesionActual));
     esAdmin = await esAdministrador();
     elementos.botonMiTV.hidden = false;
+    // Importar y borrar canciones del catálogo común solo le corresponde a un
+    // administrador (las reglas ya lo exigen; así el cliente no los ve).
+    if (!esAdmin) {
+      const importar = elementos.cargadorMusical && elementos.cargadorMusical.closest('label');
+      if (importar) importar.hidden = true;
+      if (elementos.botonBorrarMusical) elementos.botonBorrarMusical.hidden = true;
+    }
   }
   iniciarMonitoreoConexion();
 
