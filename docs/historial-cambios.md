@@ -258,3 +258,17 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Panel: compartir una TV y vinculación automática (ver la entrada anterior), reglas publicadas y renombradas (`database.rules.json` = lo publicado; `database.rules.sin-miembros.json` = anteriores), mensaje de Mi TV sin el gesto de pulsado largo (`261bc6c`).
 - APK de depuración reconstruida e instalada en el teléfono del dueño (con Compartir).
 - Documentación nueva: `docs/juegos-y-controles.md`; sección 9 de `CLAUDE.md` con el panorama pendiente.
+
+**Auditoría integral y Etapa 1 de arreglos (2026-11-12):** se hizo una auditoría completa (informe fuera del repo: `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-12.md`, hallazgos H-01…H-27) y se empezó a arreglar lo detectado, un paso por commit:
+
+| Commit | Qué |
+|---|---|
+| `8e86d47` | **Lógica (H-05):** importar y borrar canciones solo se muestran a un administrador (con `?sincuentas=1` siguen visibles, para las pruebas locales). |
+| `7becc39` | **Lógica (H-14):** la línea de estado ya no dice "Conectado a Firebase. Todavía no hay datos." ni nombra a Firebase en los errores. |
+| `9e4ec19` | **Lógica (H-11):** topes de archivo con mensaje claro: 25 MB, GIF de hasta 2048 px por lado y 1000 cuadros (`comprobarTamanoArchivo`, `ArchivoDemasiadoGrande` en `gif.js`). |
+| `a7eb729` | **Reglas (propuesta, H-09):** `database.rules.propuesta.json` = `database.rules.json` con una sola línea cambiada: `usuarios/{uid}/dispositivos/{id}` valida contra el estado posterior (`newData`), para poder vincular en una sola `update()`. **El dueño debe publicarla** (al publicar, renombrar: lo publicado pasa a `database.rules.json` y las anteriores a `database.rules.sin-vinculo-atomico.json`). Emulador: `reglas.mjs` 244/244, `simular-tv` 19, `probar-migracion` 12, `probar-biblioteca` 5 y `reglas-atomico.mjs` 10. |
+| `2254624` | **Lógica (H-09):** vincular y unirse a una TV en una sola escritura (dueño + código + lista, o miembro + invitación + lista). Si las reglas nuevas aún no están publicadas (o el código venció) responde "sin permiso" y sigue el camino de dos pasos de siempre. |
+
+- Las sondas de la auditoría contra el emulador confirmaron los huecos de reglas: `meta` sin tope de claves, `pantalla` sin forma, `version`/`contadorVersion` sin rango (H-04, H-07, H-08); el aislamiento entre cuentas se confirmó.
+- Entorno: la JVM portátil de `…\Temp\jdk21-descarga` se cae en este equipo; los emuladores funcionan con el JDK 25 de Android Studio (`C:\Program Files\Android\Android Studio\jbr`), y las suites `.cjs` necesitan `--only auth,database`.
+- Pendiente de la etapa: que el dueño publique la propuesta de reglas. Siguen las etapas 2 (reglas: `version`, `pantalla`, `meta`, correo verificado), 3 (APK), 4 (firmware: TLS), 5 (borrar cuenta, política de privacidad, App Check) y 6 (juegos y funciones nuevas).
