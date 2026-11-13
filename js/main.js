@@ -27,6 +27,7 @@ import {
   crearCuenta,
   cerrarSesion,
   recuperarContrasena,
+  iniciarSesionConGoogle,
   usarCuenta,
   listarMisDispositivos,
   reclamarDispositivo,
@@ -2865,6 +2866,18 @@ async function enviarFormularioLogin(e) {
   });
 }
 
+// Entrar con Google (ventana emergente). Si la persona la cierra no se muestra ningún error.
+async function manejarEntrarConGoogle() {
+  await sinRepetir('google', elementos.botonLoginGoogle, async () => {
+    mostrarErrorLogin('');
+    mostrarAvisoLogin('');
+    const r = await iniciarSesionConGoogle();
+    if (r.cancelado) return;
+    if (!r.exito) mostrarErrorLogin(r.error);
+    // Si salió bien, escucharSesion (requerirSesion) oculta esta pantalla.
+  });
+}
+
 async function manejarOlvideContrasena() {
   await sinRepetir('olvide', elementos.botonLoginOlvide, async () => {
     mostrarErrorLogin('');
@@ -3208,6 +3221,12 @@ async function resolverDispositivo(sesion) {
 function configurarLogin() {
   elementos.formLogin.addEventListener('submit', enviarFormularioLogin);
   elementos.botonLoginOlvide.addEventListener('click', manejarOlvideContrasena);
+  // Entrar con Google: en la web sí; en la APK todavía no (la ventana emergente no sirve en el
+  // WebView: hará falta el plugin nativo, ver el plan de la Etapa 3).
+  if (elementos.loginGoogle && elementos.botonLoginGoogle) {
+    elementos.loginGoogle.hidden = enApp();
+    elementos.botonLoginGoogle.addEventListener('click', manejarEntrarConGoogle);
+  }
   elementos.botonLoginModo.addEventListener('click', () => cambiarModoLogin(modoLogin === 'entrar' ? 'crear' : 'entrar'));
   const salir = (boton) => () => sinRepetir('salir', boton, () => cerrarSesion());
   elementos.botonCerrarSesion.addEventListener('click', salir(elementos.botonCerrarSesion));

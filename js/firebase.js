@@ -5,7 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
 import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
@@ -59,6 +59,10 @@ export function describirErrorAuth(error) {
     case 'auth/too-many-requests': return 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.';
     case 'auth/network-request-failed': return 'No hay conexión a internet.';
     case 'auth/user-disabled': return 'Esta cuenta está desactivada.';
+    case 'auth/popup-blocked': return 'El navegador bloqueó la ventana de Google. Permítela e inténtalo de nuevo.';
+    case 'auth/operation-not-allowed': return 'Entrar con Google todavía no está disponible.';
+    case 'auth/unauthorized-domain': return 'Entrar con Google no está habilitado en esta dirección.';
+    case 'auth/account-exists-with-different-credential': return 'Ese correo ya tiene una cuenta con otra forma de entrar. Entra con tu correo y contraseña.';
     default: return 'No se pudo completar. Vuelve a intentarlo.';
   }
 }
@@ -100,6 +104,24 @@ export async function crearCuenta(email, password) {
     try { await sendEmailVerification(r.user); } catch (e) { correoEnviado = false; }
     return { exito: true, correoEnviado };
   } catch (error) {
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+}
+
+/**
+ * Entra (o crea la cuenta) con Google, en una ventana emergente. La cuenta de Google ya trae el
+ * correo verificado. Si la persona cierra la ventana no es un error: devuelve { exito: false, cancelado: true }.
+ */
+export async function iniciarSesionConGoogle() {
+  try {
+    const proveedor = new GoogleAuthProvider();
+    proveedor.setCustomParameters({ prompt: 'select_account' });
+    await signInWithPopup(auth, proveedor);
+    return { exito: true };
+  } catch (error) {
+    const codigo = String((error && error.code) || '');
+    if (codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request') return { exito: false, cancelado: true };
+    console.error('[TV RETRO] Entrar con Google:', codigo || error);
     return { exito: false, error: describirErrorAuth(error) };
   }
 }

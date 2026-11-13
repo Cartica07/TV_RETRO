@@ -295,6 +295,8 @@ export function obtenerElementos() {
     botonLogin: document.getElementById('botonLogin'),
     botonLoginOlvide: document.getElementById('botonLoginOlvide'),
     botonLoginModo: document.getElementById('botonLoginModo'),
+    loginGoogle: document.getElementById('loginGoogle'),
+    botonLoginGoogle: document.getElementById('botonLoginGoogle'),
     botonCerrarSesion: document.getElementById('botonCerrarSesion'),
 
     // Cuentas: pantalla Mi TV (vincular, elegir, desvincular)
