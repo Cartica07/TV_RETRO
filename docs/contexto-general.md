@@ -12,7 +12,7 @@ TV RETRO es una **mini TV retro** que el dueño fabrica y piensa vender. Tiene:
 
 - una pantalla **OLED SSD1306** monocromática de 128×64 puntos (I2C);
 - un **buzzer pasivo** para música;
-- un **pulsador**, que luego será un encoder rotativo, para cambiar de modo: contenido, reloj o pantalla apagada;
+- un **botón A** (más adelante el botón capacitivo del ESP32-S3), una **rueda** (encoder rotativo) y el **botón de la rueda**, para cambiar de pantalla (contenido, reloj, juegos, reposo) y para jugar (ver `docs/juegos-y-controles.md`);
 - un **ESP32-S3** con Wi-Fi.
 
 Desde el celular o la computadora, con el **panel web**, se le manda lo que debe mostrar:
@@ -134,8 +134,8 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 
 | Archivo | Qué hace |
 |---|---|
-| `OLED_Remota.ino` | `setup()` y `loop()` (núcleo 1): aplica lo nuevo, maneja los modos (contenido → reloj → apagado) con el botón, y actualiza buzzer, animación, musical y texto. |
-| `pines.h` | Todos los pines (S3): OLED SDA 8 / SCL 9, buzzer 4, botón 5, encoder CLK 6 / DT 7 (reservado). |
+| `OLED_Remota.ino` | `setup()` y `loop()` (núcleo 1): aplica lo nuevo, maneja los modos (contenido → reloj → juegos → reposo) con el botón A, y actualiza buzzer, animación, musical y texto. |
+| `pines.h` | Todos los pines (S3): OLED SDA 8 / SCL 9, buzzer 4, botón A 5, rueda CLK 6 / DT 7, botón de la rueda 10. |
 | `partitions.csv` | 16 MB: nvs, otadata, dos app de 4 MB (OTA), LittleFS ~7,9 MB, coredump. |
 | `red.cpp` | Tarea en el núcleo 0: streaming de `oled_remota/version`, heartbeat, descarga y entrega con mutex. |
 | `github.cpp` | Descarga en partes (pantalla, archivo), escritor Base64 → LittleFS, `lastSeen`. |
@@ -146,7 +146,10 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 | `animacion.cpp` | Animaciones en LittleFS (viejas y z1), descomprime con `tinfl` de la ROM. |
 | `musical.cpp` | Reproductor de musicales m1: notas y línea de tiempo en memoria; imágenes descomprimidas al dibujarlas. |
 | `reloj.cpp`, `clima.cpp` | Modo reloj (NTP) y clima de Open-Meteo (Armenia, Quindío). |
-| `boton.cpp` | Pulsador con antirrebote. |
+| `boton.cpp` | Pulsador con antirrebote (el de antes; lo reemplazó `entrada.cpp`, se conserva). |
+| `entrada.cpp` | Entrada unificada: botón A, botón de la rueda y rueda, con eventos no bloqueantes (apretado, soltado, mantenido, giro). |
+| `juegos.cpp`, `juegos_base.cpp`, `juego_*.cpp`, `jump_*` | Modo Juegos: portada, lista y partidas; servicios compartidos y los 5 juegos. Ver `docs/juegos-y-controles.md`. |
+| `cuenta.cpp`, `emparejar.cpp` | Modo cuentas (sesión de la TV en Firebase Auth) y vinculación automática de la TV a la cuenta de un cliente. |
 | `config.cpp` | URLs de Firebase. |
 
 ### Hardware actual
@@ -182,4 +185,4 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
    - login y reglas por UID;
    - tutorial guiado;
    - APK con Capacitor (plugins de portapapeles y orientación);
-   - encoder rotativo en lugar del botón.
+   - (hecho el 2026-11-12) encoder rotativo y juegos; ver `CLAUDE.md`, sección 9, para el panorama pendiente.

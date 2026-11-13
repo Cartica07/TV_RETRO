@@ -91,6 +91,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - `tipo`: `texto` | `imagen` | `cancion` | `animacion` | `musical`. Solo va el sub-objeto del tipo actual: desde el 2026-11-10 un texto ya no lleva la imagen anterior (`pantalla.imagen`). Dibujo y Galería se envían como `imagen`; un GIF como `animacion`.
 - `enviarEstado` usa **`update()`** sobre `oled_remota` (escribe `version`, `pantalla` y `archivo` sin borrar `lastSeen`). `version` es un número nuevo en cada envío; el firmware solo descarga cuando cambia.
 - `oled_remota/contadorVersion` (aprobado 2026-11-10): entero que reserva el número de cada envío con una transacción (`max(contador, version) + 1`), justo antes del `update()`. Así dos envíos nunca salen con la misma `version`. `version` se sigue escribiendo solo en el `update()`, junto con `pantalla` y `archivo`. La TV no lo lee; si falta, arranca desde `version`.
+- `oled_remota/version = -2` (aprobado 2026-11-12, `VERSION_DESVINCULADA`): señal de "esta TV fue desvinculada". La deja el panel en el mismo `update()` que quita al dueño; la TV ya escucha esa ruta con su streaming y muestra un código nuevo. Una versión real nunca es negativa; un firmware viejo la toma como una versión más.
 - `oled_remota/lastSeen`: heartbeat que escribe el ESP cada 10 s; la web solo lo lee (en línea si tiene menos de 25 s).
 - `config.fuente` (aprobado): `clasica` | `sans` | `sansb` | `serif` | `serifi`. Si falta = `clasica`. El panel usa `sans` por defecto.
 - `config.manual`, `config.x`, `config.y` (aprobados): posición manual del bloque de texto. `config.tamano` 1..5 (en las fuentes nuevas 6/10/12/16/18 pt).
@@ -124,6 +125,12 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - La canción `tv_lanavedelolvido` no es importante para el dueño (puede ignorarse si da problemas).
 - **Auditoría y arreglo de bugs del panel (2026-11-10):** 7 arreglos de lógica (`2f6c37b` … `040e65a`, detalle en `docs/historial-cambios.md`, etapa 6). Push de `rediseno-app` hecho (todo hasta `cbd83a0`). Después: contador de versión, avisos de GIF para el S3 y código y CSS repetidos unificados (`714dc23` … `6dfced9`). Firmware `be2c5b6`: log con el tiempo de descarga (grabado en la placa junto con `66c49c2`). Detalles menores (2026-11-10): pestaña Canciones, "tú" en vez de voseo, mensaje "Ya va camino a la TV", todas las canciones respetan Repeticiones (firmware `66c49c2`, grabado en la placa y probado por el dueño), `carga-masiva.html` sin canciones, texto sin la imagen anterior. Umbral `>` (simple) / `>=` (Atkinson): se deja como está, igual que el simulador (decidido por el dueño). Comentarios viejos del código puestos al día (`18ac19d`). La seguridad de Firebase se deja para más adelante (aún no está en producción); primero se afirma el funcionamiento. Optimizaciones hechas (`7e587dc` … `ba7f2ce`, detalle y mediciones en `docs/historial-cambios.md`): trazo del Dibujo, Galería, scroll, slider de GIF, caché de canciones y pintado de bitmaps. Galería (escucha con `onValue`, `c831dff`) y arranque (`62be6db`) también hechos, sin cambiar formatos. A prueba de usuarios impacientes (`b4e672c` … `6ca421a`, detalle en `docs/historial-cambios.md`): arranque bloqueado, subidas tardías, guardar/borrar/importar sin repetirse ni colgarse, mensajes claros, red de seguridad y doble toque. Límite de pasos del intérprete de `.ino` bajado de 400 M a 20 M (`eeeeb54`), `inert` fijo en `index.html` (`ebc30ee`, `defdcab`) y página sin scroll a 360×740 (`91593e8`). El Web Worker y lo de `carga-masiva.html` se descartaron (no hacen falta). Pendiente: probar un GIF grande en la placa (leer el log `[github] … en N ms`). Próximo: seguridad y cuentas de Firebase, juegos en el firmware, mando por el celular, anuncios y límites, y probar la APK con Capacitor.
 - **Seguridad y cuentas (2026-11-11): HECHO y funcionando.** Reglas publicadas, TV con su cuenta (firmware con modo cuentas grabado, `9f37ef6`), datos migrados (29 imágenes y 9 animaciones a la cuenta del dueño), panel con login, Mi TV y rutas por cuenta. Probado por el dueño: entra, ve su TV y envía contenido. **Paso 8 (límite de 25 elementos por cuenta entre imágenes y GIF, y máximo 10 GIF; biblioteca predeterminada en `biblioteca/`, que solo un administrador puede borrar): reglas PUBLICADAS por el dueño el 2026-11-12 (`database.rules.json`, verificadas contra la consola) y las 29 imágenes y 9 animaciones del dueño COPIADAS a `biblioteca/`; las copias personales ya se quitaron (2026-11-12, con respaldo en `herramientas/salida/`); falta el push del panel a `main` (hasta entonces el panel publicado no aplica el límite y una cuenta normal no podría guardar) y reconstruir la APK.** Falta además: anuncios, juegos, mando por el celular, borrar o revocar la clave de servicio al terminar, y migrar la APK/GitHub Pages (el panel publicado en GitHub Pages y la APK aún usan el código viejo hasta el próximo push y build).
+- **Sesión del 2026-11-12 (cierre, TODO subido a `main` de los dos repos):**
+  - Paso 8 puesto en marcha (límites 25 + 10 GIF, biblioteca predeterminada, copias personales quitadas, clave de servicio borrada por el dueño).
+  - **Compartir una TV:** una TV tiene un dueño y hasta 5 miembros (invitación de 10 min y un solo uso). Reglas publicadas por el dueño (`database.rules.json` = lo publicado; las anteriores en `database.rules.sin-miembros.json`), panel con Compartir/Salir/Quitar. Probado con una segunda cuenta real: ambas envían a la misma TV.
+  - **Vinculación automática:** la TV muestra sola su código si no tiene dueño (sin gesto de pulsado largo); la desvinculación llega con `oled_remota/version = -2`. Probado de punta a punta con la TV real (`rt3gkm4u6j`).
+  - **Entrada unificada** (botón A, botón de la rueda y rueda) y **modo Juegos** con 5 juegos (Snake, Breakout, Flappy, Invaders, Jump) probados por el dueño. Ver `docs/juegos-y-controles.md`. **4 de los 5 derivan de un repo sin licencia: reescribirlos antes de vender.**
+  - **APK nueva** (con Compartir) compilada e instalada en el teléfono del dueño (build debug; `ANDROID_HOME` y JDK 21 portable hacen falta para compilarla).
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases
@@ -147,4 +154,39 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - [docs/historial-cambios.md](docs/historial-cambios.md): todos los cambios de los dos repos, en orden.
 - [docs/rediseno-cambios.md](docs/rediseno-cambios.md): el rediseño, pestaña por pestaña.
 - [docs/firmware-fuentes.md](docs/firmware-fuentes.md): especificación de fuentes, posición manual y scroll.
+- [docs/juegos-y-controles.md](docs/juegos-y-controles.md): controles (botón A, rueda, botón de la rueda), modo Juegos, arquitectura, licencias de los juegos y pendientes.
+- [docs/seguridad-puesta-en-marcha.md](docs/seguridad-puesta-en-marcha.md): pasos 7, 8 y 9 de cuentas, límites y compartir; plan de vuelta atrás.
 - **Al hacer un cambio, actualizar la documentación que corresponda** (este archivo si cambia una regla, el contrato o el estado; `historial-cambios.md` siempre).
+
+## 9. Panorama pendiente (al 2026-11-12, para retomar en otra conversación)
+
+Lo hecho está en la sección 5 y en `docs/historial-cambios.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
+
+**Panel y app**
+- **Pestaña "Más"** (decidida): reemplaza a "Galería" en la barra inferior; adentro un selector de subvistas **Galería | Juegos | Alarma | Config**, con Galería por defecto y recordando la última usada. Cada subvista sin scroll en 390×844 y 360×740. Respetar la regla de no cambiar IDs ni `data-valor` existentes (se añade, no se renombra). Alarma y Config las pospuso el dueño: primero se hace "Más" con Galería y Juegos.
+- **Juegos desde la app:** tarjetas con "Jugar" que abren el juego en la TV. Necesita campo nuevo (idea: `pantalla.tipo = "juego"`, nombre del juego); un firmware viejo debe ignorarlo. Proponer y aprobar antes.
+- **Alarma:** vive en la TV (suena sin celular ni Wi-Fi): la app la configura (hora, días, tono), la TV la guarda en NVS y usa NTP. El tono es una canción de los musicales (se baja y guarda en LittleFS); el botón la silencia o pospone. Falta decidir: una o varias, días de la semana, posponer. Necesita zona horaria (va en Config).
+- **Config:** zona horaria, volumen, nombre de la TV, brillo (a definir por el dueño).
+- **Miembros con nombre:** hoy se ven como "Persona 1…5"; mejora posible: que el invitado ponga un nombre. El límite de 5 lo aplica solo el panel (las reglas no pueden contar hijos).
+- **QR** en vez de escribir el código (dibujo difícil en la OLED 128×64; pendiente a futuro).
+- **Tutorial guiado** (por eso las pestañas no llevan textos explicativos).
+- **Anuncios con recompensa:** necesitan un servidor que verifique el anuncio (idea: Cloudflare Worker gratis que escribe `extra`/`extraAnimaciones` en `cuotas`); sin diseñar.
+- **Anti abuso:** exigir correo verificado para guardar (no hecho).
+- **Correos de Firebase caen en spam:** plantilla en español con remitente "TV RETRO" y, a futuro, dominio propio con SPF/DKIM antes de vender (el dueño revisa el costo).
+- **`carga-masiva.html`:** opción de administrador para gestionar la biblioteca predeterminada ("luego las administro bien").
+- **APK:** confirmar nombre y paquete antes de Play Store (ver memoria `capacitor-nombre-paquete`); falta una APK de release firmada. La instalada es de depuración.
+
+**Firmware**
+- **Juegos:** pulir tiempos y estética; reescribir Snake, Breakout, Flappy e Invaders (sin licencia; Jump es Unlicense); récords en NVS; botón A capacitivo; `ENTRADA_LOG` a 0 en producción. Detalle en `docs/juegos-y-controles.md`.
+- **Mando por el celular** (WebSocket local o BLE).
+- **OTA** (la tabla de particiones ya la deja preparada).
+- **Restablecimiento de fábrica / reventa:** si el dueño pierde su cuenta, hoy no hay forma de soltar la TV sin tocar la base; hace falta un gesto físico o un comando por cable.
+- **Fabricación a escala:** hoy cada TV se fabrica por cable con `herramientas/fabricar-tv.cjs` (clave de servicio temporal, que se borra al terminar). Si se venden muchas hay que automatizarlo.
+- Pendiente menor: probar un GIF grande en la placa y leer el log `[github] … en N ms`.
+
+**Operación y entorno**
+- Pruebas FUERA del repo en `C:\Proyectos\pruebas-tv-retro` (hay un `.zip` de respaldo al lado): `pruebas-panel.mjs`, `bobos.mjs`, `mono.mjs`, `login.mjs` (12), `tv.mjs` (12), `compartir.mjs` (8), `cuotas.mjs` (15), `carga-masiva-cuentas.mjs` (6), `por-defecto.mjs`, y con el emulador: `reglas.mjs` (244 con `REGLAS_ARCHIVO=…database.rules.json`), `simular-tv.cjs` (19), `probar-migracion.cjs` (12), `probar-biblioteca.cjs` (5). Necesitan **Node 22** (Node 26 se cae) y **JDK 21 portable** (`…\Temp\jdk21-descarga`; si ya no está, volver a bajarlo) para los emuladores.
+- Compilar la APK: `node copiar-web.mjs`, `npx cap sync android` y `./gradlew assembleDebug` en `app-android/android` con `ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk` y JDK 21; `adb install -r`.
+- Compilar el firmware con `arduino-cli` a veces falla por "Access is denied", "CreateProcess" o un segfault del compilador (antivirus o poca memoria): reintentar, con `--jobs 2`.
+- La hora de Windows se desfasó 5 h una vez (servicio de hora detenido): rompe la firma de la clave de servicio.
+- Las herramientas que usan el Admin SDK necesitan una clave de servicio nueva (la anterior se borró); generarla y borrarla al terminar.

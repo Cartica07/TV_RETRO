@@ -250,3 +250,11 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pendiente: que el dueño publique `database.rules.propuesta.json` (renombrar al publicar: lo publicado pasa a `database.rules.json`), grabar el firmware y probar de punta a punta (desvincular desde la app y ver el código nuevo en la TV), cambiar el texto "Mantén pulsado el botón de tu TV" del panel, push a `main` y APK nueva.
 
 **Compartir y vinculación automática, puesta en marcha (2026-11-12):** el dueño publicó las reglas; firmware grabado (la rueda, el botón de la rueda y el A se leen bien por el serial). Probado con la TV real: al desvincular, la TV leyó `version = -2`, publicó sola su código y mostró "LISTO" al vincularla; con una segunda cuenta invitada, ambas cuentas envían a la misma TV. `database.rules.propuesta.json` pasó a `database.rules.json` y las anteriores a `database.rules.sin-miembros.json`. Aviso de Mi TV sin el gesto de pulsado largo (`261bc6c`).
+
+**Juegos y cierre de la sesión (2026-11-12, TODO subido a `main`):**
+
+- Decisiones del dueño: la pestaña "Galería" pasará a llamarse **"Más"** (Galería | Juegos | Alarma | Config; Alarma y Config después); el botón A cicla las pantallas (Contenido → Reloj → **Juegos** → Reposo); mantener A abre la lista de juegos y sale en dos etapas; la rueda elige y su botón inicia/pausa/reinicia. Los 4 juegos de `chifunt/phone-project` (sin licencia) sirven de base y se reescribirán; Jump (atomic14) es Unlicense.
+- Firmware: `20a25f4` (entrada unificada), `bfba58b` (vinculación automática), `915e013` (modo Juegos con Snake y servicios compartidos), `07f4582` (Breakout, Flappy, Invaders y Jump), más ajuste de sonido al iniciar un juego y las dependencias de `herramientas/`. Probado en la TV real: los controles por el serial, la vinculación (desvincular → código solo → vincular) y los 5 juegos ("parecen ir bien").
+- Panel: compartir una TV y vinculación automática (ver la entrada anterior), reglas publicadas y renombradas (`database.rules.json` = lo publicado; `database.rules.sin-miembros.json` = anteriores), mensaje de Mi TV sin el gesto de pulsado largo (`261bc6c`).
+- APK de depuración reconstruida e instalada en el teléfono del dueño (con Compartir).
+- Documentación nueva: `docs/juegos-y-controles.md`; sección 9 de `CLAUDE.md` con el panorama pendiente.
