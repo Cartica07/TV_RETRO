@@ -2765,6 +2765,7 @@ async function inicializar() {
 
   configurarEventos();
   marcarControlesEncuadre();
+  configurarBotonAtras();
   if (USAR_CUENTAS) {
     configurarLogin();
     sesionActual = await requerirSesion();
@@ -3267,6 +3268,35 @@ function requerirSesion() {
       }
       elementos.pantallaLogin.hidden = false;
     });
+  });
+}
+
+// ---- Botón Atrás de Android (solo APK) ----
+// Cierra la capa que esté arriba (lienzo expandido, Compartir, Mi TV) y, si no hay ninguna,
+// sale de la app. Sin esto "Atrás" cerraba la app aunque hubiera Mi TV o Compartir abiertos.
+// Devuelve true si cerró algo.
+function cerrarCapaSuperior() {
+  if (dibujoExpandido) {
+    contraerDibujo();
+    return true;
+  }
+  const el = elementos;
+  if (!el.pantallaLogin.hidden || el.pantallaTV.hidden) return false;
+  if (!el.compartirTV.hidden) {
+    mostrarPantallaTV('gestionar'); // de Compartir vuelve a la lista
+    return true;
+  }
+  // "Añade tu TV" (primera vez) y el error de lista no se cierran: ahí Atrás sale de la app.
+  if (el.formTV.hidden || el.botonTVVolver.hidden) return false;
+  el.pantallaTV.hidden = true;
+  return true;
+}
+
+function configurarBotonAtras() {
+  const app = pluginNativo('App');
+  if (!app || typeof app.addListener !== 'function') return;
+  app.addListener('backButton', () => {
+    if (!cerrarCapaSuperior() && typeof app.exitApp === 'function') app.exitApp();
   });
 }
 
