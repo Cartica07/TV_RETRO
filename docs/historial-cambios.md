@@ -272,3 +272,16 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Las sondas de la auditoría contra el emulador confirmaron los huecos de reglas: `meta` sin tope de claves, `pantalla` sin forma, `version`/`contadorVersion` sin rango (H-04, H-07, H-08); el aislamiento entre cuentas se confirmó.
 - Entorno: la JVM portátil de `…\Temp\jdk21-descarga` se cae en este equipo; los emuladores funcionan con el JDK 25 de Android Studio (`C:\Program Files\Android\Android Studio\jbr`), y las suites `.cjs` necesitan `--only auth,database`.
 - Pendiente de la etapa: que el dueño publique la propuesta de reglas. Siguen las etapas 2 (reglas: `version`, `pantalla`, `meta`, correo verificado), 3 (APK), 4 (firmware: TLS), 5 (borrar cuenta, política de privacidad, App Check) y 6 (juegos y funciones nuevas).
+
+**Etapa 2 de arreglos: reglas y cuentas (2026-11-12):**
+
+| Commit | Qué |
+|---|---|
+| `34ecd29` | **Reglas (propuesta, H-04/H-07/H-08):** `database.rules.propuesta.json` (acumula la propuesta de la Etapa 1) cierra `version`/`contadorVersion` (enteros), la forma de `pantalla` y `archivo`, el `meta` del catálogo y pide correo verificado para crear o reemplazar en el catálogo. Detalle en `docs/formatos-datos.md`. |
+| `2a39c24` | **Lógica:** antes de guardar en el catálogo se comprueba el correo verificado (`comprobarCorreoVerificado`): reenvía el enlace una vez por sesión, avisa con un mensaje claro y, si la persona ya lo pulsó en otra pestaña, sigue sin recargar. Borrar y los administradores no se ven afectados. |
+| `fd80f15` | **Visual:** botón "Continuar con Google" y separador "o" en el login (nace oculto). |
+| `2238dc8` | **Lógica:** `iniciarSesionConGoogle()` (ventana emergente de Firebase Auth) y su manejo de errores; en la APK el botón no se muestra todavía (hará falta el plugin nativo en la Etapa 3). |
+
+- Pruebas en el emulador con las reglas propuestas: `reglas.mjs` 244/244, `simular-tv` 19, `probar-migracion` 12, `probar-biblioteca` 5, `reglas-atomico.mjs` 10, `reglas-etapa2.mjs` 30 y `reglas-envios-reales.mjs` (los 6 envíos reales del panel —texto, GIF, dibujo, canción con y sin letra, musical— pasan como dueño y como miembro). Panel: `verificacion.mjs` 6, `login-google.mjs` 7 y todas las anteriores sin cambios.
+- **Para el dueño (en este orden):** 1) publicar `database.rules.propuesta.json` en la consola (renombrar al publicar: lo publicado pasa a `database.rules.json` y las anteriores a `database.rules.sin-etapa2.json`); 2) Firebase > Authentication > Método de acceso > activar **Google** (correo de asistencia del proyecto) y comprobar que el dominio donde está el panel figura en "Dominios autorizados"; 3) probar con una cuenta nueva: crear cuenta con correo, intentar guardar en la Galería (debe pedir confirmar el correo) y entrar con Google.
+- Al publicar las reglas, las cuentas existentes **sin correo verificado** dejarán de poder guardar en la Galería hasta confirmarlo (envían y borran igual).
