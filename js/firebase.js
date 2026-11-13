@@ -321,6 +321,23 @@ export async function reclamarDispositivo(uid, codigoTexto) {
     const id = snap.exists() ? snap.val().id : null;
     if (!id) return { exito: false, error: 'Ese código no existe o ya venció. Revisa el código que muestra tu TV (se renueva solo).' };
 
+    // Camino directo: dueño, código y lista de la cuenta en UNA sola escritura, así no puede
+    // quedar una TV con dueño que no aparece en la lista de nadie (la app se cierra, se corta
+    // la señal…). Necesita las reglas con la lista validada contra el estado posterior; si
+    // todavía no están publicadas (o el código venció) responde "sin permiso" y se sigue con
+    // el camino de dos pasos de abajo, que además explica el motivo.
+    try {
+      const unico = await esperarHasta(update(ref(db), {
+        [`dispositivos/${id}/dueno`]: uid,
+        [`dispositivos/${id}/codigoUsado`]: codigo,
+        [`usuarios/${uid}/dispositivos/${id}`]: true
+      }), ESPERA_MAXIMA_ENVIO_MS);
+      if (unico === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+      return { exito: true, id };
+    } catch (error) {
+      if (!esPermisoDenegado(error)) throw error;
+    }
+
     try {
       const paso = await esperarHasta(update(ref(db, `dispositivos/${id}`), { dueno: uid, codigoUsado: codigo }), ESPERA_MAXIMA_ENVIO_MS);
       if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
@@ -486,6 +503,21 @@ async function unirseATV(uid, codigo) {
   if (!rol.exito) return rol;
   if (rol.rol === 'dueno') return { exito: false, error: 'Esa TV ya es tuya.' };
   if (rol.rol === 'miembro') return { exito: false, error: 'Ya tienes acceso a esa TV.' };
+
+  // Camino directo: entrar, gastar la invitación y apuntar la TV en la lista de la cuenta en una
+  // sola escritura (ver reclamarDispositivo). Si las reglas nuevas aún no están publicadas
+  // responde "sin permiso" y se sigue con el camino de dos pasos de abajo.
+  try {
+    const unico = await esperarHasta(update(ref(db), {
+      [`dispositivos/${id}/miembros/${uid}`]: codigo,
+      [`invitaciones/${codigo}`]: null,
+      [`usuarios/${uid}/dispositivos/${id}`]: true
+    }), ESPERA_MAXIMA_ENVIO_MS);
+    if (unico === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true, id };
+  } catch (error) {
+    if (!esPermisoDenegado(error)) throw error;
+  }
 
   try {
     // Se entra y se gasta la invitación en el mismo paso: así solo sirve una vez.
