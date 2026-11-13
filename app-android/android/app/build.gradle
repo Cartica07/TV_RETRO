@@ -1,4 +1,17 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.application'
+
+// Versión de la app: sale de app-android/package.json ("1.2.3" -> versionName "1.2.3" y
+// versionCode 10203). Para publicar una versión nueva solo se sube la versión de package.json.
+def versionApp = new JsonSlurper().parse(file('../../package.json')).version.toString()
+def numerosVersion = versionApp.tokenize('.').collect { it.replaceAll('[^0-9]', '') as int }
+def codigoVersion = numerosVersion[0] * 10000 + numerosVersion[1] * 100 + numerosVersion[2]
+
+// Firma de publicación: se lee de android/keystore.properties (storeFile, storePassword, keyAlias,
+// keyPassword). Ese archivo y la clave (.jks) NO van en el repo (ver docs/apk-publicacion.md).
+// Sin ese archivo, "assembleRelease" genera un APK sin firmar.
+def archivoClave = rootProject.file('keystore.properties')
 
 android {
     namespace = "com.tvretro.app"
@@ -7,8 +20,8 @@ android {
         applicationId "com.tvretro.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode codigoVersion
+        versionName versionApp
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +29,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (archivoClave.exists()) {
+                def claves = new Properties()
+                archivoClave.withInputStream { claves.load(it) }
+                storeFile file(claves['storeFile'])
+                storePassword claves['storePassword']
+                keyAlias claves['keyAlias']
+                keyPassword claves['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig archivoClave.exists() ? signingConfigs.release : null
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
