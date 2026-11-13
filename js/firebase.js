@@ -188,6 +188,40 @@ export async function esAdministrador() {
   }
 }
 
+// Guardar en el catálogo exige tener el correo verificado (lo exigen las reglas de Firebase;
+// un administrador queda exento). La cuenta de Google ya viene verificada.
+let enlaceDeVerificacionReenviado = false;
+
+/**
+ * Comprueba que la cuenta tenga el correo verificado. Mira el dato que lleva la sesión (el que
+ * leen las reglas); si no está, vuelve a consultar a Firebase por si la persona ya pulsó el enlace
+ * en otra pestaña, y si aún no, le reenvía el enlace (una vez por sesión). Sin conexión no bloquea:
+ * que decidan las reglas. Devuelve { ok: true } o { ok: false, reenviado }.
+ */
+async function comprobarCorreoVerificado() {
+  const u = auth.currentUser;
+  if (!u) return { ok: true };
+  try {
+    if ((await u.getIdTokenResult()).claims.email_verified === true) return { ok: true };
+    await u.reload();
+    if (u.emailVerified) {
+      await u.getIdToken(true); // para que las reglas vean el cambio
+      return { ok: true };
+    }
+  } catch (error) {
+    return { ok: true };
+  }
+  let reenviado = false;
+  if (!enlaceDeVerificacionReenviado) {
+    try {
+      await sendEmailVerification(u);
+      enlaceDeVerificacionReenviado = true;
+      reenviado = true;
+    } catch (error) { /* si no se puede reenviar, el aviso sigue valiendo */ }
+  }
+  return { ok: false, reenviado };
+}
+
 /**
  * Guarda un elemento en el catálogo de la cuenta ('imagenes' | 'animaciones').
  * Reemplazar uno que ya existe no cambia el contador; uno nuevo lo suma (si cabe).
@@ -199,6 +233,11 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
     return lento || { exito: true, key: safeKey };
   }
   if (safeKey.length > LARGO_MAXIMO_CLAVE) return { exito: false, error: `el nombre es demasiado largo (máximo ${LARGO_MAXIMO_CLAVE} caracteres)` };
+
+  const correo = await comprobarCorreoVerificado();
+  if (!correo.ok && !(await esAdministrador())) {
+    return { exito: false, error: 'primero confirma tu correo (' + (correo.reenviado ? 'te enviamos el enlace ahora' : 'ya te enviamos el enlace') + '; mira también en spam) y vuelve a intentarlo' };
+  }
 
   const refItem = ref(db, `${base}/${safeKey}`);
   const prefijo = tipo === 'imagenes' ? 'i' : 'a';
