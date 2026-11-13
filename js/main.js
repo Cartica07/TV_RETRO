@@ -1971,7 +1971,7 @@ async function cargarMusical(clave) {
   cancionesBajadas.delete(clave);
   const fecha = fechaDeMusical(clave); // antes de bajar: si cambia mientras tanto, no vale
   const datos = await leerMusical(clave);
-  if (!datos) throw new Error('No se encontró la canción en Firebase.');
+  if (!datos) throw new Error('No se encontró la canción.');
   const grabacion = await decodificarMusical(datos);
   const m = { clave, datos, grabacion, fecha };
   cancionesBajadas.set(clave, m);
@@ -2520,7 +2520,7 @@ async function cargarEstadoInicial() {
       // La versión (contador de envíos) no se muestra en la interfaz por
       // ahora: queda en la consola del navegador para depurar.
       if (resultado.vacio) {
-        marcarEstado('Conectado a Firebase. Todavía no hay datos.', 'ok', elementos);
+        marcarEstado('', null, elementos);
       } else {
         console.info(`[TV RETRO] En la OLED ahora mismo: v${resultado.version}`);
         marcarEstado('', null, elementos);
@@ -2545,15 +2545,15 @@ async function cargarEstadoInicial() {
     } else {
       poblarControles(estadoActual, elementos);
       renderizar();
-      marcarConexion('sin Firebase', 'error', elementos);
-      marcarEstado('No se pudo leer Firebase.', 'error', elementos);
+      marcarConexion('sin conexión', 'error', elementos);
+      marcarEstado('No se pudo leer lo que muestra la TV. Revisa tu internet.', 'error', elementos);
     }
   } catch (err) {
     console.error('Error durante carga inicial:', err);
     poblarControles(estadoActual, elementos);
     renderizar();
-    marcarConexion('sin Firebase', 'error', elementos);
-    marcarEstado('Error de conexión a Firebase.', 'error', elementos);
+    marcarConexion('sin conexión', 'error', elementos);
+    marcarEstado('No hay conexión a internet.', 'error', elementos);
   }
 }
 
