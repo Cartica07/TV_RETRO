@@ -41,7 +41,8 @@ const ENTRADA_SDK = `
 export { initializeApp } from 'firebase/app';
 export { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'firebase/database';
 export { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential } from 'firebase/auth';
+  sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential,
+  EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from 'firebase/auth';
 `;
 fs.mkdirSync(path.join(destino, 'js', 'vendor'), { recursive: true });
 await build({

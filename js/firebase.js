@@ -5,7 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
 import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
@@ -59,6 +59,7 @@ export function describirErrorAuth(error) {
     case 'auth/too-many-requests': return 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.';
     case 'auth/network-request-failed': return 'No hay conexión a internet.';
     case 'auth/user-disabled': return 'Esta cuenta está desactivada.';
+    case 'auth/requires-recent-login': return 'Por seguridad, vuelve a confirmar que eres tú e inténtalo de nuevo.';
     case 'auth/popup-blocked': return 'El navegador bloqueó la ventana de Google. Permítela e inténtalo de nuevo.';
     case 'auth/operation-not-allowed': return 'Entrar con Google todavía no está disponible.';
     case 'auth/unauthorized-domain': return 'Entrar con Google no está habilitado en esta dirección.';
@@ -146,6 +147,92 @@ export async function iniciarSesionConGoogleNativo(plugin) {
     console.error('[TV RETRO] Entrar con Google (app):', texto);
     return { exito: false, error: describirErrorAuth(error) };
   }
+}
+
+/** Con qué entra la cuenta con sesión: 'password' (correo y contraseña), 'google.com' u otro, o null. */
+export function proveedorDeLaCuenta() {
+  const u = auth.currentUser;
+  if (!u) return null;
+  const ids = (u.providerData || []).map((p) => p.providerId);
+  if (ids.includes('password')) return 'password';
+  if (ids.includes('google.com')) return 'google.com';
+  return ids[0] || null;
+}
+
+/**
+ * Borra la cuenta de la persona con sesión y TODO lo suyo (baja desde la app, la exigen Google Play
+ * y la ley de datos personales):
+ *   1) confirma que es ella (contraseña, o Google otra vez: Firebase pide un inicio de sesión reciente);
+ *   2) suelta sus TV: las que son suyas quedan sin dueño (la TV muestra un código nuevo y se quita a quienes
+ *      la compartían) y de las compartidas conmigo sale;
+ *   3) borra usuarios/{uid} entero: imágenes, GIF, contadores y lista de TV;
+ *   4) borra la cuenta de Firebase Authentication.
+ * Se puede repetir si se corta a la mitad (cada paso tolera que ya esté hecho). El rol de administrador
+ * (administradores/{uid}) no se toca desde acá. Devuelve { exito } o { exito: false, error } / { cancelado }.
+ *   opciones.password: la contraseña (cuentas de correo)
+ *   opciones.plugin:   plugin nativo FirebaseAuthentication (cuentas de Google dentro de la APK)
+ */
+export async function eliminarMiCuenta({ password = '', plugin = null } = {}) {
+  const u = auth.currentUser;
+  if (!u) return { exito: false, error: 'No hay una sesión iniciada.' };
+  const uid = u.uid;
+
+  // 1) Confirmar la identidad
+  try {
+    const proveedor = proveedorDeLaCuenta();
+    if (proveedor === 'password') {
+      if (!password) return { exito: false, error: 'Escribe tu contraseña para confirmar.' };
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
+    } else if (proveedor === 'google.com') {
+      if (plugin) {
+        const r = await plugin.signInWithGoogle();
+        const idToken = r && r.credential && r.credential.idToken;
+        if (!idToken) throw new Error('Google no devolvió el idToken');
+        await reauthenticateWithCredential(u, GoogleAuthProvider.credential(idToken));
+      } else {
+        await reauthenticateWithPopup(u, new GoogleAuthProvider());
+      }
+    } else {
+      return { exito: false, error: 'No se puede confirmar este tipo de cuenta desde la app.' };
+    }
+  } catch (error) {
+    const codigo = String((error && error.code) || '');
+    const texto = String((error && (error.code || error.message)) || '');
+    if (codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request' || /cancel/i.test(texto)) return { exito: false, cancelado: true };
+    if (codigo === 'auth/wrong-password' || codigo === 'auth/invalid-credential' || codigo === 'auth/invalid-login-credentials') return { exito: false, error: 'La contraseña no es correcta.' };
+    console.error('[TV RETRO] Confirmar la baja de la cuenta:', codigo || error);
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+
+  // 2) Soltar las TV
+  const lista = await listarMisDispositivos(uid);
+  if (!lista.exito) return lista;
+  for (const id of lista.dispositivos) {
+    const rol = await rolEnTV(uid, id);
+    if (!rol.exito) return rol;
+    let r = { exito: true };
+    if (rol.rol === 'dueno') r = await desvincularDispositivo(uid, id);
+    else if (rol.rol === 'miembro') r = await salirDeTV(uid, id);
+    if (!r.exito) return r;
+  }
+
+  // 3) Todo lo guardado
+  try {
+    const borrado = await esperarHasta(remove(ref(db, `usuarios/${uid}`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (borrado === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+  } catch (error) {
+    console.error('Error al borrar los datos de la cuenta:', error);
+    return { exito: false, error: 'No se pudieron borrar tus datos: ' + describirError(error) + '.' };
+  }
+
+  // 4) La cuenta
+  try {
+    await deleteUser(u);
+  } catch (error) {
+    console.error('[TV RETRO] Borrar la cuenta:', error && error.code);
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+  return { exito: true };
 }
 
 export async function cerrarSesion() {
