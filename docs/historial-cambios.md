@@ -350,3 +350,13 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pruebas: `mas.mjs` (6) con Firebase falso; el resto del banco sin cambios. Alarma y Config quedan fuera por ahora (decisión del dueño).
 - Pendiente: publicar las reglas propuestas, grabar el firmware y probar un "Jugar" real; push.
 - **Reglas con `juego` PUBLICADAS por el dueño (2026-11-14)** y firmware `c243cda` grabado en la placa: `database.rules.json` = lo publicado; las anteriores quedan en `database.rules.sin-juegos.json`.
+
+**Más como menú (2026-11-14, pedido del dueño tras verlo en la web: "quiero que la pestaña muestre solo las opciones"):**
+
+| Commit | Qué |
+|---|---|
+| `f70c9c3` | **Visual:** "Más" pasa a ser un menú (filas Galería y Juegos con flecha); cada opción abre su pantalla con botón volver y título (`#cabeceraMas`, `#botonMasVolver`, `#tituloMas`). En el menú y en Juegos no se ve Enviar ni Invertir (`body.sin-barra-accion` quita también su espacio). Los tres campos "Nombre" llevan `autocomplete="off"` (el navegador ponía ahí el correo de la cuenta). |
+| `9b0b620` | **Lógica:** `masVista` = `menu` / `galeria` / `juegos`; tocar "Más" abre siempre el menú; volver y el Atrás de la APK regresan al menú; si lo último enviado es una animación, el panel abre directo en Galería. Ya no se recuerda la última opción (reemplaza a `e140ca9`). |
+
+- Pruebas: `mas.mjs` (10). Las pruebas que entraban a la Galería tocan ahora "Más > Galería"; `etapa1-sin-firebase` mide el "sin scroll" contra la navegación cuando no hay botón Enviar. Todo el banco sin fallas. Sin scroll a 360×740 y 390×844 en las tres pantallas.
+

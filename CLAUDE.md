@@ -56,7 +56,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - Nombre visible: **TV RETRO**. Es solo el nombre visible: la ruta `oled_remota` y demás nombres de datos **no se renombran**.
 - **Sin textos explicativos** en las pestañas (habrá un tutorial guiado más adelante).
 - **Textos con "tú"** ("Elige", "Pon", "Prueba"), nunca voseo ("Elegí", "Poné"): el dueño vende en Colombia (decidido el 2026-11-10). La pestaña de música se llama **Canciones**.
-- **Cada pestaña (salvo las grillas de Galería) entra SIN scroll** en celulares de 390×844 y 360×740. Se mide comparando el final de `main.controles` con el borde superior de `.barra-accion`.
+- **Cada pestaña (salvo las grillas de Galería) entra SIN scroll** en celulares de 390×844 y 360×740. Se mide comparando el final de `main.controles` con el borde superior de `.barra-accion` (o de `.nav-inferior` en las pantallas sin Enviar: menú Más y Juegos).
 - La vista previa de la OLED en el panel debe ser **pixel-perfect** con lo que dibuja el firmware (mismas fuentes, mismos cortes de línea, mismos tiempos de scroll).
 
 ## 3. Archivos del panel
@@ -75,7 +75,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 
 ### Estructura de index.html
 - `.cabecera-fija` (barra superior + tarjeta `.dispositivo` con `#oled`, `#filaInvertido` y `#estadoLinea`), `main.controles` con una sección por pestaña, `.barra-accion` (Enviar) y `nav.nav-inferior`.
-- La navegación inferior ES `#grupoTipo`: botones `data-valor` = `texto`, `imagen`, `dibujo`, `cancion`, `galeria`; los usa `cambiarTipo()` en main.js.
+- La navegación inferior ES `#grupoTipo`: botones `data-valor` = `texto`, `imagen`, `dibujo`, `cancion`, `galeria`; los usa `cambiarTipo()` en main.js. El último se llama **Más** (2026-11-14): abre un menú (`#seccionMasSelector` / `#grupoMas`, botones `data-mas` = `galeria` | `juegos`) y cada opción es una pantalla con `#cabeceraMas` (volver + título); Juegos es `#seccionJuegos` (botones `data-juego`).
 - Cada pantalla son `.campo` con un `.rotulo` corto; filas con interruptor: `.fila-ajuste-simple`; nombre + Guardar: `.fila-guardar-inline`.
 - Galería: `#seccionGaleriaFinal` (herramientas) antes de `#seccionGaleria` (grillas); `data-subvista` lo maneja `actualizarVistaGaleria()`.
 - Canciones: `.fila-cancion` con `#seleccionCancion`, `#cargadorMusical` (input de `.ino`, múltiple) y `#botonBorrarMusical`; control `#grupoLetra` (`data-valor` `con` | `sin`); `#inputRepeticiones`; `#avisoCancion`.
