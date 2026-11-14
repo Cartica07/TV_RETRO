@@ -318,6 +318,13 @@ export function obtenerElementos() {
     botonVincularTV: document.getElementById('botonVincularTV'),
     botonTVVolver: document.getElementById('botonTVVolver'),
     botonTVSalir: document.getElementById('botonTVSalir'),
+    botonEliminarCuenta: document.getElementById('botonEliminarCuenta'),
+    eliminarCuenta: document.getElementById('eliminarCuenta'),
+    campoEliminarPassword: document.getElementById('campoEliminarPassword'),
+    eliminarPassword: document.getElementById('eliminarPassword'),
+    eliminarGoogleNota: document.getElementById('eliminarGoogleNota'),
+    eliminarError: document.getElementById('eliminarError'),
+    botonEliminarConfirmar: document.getElementById('botonEliminarConfirmar'),
 
     // Botón enviar
     botonEnviar: document.getElementById('enviar'),

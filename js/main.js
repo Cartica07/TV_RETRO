@@ -29,6 +29,8 @@ import {
   recuperarContrasena,
   iniciarSesionConGoogle,
   iniciarSesionConGoogleNativo,
+  eliminarMiCuenta,
+  proveedorDeLaCuenta,
   usarCuenta,
   listarMisDispositivos,
   reclamarDispositivo,
@@ -2978,11 +2980,17 @@ function dibujarListaTV() {
 
 // modo: 'primera' (la cuenta no tiene TV), 'gestionar' (abierta con el botón Mi TV)
 // o 'error' (no se pudo leer la lista de TV: solo se puede reintentar).
+let modoTVActual = 'gestionar'; // para volver desde "Eliminar mi cuenta"
 function mostrarPantallaTV(modo, error = '') {
   const el = elementos;
   detenerRelojCompartir();
   compartirVista = null;
+  modoTVActual = modo;
   el.compartirTV.hidden = true;
+  el.eliminarCuenta.hidden = true;
+  el.eliminarPassword.value = '';
+  // "Eliminar mi cuenta" también vale para quien aún no vinculó ninguna TV; en el error de lista no.
+  el.botonEliminarCuenta.hidden = modo === 'error';
   el.pantallaTV.hidden = false;
   el.tvAviso.hidden = true;
   mostrarErrorTV(modo === 'error' ? '' : error);
@@ -3139,6 +3147,50 @@ async function manejarQuitarMiembro(id, uidMiembro) {
   });
 }
 
+// ---- Eliminar mi cuenta (baja desde la app) ----
+const CLAVE_CUENTA_ELIMINADA = 'tvretro.cuentaEliminada';
+
+function mostrarErrorEliminar(texto) {
+  elementos.eliminarError.textContent = texto;
+  elementos.eliminarError.hidden = !texto;
+}
+
+function abrirEliminarCuenta() {
+  const el = elementos;
+  const conGoogle = proveedorDeLaCuenta() === 'google.com';
+  mostrarErrorTV('');
+  mostrarErrorEliminar('');
+  detenerRelojCompartir();
+  compartirVista = null;
+  el.listaTV.hidden = true;
+  el.formTV.hidden = true;
+  el.compartirTV.hidden = true;
+  el.botonEliminarCuenta.hidden = true;
+  el.eliminarCuenta.hidden = false;
+  el.campoEliminarPassword.hidden = conGoogle;
+  el.eliminarGoogleNota.hidden = !conGoogle;
+  el.eliminarPassword.value = '';
+  el.tvTitulo.textContent = 'Eliminar mi cuenta';
+  el.tvSubtitulo.textContent = 'Confirma que eres tú.';
+  el.botonTVVolver.textContent = 'Cancelar';
+  el.botonTVVolver.hidden = false;
+  if (!conGoogle) el.eliminarPassword.focus();
+}
+
+async function manejarEliminarCuenta() {
+  if (!window.confirm('¿Eliminar tu cuenta y todo lo que guardaste? Esto no se puede deshacer.')) return;
+  await sinRepetir('eliminar-cuenta', elementos.botonEliminarConfirmar, async () => {
+    mostrarErrorEliminar('');
+    // Al borrarse la cuenta la página se recarga sola (vuelve al login): la marca deja avisar allí.
+    try { sessionStorage.setItem(CLAVE_CUENTA_ELIMINADA, '1'); } catch (e) { /* sin almacenamiento: no hay aviso */ }
+    const r = await eliminarMiCuenta({ password: elementos.eliminarPassword.value, plugin: pluginNativo('FirebaseAuthentication') });
+    if (r.exito) return; // la recarga la hace requerirSesion al quedar sin sesión
+    try { sessionStorage.removeItem(CLAVE_CUENTA_ELIMINADA); } catch (e) { /* nada */ }
+    if (r.cancelado) return;
+    mostrarErrorEliminar(r.error || 'No se pudo eliminar la cuenta. Vuelve a intentarlo.');
+  });
+}
+
 async function abrirCompartir(id, numero) {
   const el = elementos;
   detenerRelojCompartir();
@@ -3148,6 +3200,7 @@ async function abrirCompartir(id, numero) {
   mostrarErrorCompartir('');
   el.listaTV.hidden = true;
   el.formTV.hidden = true;
+  el.botonEliminarCuenta.hidden = true;
   el.compartirTV.hidden = false;
   el.tvTitulo.textContent = 'Compartir TV ' + numero;
   el.tvSubtitulo.textContent = 'La otra persona escribe este código en Mi TV.';
@@ -3223,6 +3276,12 @@ async function resolverDispositivo(sesion) {
 }
 
 function configurarLogin() {
+  try {
+    if (sessionStorage.getItem(CLAVE_CUENTA_ELIMINADA)) {
+      sessionStorage.removeItem(CLAVE_CUENTA_ELIMINADA);
+      mostrarAvisoLogin('Tu cuenta y tus datos se eliminaron.');
+    }
+  } catch (e) { /* sin almacenamiento */ }
   elementos.formLogin.addEventListener('submit', enviarFormularioLogin);
   elementos.botonLoginOlvide.addEventListener('click', manejarOlvideContrasena);
   // Entrar con Google: en la web con la ventana emergente; en la APK con el plugin nativo
@@ -3238,7 +3297,16 @@ function configurarLogin() {
   elementos.formTV.addEventListener('submit', enviarFormularioTV);
   elementos.botonMiTV.addEventListener('click', () => mostrarPantallaTV('gestionar'));
   elementos.botonCompartirCopiar.addEventListener('click', manejarCopiarCodigoCompartir);
+  elementos.botonEliminarCuenta.addEventListener('click', abrirEliminarCuenta);
+  elementos.botonEliminarConfirmar.addEventListener('click', manejarEliminarCuenta);
+  elementos.eliminarPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); manejarEliminarCuenta(); }
+  });
   elementos.botonTVVolver.addEventListener('click', () => {
+    if (!elementos.eliminarCuenta.hidden) {
+      mostrarPantallaTV(modoTVActual); // cancelar la baja: vuelve a Mi TV (o a "Añade tu TV")
+      return;
+    }
     if (!elementos.compartirTV.hidden) {
       mostrarPantallaTV('gestionar'); // de compartir vuelve a la lista
       return;
@@ -3285,6 +3353,10 @@ function cerrarCapaSuperior() {
   }
   const el = elementos;
   if (!el.pantallaLogin.hidden || el.pantallaTV.hidden) return false;
+  if (!el.eliminarCuenta.hidden) {
+    mostrarPantallaTV(modoTVActual); // cancela la baja
+    return true;
+  }
   if (!el.compartirTV.hidden) {
     mostrarPantallaTV('gestionar'); // de Compartir vuelve a la lista
     return true;
