@@ -360,3 +360,15 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 
 - Pruebas: `mas.mjs` (10). Las pruebas que entraban a la Galería tocan ahora "Más > Galería"; `etapa1-sin-firebase` mide el "sin scroll" contra la navegación cuando no hay botón Enviar. Todo el banco sin fallas. Sin scroll a 360×740 y 390×844 en las tres pantallas.
 
+**Alarma (2026-11-14, Etapa 6):**
+
+| Commit | Qué |
+|---|---|
+| `29e902b` | **Visual:** fila "Alarma" en el menú de Más y su pantalla (selector Alarma 1/2/3 con punto en las activas, hora, interruptor, días, tono y Guardar alarma). |
+| `1893906` | **Lógica:** `cargarAlarma()` / `guardarAlarma()` (`firebase.js`) y la pantalla en `main.js`; guardar escribe `dispositivos/{id}/alarma` y manda la orden `tipo "alarma"`. |
+| `9b42c3e` | **Reglas (propuesta, sin publicar):** nodo `alarma` (hasta 3, rangos de hora/minuto/días, solo dueño y miembros escriben) y `tipo = "alarma"`. |
+| firmware | **Firmware:** `alarma.cpp/.h` (hora por NTP, hasta 3 alarmas, NVS, A silencia, rueda pospone 5 min, se calla a los 2 min; tono = canción de `musicales/` o aviso simple), `sincronizarAlarma()` en `github.cpp` (lee la alarma y baja el tono), lectura al conectarse en `red.cpp` y gancho en el `.ino` (sale del juego o enciende la pantalla al sonar). Compila (1 512 982 bytes); **sin grabar ni probar en la placa**. |
+
+- Campo nuevo aprobado por el dueño el 2026-11-14: una canción del catálogo como tono y hasta 3 alarmas.
+- Pruebas escritas pero **aún sin correr** por pedido del dueño (se corren cuando confirme la versión final): `alarma.mjs` (11, panel con Firebase falso) y `reglas-alarma.mjs` (emulador).
+

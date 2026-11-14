@@ -36,7 +36,7 @@ El panel escribe con **un solo `update()`** sobre `oled_remota`: `{version, pant
 
 ```json
 {
-  "tipo": "texto | imagen | cancion | animacion | musical | juego",
+  "tipo": "texto | imagen | cancion | animacion | musical | juego | alarma",
   "texto": "último texto (se guarda siempre, sea cual sea el tipo)",
   "config": {
     "tamano": 1,              // 1..5
@@ -67,6 +67,7 @@ Solo va el sub-objeto del `tipo` actual (`imagen`, `cancion`, `animacion` o `mus
 | `config.direccion` | rediseño (aprobado) | Scroll vertical: 1 s quieto, sube a 12 px/s, 1 s quieto, repite. |
 | `animacion.formato/cantidad` | z1 (aprobado) | Sin `cuadros`; los cuadros van en `archivo`. |
 | `musical` | musicales (aprobado) | La grabación va en `archivo`. |
+| `tipo = "alarma"` + nodo `dispositivos/{id}/alarma` | Más > Alarma (aprobado 2026-11-14) | La alarma NO va en `pantalla`: vive en `dispositivos/{id}/alarma` = `{ tono, alarmas: { "0": {activa, hora, minuto, dias}, "1": …, "2": … } }` (hasta 3; `tono` = clave de `musicales/` o vacío = aviso simple de la TV; `hora` 0..23, `minuto` 0..59, `dias` = máscara de bits 0..127 con bit 0 = domingo … bit 6 = sábado; por defecto 07:00 de lunes a viernes). Lo escribe el dueño o un miembro (la TV solo lo lee). La orden `pantalla.tipo = "alarma"` (mismo `update()` de siempre, sin datos propios) le dice a la TV que vuelva a leerlo; la TV también lo lee al conectarse y lo guarda en su memoria (NVS), así suena sin celular ni Wi-Fi siempre que sepa la hora (NTP; sin batería de reloj, tras un corte sin Wi-Fi no suena hasta sincronizar). Si el tono es una canción, la TV baja `musicales/datos/{clave}` (m1) a su memoria. Es una orden como `juego`: no cambia lo mostrado, no se obedece al encender y el panel la lee como Texto. Reglas propuestas: ver `database.rules.propuesta.json`. |
 | `tipo = "juego"` + `juego.id` | Más > Juegos (aprobado 2026-11-14) | Es una **orden**, no contenido: la TV entra al modo Juegos y arranca ese juego (`snake`, `breakout`, `flappy`, `invaders`, `jump`); lo que mostraba se queda como estaba. Va en el mismo `update()` de siempre (`version` nueva, `texto` y `config` como siempre, `archivo` = null). Un firmware viejo la toma como contenido sin imagen y no hace nada especial. La TV no obedece una orden vieja al encender (la muestra como texto) y descarta la que llega mientras hay una partida. El panel, al recargar, la lee como Texto. Las reglas (propuesta) piden `juego.id` = `^[a-z]{1,12}$` y ningún otro hijo. |
 
 Especificación de cómo dibujar el texto: [firmware-fuentes.md](firmware-fuentes.md).
