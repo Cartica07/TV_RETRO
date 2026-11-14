@@ -301,3 +301,15 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pendiente de la etapa: **entrar con Google en la APK** (necesita que el dueño registre la app Android en Firebase con las huellas SHA-1 y entregue `google-services.json`).
 
 - **Google en la APK (2026-11-14, `4f5f839`):** plugin `@capacitor-firebase/authentication` 8.6.0 sin sesión nativa + `signInWithCredential` en el SDK web; botón visible en la APK solo con el plugin; `google-services.json` (público) en el repo. Pruebas: `login-google.mjs` 10 escenarios (3 nuevos del selector nativo). APK de depuración compilada e instalada en un teléfono real (arranca, lee la TV, fuentes locales); falta que el dueño pruebe el botón de Google.
+
+**Etapa 4 de arreglos: firmware (2026-11-14, repo del firmware, rama `esp32`, sin push):**
+
+| Commit | Qué |
+|---|---|
+| `d49dc55` | **TLS verificado (H-02):** las 5 conexiones HTTPS comprueban el certificado (paquete de raíces del núcleo + nombre); el streaming solo sigue redirecciones a Firebase; comando `TVRETRO_PROBAR_TLS`. |
+| `74a8017` | **Reintentos (H-08):** espera creciente de 3 a 60 s cuando una descarga falla. |
+| `c248d70` | **Portal Wi-Fi:** la red "TV RETRO" lleva una clave de 8 caracteres que cambia cada vez y solo se ve en la pantalla de la TV. |
+
+- Grabado en la placa por COM6 (Java no hace falta; `arduino-cli` con `--jobs 1`: con `--jobs 2` falló una vez con "CreateProcess"). `TVRETRO_PROBAR_TLS`: 6 de 6. Envíos reales: texto, imagen, musical y 3 GIF recibidos sin errores.
+- Decisiones del dueño (2026-11-14): clave del portal **en la pantalla** (no fija); la configuración por **Bluetooth desde la app** (Wi-Fi + vinculación automática con la TV, "primera vez fácil": Google en un toque y confirmar con el botón A) queda como proyecto de la Etapa 6; el portal con clave queda como respaldo para la web y el iPhone.
+- Pendiente de la etapa: comprobar la clave del portal en la TV real (hay que apagar el router o llevar la TV a donde no haya Wi-Fi conocido) y repetir un mismo envío varias veces para confirmar que la memoria libre no cae.
