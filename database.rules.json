@@ -33,7 +33,7 @@
           },
           "pantalla": {
             ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
-            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical')",
+            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego')",
             "texto": {
               ".validate": "newData.isString() && newData.val().length <= 5000"
             },
@@ -143,6 +143,14 @@
                     ".validate": false
                   }
                 }
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "juego": {
+              "id": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z]{1,12}$/)"
               },
               "$otro": {
                 ".validate": false

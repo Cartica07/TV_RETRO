@@ -349,4 +349,4 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Campo nuevo aprobado por el dueño el 2026-11-14 (ver `formatos-datos.md`).
 - Pruebas: `mas.mjs` (6) con Firebase falso; el resto del banco sin cambios. Alarma y Config quedan fuera por ahora (decisión del dueño).
 - Pendiente: publicar las reglas propuestas, grabar el firmware y probar un "Jugar" real; push.
-
+- **Reglas con `juego` PUBLICADAS por el dueño (2026-11-14)** y firmware `c243cda` grabado en la placa: `database.rules.json` = lo publicado; las anteriores quedan en `database.rules.sin-juegos.json`.
