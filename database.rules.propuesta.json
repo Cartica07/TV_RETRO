@@ -215,6 +215,7 @@
     "usuarios": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !newData.exists()",
         "dispositivos": {
           "$id": {
             ".write": "auth != null && auth.uid === $uid && (!newData.exists() || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('dueno').val() === $uid || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('miembros').child($uid).exists())",
