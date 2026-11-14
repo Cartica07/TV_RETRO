@@ -521,6 +521,7 @@
       <button type="button" id="botonLoginOlvide" class="boton-enlace">¿Olvidaste tu contraseña?</button>
       <button type="button" id="botonLoginModo" class="boton-enlace">Crear cuenta</button>
     </div>
+    <p class="login-legal">Al crear una cuenta aceptas la <a href="https://cartica07.github.io/TV_RETRO/privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</p>
   </div>
 </div>
 
@@ -549,6 +550,18 @@
       <div id="compartirError" class="aviso error" role="alert" hidden></div>
     </div>
 
+    <!-- Baja de la cuenta (se abre desde "Eliminar mi cuenta"). -->
+    <div class="eliminar-cuenta" id="eliminarCuenta" hidden>
+      <p class="eliminar-texto">Se borrarán tu cuenta y todo lo que guardaste (imágenes, dibujos y GIF). Si una TV es tuya, quedará sin dueño y se quitará el acceso a quienes la comparten contigo. <strong>Esto no se puede deshacer.</strong></p>
+      <div class="campo" id="campoEliminarPassword">
+        <label class="rotulo" for="eliminarPassword">Tu contraseña</label>
+        <input type="password" id="eliminarPassword" class="campo-texto" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+      <p class="eliminar-texto" id="eliminarGoogleNota" hidden>Para confirmar, elegirás tu cuenta de Google otra vez.</p>
+      <div id="eliminarError" class="aviso error" role="alert" hidden></div>
+      <button type="button" id="botonEliminarConfirmar" class="boton-peligro">Eliminar mi cuenta</button>
+    </div>
+
     <form class="login-form" id="formTV" novalidate>
       <div class="campo">
         <label class="rotulo" for="codigoTV">Código de la TV</label>
@@ -564,6 +577,10 @@
     <div class="login-enlaces">
       <button type="button" id="botonTVVolver" class="boton-enlace" hidden>Volver</button>
       <button type="button" id="botonTVSalir" class="boton-enlace">Cerrar sesión</button>
+    </div>
+    <div class="login-enlaces login-enlaces-pie">
+      <button type="button" id="botonEliminarCuenta" class="boton-enlace peligro" hidden>Eliminar mi cuenta</button>
+      <a class="boton-enlace" href="https://cartica07.github.io/TV_RETRO/privacidad.html" target="_blank" rel="noopener">Política de privacidad</a>
     </div>
   </div>
 </div>

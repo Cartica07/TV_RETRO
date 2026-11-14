@@ -2043,6 +2043,85 @@ label.fila-ajuste-titulo {
   color: var(--error-texto);
 }
 
+/* Fila inferior de Mi TV: eliminar la cuenta y política de privacidad. */
+.login-enlaces-pie {
+  align-items: center;
+  margin-top: var(--esp-1);
+  padding-top: var(--esp-2);
+  border-top: 1px solid var(--borde);
+}
+
+.login-enlaces-pie .boton-enlace {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--texto-xs);
+  color: var(--texto-2);
+  text-decoration: none;
+}
+
+.login-enlaces-pie .boton-enlace.peligro {
+  color: var(--error-texto);
+}
+
+/* Aviso legal bajo el login. */
+.login-legal {
+  margin: var(--esp-3) 0 0;
+  font-size: var(--texto-xs);
+  line-height: 1.5;
+  color: var(--texto-2);
+  text-align: center;
+}
+
+.login-legal a {
+  color: var(--acento);
+}
+
+/* Baja de la cuenta. */
+.eliminar-cuenta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  margin-bottom: var(--esp-4);
+}
+
+.eliminar-texto {
+  margin: 0;
+  font-size: var(--texto-sm);
+  line-height: 1.5;
+  color: var(--texto-2);
+}
+
+.eliminar-texto strong {
+  color: var(--error-texto);
+}
+
+.boton-peligro {
+  width: 100%;
+  min-height: 52px;
+  background: transparent;
+  color: var(--error-texto);
+  border: 1px solid var(--error);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-weight: 700;
+  font-size: var(--texto-md);
+  cursor: pointer;
+  transition: background .12s ease, transform .05s ease;
+}
+
+.boton-peligro:hover:not(:disabled) {
+  background: var(--error-fondo);
+}
+
+.boton-peligro:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.boton-peligro:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
 /* Compartir una TV (pantalla Mi TV): código de invitación y personas con acceso. */
 .compartir-tv {
   display: flex;
