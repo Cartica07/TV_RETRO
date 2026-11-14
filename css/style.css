@@ -1419,6 +1419,35 @@ label.fila-ajuste-titulo {
   flex: 1;
 }
 
+/* Más > Juegos: una fila por juego (ícono, nombre y Jugar). */
+.lista-juegos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+}
+
+.fila-juego {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  min-height: 52px;
+  padding: var(--esp-2) var(--esp-3);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+}
+
+.fila-juego .icono {
+  color: var(--acento);
+}
+
+.fila-juego .nombre-juego {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--texto-md);
+  font-weight: 600;
+}
+
 /* Botón de ícono que envuelve un input de archivo (Añadir imagen). */
 /* Canciones: selector + importar .ino + borrar, en una fila. */
 .fila-cancion {

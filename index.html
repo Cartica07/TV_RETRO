@@ -359,6 +359,48 @@
 
     </div>
 
+    <!-- Más: selector Galería | Juegos (la pestaña de abajo sigue siendo data-valor="galeria").
+         main.js lo muestra solo en esa pestaña. -->
+    <div id="seccionMasSelector" style="display: none;">
+      <div class="campo">
+        <div class="segmento segmento-subvista" id="grupoMas" role="tablist" aria-label="Más">
+          <button type="button" role="tab" data-mas="galeria" class="activo" aria-selected="true">Galería</button>
+          <button type="button" role="tab" data-mas="juegos" aria-selected="false">Juegos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Juegos: abre el juego elegido en la TV. -->
+    <div id="seccionJuegos" style="display: none;">
+      <div class="lista-juegos">
+        <div class="fila-juego">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-juego">Snake</span>
+          <button type="button" class="boton-secundario" data-juego="snake" aria-label="Jugar Snake">Jugar</button>
+        </div>
+        <div class="fila-juego">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-juego">Breakout</span>
+          <button type="button" class="boton-secundario" data-juego="breakout" aria-label="Jugar Breakout">Jugar</button>
+        </div>
+        <div class="fila-juego">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-juego">Flappy</span>
+          <button type="button" class="boton-secundario" data-juego="flappy" aria-label="Jugar Flappy">Jugar</button>
+        </div>
+        <div class="fila-juego">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-juego">Invaders</span>
+          <button type="button" class="boton-secundario" data-juego="invaders" aria-label="Jugar Invaders">Jugar</button>
+        </div>
+        <div class="fila-juego">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-juego">Jump</span>
+          <button type="button" class="boton-secundario" data-juego="jump" aria-label="Jugar Jump">Jugar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Galería, parte superior: selector Imágenes/Animaciones, borrar,
          añadir y guardar, y ajustes de la imagen elegida. Va antes que la
          grilla para que estas herramientas queden siempre a la vista.
@@ -464,8 +506,8 @@
         <span>Canciones</span>
       </button>
       <button type="button" data-valor="galeria">
-        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Galería</span>
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        <span>Más</span>
       </button>
     </div>
   </nav>
