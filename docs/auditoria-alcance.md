@@ -139,3 +139,5 @@ Resultado de la última corrida (2026-11-14, con todas las etapas hechas):
 5. Repetir las sondas del emulador con las reglas **publicadas** (no solo las propuestas): hay que confirmar contra la consola que lo publicado es lo propuesto.
 6. Sin repetir las áreas de la sección 4, salvo que `git diff <línea base>..HEAD` muestre cambios en ellas.
 7. Entregar un informe nuevo con el mismo formato (A–O, tabla de hallazgos con IDs que sigan desde `H-28`) y actualizar este documento con la nueva línea base.
+
+> **Actualización 2026-11-14:** el dueño publicó las reglas. `database.rules.propuesta.json` pasó a ser `database.rules.json` y las anteriores están en `database.rules.sin-etapa2.json`. Donde este documento dice "propuesta / falta publicar", léase "publicada; falta probar en el proyecto real". La auditoría final debe confirmar en la consola que lo publicado es idéntico a `database.rules.json`.
