@@ -299,3 +299,5 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - `npm audit` de `app-android`: 4 avisos altos, todos en dependencias de Firestore/gRPC del paquete `firebase`, que no se usan ni se empaquetan (solo app, database y auth).
 - Clave de subida creada en `C:\Proyectos\TV_RETRO-claves\` (la copia de seguridad queda a cargo del dueño). Guía completa, entorno de compilación (JDK 25 de Android Studio + Gradle 9.5 de la caché; el JDK 21 portátil se cae) y pendientes para Play en `docs/apk-publicacion.md`.
 - Pendiente de la etapa: **entrar con Google en la APK** (necesita que el dueño registre la app Android en Firebase con las huellas SHA-1 y entregue `google-services.json`).
+
+- **Google en la APK (2026-11-14, `4f5f839`):** plugin `@capacitor-firebase/authentication` 8.6.0 sin sesión nativa + `signInWithCredential` en el SDK web; botón visible en la APK solo con el plugin; `google-services.json` (público) en el repo. Pruebas: `login-google.mjs` 10 escenarios (3 nuevos del selector nativo). APK de depuración compilada e instalada en un teléfono real (arranca, lee la TV, fuentes locales); falta que el dueño pruebe el botón de Google.

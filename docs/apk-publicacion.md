@@ -45,8 +45,8 @@ Entorno de este equipo (2026-11-12):
 1. **Nombre y paquete:** hoy `com.tvretro.app` (provisional; ver la memoria `capacitor-nombre-paquete`). **No se puede cambiar después de publicar.**
 2. **Eliminar la cuenta desde la app** y **política de privacidad** (Play los exige si se pueden crear cuentas): Etapa 5.
 3. Ficha de "seguridad de los datos" y capturas.
-4. **Entrar con Google en la APK** (Etapa 3, pendiente de datos del dueño):
-   1. En Firebase > Configuración del proyecto > Tus apps: **añadir app Android** con el paquete `com.tvretro.app` y las huellas SHA-1 de arriba.
-   2. Descargar `google-services.json` y dejarlo en `app-android/android/app/` (el `build.gradle` de la app ya aplica el plugin `com.google.gms.google-services` solo si el archivo existe, y el raíz ya trae su classpath).
-   3. Añadir el plugin nativo de Google (probablemente `@capacitor-firebase/authentication`, entrando con `skipNativeAuth` y pasando el `idToken` a `signInWithCredential` del SDK web) y mostrar el botón en la APK (hoy `loginGoogle.hidden = enApp()` en `configurarLogin`).
-   4. Probar en el teléfono (con la huella de depuración) y con el AAB instalado desde la pista interna de Play (con la de subida / firma de Play).
+4. **Entrar con Google en la APK** (hecho el 2026-11-14, falta probarlo con el botón en el teléfono):
+   - Firebase: app Android `com.tvretro.app` registrada con las huellas SHA-1 de arriba y Google activado en Authentication; `google-services.json` está en `app-android/android/app/` y **va en el repo** (solo trae identificadores públicos: proyecto, claves de cliente y huellas; no es secreto).
+   - Plugin `@capacitor-firebase/authentication` 8.6.0 con `skipNativeAuth: true` (en `capacitor.config.json`): el selector de cuentas de Android devuelve el `idToken` y `iniciarSesionConGoogleNativo` (`firebase.js`) hace `signInWithCredential` en el SDK web. El botón se muestra en la APK solo si el plugin está (`configurarLogin`).
+   - **Si se activa Play App Signing,** hay que añadir en Firebase también la huella SHA-1 de la clave de firma que muestra la consola de Play (la de subida de arriba solo sirve para los APK firmados localmente); luego volver a descargar `google-services.json`.
+   - Probar con el AAB instalado desde la pista interna de Play antes de publicar.
