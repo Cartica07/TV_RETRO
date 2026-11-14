@@ -156,6 +156,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - [docs/firmware-fuentes.md](docs/firmware-fuentes.md): especificación de fuentes, posición manual y scroll.
 - [docs/juegos-y-controles.md](docs/juegos-y-controles.md): controles (botón A, rueda, botón de la rueda), modo Juegos, arquitectura, licencias de los juegos y pendientes.
 - [docs/seguridad-puesta-en-marcha.md](docs/seguridad-puesta-en-marcha.md): pasos 7, 8 y 9 de cuentas, límites y compartir; plan de vuelta atrás.
+- [docs/auditoria-alcance.md](docs/auditoria-alcance.md): qué cubrió la auditoría del 2026-11-12, estado de sus 27 hallazgos, qué código cambió desde entonces y qué falta; **leerlo antes de la auditoría final** para no repetir lo ya revisado.
 - **Al hacer un cambio, actualizar la documentación que corresponda** (este archivo si cambia una regla, el contrato o el estado; `historial-cambios.md` siempre).
 
 ## 9. Panorama pendiente (al 2026-11-12, para retomar en otra conversación)
