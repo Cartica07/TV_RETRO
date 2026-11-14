@@ -67,7 +67,7 @@ Los sketches originales del dueño (con su `.zip`) están en `Juegos/` del repo 
 - Pulir tiempos (1,5 s / 3 s / 1 s) y detalles estéticos de portada y lista (el dueño lo hará "luego").
 - Reescribir y mejorar los 4 juegos con licencia dudosa (más mundos, mecánicas, sonidos propios).
 - **Récords** de cada juego en la NVS de la TV (no hecho).
-- Abrir un juego desde la app ("Más > Juegos"): necesita un campo nuevo en Firebase (idea: `pantalla.tipo = "juego"` con el nombre del juego) que se propone y se aprueba antes; un firmware viejo debe ignorarlo.
+- **Abrir un juego desde la app (hecho el 2026-11-14, falta probar en la TV real):** panel Más > Juegos > Jugar manda `pantalla.tipo = "juego"` + `pantalla.juego.id` (ver `formatos-datos.md`). Firmware: `OLED_Remota.ino` entra al modo Juegos e inicia el juego con `juegos_iniciarPorId()`; no obedece órdenes viejas al encender; descarta las que llegan durante una partida. Requiere publicar las reglas propuestas.
 - Mando por el celular (WebSocket local o BLE): idea aparte, más grande.
 - Cambiar el botón A por el capacitivo del ESP32-S3.
 - Menú de "Otros/Más" del panel y alarma: ver la sección de pendientes de `CLAUDE.md`.

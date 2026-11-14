@@ -36,7 +36,7 @@ El panel escribe con **un solo `update()`** sobre `oled_remota`: `{version, pant
 
 ```json
 {
-  "tipo": "texto | imagen | cancion | animacion | musical",
+  "tipo": "texto | imagen | cancion | animacion | musical | juego",
   "texto": "último texto (se guarda siempre, sea cual sea el tipo)",
   "config": {
     "tamano": 1,              // 1..5
@@ -53,7 +53,8 @@ El panel escribe con **un solo `update()`** sobre `oled_remota`: `{version, pant
   "cancion":   { "nombre": "...", "repeticiones": 1, "notas": [[Hz, ms], ...] },
   "animacion": { "nombre": "...", "ancho": 128, "alto": 64, "cuadros": [{ "datos": "<Base64>", "dur": 100 }] },
   "animacion (z1)": { "nombre": "...", "ancho": 128, "alto": 64, "formato": "z1", "cantidad": 8 },
-  "musical":   { "nombre": "<clave del catálogo>", "repeticiones": 1, "formato": "m1" }
+  "musical":   { "nombre": "<clave del catálogo>", "repeticiones": 1, "formato": "m1" },
+  "juego":     { "id": "snake" }   // orden "abre este juego" (Más > Juegos); id = 1 a 12 letras minúsculas
 }
 ```
 
@@ -66,6 +67,7 @@ Solo va el sub-objeto del `tipo` actual (`imagen`, `cancion`, `animacion` o `mus
 | `config.direccion` | rediseño (aprobado) | Scroll vertical: 1 s quieto, sube a 12 px/s, 1 s quieto, repite. |
 | `animacion.formato/cantidad` | z1 (aprobado) | Sin `cuadros`; los cuadros van en `archivo`. |
 | `musical` | musicales (aprobado) | La grabación va en `archivo`. |
+| `tipo = "juego"` + `juego.id` | Más > Juegos (aprobado 2026-11-14) | Es una **orden**, no contenido: la TV entra al modo Juegos y arranca ese juego (`snake`, `breakout`, `flappy`, `invaders`, `jump`); lo que mostraba se queda como estaba. Va en el mismo `update()` de siempre (`version` nueva, `texto` y `config` como siempre, `archivo` = null). Un firmware viejo la toma como contenido sin imagen y no hace nada especial. La TV no obedece una orden vieja al encender (la muestra como texto) y descarta la que llega mientras hay una partida. El panel, al recargar, la lee como Texto. Las reglas (propuesta) piden `juego.id` = `^[a-z]{1,12}$` y ningún otro hijo. |
 
 Especificación de cómo dibujar el texto: [firmware-fuentes.md](firmware-fuentes.md).
 

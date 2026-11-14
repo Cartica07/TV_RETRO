@@ -337,3 +337,16 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - **Arreglo hallado en la prueba en el teléfono (`84dbd71`, lógica):** con la sesión guardada y sin internet, el arranque esperaba hasta 15 s a Firebase con el panel bloqueado (`inert`) y sin mensaje. Ahora, si `navigator.onLine` es falso, `resolverDispositivo` muestra en seguida "Sin conexión a internet. Conéctate y pulsa Reintentar." y entra solo al volver la conexión (evento `online`); `esAdministrador()` también tiene tope. Prueba nueva `sin-red-arranque.mjs` (3); el resto del banco sin cambios.
 - Pruebas del dueño en el teléfono: Google, correo, enviar a la TV, Atrás, sin internet (con el arreglo) y cuenta nueva con invitación: **todo bien**.
 
+**Etapa 6 (inicio): pestaña Más y juegos desde la app (2026-11-14):**
+
+| Commit | Qué |
+|---|---|
+| `bb3bf28` | **Visual:** la pestaña "Galería" pasa a llamarse **Más** (ícono de tres puntos; internamente sigue `data-valor="galeria"`), con selector **Galería | Juegos** y la lista de 5 juegos con "Jugar". |
+| `e140ca9` | **Lógica:** el selector se recuerda (`localStorage` `tvretro.masVista`); en Juegos se oculta el botón Enviar general; "Jugar" manda `pantalla.tipo = "juego"` + `juego.id` (`enviarEstado`); al recargar un envío así el panel abre como Texto. |
+| `5602dcb` | **Reglas (propuesta, sin publicar):** `database.rules.propuesta.json` = lo publicado + `tipo = "juego"` y `juego.id` (`^[a-z]{1,12}$`). Emulador: `reglas-juego.mjs` 15 casos y las otras suites iguales (244, 30, 10, 12, 15, 19, 12, 5). |
+| firmware `c243cda` | **Firmware:** `tipo "juego"` entra al modo Juegos e inicia el juego (`juegos_iniciarPorId`); es una orden: no cambia lo mostrado, no se obedece al encender y se descarta durante una partida. Compila (1 506 834 bytes). **Sin grabar en la placa ni probar.** |
+
+- Campo nuevo aprobado por el dueño el 2026-11-14 (ver `formatos-datos.md`).
+- Pruebas: `mas.mjs` (6) con Firebase falso; el resto del banco sin cambios. Alarma y Config quedan fuera por ahora (decisión del dueño).
+- Pendiente: publicar las reglas propuestas, grabar el firmware y probar un "Jugar" real; push.
+
