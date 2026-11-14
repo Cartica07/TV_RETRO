@@ -313,3 +313,16 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Grabado en la placa por COM6 (Java no hace falta; `arduino-cli` con `--jobs 1`: con `--jobs 2` falló una vez con "CreateProcess"). `TVRETRO_PROBAR_TLS`: 6 de 6. Envíos reales: texto, imagen, musical y 3 GIF recibidos sin errores.
 - Decisiones del dueño (2026-11-14): clave del portal **en la pantalla** (no fija); la configuración por **Bluetooth desde la app** (Wi-Fi + vinculación automática con la TV, "primera vez fácil": Google en un toque y confirmar con el botón A) queda como proyecto de la Etapa 6; el portal con clave queda como respaldo para la web y el iPhone.
 - Pendiente de la etapa: comprobar la clave del portal en la TV real (hay que apagar el router o llevar la TV a donde no haya Wi-Fi conocido) y repetir un mismo envío varias veces para confirmar que la memoria libre no cae.
+
+**Etapa 5 de arreglos: baja de cuenta y privacidad (2026-11-14):**
+
+| Commit | Qué |
+|---|---|
+| `0357fe4` | **Reglas (propuesta):** `usuarios/{uid}` se puede borrar entero (solo "no existe", solo la propia cuenta). Emulador: `reglas-borrar-cuenta.mjs` 15 casos y las 7 suites anteriores sin cambios (244, 30, 10, 12, 19, 12, 5). Se suma a `database.rules.propuesta.json`, que sigue sin publicar. |
+| `b645dd8` | **Lógica:** `eliminarMiCuenta()` y `proveedorDeLaCuenta()` en `firebase.js` (contraseña, Google con ventana o selector nativo; suelta las TV; borra los datos; borra la cuenta; se puede repetir si se corta a la mitad). |
+| `22dafe0` | **Visual:** panel "Eliminar mi cuenta" en Mi TV, enlace en el pie y enlace a la política de privacidad en el login y en Mi TV (apuntan a `https://cartica07.github.io/TV_RETRO/privacidad.html`). |
+| `a66f052` | **Lógica:** conexión del panel (también para quien aún no vinculó TV), botón Atrás de la APK, aviso "Tu cuenta y tus datos se eliminaron." al volver al login. |
+
+- Pruebas: `baja-cuenta.mjs` (6, la función) y `baja-ui.mjs` (8, la pantalla de punta a punta) con Auth y base falsos; el resto del panel sin cambios.
+- **App Check: NO se activa (decisión de la auditoría, revisada).** Con App Check exigido en Realtime Database, toda petición sin token se rechaza, también las REST: la TV (ESP32, sin forma de atestiguar) dejaría de funcionar, y no hay excepción por cliente. Solo serviría con un proveedor propio (una Cloud Function que firme tokens para las TV), que necesita facturación y un backend. Hasta que haya abuso real, la defensa es la que ya está: correo verificado para guardar, límite de 25 elementos / 10 GIF, topes de tamaño y forma cerrada en las reglas. Pendiente del dueño: mirar en Firebase qué plan tiene (Spark: al pasar la cuota se bloquea la base; Blaze: cuesta dinero) y, si es Blaze, poner una alerta de presupuesto.
+- Pendiente de la etapa: la página de la política de privacidad (`privacidad.html`), que necesita datos del dueño (responsable y correo de contacto).

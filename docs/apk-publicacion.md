@@ -43,7 +43,7 @@ Entorno de este equipo (2026-11-12):
 ## Antes de subir a Google Play (pendiente)
 
 1. **Nombre y paquete:** hoy `com.tvretro.app` (provisional; ver la memoria `capacitor-nombre-paquete`). **No se puede cambiar después de publicar.**
-2. **Eliminar la cuenta desde la app** y **política de privacidad** (Play los exige si se pueden crear cuentas): Etapa 5.
+2. **Eliminar la cuenta desde la app** (hecho: Mi TV > "Eliminar mi cuenta") y **política de privacidad** (pendiente: `privacidad.html` en `https://cartica07.github.io/TV_RETRO/privacidad.html`; Play pide también esa dirección como "URL para eliminar la cuenta", sirve la misma página con el paso a paso). Las dos cosas dependen de publicar en `main` y de las reglas propuestas.
 3. Ficha de "seguridad de los datos" y capturas.
 4. **Entrar con Google en la APK** (hecho el 2026-11-14, falta probarlo con el botón en el teléfono):
    - Firebase: app Android `com.tvretro.app` registrada con las huellas SHA-1 de arriba y Google activado en Authentication; `google-services.json` está en `app-android/android/app/` y **va en el repo** (solo trae identificadores públicos: proyecto, claves de cliente y huellas; no es secreto).
