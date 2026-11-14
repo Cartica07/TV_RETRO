@@ -195,6 +195,9 @@ export function obtenerElementos() {
     seccionMasSelector: document.getElementById('seccionMasSelector'),
     grupoMas: document.getElementById('grupoMas'),
     seccionJuegos: document.getElementById('seccionJuegos'),
+    cabeceraMas: document.getElementById('cabeceraMas'),
+    botonMasVolver: document.getElementById('botonMasVolver'),
+    tituloMas: document.getElementById('tituloMas'),
     
     // Texto y contador
     texto: document.getElementById('texto'),

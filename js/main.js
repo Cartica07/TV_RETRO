@@ -744,14 +744,17 @@ function mostrarSeccionSegunTipo(tipo) {
     galeria: elementos.seccionGaleria
   };
 
-  // La pestaña "Más" (tipo "galeria") tiene dos vistas: Galería y Juegos.
+  // La pestaña "Más" (tipo "galeria") abre un menú; cada opción (Galería, Juegos) es su
+  // propia pantalla con título y "volver".
   const enMas = tipoSeccion === 'galeria';
+  const enMenu = enMas && masVista === 'menu';
   const enJuegos = enMas && masVista === 'juegos';
+  const enGaleria = enMas && masVista === 'galeria';
 
   Object.keys(secciones).forEach((clave) => {
     const el = secciones[clave];
     if (!el) return;
-    const visible = clave === tipoSeccion && !(clave === 'galeria' && enJuegos);
+    const visible = clave === 'galeria' ? enGaleria : clave === tipoSeccion;
     el.style.display = visible ? 'block' : 'none';
   });
 
@@ -759,39 +762,34 @@ function mostrarSeccionSegunTipo(tipo) {
   // aparte (después del switch global Invertido), pero solo deben
   // verse cuando la sección Galería está activa -- se sincronizan acá.
   if (elementos.seccionGaleriaFinal) {
-    elementos.seccionGaleriaFinal.style.display = (enMas && !enJuegos) ? 'block' : 'none';
+    elementos.seccionGaleriaFinal.style.display = enGaleria ? 'block' : 'none';
   }
-  if (elementos.seccionMasSelector) elementos.seccionMasSelector.style.display = enMas ? 'block' : 'none';
+  if (elementos.seccionMasSelector) elementos.seccionMasSelector.style.display = enMenu ? 'block' : 'none';
   if (elementos.seccionJuegos) elementos.seccionJuegos.style.display = enJuegos ? 'block' : 'none';
-  if (elementos.grupoMas) {
-    elementos.grupoMas.querySelectorAll('button[data-mas]').forEach((b) => {
-      const activo = b.dataset.mas === masVista;
-      b.classList.toggle('activo', activo);
-      b.setAttribute('aria-selected', activo ? 'true' : 'false');
-    });
+  if (elementos.cabeceraMas) {
+    elementos.cabeceraMas.style.display = (enMas && !enMenu) ? '' : 'none';
+    if (elementos.tituloMas) elementos.tituloMas.textContent = enJuegos ? 'Juegos' : 'Galería';
   }
-  // En Juegos cada fila tiene su propio "Jugar": el botón general de enviar no se usa.
-  const barraAccion = document.querySelector('.barra-accion');
-  if (barraAccion) barraAccion.style.display = enJuegos ? 'none' : '';
+  // En el menú y en Juegos (cada fila tiene su "Jugar") no se usa el botón general de enviar.
+  document.body.classList.toggle('sin-barra-accion', enMas && !enGaleria);
 
   // "Invertido" no tiene ningún efecto visual mientras suena una
   // canción (la pantalla no cambia con la música), así que no
   // corresponde mostrarlo ahí -- para el resto de los tipos sí aplica.
+  // Tampoco en el menú de Más ni en Juegos (no hay nada que invertir).
   if (elementos.filaInvertido) {
-    elementos.filaInvertido.style.display = (tipoSeccion === 'cancion' || enJuegos) ? 'none' : 'flex';
+    elementos.filaInvertido.style.display = (tipoSeccion === 'cancion' || (enMas && !enGaleria)) ? 'none' : 'flex';
   }
 }
 
-// ---- Más: Galería | Juegos ----
-const CLAVE_MAS_VISTA = 'tvretro.masVista';
-let masVista = (() => {
-  try { return localStorage.getItem(CLAVE_MAS_VISTA) === 'juegos' ? 'juegos' : 'galeria'; } catch (e) { return 'galeria'; }
-})();
+// ---- Más: menú (Galería, Juegos) ----
+// 'menu' | 'galeria' | 'juegos'. Al tocar "Más" abajo siempre se ve el menú.
+let masVista = 'menu';
 
 function cambiarMasVista(vista) {
-  masVista = vista === 'juegos' ? 'juegos' : 'galeria';
-  try { localStorage.setItem(CLAVE_MAS_VISTA, masVista); } catch (e) { /* sin almacenamiento: no se recuerda */ }
+  masVista = (vista === 'juegos' || vista === 'galeria') ? vista : 'menu';
   mostrarSeccionSegunTipo(estadoActual.tipo);
+  if (window.scrollY > 0) window.scrollTo(0, 0);
   renderizar();
 }
 
@@ -814,6 +812,8 @@ async function jugarEnLaTV(id, boton) {
 }
 
 function cambiarTipo(nuevoTipo) {
+  // "Más" (tipo galeria) siempre abre en su menú de opciones.
+  if (nuevoTipo === 'galeria') masVista = 'menu';
   estadoActual.tipo = nuevoTipo;
   mostrarSeccionSegunTipo(nuevoTipo);
 
@@ -2380,12 +2380,15 @@ function configurarEventos() {
     });
   }
 
-  // Más: selector Galería | Juegos y botones "Jugar".
+  // Más: menú de opciones, "volver" y botones "Jugar".
   if (elementos.grupoMas) {
     elementos.grupoMas.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-mas]');
       if (btn) cambiarMasVista(btn.dataset.mas);
     });
+  }
+  if (elementos.botonMasVolver) {
+    elementos.botonMasVolver.addEventListener('click', () => cambiarMasVista('menu'));
   }
   if (elementos.seccionJuegos) {
     elementos.seccionJuegos.addEventListener('click', (e) => {
@@ -3426,6 +3429,12 @@ function cerrarCapaSuperior() {
     return true;
   }
   const el = elementos;
+  // Dentro de una opción de Más (Galería o Juegos): Atrás vuelve al menú.
+  if (el.pantallaLogin.hidden && el.pantallaTV.hidden && masVista !== 'menu' &&
+      (estadoActual.tipo === 'galeria' || estadoActual.tipo === 'animacion')) {
+    cambiarMasVista('menu');
+    return true;
+  }
   if (!el.pantallaLogin.hidden || el.pantallaTV.hidden) return false;
   if (!el.eliminarCuenta.hidden) {
     mostrarPantallaTV(modoTVActual); // cancela la baja
