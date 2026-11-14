@@ -5,6 +5,12 @@
   "plugins": {
     "SystemBars": {
       "style": "DARK"
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
     }
   }
 }

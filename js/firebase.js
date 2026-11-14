@@ -5,7 +5,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
 import { FORMATO_COMPRIMIDO, FORMATO_MUSICAL, puedeComprimir, comprimirCuadros, descomprimirCuadros } from './compresion.js';
 
 // Configuración de Firebase
@@ -122,6 +122,28 @@ export async function iniciarSesionConGoogle() {
     const codigo = String((error && error.code) || '');
     if (codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request') return { exito: false, cancelado: true };
     console.error('[TV RETRO] Entrar con Google:', codigo || error);
+    return { exito: false, error: describirErrorAuth(error) };
+  }
+}
+
+/**
+ * Entrar con Google DENTRO DE LA APK: la ventana emergente no sirve en el WebView, así que la
+ * cuenta se elige con el selector nativo de Android (plugin FirebaseAuthentication, sin sesión
+ * nativa) y el idToken que devuelve se pasa al SDK web, que es el que maneja toda la sesión.
+ * `plugin` es el plugin nativo (window.Capacitor.Plugins.FirebaseAuthentication).
+ */
+export async function iniciarSesionConGoogleNativo(plugin) {
+  try {
+    const r = await plugin.signInWithGoogle();
+    const idToken = r && r.credential && r.credential.idToken;
+    if (!idToken) throw new Error('Google no devolvió el idToken');
+    await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+    return { exito: true };
+  } catch (error) {
+    const texto = String((error && (error.code || error.message)) || error || '');
+    // Cerrar el selector no es un error (el plugin lo informa como "canceled" / "cancelled").
+    if (/cancel/i.test(texto)) return { exito: false, cancelado: true };
+    console.error('[TV RETRO] Entrar con Google (app):', texto);
     return { exito: false, error: describirErrorAuth(error) };
   }
 }

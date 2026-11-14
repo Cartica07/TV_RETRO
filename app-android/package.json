@@ -7,6 +7,7 @@
     "copiar-web": "node copiar-web.mjs"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "8.6.0",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/cli": "^8.6.0",
