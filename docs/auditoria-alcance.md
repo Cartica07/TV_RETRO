@@ -141,3 +141,6 @@ Resultado de la última corrida (2026-11-14, con todas las etapas hechas):
 7. Entregar un informe nuevo con el mismo formato (A–O, tabla de hallazgos con IDs que sigan desde `H-28`) y actualizar este documento con la nueva línea base.
 
 > **Actualización 2026-11-14:** el dueño publicó las reglas. `database.rules.propuesta.json` pasó a ser `database.rules.json` y las anteriores están en `database.rules.sin-etapa2.json`. Donde este documento dice "propuesta / falta publicar", léase "publicada; falta probar en el proyecto real". La auditoría final debe confirmar en la consola que lo publicado es idéntico a `database.rules.json`.
+
+> **Actualización 2026-11-14 (tarde):** además, `84dbd71` (panel) cambia `js/main.js` (`resolverDispositivo`) y `js/firebase.js` (`esAdministrador`): código nuevo a revisar en la auditoría final. H-10 queda verificado en un teléfono real (arranque sin internet). Pruebas del dueño en el teléfono: Google, correo, envío a la TV, botón Atrás, cuenta nueva con invitación, aviso de correo y baja de cuenta, todas bien. Siguen pendientes de probar en la TV real: la clave del portal Wi-Fi y la estabilidad de memoria con envíos repetidos.
+

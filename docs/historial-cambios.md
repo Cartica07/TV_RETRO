@@ -329,3 +329,11 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 
 - **Alcance de la auditoría final:** [auditoria-alcance.md](auditoria-alcance.md) deja anotado qué se revisó a fondo en la auditoría base, el estado de H-01…H-27, el código cambiado desde entonces (sección 3) y lo pendiente (Etapa 6), para que la auditoría final no repita lo ya visto.
 - **Reglas de las Etapas 1 a 5 PUBLICADAS por el dueño (2026-11-14):** `database.rules.json` = lo publicado; las anteriores quedan en `database.rules.sin-etapa2.json` (para volver atrás). Lo que antes se llamaba "propuesta" ya está activo. Falta que el dueño repita las pruebas en el proyecto real (cuenta nueva con verificación de correo, baja de cuenta, envío a la TV).
+
+**Puesta en marcha y pruebas en el teléfono (2026-11-14):**
+
+- Push a `main` de los dos repos (panel `2562dc7`, firmware `300b197`) con las reglas de las Etapas 1 a 5 ya publicadas por el dueño. APK 0.2.0 (depuración) reconstruida e instalada en el Motorola del dueño.
+- GitHub avisó de una "Google API Key" en `google-services.json`: es la clave pública de Firebase para Android (viaja dentro de cualquier APK), no un secreto. No se rota; la alerta se cierra como "Used in tests" y, opcional, se restringe la clave de Android a `com.tvretro.app` + huellas SHA-1 en Google Cloud (no restringir la clave del navegador por dominio: puede romper la APK).
+- **Arreglo hallado en la prueba en el teléfono (`84dbd71`, lógica):** con la sesión guardada y sin internet, el arranque esperaba hasta 15 s a Firebase con el panel bloqueado (`inert`) y sin mensaje. Ahora, si `navigator.onLine` es falso, `resolverDispositivo` muestra en seguida "Sin conexión a internet. Conéctate y pulsa Reintentar." y entra solo al volver la conexión (evento `online`); `esAdministrador()` también tiene tope. Prueba nueva `sin-red-arranque.mjs` (3); el resto del banco sin cambios.
+- Pruebas del dueño en el teléfono: Google, correo, enviar a la TV, Atrás, sin internet (con el arreglo) y cuenta nueva con invitación: **todo bien**.
+
