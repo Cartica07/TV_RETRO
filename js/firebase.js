@@ -833,7 +833,8 @@ export async function cargarEstado() {
       }
 
       return {
-        tipo: pantalla.tipo || 'texto',
+        // "juego" es una orden para la TV, no contenido: el panel lo muestra como Texto.
+        tipo: (pantalla.tipo === 'juego' ? 'texto' : pantalla.tipo) || 'texto',
         texto: (typeof pantalla.texto === 'string') ? pantalla.texto : 'Hola Mundo',
         tamano: Number(config.tamano) || 2,
         alineacion: config.alineacion || 'centro',
@@ -1289,6 +1290,11 @@ export async function enviarEstado(estado) {
         formato: FORMATO_MUSICAL
       };
       archivo = { version: nuevaVersion, datos: estado.musicalDatos || '' };
+    } else if (estado.tipo === 'juego') {
+      // Orden "abre este juego" (Más > Juegos). No es contenido: la TV lo toma como
+      // un comando y sigue mostrando lo que tenía. Un firmware que no lo conozca lo ignora.
+      pantallaPayload.tipo = 'juego';
+      pantallaPayload.juego = { id: String(estado.juegoId || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 12) };
     } else if (estado.tipo === 'animacion') {
       pantallaPayload.tipo = 'animacion';
       if (puedeComprimir()) {

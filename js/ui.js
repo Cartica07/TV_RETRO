@@ -192,6 +192,9 @@ export function obtenerElementos() {
     seccionDibujo: document.getElementById('seccionDibujo'),
     seccionGaleria: document.getElementById('seccionGaleria'),
     seccionGaleriaFinal: document.getElementById('seccionGaleriaFinal'),
+    seccionMasSelector: document.getElementById('seccionMasSelector'),
+    grupoMas: document.getElementById('grupoMas'),
+    seccionJuegos: document.getElementById('seccionJuegos'),
     
     // Texto y contador
     texto: document.getElementById('texto'),

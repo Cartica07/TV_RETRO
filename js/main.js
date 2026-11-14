@@ -729,6 +729,7 @@ function mostrarSeccionSegunTipo(tipo) {
   // Si lo activo es una animación, la Galería abre en esa lista.
   if (tipo === 'animacion') {
     subvistaGaleria = esAnimacionDeGif(animacionesCatalogo[estadoActual.animacion]) ? 'gif' : 'animaciones';
+    masVista = 'galeria'; // la animación activa se ve en la Galería, no en Juegos
   }
   actualizarVistaGaleria();
 
@@ -743,24 +744,73 @@ function mostrarSeccionSegunTipo(tipo) {
     galeria: elementos.seccionGaleria
   };
 
+  // La pestaña "Más" (tipo "galeria") tiene dos vistas: Galería y Juegos.
+  const enMas = tipoSeccion === 'galeria';
+  const enJuegos = enMas && masVista === 'juegos';
+
   Object.keys(secciones).forEach((clave) => {
     const el = secciones[clave];
-    if (el) el.style.display = (clave === tipoSeccion) ? 'block' : 'none';
+    if (!el) return;
+    const visible = clave === tipoSeccion && !(clave === 'galeria' && enJuegos);
+    el.style.display = visible ? 'block' : 'none';
   });
 
   // "Añadir nueva" y "Guardar en la galería" viven en un contenedor
   // aparte (después del switch global Invertido), pero solo deben
   // verse cuando la sección Galería está activa -- se sincronizan acá.
   if (elementos.seccionGaleriaFinal) {
-    elementos.seccionGaleriaFinal.style.display = (tipoSeccion === 'galeria') ? 'block' : 'none';
+    elementos.seccionGaleriaFinal.style.display = (enMas && !enJuegos) ? 'block' : 'none';
   }
+  if (elementos.seccionMasSelector) elementos.seccionMasSelector.style.display = enMas ? 'block' : 'none';
+  if (elementos.seccionJuegos) elementos.seccionJuegos.style.display = enJuegos ? 'block' : 'none';
+  if (elementos.grupoMas) {
+    elementos.grupoMas.querySelectorAll('button[data-mas]').forEach((b) => {
+      const activo = b.dataset.mas === masVista;
+      b.classList.toggle('activo', activo);
+      b.setAttribute('aria-selected', activo ? 'true' : 'false');
+    });
+  }
+  // En Juegos cada fila tiene su propio "Jugar": el botón general de enviar no se usa.
+  const barraAccion = document.querySelector('.barra-accion');
+  if (barraAccion) barraAccion.style.display = enJuegos ? 'none' : '';
 
   // "Invertido" no tiene ningún efecto visual mientras suena una
   // canción (la pantalla no cambia con la música), así que no
   // corresponde mostrarlo ahí -- para el resto de los tipos sí aplica.
   if (elementos.filaInvertido) {
-    elementos.filaInvertido.style.display = (tipoSeccion === 'cancion') ? 'none' : 'flex';
+    elementos.filaInvertido.style.display = (tipoSeccion === 'cancion' || enJuegos) ? 'none' : 'flex';
   }
+}
+
+// ---- Más: Galería | Juegos ----
+const CLAVE_MAS_VISTA = 'tvretro.masVista';
+let masVista = (() => {
+  try { return localStorage.getItem(CLAVE_MAS_VISTA) === 'juegos' ? 'juegos' : 'galeria'; } catch (e) { return 'galeria'; }
+})();
+
+function cambiarMasVista(vista) {
+  masVista = vista === 'juegos' ? 'juegos' : 'galeria';
+  try { localStorage.setItem(CLAVE_MAS_VISTA, masVista); } catch (e) { /* sin almacenamiento: no se recuerda */ }
+  mostrarSeccionSegunTipo(estadoActual.tipo);
+  renderizar();
+}
+
+// "Jugar": le dice a la TV que abra ese juego (tipo "juego"; no cambia lo que ya muestra).
+async function jugarEnLaTV(id, boton) {
+  await sinRepetir('jugar', boton, async () => {
+    turnoEnvio++;
+    marcarEstado('Enviando…', null, elementos);
+    activarLedTransmision(elementos);
+    try {
+      const resultado = await enviarEstado(Object.assign({}, estadoActual, { tipo: 'juego', juegoId: id }));
+      mostrarResultadoEnvio(resultado);
+    } catch (err) {
+      console.error('Error al abrir el juego:', err);
+      marcarEstado('Error desconocido al enviar.', 'error', elementos);
+    } finally {
+      desactivarLedTransmision(elementos);
+    }
+  });
 }
 
 function cambiarTipo(nuevoTipo) {
@@ -2327,6 +2377,20 @@ function configurarEventos() {
       if (!btn) return;
       subvistaGaleria = btn.dataset.subvista;
       actualizarVistaGaleria();
+    });
+  }
+
+  // Más: selector Galería | Juegos y botones "Jugar".
+  if (elementos.grupoMas) {
+    elementos.grupoMas.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-mas]');
+      if (btn) cambiarMasVista(btn.dataset.mas);
+    });
+  }
+  if (elementos.seccionJuegos) {
+    elementos.seccionJuegos.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-juego]');
+      if (btn && !panelBloqueado) jugarEnLaTV(btn.dataset.juego, btn);
     });
   }
 
