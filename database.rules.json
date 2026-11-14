@@ -33,7 +33,7 @@
           },
           "pantalla": {
             ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
-            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego')",
+            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma')",
             "texto": {
               ".validate": "newData.isString() && newData.val().length <= 5000"
             },
@@ -185,6 +185,36 @@
             "$otro": {
               ".validate": false
             }
+          }
+        },
+        "alarma": {
+          ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['tono', 'alarmas'])",
+          "tono": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "alarmas": {
+            "$i": {
+              ".validate": "$i.matches(/^[0-2]$/) && newData.hasChildren(['activa', 'hora', 'minuto', 'dias'])",
+              "activa": {
+                ".validate": "newData.isBoolean()"
+              },
+              "hora": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 23"
+              },
+              "minuto": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 59"
+              },
+              "dias": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 127"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            }
+          },
+          "$otro": {
+            ".validate": false
           }
         },
         "miembros": {
