@@ -833,8 +833,8 @@ export async function cargarEstado() {
       }
 
       return {
-        // "juego" es una orden para la TV, no contenido: el panel lo muestra como Texto.
-        tipo: (pantalla.tipo === 'juego' ? 'texto' : pantalla.tipo) || 'texto',
+        // "juego" y "alarma" son órdenes para la TV, no contenido: el panel las muestra como Texto.
+        tipo: ((pantalla.tipo === 'juego' || pantalla.tipo === 'alarma') ? 'texto' : pantalla.tipo) || 'texto',
         texto: (typeof pantalla.texto === 'string') ? pantalla.texto : 'Hola Mundo',
         tamano: Number(config.tamano) || 2,
         alineacion: config.alineacion || 'centro',
@@ -1220,6 +1220,76 @@ export async function borrarMusicalCatalogo(clave) {
   }
 }
 
+// ===================================================
+// Alarma (Más > Alarma)
+// ===================================================
+// dispositivos/{id}/alarma = { tono: "<clave de musicales/> o ''", alarmas: { "0": {activa, hora,
+// minuto, dias}, "1": ..., "2": ... } }. dias = máscara de bits (bit 0 = domingo ... bit 6 = sábado).
+// La TV la guarda y suena sin celular; el panel solo la configura (ver docs/formatos-datos.md).
+export const CANTIDAD_ALARMAS = 3;
+export const DIAS_ALARMA_DEFECTO = 62; // lunes a viernes
+
+const rutaAlarma = () => (contexto ? `dispositivos/${contexto.dispositivo}/alarma` : 'alarma');
+
+const entero = (v, min, max, defecto) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n >= min && n <= max ? n : defecto;
+};
+
+/** Deja una alarma con valores válidos (sea lo que sea lo que haya en Firebase). */
+function normalizarAlarmaUna(a) {
+  const x = a && typeof a === 'object' ? a : {};
+  return {
+    activa: x.activa === true,
+    hora: entero(x.hora, 0, 23, 7),
+    minuto: entero(x.minuto, 0, 59, 0),
+    dias: entero(x.dias, 0, 127, DIAS_ALARMA_DEFECTO)
+  };
+}
+
+export function normalizarAlarma(datos) {
+  const d = datos && typeof datos === 'object' ? datos : {};
+  const lista = d.alarmas && typeof d.alarmas === 'object' ? d.alarmas : {};
+  return {
+    tono: typeof d.tono === 'string' ? d.tono.slice(0, 100) : '',
+    alarmas: Array.from({ length: CANTIDAD_ALARMAS }, (_, i) => normalizarAlarmaUna(lista[i] ?? lista[String(i)]))
+  };
+}
+
+/** Lee la alarma de la TV. { exito, alarma } (con valores por defecto si aún no hay) o { exito: false, error }. */
+export async function cargarAlarma() {
+  try {
+    const snap = await esperarHasta(get(ref(db, rutaAlarma())), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta.' };
+    return { exito: true, alarma: normalizarAlarma(snap.exists() ? snap.val() : null) };
+  } catch (error) {
+    console.error('Error al leer la alarma:', error);
+    return { exito: false, error: describirError(error) };
+  }
+}
+
+/**
+ * Guarda la alarma y le avisa a la TV (orden tipo "alarma" por el mismo canal de siempre; la TV vuelve
+ * a leer dispositivos/{id}/alarma). Devuelve lo mismo que enviarEstado().
+ */
+export async function guardarAlarma(datos, estado) {
+  const alarma = normalizarAlarma(datos);
+  try {
+    const lento = await conTope(set(ref(db, rutaAlarma()), {
+      tono: alarma.tono,
+      alarmas: Object.fromEntries(alarma.alarmas.map((a, i) => [String(i), a]))
+    }));
+    if (lento) {
+      const final = await lento.escritura;
+      if (!final.exito) return { exito: false, error: final.error };
+    }
+  } catch (error) {
+    console.error('Error al guardar la alarma:', error);
+    return { exito: false, error: describirError(error) };
+  }
+  return await enviarEstado(Object.assign({}, estado, { tipo: 'alarma' }));
+}
+
 /**
  * Envía la configuración actualizada a Firebase
  */
@@ -1290,6 +1360,9 @@ export async function enviarEstado(estado) {
         formato: FORMATO_MUSICAL
       };
       archivo = { version: nuevaVersion, datos: estado.musicalDatos || '' };
+    } else if (estado.tipo === 'alarma') {
+      // Orden "vuelve a leer la alarma" (Más > Alarma). No lleva datos: viven en dispositivos/{id}/alarma.
+      pantallaPayload.tipo = 'alarma';
     } else if (estado.tipo === 'juego') {
       // Orden "abre este juego" (Más > Juegos). No es contenido: la TV lo toma como
       // un comando y sigue mostrando lo que tenía. Un firmware que no lo conozca lo ignora.

@@ -42,7 +42,11 @@ import {
   crearInvitacion,
   quitarMiembro,
   salirDeTV,
-  esAdministrador
+  esAdministrador,
+  cargarAlarma,
+  guardarAlarma,
+  normalizarAlarma,
+  CANTIDAD_ALARMAS
 } from './firebase.js';
 import {
   procesarImagen,
@@ -749,6 +753,7 @@ function mostrarSeccionSegunTipo(tipo) {
   const enMas = tipoSeccion === 'galeria';
   const enMenu = enMas && masVista === 'menu';
   const enJuegos = enMas && masVista === 'juegos';
+  const enAlarma = enMas && masVista === 'alarma';
   const enGaleria = enMas && masVista === 'galeria';
 
   Object.keys(secciones).forEach((clave) => {
@@ -766,9 +771,10 @@ function mostrarSeccionSegunTipo(tipo) {
   }
   if (elementos.seccionMasSelector) elementos.seccionMasSelector.style.display = enMenu ? 'block' : 'none';
   if (elementos.seccionJuegos) elementos.seccionJuegos.style.display = enJuegos ? 'block' : 'none';
+  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';
   if (elementos.cabeceraMas) {
     elementos.cabeceraMas.style.display = (enMas && !enMenu) ? '' : 'none';
-    if (elementos.tituloMas) elementos.tituloMas.textContent = enJuegos ? 'Juegos' : 'Galería';
+    if (elementos.tituloMas) elementos.tituloMas.textContent = enJuegos ? 'Juegos' : (enAlarma ? 'Alarma' : 'Galería');
   }
   // En el menú y en Juegos (cada fila tiene su "Jugar") no se usa el botón general de enviar.
   document.body.classList.toggle('sin-barra-accion', enMas && !enGaleria);
@@ -782,15 +788,133 @@ function mostrarSeccionSegunTipo(tipo) {
   }
 }
 
-// ---- Más: menú (Galería, Juegos) ----
-// 'menu' | 'galeria' | 'juegos'. Al tocar "Más" abajo siempre se ve el menú.
+// ---- Más: menú (Galería, Juegos, Alarma) ----
+// 'menu' | 'galeria' | 'juegos' | 'alarma'. Al tocar "Más" abajo siempre se ve el menú.
 let masVista = 'menu';
 
 function cambiarMasVista(vista) {
-  masVista = (vista === 'juegos' || vista === 'galeria') ? vista : 'menu';
+  masVista = (vista === 'juegos' || vista === 'galeria' || vista === 'alarma') ? vista : 'menu';
   mostrarSeccionSegunTipo(estadoActual.tipo);
   if (window.scrollY > 0) window.scrollTo(0, 0);
   renderizar();
+  if (masVista === 'alarma') abrirAlarma();
+}
+
+// ---- Más > Alarma ----
+// Hasta 3 alarmas (se edita una por vez) y un solo tono (canción del catálogo). Vive en la TV; acá
+// solo se configura (firebase.js: cargarAlarma / guardarAlarma).
+let alarmaDatos = normalizarAlarma(null); // copia que se edita
+let alarmaSel = 0;
+let turnoAlarma = 0;
+
+const dosDigitos = (n) => String(n).padStart(2, '0');
+
+// Pasa la alarma elegida (y el tono) de los datos a los controles.
+function volcarAlarmaEnPantalla() {
+  const el = elementos;
+  const a = alarmaDatos.alarmas[alarmaSel];
+  el.alarmaHora.value = `${dosDigitos(a.hora)}:${dosDigitos(a.minuto)}`;
+  el.alarmaActiva.checked = a.activa;
+  el.grupoAlarmaDias.querySelectorAll('button[data-dia]').forEach((b) => {
+    b.setAttribute('aria-pressed', (a.dias >> Number(b.dataset.dia)) & 1 ? 'true' : 'false');
+  });
+  el.grupoAlarmaNumero.querySelectorAll('button[data-alarma]').forEach((b) => {
+    const n = Number(b.dataset.alarma);
+    const activo = n === alarmaSel;
+    b.classList.toggle('activo', activo);
+    b.setAttribute('aria-selected', activo ? 'true' : 'false');
+    b.classList.toggle('alarma-activa', alarmaDatos.alarmas[n].activa);
+  });
+  poblarTonosAlarma();
+}
+
+// Pasa lo que muestran los controles a los datos. false si falta la hora.
+function leerAlarmaDePantalla() {
+  const el = elementos;
+  const a = alarmaDatos.alarmas[alarmaSel];
+  const m = /^(\d{1,2}):(\d{2})/.exec(el.alarmaHora.value || '');
+  const hayHora = !!m;
+  if (m) {
+    a.hora = Math.min(23, Number(m[1]));
+    a.minuto = Math.min(59, Number(m[2]));
+  }
+  a.activa = el.alarmaActiva.checked;
+  let dias = 0;
+  el.grupoAlarmaDias.querySelectorAll('button[data-dia]').forEach((b) => {
+    if (b.getAttribute('aria-pressed') === 'true') dias |= 1 << Number(b.dataset.dia);
+  });
+  a.dias = dias;
+  alarmaDatos.tono = el.alarmaTono.value || '';
+  el.grupoAlarmaNumero.querySelectorAll('button[data-alarma]').forEach((b) => {
+    b.classList.toggle('alarma-activa', alarmaDatos.alarmas[Number(b.dataset.alarma)].activa);
+  });
+  return hayHora;
+}
+
+// Lista de tonos = las canciones del catálogo (musicales/). La primera opción es el sonido simple de la TV.
+function poblarTonosAlarma() {
+  const sel = elementos.alarmaTono;
+  const claves = Object.keys(musicalesCatalogo)
+    .sort((a, b) => nombreMusical(a).localeCompare(nombreMusical(b), 'es', { sensitivity: 'base' }));
+  sel.innerHTML = '';
+  const simple = document.createElement('option');
+  simple.value = '';
+  simple.textContent = 'Sonido simple de la TV';
+  sel.appendChild(simple);
+  const opcion = (clave, texto) => {
+    const opt = document.createElement('option');
+    opt.value = clave;
+    opt.textContent = texto;
+    sel.appendChild(opt);
+  };
+  claves.forEach((clave) => opcion(clave, nombreMusical(clave)));
+  // Si la canción elegida ya no está en el catálogo se conserva (la TV ya la tiene), con su clave.
+  if (alarmaDatos.tono && !musicalesCatalogo[alarmaDatos.tono]) opcion(alarmaDatos.tono, alarmaDatos.tono);
+  sel.value = alarmaDatos.tono || '';
+}
+
+async function abrirAlarma() {
+  const turno = ++turnoAlarma;
+  alarmaSel = 0;
+  volcarAlarmaEnPantalla();
+  if (!Object.keys(musicalesCatalogo).length) {
+    const lista = await listarMusicales();
+    if (turno !== turnoAlarma || masVista !== 'alarma') return;
+    if (lista) musicalesCatalogo = lista;
+  }
+  const r = await cargarAlarma();
+  if (turno !== turnoAlarma || masVista !== 'alarma') return; // se fue de la pantalla mientras tanto
+  if (r.exito) {
+    alarmaDatos = r.alarma;
+    volcarAlarmaEnPantalla();
+  } else {
+    marcarEstado('No se pudo leer la alarma de la TV. Revisa tu internet.', 'error', elementos);
+  }
+}
+
+async function guardarAlarmaEnLaTV() {
+  await sinRepetir('alarma', elementos.botonGuardarAlarma, async () => {
+    if (!leerAlarmaDePantalla()) {
+      marcarEstado('Pon la hora de la alarma.', 'error', elementos);
+      return;
+    }
+    const sinDias = alarmaDatos.alarmas.findIndex((a) => a.activa && a.dias === 0);
+    if (sinDias >= 0) {
+      marcarEstado(`Elige al menos un día para la alarma ${sinDias + 1}.`, 'error', elementos);
+      return;
+    }
+    turnoEnvio++;
+    marcarEstado('Guardando…', null, elementos);
+    activarLedTransmision(elementos);
+    try {
+      mostrarResultadoEnvio(await guardarAlarma(alarmaDatos, estadoActual), 'Alarma guardada ✅ Ya va camino a la TV.');
+    } catch (err) {
+      console.error('Error al guardar la alarma:', err);
+      marcarEstado('Error desconocido al guardar la alarma.', 'error', elementos);
+    } finally {
+      desactivarLedTransmision(elementos);
+    }
+  });
 }
 
 // "Jugar": le dice a la TV que abra ese juego (tipo "juego"; no cambia lo que ya muestra).
@@ -2390,6 +2514,24 @@ function configurarEventos() {
   if (elementos.botonMasVolver) {
     elementos.botonMasVolver.addEventListener('click', () => cambiarMasVista('menu'));
   }
+  // Alarma: elegir cuál (1, 2 o 3), días, interruptor y guardar.
+  if (elementos.grupoAlarmaNumero) {
+    elementos.grupoAlarmaNumero.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-alarma]');
+      if (!btn) return;
+      leerAlarmaDePantalla(); // lo que se estaba editando no se pierde al cambiar de alarma
+      alarmaSel = Number(btn.dataset.alarma);
+      volcarAlarmaEnPantalla();
+    });
+  }
+  if (elementos.grupoAlarmaDias) {
+    elementos.grupoAlarmaDias.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-dia]');
+      if (btn) btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    });
+  }
+  if (elementos.alarmaActiva) elementos.alarmaActiva.addEventListener('change', leerAlarmaDePantalla);
+  if (elementos.botonGuardarAlarma) elementos.botonGuardarAlarma.addEventListener('click', guardarAlarmaEnLaTV);
   if (elementos.seccionJuegos) {
     elementos.seccionJuegos.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-juego]');
@@ -2652,18 +2794,24 @@ let turnoEnvio = 0;
 // lienzo expandido para mostrar la palomita).
 let ultimoEnvioExitoso = false;
 
-function mostrarResultadoEnvio(resultado) {
+function mostrarResultadoEnvio(resultado, textoOk) {
   const turno = turnoEnvio; // lo sube enviarAFirebase al empezar cada envío
   ultimoEnvioExitoso = !!resultado.exito;
+  // textoOk: mensaje propio para envíos que no son contenido (ej. guardar la alarma).
+  const mensajeOk = (version) => {
+    if (!textoOk) return textoEnviado(version);
+    console.info(`[TV RETRO] Enviado: v${version}`);
+    return textoOk;
+  };
   if (resultado.exito) {
-    marcarEstado(textoEnviado(resultado.version), 'ok', elementos);
+    marcarEstado(mensajeOk(resultado.version), 'ok', elementos);
     return;
   }
   if (resultado.pendiente && resultado.escritura) {
     marcarEstado('La conexión está lenta: se enviará solo cuando vuelva la señal.', null, elementos);
     resultado.escritura.then((final) => {
       if (turno !== turnoEnvio) return;
-      if (final.exito) marcarEstado(textoEnviado(final.version), 'ok', elementos);
+      if (final.exito) marcarEstado(mensajeOk(final.version), 'ok', elementos);
       else marcarEstado(`No se pudo enviar: ${describirError(final.error)}.`, 'error', elementos);
     });
     return;
