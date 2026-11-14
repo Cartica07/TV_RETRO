@@ -313,7 +313,9 @@ async function leerCuota() {
 export async function esAdministrador() {
   if (!contexto) return false;
   try {
-    return (await get(ref(db, `administradores/${contexto.uid}`))).val() === true;
+    // Con tope: si la conexión no responde, el arranque no se queda esperando (se asume "no administrador").
+    const snap = await esperarHasta(get(ref(db, `administradores/${contexto.uid}`)), ESPERA_MAXIMA_ENVIO_MS);
+    return snap !== ESPERA_LENTA && snap.val() === true;
   } catch (error) {
     return false;
   }

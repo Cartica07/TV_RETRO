@@ -3238,15 +3238,25 @@ async function manejarCopiarCodigoCompartir() {
 // tiene ninguna, muestra "Añade tu TV" y espera a que se vincule una.
 async function resolverDispositivo(sesion) {
   for (;;) {
-    const r = await listarMisDispositivos(sesion.uid);
+    // Sin internet no se espera a Firebase (el panel quedaría bloqueado sin decir nada): se avisa ya.
+    const r = navigator.onLine === false
+      ? { exito: false, error: 'Sin conexión a internet. Conéctate y pulsa Reintentar.' }
+      : await listarMisDispositivos(sesion.uid);
     if (r.exito) {
       misTV = r.dispositivos;
+      elementos.pantallaTV.hidden = true;
       break;
     }
-    // Sin lista no se puede seguir: se muestra el error y se espera "Reintentar".
+    // Sin lista no se puede seguir: se muestra el error y se espera "Reintentar" o que vuelva la conexión.
     mostrarPantallaTV('error', r.error);
     await new Promise((resolver) => {
-      elementos.botonTVVolver.addEventListener('click', resolver, { once: true });
+      const seguir = () => {
+        window.removeEventListener('online', seguir);
+        elementos.botonTVVolver.removeEventListener('click', seguir);
+        resolver();
+      };
+      elementos.botonTVVolver.addEventListener('click', seguir);
+      window.addEventListener('online', seguir);
     });
   }
   // Qué es la cuenta en cada TV. Las que ya no dejan entrar (la desvincularon o la
