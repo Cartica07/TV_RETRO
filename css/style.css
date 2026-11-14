@@ -1479,6 +1479,66 @@ body.sin-barra-accion .barra-accion {
   display: none;
 }
 
+/* Más > Alarma: hora + interruptor, días y tono. */
+.fila-alarma-hora {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+}
+
+.fila-alarma-hora .campo-texto {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xl);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-align: center;
+  color-scheme: dark;
+}
+
+.dias-alarma {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dias-alarma button {
+  min-height: var(--toque-min);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-pill);
+  color: var(--texto-2);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .12s ease, background .12s ease, color .12s ease;
+}
+
+.dias-alarma button[aria-pressed="true"] {
+  background: var(--acento-fondo);
+  border-color: var(--acento);
+  color: var(--acento);
+}
+
+.dias-alarma button:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* En el selector de alarmas, un punto marca las que están activas. */
+#grupoAlarmaNumero button.alarma-activa::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  vertical-align: middle;
+}
+
 .cabecera-mas {
   display: flex;
   align-items: center;

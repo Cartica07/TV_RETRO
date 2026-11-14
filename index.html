@@ -373,6 +373,11 @@
           <span class="nombre-mas">Juegos</span>
           <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
         </button>
+        <button type="button" class="fila-mas" data-mas="alarma">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nombre-mas">Alarma</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
       </nav>
     </div>
 
@@ -413,6 +418,52 @@
           <button type="button" class="boton-secundario" data-juego="jump" aria-label="Jugar Jump">Jugar</button>
         </div>
       </div>
+    </div>
+
+    <!-- Alarma: hasta 3 alarmas (se edita una por vez), con hora, días y activa; un solo tono
+         (una canción del catálogo). La TV la guarda y suena sin celular ni Wi-Fi. -->
+    <div id="seccionAlarma" style="display: none;">
+
+      <div class="campo">
+        <div class="segmento segmento-subvista" id="grupoAlarmaNumero" role="tablist" aria-label="Alarma">
+          <button type="button" role="tab" data-alarma="0" class="activo" aria-selected="true">Alarma 1</button>
+          <button type="button" role="tab" data-alarma="1" aria-selected="false">Alarma 2</button>
+          <button type="button" role="tab" data-alarma="2" aria-selected="false">Alarma 3</button>
+        </div>
+      </div>
+
+      <div class="campo fila-alarma-hora">
+        <input type="time" id="alarmaHora" class="campo-texto" value="07:00" aria-label="Hora de la alarma" />
+        <label class="switch" title="Activar esta alarma">
+          <input type="checkbox" id="alarmaActiva" aria-label="Activar esta alarma" />
+          <span class="via"><span class="perilla"></span></span>
+        </label>
+      </div>
+
+      <div class="campo">
+        <div class="dias-alarma" id="grupoAlarmaDias" role="group" aria-label="Días de la semana">
+          <button type="button" data-dia="1" aria-pressed="false" aria-label="Lunes">L</button>
+          <button type="button" data-dia="2" aria-pressed="false" aria-label="Martes">M</button>
+          <button type="button" data-dia="3" aria-pressed="false" aria-label="Miércoles">M</button>
+          <button type="button" data-dia="4" aria-pressed="false" aria-label="Jueves">J</button>
+          <button type="button" data-dia="5" aria-pressed="false" aria-label="Viernes">V</button>
+          <button type="button" data-dia="6" aria-pressed="false" aria-label="Sábado">S</button>
+          <button type="button" data-dia="0" aria-pressed="false" aria-label="Domingo">D</button>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label class="rotulo" for="alarmaTono">Tono</label>
+        <div class="selector">
+          <select id="alarmaTono"></select>
+          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="campo">
+        <button type="button" id="botonGuardarAlarma" class="boton-primario">Guardar alarma</button>
+      </div>
+
     </div>
 
     <!-- Galería, parte superior: selector Imágenes/Animaciones, borrar,
