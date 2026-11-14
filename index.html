@@ -238,7 +238,7 @@
 
       <div class="campo">
         <div class="fila-guardar-galeria fila-guardar-inline">
-          <input type="text" id="nombreGaleria" placeholder="Nombre" maxlength="60" aria-label="Nombre para guardar en la galería" />
+          <input type="text" id="nombreGaleria" placeholder="Nombre" maxlength="60" autocomplete="off" aria-label="Nombre para guardar en la galería" />
           <button type="button" id="botonGuardarGaleria" class="boton-secundario" title="Añadir esta imagen a la galería">Guardar</button>
         </div>
         <div id="avisoGaleria" class="aviso" style="display: none;"></div>
@@ -351,7 +351,7 @@
            igual que una imagen subida guardada. -->
       <div class="campo">
         <div class="fila-guardar-galeria fila-guardar-inline">
-          <input type="text" id="nombreGaleriaDibujo" placeholder="Nombre" maxlength="60" aria-label="Nombre para guardar el dibujo en la galería" />
+          <input type="text" id="nombreGaleriaDibujo" placeholder="Nombre" maxlength="60" autocomplete="off" aria-label="Nombre para guardar el dibujo en la galería" />
           <button type="button" id="botonGuardarGaleriaDibujo" class="boton-secundario" title="Añadir este dibujo a la galería">Guardar</button>
         </div>
         <div id="avisoGaleriaDibujo" class="aviso" style="display: none;"></div>
@@ -359,15 +359,29 @@
 
     </div>
 
-    <!-- Más: selector Galería | Juegos (la pestaña de abajo sigue siendo data-valor="galeria").
-         main.js lo muestra solo en esa pestaña. -->
+    <!-- Más (la pestaña de abajo sigue siendo data-valor="galeria"): primero un menú con las
+         opciones; cada una abre su propia pantalla con título y "volver". main.js lo maneja. -->
     <div id="seccionMasSelector" style="display: none;">
-      <div class="campo">
-        <div class="segmento segmento-subvista" id="grupoMas" role="tablist" aria-label="Más">
-          <button type="button" role="tab" data-mas="galeria" class="activo" aria-selected="true">Galería</button>
-          <button type="button" role="tab" data-mas="juegos" aria-selected="false">Juegos</button>
-        </div>
-      </div>
+      <nav class="menu-mas" id="grupoMas" aria-label="Más">
+        <button type="button" class="fila-mas" data-mas="galeria">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="nombre-mas">Galería</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button type="button" class="fila-mas" data-mas="juegos">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          <span class="nombre-mas">Juegos</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Cabecera de cada opción de Más: volver al menú + título. -->
+    <div id="cabeceraMas" class="cabecera-mas" style="display: none;">
+      <button type="button" id="botonMasVolver" class="boton-icono" aria-label="Volver a Más" title="Volver">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <h2 class="titulo-mas" id="tituloMas">Galería</h2>
     </div>
 
     <!-- Juegos: abre el juego elegido en la TV. -->
@@ -429,7 +443,7 @@
             <input type="file" id="cargadorImagenGaleria" accept="image/*" aria-label="Añadir una imagen o GIF nuevo" />
             <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </label>
-          <input type="text" id="nombreGaleriaNueva" placeholder="Nombre" maxlength="60" aria-label="Nombre para guardar en la galería" />
+          <input type="text" id="nombreGaleriaNueva" placeholder="Nombre" maxlength="60" autocomplete="off" aria-label="Nombre para guardar en la galería" />
           <button type="button" id="botonGuardarGaleriaNueva" class="boton-secundario" title="Guardar en la galería (si el nombre ya existe, la reemplaza)">Guardar</button>
         </div>
         <div id="avisoGaleriaNueva" class="aviso" style="display: none;"></div>
