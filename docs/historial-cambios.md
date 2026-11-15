@@ -393,3 +393,11 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - **Volumen:** el nivel Medio se ajustó a oído (80 → 30 → 60 → **50**; Bajo 12, Alto 512 = máximo posible). Firmware `27b1138`, `54dba6e` y `788eaf5`.
 - **Buzzer con transistor:** el buzzer (pasivo magnético, ~16 Ω) pasó a ir detrás de un transistor NPN con resistencia de 1 kΩ y diodo, alimentado de 3,3 V: el pin del ESP32 no daba la corriente que pide la bobina y el sonido era flojo. Sin cambios de firmware. Esquema en el `README.md` del firmware; las TV nuevas deben fabricarse así.
 - Banco completo de pruebas corrido con Config y las reglas de ajustes incluidos.
+
+**Cierre de la sesión 2026-11-12 → 2026-11-15 (2026-11-15):** pruebas finales del dueño y push de todo.
+
+- **Pruebas en la TV real:** el portal Wi-Fi con clave funciona (la TV muestra la clave, al escribirla abre el portal); **9 envíos seguidos del mismo GIF** (23 233 B) sin errores: memoria libre estable entre 104 y 105 KB, descarga de 0,85 a 1,03 s cada una, sin reinicios. Con el volumen y el buzzer con transistor, Medio quedó en 50.
+- **Banco completo de pruebas en verde** (31 suites; en la primera vuelta `mas` falló por una expectativa vieja —esperaba tres opciones de menú y ahora son cuatro— y se corrigió la prueba).
+- **Push** de `rediseno-app` y `main` (panel) y de `esp32` y `main` (firmware); **APK de depuración** nueva instalada en el teléfono del dueño.
+- **Documentación de cierre:** `docs/auditoria-alcance.md` reescrito con las tres zonas (A ya auditado, B esta sesión, C sesiones posteriores) para la auditoría final; recordatorio de la subida a Google Play en `CLAUDE.md` sección 9; reglas nuevas de trabajo (pruebas largas solo con la versión final confirmada; cada sesión añade su fila a la sección 8 de la auditoría).
+- **Siguiente conversación:** Juegos (reescribir los 4 sin licencia).

@@ -1,6 +1,8 @@
 # APK: compilar, firmar y publicar
 
-Estado: **2026-11-12** (Etapa 3 de la auditoría). La APK de depuración que el dueño tiene instalada es anterior; esta guía es para la siguiente.
+Estado: **2026-11-12** (Etapa 3 de la auditoría). La APK de depuración que el dueño tiene instalada es de **2026-11-15** (con Más, Alarma y Config); esta guía es para la de publicación.
+
+> **RECORDATORIO (pedido del dueño, 2026-11-15):** cuando el dueño avise, en una conversación nueva, que va a subir la app a Google Play, **Claude lo ayuda a empaquetarla en el formato que Google exige (AAB firmado, `gradlew bundleRelease`)**. Antes hay que confirmar nombre y paquete (`com.tvretro.app` es provisional), respaldar el keystore y registrar la huella de Play App Signing en Firebase (ver "Antes de subir a Google Play" más abajo).
 
 ## Qué lleva la APK ahora
 

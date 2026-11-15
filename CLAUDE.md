@@ -27,6 +27,8 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - **No hacer push ni merge a `main` sin pedido explícito** del dueño (en cada ocasión; un permiso anterior no vale para la siguiente).
 - Verificar antes de commitear: `node --check js/<archivo>.js` y probar en el navegador (ver sección 7).
 - Mantener los finales de línea CRLF de los archivos que ya los tienen.
+- **Pruebas largas (bobos, panel, emulador de reglas…): NO correrlas durante la edición de un cambio**; solo cuando el dueño confirme que esa versión es la final (acordado 2026-11-14). Para medir "sin scroll" o comprobar algo puntual sí se puede probar una cosa.
+- **Al cerrar una sesión que cambió código: añadir su fila en `docs/auditoria-alcance.md` sección 8** (fecha, commits de cada repo, qué cambió, qué mirar). Así la auditoría final sabe qué es nuevo.
 
 ### Código
 - **No migrar a React/Vue/otro framework.** HTML/CSS/JS puro, módulos ES.
@@ -131,6 +133,12 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - **Vinculación automática:** la TV muestra sola su código si no tiene dueño (sin gesto de pulsado largo); la desvinculación llega con `oled_remota/version = -2`. Probado de punta a punta con la TV real (`rt3gkm4u6j`).
   - **Entrada unificada** (botón A, botón de la rueda y rueda) y **modo Juegos** con 5 juegos (Snake, Breakout, Flappy, Invaders, Jump) probados por el dueño. Ver `docs/juegos-y-controles.md`. **4 de los 5 derivan de un repo sin licencia: reescribirlos antes de vender.**
   - **APK nueva** (con Compartir) compilada e instalada en el teléfono del dueño (build debug; `ANDROID_HOME` y JDK 21 portable hacen falta para compilarla).
+- **Sesión del 2026-11-12 al 2026-11-15 (cierre, TODO subido a `main` de los dos repos el 2026-11-15; APK de depuración nueva en el teléfono del dueño):**
+  - **Arreglos de la auditoría (Etapas 1 a 5):** reglas cerradas y publicadas, correo verificado, Google (web y nativo), APK lista para publicar y que abre sin internet, botón Atrás, TLS verificado y portal Wi-Fi con clave en el firmware, baja de cuenta y política de privacidad.
+  - **Funciones nuevas:** pestaña **Más** (menú Galería | Juegos | Alarma | Config), **juegos desde la app** (`tipo "juego"`), **Alarma** (hasta 3, tono de canción, la TV la guarda y suena sin celular; 12 h; se calla al minuto), **Config** (Mi cuenta; Ajustes de la TV: brillo, volumen y zona horaria con el campo nuevo `dispositivos/{id}/ajustes`; Ayuda y contacto; Legal con `ayuda.html`, `terminos.html` y `licencias.html`).
+  - **Firmware:** `sonido.cpp` (todos los sonidos con PWM propio y volumen), `alarma.cpp`, `ajustes.cpp`. **Hardware:** el buzzer ahora va detrás de un transistor NPN (esquema en el `README.md` del firmware; las TV nuevas deben llevarlo).
+  - **Probado por el dueño en teléfono y TV reales:** todo lo anterior, el portal Wi-Fi con clave y 9 envíos seguidos del mismo GIF con la memoria estable (~105 KB libres). Banco completo de pruebas en verde (31 suites; detalle en `docs/auditoria-alcance.md` sección 5).
+  - **Auditoría final:** lo hecho en esta sesión NO está auditado por un tercero; `docs/auditoria-alcance.md` dice exactamente qué auditar y qué no.
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases
@@ -156,38 +164,41 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - [docs/firmware-fuentes.md](docs/firmware-fuentes.md): especificación de fuentes, posición manual y scroll.
 - [docs/juegos-y-controles.md](docs/juegos-y-controles.md): controles (botón A, rueda, botón de la rueda), modo Juegos, arquitectura, licencias de los juegos y pendientes.
 - [docs/seguridad-puesta-en-marcha.md](docs/seguridad-puesta-en-marcha.md): pasos 7, 8 y 9 de cuentas, límites y compartir; plan de vuelta atrás.
-- [docs/auditoria-alcance.md](docs/auditoria-alcance.md): qué cubrió la auditoría del 2026-11-12, estado de sus 27 hallazgos, qué código cambió desde entonces y qué falta; **leerlo antes de la auditoría final** para no repetir lo ya revisado.
+- [docs/auditoria-alcance.md](docs/auditoria-alcance.md): **LEERLO ENTERO antes de auditar.** Divide el proyecto en tres zonas: A (ya auditado en 2026-11-12: no repetir), B (todo lo hecho en la sesión 2026-11-12 → 11-15: auditar) y C (lo que se haga después, registrado en su sección 8: auditar). Trae además el estado de los 27 hallazgos, las pruebas y lo que falta.
 - **Al hacer un cambio, actualizar la documentación que corresponda** (este archivo si cambia una regla, el contrato o el estado; `historial-cambios.md` siempre).
 
-## 9. Panorama pendiente (al 2026-11-12, para retomar en otra conversación)
+## 9. Panorama pendiente (al 2026-11-15, para retomar en otra conversación)
 
-Lo hecho está en la sección 5 y en `docs/historial-cambios.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
+Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
+
+**Siguiente: JUEGOS (conversación aparte)**
+- Reescribir desde cero Snake, Breakout, Flappy e Invaders (derivan de un repo sin licencia, `chifunt/phone-project`; Jump es Unlicense y se queda), pulir tiempos y estética, récords en NVS, botón A capacitivo. Detalle en `docs/juegos-y-controles.md`. La carpeta `Juegos/` del firmware (sketches originales del dueño) sigue sin versionar.
+
+**RECORDATORIO — Subir la APK a Google Play (para el final):**
+- Cuando el dueño avise, en una conversación nueva, que va a subir la app a Play Store, **Claude lo ayuda a empaquetarla en el formato que Google exige (AAB firmado)**. El dueño lo pidió expresamente (2026-11-15): no dejar pasar este paso.
+- Guía y estado en `docs/apk-publicacion.md` (`gradlew bundleRelease`, clave de subida `C:\Proyectos\TV_RETRO-claves\tvretro-subida.jks`). Antes: **confirmar nombre y paquete** (`com.tvretro.app` es provisional y no se puede cambiar después de publicar), respaldar el keystore y `keystore.properties` fuera de este equipo, registrar en Firebase la huella SHA-1 de Play App Signing, probar el AAB en la pista interna y revisar la política de privacidad y los términos con un abogado.
+
+**Otros detalles antes de vender**
+- `ENTRADA_LOG` a 0 en el firmware de producción (`entrada.h`).
+- Fabricar las TV con el buzzer detrás del transistor (ver `README.md` del firmware).
+- Alerta de presupuesto en Firebase si se pasa a Blaze.
+- Correos de Firebase caen en spam: plantilla en español con remitente "TV RETRO" y, a futuro, dominio propio con SPF/DKIM.
 
 **Panel y app**
-- **Pestaña "Más"** (decidida): reemplaza a "Galería" en la barra inferior; adentro un selector de subvistas **Galería | Juegos | Alarma | Config**, con Galería por defecto y recordando la última usada. Cada subvista sin scroll en 390×844 y 360×740. Respetar la regla de no cambiar IDs ni `data-valor` existentes (se añade, no se renombra). Alarma y Config las pospuso el dueño: primero se hace "Más" con Galería y Juegos.
-- **Juegos desde la app:** tarjetas con "Jugar" que abren el juego en la TV. Necesita campo nuevo (idea: `pantalla.tipo = "juego"`, nombre del juego); un firmware viejo debe ignorarlo. Proponer y aprobar antes.
-- **Alarma:** vive en la TV (suena sin celular ni Wi-Fi): la app la configura (hora, días, tono), la TV la guarda en NVS y usa NTP. El tono es una canción de los musicales (se baja y guarda en LittleFS); el botón la silencia o pospone. Falta decidir: una o varias, días de la semana, posponer. Necesita zona horaria (va en Config).
-- **Config:** zona horaria, volumen, nombre de la TV, brillo (a definir por el dueño).
-- **Miembros con nombre:** hoy se ven como "Persona 1…5"; mejora posible: que el invitado ponga un nombre. El límite de 5 lo aplica solo el panel (las reglas no pueden contar hijos).
-- **QR** en vez de escribir el código (dibujo difícil en la OLED 128×64; pendiente a futuro).
+- **Configuración de Wi-Fi por Bluetooth** desde la app y vinculación automática (decidido el 2026-11-14; web e iOS conservan el portal).
+- **Miembros con nombre:** hoy se ven como "Persona 1…5"; el límite de 5 lo aplica solo el panel.
+- **QR** en vez de escribir el código (dibujo difícil en la OLED 128×64).
 - **Tutorial guiado** (por eso las pestañas no llevan textos explicativos).
-- **Anuncios con recompensa:** necesitan un servidor que verifique el anuncio (idea: Cloudflare Worker gratis que escribe `extra`/`extraAnimaciones` en `cuotas`); sin diseñar.
-- **Anti abuso:** exigir correo verificado para guardar (no hecho).
-- **Correos de Firebase caen en spam:** plantilla en español con remitente "TV RETRO" y, a futuro, dominio propio con SPF/DKIM antes de vender (el dueño revisa el costo).
-- **`carga-masiva.html`:** opción de administrador para gestionar la biblioteca predeterminada ("luego las administro bien").
-- **APK:** confirmar nombre y paquete antes de Play Store (ver memoria `capacitor-nombre-paquete`); falta una APK de release firmada. La instalada es de depuración.
+- **Anuncios con recompensa:** necesitan un servidor que verifique el anuncio (idea: Cloudflare Worker); sin diseñar.
+- **`carga-masiva.html`:** opción de administrador para gestionar la biblioteca predeterminada.
+- Calidad y arquitectura (hallazgos abiertos de la auditoría): H-12, H-13 (`main.js` ~3 800 líneas), H-15, H-16, H-18 (pruebas dentro del repo y CI), H-22 a H-24, H-26 y H-27.
 
 **Firmware**
-- **Juegos:** pulir tiempos y estética; reescribir Snake, Breakout, Flappy e Invaders (sin licencia; Jump es Unlicense); récords en NVS; botón A capacitivo; `ENTRADA_LOG` a 0 en producción. Detalle en `docs/juegos-y-controles.md`.
-- **Mando por el celular** (WebSocket local o BLE).
-- **OTA** (la tabla de particiones ya la deja preparada).
-- **Restablecimiento de fábrica / reventa:** si el dueño pierde su cuenta, hoy no hay forma de soltar la TV sin tocar la base; hace falta un gesto físico o un comando por cable.
-- **Fabricación a escala:** hoy cada TV se fabrica por cable con `herramientas/fabricar-tv.cjs` (clave de servicio temporal, que se borra al terminar). Si se venden muchas hay que automatizarlo.
-- Pendiente menor: probar un GIF grande en la placa y leer el log `[github] … en N ms`.
+- **Mando por el celular** (WebSocket local o BLE), **OTA** (la tabla de particiones ya la deja preparada), **restablecimiento de fábrica / reventa** (si el dueño pierde su cuenta no hay forma de soltar la TV sin tocar la base), acuse de recibo de la TV (H-06), **fabricación a escala** (hoy cada TV se fabrica por cable con `herramientas/fabricar-tv.cjs`, con clave de servicio temporal).
 
 **Operación y entorno**
-- Pruebas FUERA del repo en `C:\Proyectos\pruebas-tv-retro` (hay un `.zip` de respaldo al lado): `pruebas-panel.mjs`, `bobos.mjs`, `mono.mjs`, `login.mjs` (12), `tv.mjs` (12), `compartir.mjs` (8), `cuotas.mjs` (15), `carga-masiva-cuentas.mjs` (6), `por-defecto.mjs`, y con el emulador: `reglas.mjs` (244 con `REGLAS_ARCHIVO=…database.rules.json`), `simular-tv.cjs` (19), `probar-migracion.cjs` (12), `probar-biblioteca.cjs` (5). Necesitan **Node 22** (Node 26 se cae) y **JDK 21 portable** (`…\Temp\jdk21-descarga`; si ya no está, volver a bajarlo) para los emuladores.
-- Compilar la APK: `node copiar-web.mjs`, `npx cap sync android` y `./gradlew assembleDebug` en `app-android/android` con `ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk` y JDK 21; `adb install -r`.
-- Compilar el firmware con `arduino-cli` a veces falla por "Access is denied", "CreateProcess" o un segfault del compilador (antivirus o poca memoria): reintentar, con `--jobs 2`.
+- Pruebas FUERA del repo en `C:\Proyectos\pruebas-tv-retro` (31 suites; lista y resultados en `docs/auditoria-alcance.md` sección 5). Necesitan **Node 22** (Node 26 se cae) y el JDK de Android Studio (`C:\Program Files\Android\Android Studio\jbr`) para los emuladores. Una corrida cortada puede dejar un `tv.mjs` ocupando el puerto 8765: cerrarlo antes de repetir.
+- Compilar la APK: `node copiar-web.mjs` y `npx cap sync android` en `app-android`, luego Gradle 9.5 (`assembleDebug`, `--offline`) en `app-android/android` con `JAVA_HOME` del JDK de Android Studio y `ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk`; `adb install -r`.
+- Compilar y grabar el firmware con `arduino-cli` (`esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,FlashMode=qio,PartitionScheme=custom`, puerto COM6; a veces falla por "CreateProcess" o "Access is denied": reintentar con `--jobs 1`). **Abrir el puerto serie reinicia la TV.**
 - La hora de Windows se desfasó 5 h una vez (servicio de hora detenido): rompe la firma de la clave de servicio.
 - Las herramientas que usan el Admin SDK necesitan una clave de servicio nueva (la anterior se borró); generarla y borrarla al terminar.
