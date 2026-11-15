@@ -388,3 +388,8 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pruebas escritas: `config.mjs` (11, corrida: 11 bien) y `reglas-ajustes.mjs` (sin correr, va con el banco completo cuando el dueño confirme).
 - Los 4 juegos sin licencia NO se listan en `licencias.html` (hay que reescribirlos antes de vender).
 
+**Ajustes de la TV: cierre (2026-11-15):** el dueño publicó las reglas con `ajustes` (`database.rules.json` = publicado; las anteriores en `database.rules.sin-ajustes.json`) y probó Config en la TV real: brillo, volumen y zona funcionan.
+
+- **Volumen:** el nivel Medio se ajustó a oído (80 → 30 → 60 → **50**; Bajo 12, Alto 512 = máximo posible). Firmware `27b1138`, `54dba6e` y `788eaf5`.
+- **Buzzer con transistor:** el buzzer (pasivo magnético, ~16 Ω) pasó a ir detrás de un transistor NPN con resistencia de 1 kΩ y diodo, alimentado de 3,3 V: el pin del ESP32 no daba la corriente que pide la bobina y el sonido era flojo. Sin cambios de firmware. Esquema en el `README.md` del firmware; las TV nuevas deben fabricarse así.
+- Banco completo de pruebas corrido con Config y las reglas de ajustes incluidos.

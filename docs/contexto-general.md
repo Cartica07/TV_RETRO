@@ -143,6 +143,8 @@ Carpeta `OLED_Remota/` del repo del firmware. El detalle está en su `README.md`
 | `pantalla.cpp` | Dibujo general, imagen, reloj; delega texto, animación y musical. |
 | `texto.cpp`, `fuentes.cpp` | Texto igual a la vista previa; `fuentes.cpp` lo genera `herramientas/generar_fuentes.js` desde `js/fuentesGfx.js`. |
 | `buzzer.cpp` | Canciones (`/current_song.bin`), aviso de mensaje nuevo. |
+| `sonido.cpp` | Único lugar que hace sonar el buzzer (PWM propio; volumen por ancho de pulso). El buzzer va detrás de un transistor NPN (ver `README.md` del firmware). |
+| `ajustes.cpp`, `alarma.cpp` | Ajustes de la TV (brillo, volumen, zona horaria; NVS) y alarmas (hasta 3, con tono de canción); ambos se leen de `dispositivos/{id}/…` y se guardan en la NVS. |
 | `animacion.cpp` | Animaciones en LittleFS (viejas y z1), descomprime con `tinfl` de la ROM. |
 | `musical.cpp` | Reproductor de musicales m1: notas y línea de tiempo en memoria; imágenes descomprimidas al dibujarlas. |
 | `reloj.cpp`, `clima.cpp` | Modo reloj (NTP) y clima de Open-Meteo (Armenia, Quindío). |
