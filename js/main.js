@@ -46,7 +46,10 @@ import {
   cargarAlarma,
   guardarAlarma,
   normalizarAlarma,
-  CANTIDAD_ALARMAS
+  CANTIDAD_ALARMAS,
+  cargarAjustes,
+  guardarAjustes,
+  normalizarAjustes
 } from './firebase.js';
 import {
   procesarImagen,
@@ -754,6 +757,7 @@ function mostrarSeccionSegunTipo(tipo) {
   const enMenu = enMas && masVista === 'menu';
   const enJuegos = enMas && masVista === 'juegos';
   const enAlarma = enMas && masVista === 'alarma';
+  const enConfig = enMas && masVista === 'config';
   const enGaleria = enMas && masVista === 'galeria';
 
   Object.keys(secciones).forEach((clave) => {
@@ -772,9 +776,16 @@ function mostrarSeccionSegunTipo(tipo) {
   if (elementos.seccionMasSelector) elementos.seccionMasSelector.style.display = enMenu ? 'block' : 'none';
   if (elementos.seccionJuegos) elementos.seccionJuegos.style.display = enJuegos ? 'block' : 'none';
   if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';
+  // Config: la lista de apartados o uno de ellos.
+  const apartados = { lista: elementos.seccionConfig, cuenta: elementos.configCuenta, tv: elementos.configTV, ayuda: elementos.configAyuda, legal: elementos.configLegal };
+  Object.entries(apartados).forEach(([clave, el]) => {
+    if (el) el.style.display = (enConfig && configVista === clave) ? 'block' : 'none';
+  });
   if (elementos.cabeceraMas) {
     elementos.cabeceraMas.style.display = (enMas && !enMenu) ? '' : 'none';
-    if (elementos.tituloMas) elementos.tituloMas.textContent = enJuegos ? 'Juegos' : (enAlarma ? 'Alarma' : 'Galería');
+    if (elementos.tituloMas) {
+      elementos.tituloMas.textContent = enJuegos ? 'Juegos' : enAlarma ? 'Alarma' : enConfig ? TITULOS_CONFIG[configVista] : 'Galería';
+    }
   }
   // En el menú y en Juegos (cada fila tiene su "Jugar") no se usa el botón general de enviar.
   document.body.classList.toggle('sin-barra-accion', enMas && !enGaleria);
@@ -788,16 +799,113 @@ function mostrarSeccionSegunTipo(tipo) {
   }
 }
 
-// ---- Más: menú (Galería, Juegos, Alarma) ----
-// 'menu' | 'galeria' | 'juegos' | 'alarma'. Al tocar "Más" abajo siempre se ve el menú.
+// ---- Más: menú (Galería, Juegos, Alarma, Config) ----
+// 'menu' | 'galeria' | 'juegos' | 'alarma' | 'config'. Al tocar "Más" abajo siempre se ve el menú.
 let masVista = 'menu';
+// Dentro de Config: 'lista' | 'cuenta' | 'tv' | 'ayuda' | 'legal'.
+let configVista = 'lista';
+const TITULOS_CONFIG = { lista: 'Config', cuenta: 'Mi cuenta', tv: 'Ajustes de la TV', ayuda: 'Ayuda y contacto', legal: 'Legal' };
 
 function cambiarMasVista(vista) {
-  masVista = (vista === 'juegos' || vista === 'galeria' || vista === 'alarma') ? vista : 'menu';
+  masVista = ['juegos', 'galeria', 'alarma', 'config'].includes(vista) ? vista : 'menu';
+  configVista = 'lista';
   mostrarSeccionSegunTipo(estadoActual.tipo);
   if (window.scrollY > 0) window.scrollTo(0, 0);
   renderizar();
   if (masVista === 'alarma') abrirAlarma();
+}
+
+// Un apartado de Config (o de vuelta a su lista).
+function abrirApartadoConfig(apartado) {
+  configVista = Object.prototype.hasOwnProperty.call(TITULOS_CONFIG, apartado) ? apartado : 'lista';
+  mostrarSeccionSegunTipo(estadoActual.tipo);
+  if (window.scrollY > 0) window.scrollTo(0, 0);
+  if (configVista === 'cuenta') mostrarMiCuenta();
+  if (configVista === 'tv') abrirAjustesTV();
+}
+
+// "Volver" (y el Atrás de la APK) dentro de Más: de un apartado de Config a su lista; si no, al menú.
+function volverEnMas() {
+  if (masVista === 'config' && configVista !== 'lista') abrirApartadoConfig('lista');
+  else cambiarMasVista('menu');
+}
+
+// ---- Config > Mi cuenta ----
+function mostrarMiCuenta() {
+  const correo = sesionActual && sesionActual.email ? sesionActual.email : '';
+  elementos.configCorreo.textContent = correo || 'Sin sesión';
+  // Sin cuentas (solo pruebas locales) no hay nada que cerrar ni eliminar.
+  elementos.botonConfigCerrarSesion.disabled = !sesionActual;
+  elementos.botonConfigEliminarCuenta.disabled = !sesionActual;
+  elementos.botonConfigMisTV.disabled = !sesionActual;
+}
+
+// ---- Config > Ajustes de la TV ----
+let ajustesDatos = normalizarAjustes(null);
+let turnoAjustes = 0;
+
+function marcarOpcion(grupo, valor) {
+  grupo.querySelectorAll('button[data-valor]').forEach((b) => {
+    b.setAttribute('aria-pressed', b.dataset.valor === String(valor) ? 'true' : 'false');
+  });
+}
+
+function volcarAjustesEnPantalla() {
+  marcarOpcion(elementos.grupoBrillo, ajustesDatos.brillo);
+  marcarOpcion(elementos.grupoVolumen, ajustesDatos.volumen);
+  const sel = elementos.ajusteZona;
+  const valor = String(ajustesDatos.zona);
+  // Una zona guardada que no está en la lista (ej. puesta desde otro lado) se muestra igual.
+  if (![...sel.options].some((o) => o.value === valor)) {
+    const opt = document.createElement('option');
+    const horas = ajustesDatos.zona / 60;
+    opt.value = valor;
+    opt.textContent = `UTC${horas >= 0 ? '+' : '−'}${Math.abs(horas)}`;
+    sel.appendChild(opt);
+  }
+  sel.value = valor;
+}
+
+function leerAjustesDePantalla() {
+  const elegido = (grupo, defecto) => {
+    const b = grupo.querySelector('button[aria-pressed="true"]');
+    return b ? Number(b.dataset.valor) : defecto;
+  };
+  ajustesDatos = normalizarAjustes({
+    brillo: elegido(elementos.grupoBrillo, ajustesDatos.brillo),
+    volumen: elegido(elementos.grupoVolumen, ajustesDatos.volumen),
+    zona: Number(elementos.ajusteZona.value)
+  });
+}
+
+async function abrirAjustesTV() {
+  const turno = ++turnoAjustes;
+  volcarAjustesEnPantalla();
+  const r = await cargarAjustes();
+  if (turno !== turnoAjustes || masVista !== 'config' || configVista !== 'tv') return; // se fue mientras tanto
+  if (r.exito) {
+    ajustesDatos = r.ajustes;
+    volcarAjustesEnPantalla();
+  } else {
+    marcarEstado('No se pudieron leer los ajustes de la TV. Revisa tu internet.', 'error', elementos);
+  }
+}
+
+async function guardarAjustesEnLaTV() {
+  await sinRepetir('ajustes', elementos.botonGuardarAjustes, async () => {
+    leerAjustesDePantalla();
+    turnoEnvio++;
+    marcarEstado('Guardando…', null, elementos);
+    activarLedTransmision(elementos);
+    try {
+      mostrarResultadoEnvio(await guardarAjustes(ajustesDatos, estadoActual), 'Ajustes guardados ✅ Ya van camino a la TV.');
+    } catch (err) {
+      console.error('Error al guardar los ajustes:', err);
+      marcarEstado('Error desconocido al guardar los ajustes.', 'error', elementos);
+    } finally {
+      desactivarLedTransmision(elementos);
+    }
+  });
 }
 
 // ---- Más > Alarma ----
@@ -2512,8 +2620,38 @@ function configurarEventos() {
     });
   }
   if (elementos.botonMasVolver) {
-    elementos.botonMasVolver.addEventListener('click', () => cambiarMasVista('menu'));
+    elementos.botonMasVolver.addEventListener('click', volverEnMas);
   }
+  // Config: apartados, Mi cuenta y Ajustes de la TV.
+  if (elementos.grupoConfig) {
+    elementos.grupoConfig.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-config]');
+      if (btn) abrirApartadoConfig(btn.dataset.config);
+    });
+  }
+  if (elementos.botonConfigMisTV) {
+    elementos.botonConfigMisTV.addEventListener('click', () => { if (sesionActual) mostrarPantallaTV('gestionar'); });
+  }
+  if (elementos.botonConfigCerrarSesion) {
+    elementos.botonConfigCerrarSesion.addEventListener('click', () => {
+      if (sesionActual) sinRepetir('salir', elementos.botonConfigCerrarSesion, () => cerrarSesion());
+    });
+  }
+  if (elementos.botonConfigEliminarCuenta) {
+    elementos.botonConfigEliminarCuenta.addEventListener('click', () => {
+      if (!sesionActual) return;
+      mostrarPantallaTV('gestionar'); // la baja vive en Mi TV (Cancelar vuelve a Mis TV)
+      abrirEliminarCuenta();
+    });
+  }
+  [elementos.grupoBrillo, elementos.grupoVolumen].forEach((grupo) => {
+    if (!grupo) return;
+    grupo.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-valor]');
+      if (btn) marcarOpcion(grupo, btn.dataset.valor);
+    });
+  });
+  if (elementos.botonGuardarAjustes) elementos.botonGuardarAjustes.addEventListener('click', guardarAjustesEnLaTV);
   // Alarma: elegir cuál (1, 2 o 3), días, interruptor y guardar.
   if (elementos.grupoAlarmaNumero) {
     elementos.grupoAlarmaNumero.addEventListener('click', (e) => {
@@ -3577,10 +3715,11 @@ function cerrarCapaSuperior() {
     return true;
   }
   const el = elementos;
-  // Dentro de una opción de Más (Galería o Juegos): Atrás vuelve al menú.
+  // Dentro de una opción de Más (Galería, Juegos, Alarma, Config): Atrás vuelve un paso
+  // (de un apartado de Config a su lista; si no, al menú de Más).
   if (el.pantallaLogin.hidden && el.pantallaTV.hidden && masVista !== 'menu' &&
       (estadoActual.tipo === 'galeria' || estadoActual.tipo === 'animacion')) {
-    cambiarMasVista('menu');
+    volverEnMas();
     return true;
   }
   if (!el.pantallaLogin.hidden || el.pantallaTV.hidden) return false;

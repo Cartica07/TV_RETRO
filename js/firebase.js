@@ -833,8 +833,8 @@ export async function cargarEstado() {
       }
 
       return {
-        // "juego" y "alarma" son órdenes para la TV, no contenido: el panel las muestra como Texto.
-        tipo: ((pantalla.tipo === 'juego' || pantalla.tipo === 'alarma') ? 'texto' : pantalla.tipo) || 'texto',
+        // "juego", "alarma" y "ajustes" son órdenes para la TV, no contenido: el panel las muestra como Texto.
+        tipo: (['juego', 'alarma', 'ajustes'].includes(pantalla.tipo) ? 'texto' : pantalla.tipo) || 'texto',
         texto: (typeof pantalla.texto === 'string') ? pantalla.texto : 'Hola Mundo',
         tamano: Number(config.tamano) || 2,
         alineacion: config.alineacion || 'centro',
@@ -1290,6 +1290,55 @@ export async function guardarAlarma(datos, estado) {
   return await enviarEstado(Object.assign({}, estado, { tipo: 'alarma' }));
 }
 
+// ===================================================
+// Ajustes de la TV (Más > Config > Ajustes de la TV)
+// ===================================================
+// dispositivos/{id}/ajustes = { brillo: 1..3, volumen: 0..3, zona: minutos respecto de la hora
+// universal (ej. -300 = Colombia) }. La TV los guarda; el panel solo los configura.
+export const AJUSTES_DEFECTO = { brillo: 3, volumen: 3, zona: -300 };
+
+const rutaAjustes = () => (contexto ? `dispositivos/${contexto.dispositivo}/ajustes` : 'ajustes');
+
+export function normalizarAjustes(datos) {
+  const d = datos && typeof datos === 'object' ? datos : {};
+  return {
+    brillo: entero(d.brillo, 1, 3, AJUSTES_DEFECTO.brillo),
+    volumen: entero(d.volumen, 0, 3, AJUSTES_DEFECTO.volumen),
+    zona: entero(d.zona, -720, 840, AJUSTES_DEFECTO.zona)
+  };
+}
+
+/** Lee los ajustes de la TV. { exito, ajustes } (con valores por defecto si aún no hay) o { exito: false, error }. */
+export async function cargarAjustes() {
+  try {
+    const snap = await esperarHasta(get(ref(db, rutaAjustes())), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta.' };
+    return { exito: true, ajustes: normalizarAjustes(snap.exists() ? snap.val() : null) };
+  } catch (error) {
+    console.error('Error al leer los ajustes de la TV:', error);
+    return { exito: false, error: describirError(error) };
+  }
+}
+
+/**
+ * Guarda los ajustes y le avisa a la TV (orden tipo "ajustes"; la TV vuelve a leer
+ * dispositivos/{id}/ajustes). Devuelve lo mismo que enviarEstado().
+ */
+export async function guardarAjustes(datos, estado) {
+  const ajustes = normalizarAjustes(datos);
+  try {
+    const lento = await conTope(set(ref(db, rutaAjustes()), ajustes));
+    if (lento) {
+      const final = await lento.escritura;
+      if (!final.exito) return { exito: false, error: final.error };
+    }
+  } catch (error) {
+    console.error('Error al guardar los ajustes de la TV:', error);
+    return { exito: false, error: describirError(error) };
+  }
+  return await enviarEstado(Object.assign({}, estado, { tipo: 'ajustes' }));
+}
+
 /**
  * Envía la configuración actualizada a Firebase
  */
@@ -1363,6 +1412,9 @@ export async function enviarEstado(estado) {
     } else if (estado.tipo === 'alarma') {
       // Orden "vuelve a leer la alarma" (Más > Alarma). No lleva datos: viven en dispositivos/{id}/alarma.
       pantallaPayload.tipo = 'alarma';
+    } else if (estado.tipo === 'ajustes') {
+      // Orden "vuelve a leer los ajustes" (Más > Config). Los datos viven en dispositivos/{id}/ajustes.
+      pantallaPayload.tipo = 'ajustes';
     } else if (estado.tipo === 'juego') {
       // Orden "abre este juego" (Más > Juegos). No es contenido: la TV lo toma como
       // un comando y sigue mostrando lo que tenía. Un firmware que no lo conozca lo ignora.
