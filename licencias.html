@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B0F14" />
+  <meta name="color-scheme" content="dark" />
+  <title>TV RETRO · Licencias</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: var(--fuente-ui);
+      line-height: 1.6;
+      padding: var(--esp-5) 16px 48px;
+      -webkit-text-size-adjust: 100%;
+    }
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: var(--texto-xl); margin: 0 0 var(--esp-1); }
+    h2 { font-size: var(--texto-lg); margin: var(--esp-6) 0 var(--esp-2); color: var(--acento); }
+    p, li { font-size: var(--texto-md); color: var(--texto); }
+    p { margin: 0 0 var(--esp-3); }
+    ul { margin: 0 0 var(--esp-3); padding-left: 22px; }
+    li { margin-bottom: var(--esp-2); }
+    a { color: var(--acento); }
+    .fecha { color: var(--texto-2); font-size: var(--texto-sm); margin-bottom: var(--esp-5); }
+    .caja {
+      background: var(--superficie);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-md);
+      padding: var(--esp-4);
+      margin: 0 0 var(--esp-3);
+    }
+    .caja p:last-child, .caja ul:last-child { margin-bottom: 0; }
+    .volver { display: inline-block; margin-bottom: var(--esp-4); font-size: var(--texto-sm); }
+  </style>
+</head>
+<body>
+<main>
+  <a class="volver" href="./">← Volver a TV RETRO</a>
+  <h1>Licencias</h1>
+  <p class="fecha">TV RETRO · Última actualización: 14 de noviembre de 2026</p>
+  <p>TV RETRO usa componentes de software libre de terceros. Gracias a sus autores. Estas son sus licencias:</p>
+
+  <h2>App y panel web</h2>
+    <ul>
+      <li><strong>Firebase JavaScript SDK</strong> (cuentas y base de datos): Apache License 2.0 · <a href="https://github.com/firebase/firebase-js-sdk" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Capacitor</strong> (app de Android): MIT · <a href="https://github.com/ionic-team/capacitor" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>@capacitor/app y @capacitor/screen-orientation</strong> (botón Atrás y orientación): MIT · <a href="https://github.com/ionic-team/capacitor-plugins" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>@capacitor-firebase/authentication</strong> (entrar con Google en Android): Apache License 2.0 · <a href="https://github.com/capawesome-team/capacitor-firebase" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Space Grotesk y JetBrains Mono</strong> (tipografías de la app): SIL Open Font License 1.1 · <a href="https://fonts.google.com" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>GNU FreeFont (FreeSans, FreeSerif)</strong> (letras de la vista previa y de la TV): GPL v3 con excepción de fuentes · <a href="https://www.gnu.org/software/freefont/" target="_blank" rel="noopener">fuente</a></li>
+    </ul>
+
+  <h2>Firmware de la TV</h2>
+    <ul>
+      <li><strong>Arduino core para ESP32</strong> (base del programa de la TV): LGPL 2.1 · <a href="https://github.com/espressif/arduino-esp32" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>ESP-IDF (incluye miniz, mbedTLS y LittleFS)</strong> (sistema, compresión, conexiones seguras y archivos): Apache License 2.0 y licencias de cada componente (MIT, BSD) · <a href="https://github.com/espressif/esp-idf" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Adafruit GFX Library</strong> (dibujo en la pantalla): BSD · <a href="https://github.com/adafruit/Adafruit-GFX-Library" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Adafruit SSD1306</strong> (pantalla OLED): BSD · <a href="https://github.com/adafruit/Adafruit_SSD1306" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Adafruit BusIO</strong> (comunicación con la pantalla): MIT · <a href="https://github.com/adafruit/Adafruit_BusIO" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>ArduinoJson</strong> (lectura de datos): MIT · <a href="https://github.com/bblanchon/ArduinoJson" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>WiFiManager</strong> (configuración del Wi-Fi): MIT · <a href="https://github.com/tzapu/WiFiManager" target="_blank" rel="noopener">fuente</a></li>
+      <li><strong>Juego Jump</strong> (basado en esp32-c3-oled-single-button-games de atomic14): Unlicense (dominio público) · <a href="https://github.com/atomic14/esp32-c3-oled-single-button-games" target="_blank" rel="noopener">fuente</a></li>
+    </ul>
+
+  <p>Si quieres el texto completo de alguna licencia o el código fuente que la licencia exige, escríbenos a <a href="mailto:jhoncarta0706@gmail.com">jhoncarta0706@gmail.com</a>.</p>
+</main>
+</body>
+</html>
