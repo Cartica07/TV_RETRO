@@ -374,3 +374,17 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 
 - **Reglas con `alarma` PUBLICADAS por el dueño y firmware de la alarma grabado en la placa (2026-11-14);** la alarma se calla sola **al minuto** (pedido del dueño). `database.rules.json` = lo publicado; las anteriores quedan en `database.rules.sin-alarma.json`.
 - **Hora de la alarma (2026-11-14):** el dueño pidió que la TV muestre la hora como el reloj normal (12 horas, "8:18 PM"), no en 24 horas. Se hizo y se grabó (firmware). Por un malentendido se había cambiado también la hora del panel a listas de 24 horas (`c994349`, `5c8429d`); se revirtió (`406e930`, `f0411c1`): el panel sigue con el campo de hora del navegador. Además, una alarma que llega a su hora mientras otra suena queda atendida y no vuelve a sonar al terminar (antes dos alarmas seguidas sonaban más de un minuto sin parar).
+
+**Config (2026-11-14, Etapa 6):** Más > Config con Mi cuenta, Ajustes de la TV, Ayuda y contacto y Legal (decidido por el dueño, campo nuevo `dispositivos/{id}/ajustes` aprobado).
+
+| Commit | Qué |
+|---|---|
+| `424e4a8` | **Visual:** fila Config en Más, lista de apartados y sus pantallas (correo, Mis TV, cerrar sesión, eliminar cuenta; brillo, volumen, zona horaria y Guardar ajustes; preguntas frecuentes y correo; privacidad, términos y licencias). Sin scroll en 360×740 y 390×844. |
+| `5d477f2` | **Lógica:** apartados con volver (también el Atrás de la APK: apartado → lista → menú), Mi cuenta, `cargarAjustes()` / `guardarAjustes()` y la orden `tipo "ajustes"`. |
+| `049287c` | **Reglas (propuesta, sin publicar):** nodo `ajustes` (brillo 1-3, volumen 0-3, zona -720..840; dueño y miembros escriben, la TV lee) y `tipo = "ajustes"`. |
+| `499a2ab` | **Páginas:** `ayuda.html` (preguntas frecuentes), `terminos.html` (borrador para revisar con un abogado) y `licencias.html` (componentes de terceros con su licencia, revisadas en los paquetes instalados). |
+| firmware `de26b5a` | **Firmware:** `ajustes.cpp/.h` (NVS, contraste, zona `TZ`), `sonido.cpp/.h` (todos los `tone()`/`noTone()` pasan a PWM propio con volumen; la alarma suena aunque esté en Silencio), `sincronizarAjustes()` en `github.cpp`, lectura al conectarse en `red.cpp` y `ajustes` como orden en el `.ino`. Compila (1 515 510 bytes); **sin grabar ni probar**. |
+
+- Pruebas escritas: `config.mjs` (11, corrida: 11 bien) y `reglas-ajustes.mjs` (sin correr, va con el banco completo cuando el dueño confirme).
+- Los 4 juegos sin licencia NO se listan en `licencias.html` (hay que reescribirlos antes de vender).
+
