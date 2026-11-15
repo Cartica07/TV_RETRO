@@ -198,7 +198,6 @@ export function obtenerElementos() {
     seccionAlarma: document.getElementById('seccionAlarma'),
     grupoAlarmaNumero: document.getElementById('grupoAlarmaNumero'),
     alarmaHora: document.getElementById('alarmaHora'),
-    alarmaMinuto: document.getElementById('alarmaMinuto'),
     alarmaActiva: document.getElementById('alarmaActiva'),
     grupoAlarmaDias: document.getElementById('grupoAlarmaDias'),
     alarmaTono: document.getElementById('alarmaTono'),
