@@ -33,7 +33,7 @@
           },
           "pantalla": {
             ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
-            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma')",
+            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma' || newData.child('tipo').val() === 'ajustes')",
             "texto": {
               ".validate": "newData.isString() && newData.val().length <= 5000"
             },
@@ -212,6 +212,22 @@
                 ".validate": false
               }
             }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        },
+        "ajustes": {
+          ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['brillo', 'volumen', 'zona'])",
+          "brillo": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 3"
+          },
+          "volumen": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 3"
+          },
+          "zona": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= -720 && newData.val() <= 840"
           },
           "$otro": {
             ".validate": false
