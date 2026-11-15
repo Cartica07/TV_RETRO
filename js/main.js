@@ -813,7 +813,8 @@ const dosDigitos = (n) => String(n).padStart(2, '0');
 function volcarAlarmaEnPantalla() {
   const el = elementos;
   const a = alarmaDatos.alarmas[alarmaSel];
-  el.alarmaHora.value = `${dosDigitos(a.hora)}:${dosDigitos(a.minuto)}`;
+  el.alarmaHora.value = String(a.hora);     // 0..23 (formato de 24 horas)
+  el.alarmaMinuto.value = String(a.minuto); // 0..59
   el.alarmaActiva.checked = a.activa;
   el.grupoAlarmaDias.querySelectorAll('button[data-dia]').forEach((b) => {
     b.setAttribute('aria-pressed', (a.dias >> Number(b.dataset.dia)) & 1 ? 'true' : 'false');
@@ -832,11 +833,13 @@ function volcarAlarmaEnPantalla() {
 function leerAlarmaDePantalla() {
   const el = elementos;
   const a = alarmaDatos.alarmas[alarmaSel];
-  const m = /^(\d{1,2}):(\d{2})/.exec(el.alarmaHora.value || '');
-  const hayHora = !!m;
-  if (m) {
-    a.hora = Math.min(23, Number(m[1]));
-    a.minuto = Math.min(59, Number(m[2]));
+  const hora = Number(el.alarmaHora.value);
+  const minuto = Number(el.alarmaMinuto.value);
+  const hayHora = el.alarmaHora.value !== '' && el.alarmaMinuto.value !== '' &&
+    Number.isInteger(hora) && Number.isInteger(minuto) && hora >= 0 && hora <= 23 && minuto >= 0 && minuto <= 59;
+  if (hayHora) {
+    a.hora = hora;
+    a.minuto = minuto;
   }
   a.activa = el.alarmaActiva.checked;
   let dias = 0;
