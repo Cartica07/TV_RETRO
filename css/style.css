@@ -1486,15 +1486,32 @@ body.sin-barra-accion .barra-accion {
   gap: var(--esp-3);
 }
 
-.fila-alarma-hora .campo-texto {
+.hora-alarma {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.hora-alarma select {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 var(--esp-3);
   font-family: var(--fuente-data);
   font-size: var(--texto-xl);
   font-weight: 600;
-  letter-spacing: .04em;
   text-align: center;
+  text-align-last: center;
   color-scheme: dark;
+}
+
+.hora-alarma-separador {
+  font-family: var(--fuente-data);
+  font-size: var(--texto-xl);
+  font-weight: 700;
+  color: var(--acento);
 }
 
 .dias-alarma {
