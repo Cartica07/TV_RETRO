@@ -378,6 +378,11 @@
           <span class="nombre-mas">Alarma</span>
           <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
         </button>
+        <button type="button" class="fila-mas" data-mas="config">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nombre-mas">Config</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
       </nav>
     </div>
 
@@ -418,6 +423,126 @@
           <button type="button" class="boton-secundario" data-juego="jump" aria-label="Jugar Jump">Jugar</button>
         </div>
       </div>
+    </div>
+
+    <!-- Config: lista de apartados; cada uno abre su pantalla con título y volver (vuelve a esta lista). -->
+    <div id="seccionConfig" style="display: none;">
+      <nav class="menu-mas" id="grupoConfig" aria-label="Config">
+        <button type="button" class="fila-mas" data-config="cuenta">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="nombre-mas">Mi cuenta</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button type="button" class="fila-mas" data-config="tv">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="7" y1="21" x2="17" y2="21"/></svg>
+          <span class="nombre-mas">Ajustes de la TV</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button type="button" class="fila-mas" data-config="ayuda">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="nombre-mas">Ayuda y contacto</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button type="button" class="fila-mas" data-config="legal">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span class="nombre-mas">Legal</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Config > Mi cuenta -->
+    <div id="configCuenta" class="config-apartado" style="display: none;">
+      <div class="campo">
+        <span class="rotulo">Correo</span>
+        <p class="dato-cuenta" id="configCorreo"></p>
+      </div>
+      <div class="campo">
+        <button type="button" class="fila-mas" id="botonConfigMisTV">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="7" y1="21" x2="17" y2="21"/></svg>
+          <span class="nombre-mas">Mis TV</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </div>
+      <div class="campo">
+        <button type="button" id="botonConfigCerrarSesion" class="boton-contorno">Cerrar sesión</button>
+      </div>
+      <div class="campo">
+        <button type="button" id="botonConfigEliminarCuenta" class="boton-peligro">Eliminar mi cuenta</button>
+      </div>
+    </div>
+
+    <!-- Config > Ajustes de la TV (dispositivos/{id}/ajustes: la TV los guarda) -->
+    <div id="configTV" class="config-apartado" style="display: none;">
+      <div class="campo">
+        <span class="rotulo" id="rotuloBrillo">Brillo</span>
+        <div class="segmento" id="grupoBrillo" role="group" aria-label="Brillo">
+          <button type="button" data-valor="1" aria-pressed="false">Bajo</button>
+          <button type="button" data-valor="2" aria-pressed="false">Medio</button>
+          <button type="button" data-valor="3" aria-pressed="false">Alto</button>
+        </div>
+      </div>
+      <div class="campo">
+        <span class="rotulo" id="rotuloVolumen">Volumen</span>
+        <div class="segmento" id="grupoVolumen" role="group" aria-label="Volumen">
+          <button type="button" data-valor="0" aria-pressed="false">Silencio</button>
+          <button type="button" data-valor="1" aria-pressed="false">Bajo</button>
+          <button type="button" data-valor="2" aria-pressed="false">Medio</button>
+          <button type="button" data-valor="3" aria-pressed="false">Alto</button>
+        </div>
+      </div>
+      <div class="campo">
+        <label class="rotulo" for="ajusteZona">Zona horaria</label>
+        <div class="selector">
+          <select id="ajusteZona">
+            <option value="-300">Colombia, Perú, Ecuador, Panamá</option>
+            <option value="-360">México y Centroamérica</option>
+            <option value="-240">Venezuela, Bolivia, Rep. Dominicana, Puerto Rico</option>
+            <option value="-180">Argentina, Uruguay, Brasil</option>
+          </select>
+          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="campo">
+        <button type="button" id="botonGuardarAjustes" class="boton-primario">Guardar ajustes</button>
+      </div>
+    </div>
+
+    <!-- Config > Ayuda y contacto -->
+    <div id="configAyuda" class="config-apartado" style="display: none;">
+      <nav class="menu-mas" aria-label="Ayuda y contacto">
+        <a class="fila-mas" href="https://cartica07.github.io/TV_RETRO/ayuda.html" target="_blank" rel="noopener">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="nombre-mas">Preguntas frecuentes</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="fila-mas" href="mailto:jhoncarta0706@gmail.com?subject=TV%20RETRO">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>
+          <span class="nombre-mas">Escríbenos</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Config > Legal -->
+    <div id="configLegal" class="config-apartado" style="display: none;">
+      <nav class="menu-mas" aria-label="Legal">
+        <a class="fila-mas" href="https://cartica07.github.io/TV_RETRO/privacidad.html" target="_blank" rel="noopener">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span class="nombre-mas">Política de privacidad</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="fila-mas" href="https://cartica07.github.io/TV_RETRO/terminos.html" target="_blank" rel="noopener">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span class="nombre-mas">Términos y condiciones</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="fila-mas" href="https://cartica07.github.io/TV_RETRO/licencias.html" target="_blank" rel="noopener">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span class="nombre-mas">Licencias</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </nav>
     </div>
 
     <!-- Alarma: hasta 3 alarmas (se edita una por vez), con hora, días y activa; un solo tono

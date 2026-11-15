@@ -1464,6 +1464,59 @@ label.fila-ajuste-titulo {
   min-width: 0;
 }
 
+/* Filas de Más y Config que son enlaces (abren una página o el correo). */
+a.fila-mas {
+  text-decoration: none;
+}
+
+/* Config > Mi cuenta */
+.dato-cuenta {
+  margin: 0;
+  padding: var(--esp-3) var(--esp-4);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  color: var(--texto);
+  font-size: var(--texto-md);
+  overflow-wrap: anywhere;
+}
+
+.boton-contorno {
+  width: 100%;
+  min-height: 52px;
+  background: transparent;
+  color: var(--texto);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-weight: 700;
+  font-size: var(--texto-md);
+  cursor: pointer;
+  transition: border-color .12s ease, background .12s ease;
+}
+
+.boton-contorno:hover:not(:disabled) {
+  border-color: var(--acento-tenue);
+  background: var(--superficie-alta);
+}
+
+.boton-contorno:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+/* Config > Ajustes de la TV: segmentos de brillo y volumen. */
+#grupoBrillo button,
+#grupoVolumen button {
+  min-height: var(--toque-min);
+}
+
+#grupoBrillo button[aria-pressed="true"],
+#grupoVolumen button[aria-pressed="true"] {
+  background: var(--acento-relleno);
+  color: var(--sobre-acento);
+}
+
 .fila-mas .icono.chevron {
   width: 18px;
   height: 18px;
