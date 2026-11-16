@@ -381,6 +381,10 @@ export function acomodarEnDestino(fuente, sw, sh, opciones, destino) {
   dctx.restore();
 }
 
+// Topes de una imagen fija (H-39). Los de archivo y de GIF están en gif.js.
+export const LIMITE_LADO_IMAGEN = 8000;
+export const LIMITE_PIXELES_IMAGEN = 40_000_000;
+
 /**
  * Carga un archivo de imagen y devuelve la imagen ORIGINAL (sin achicar),
  * para poder reconvertirla cuantas veces haga falta al cambiar escala,
@@ -391,7 +395,19 @@ export async function cargarImagenOriginal(file) {
   const dataUrl = await leerArchivoComoDataURL(file);
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ el: img, w: img.naturalWidth || img.width, h: img.naturalHeight || img.height, dataUrl });
+    img.onload = () => {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      // Auditoría 2026-11-15 (H-39): una foto fija de decenas de megapíxeles (aunque pese menos de 25 MB)
+      // se decodifica entera y puede congelar la pestaña o cerrar el WebView en un celular modesto.
+      if (w > LIMITE_LADO_IMAGEN || h > LIMITE_LADO_IMAGEN || w * h > LIMITE_PIXELES_IMAGEN) {
+        const e = new Error('Esa imagen es demasiado grande en píxeles (máximo ' + LIMITE_LADO_IMAGEN + ' por lado). Prueba con una más pequeña.');
+        e.name = 'ImagenDemasiadoGrande';
+        reject(e);
+        return;
+      }
+      resolve({ el: img, w, h, dataUrl });
+    };
     img.onerror = () => reject(new Error('Error al cargar la imagen'));
     img.src = dataUrl;
   });

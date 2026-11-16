@@ -1505,7 +1505,7 @@ async function manejarGuardarEnGaleria() {
 // Mensaje para el cliente cuando un archivo subido no se puede procesar.
 // El detalle técnico queda en la consola (console.error en quien llama).
 function mensajeDeArchivo(error) {
-  if (error instanceof ArchivoDemasiadoGrande) return error.message;
+  if (error instanceof ArchivoDemasiadoGrande || (error && error.name === 'ImagenDemasiadoGrande')) return error.message;
   if (/GIF/i.test(String((error && error.message) || ''))) return 'No se pudo leer ese GIF. Prueba con otro.';
   return 'No se pudo leer ese archivo como imagen. Prueba con un PNG, JPG o GIF.';
 }
