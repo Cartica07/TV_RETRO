@@ -2722,3 +2722,24 @@ body.dibujo-expandido .herramientas-dibujo .boton-icono {
     font-size: 16px;
   }
 }
+
+/* ===================================================
+   Objetivos táctiles (auditoría 2026-11-15, H-15)
+   Sin cambiar cómo se ven: el área que responde al toque llega a 44 px.
+   =================================================== */
+
+/* "Jugar" medía 34 px de alto. */
+.fila-juego .boton-secundario {
+  min-height: 44px;
+}
+
+/* Interruptores (Invertir, Activar alarma): el área del label crece alrededor del interruptor. */
+.switch {
+  position: relative;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  inset: -10px -6px;
+}
