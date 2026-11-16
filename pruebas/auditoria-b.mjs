@@ -318,6 +318,21 @@ const escenarios = {
     const lista = await pagina.evaluate(() => (globalThis.__fakeDb.raiz.usuarios['uid-ana'].animaciones_indice || {}));
     await navegador.close();
     return informe('H-12: la animación anterior se ve y queda su entrada en animaciones_indice', items.includes('gato') && lista.gato && lista.gato.cantidad === 2 && lista.gato.miniatura === bmp, JSON.stringify({ items, lista: Object.keys(lista) }));
+  },
+  async 'H-06: TV apagada justo después de enviar: avisa sin conexión y al volver pasa a "En la TV"'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    // La TV estaba en línea al enviar (latido reciente) y se apaga: deja de latir.
+    await pagina.evaluate(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.lastSeen = Date.now(); globalThis.__fakeDb.notificar(); });
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    await pagina.waitForFunction(() => /sin conexión/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 45000 });
+    const sinConexion = await pagina.textContent('#estadoTexto');
+    // Vuelve: late y confirma la versión.
+    await pagina.evaluate(() => { const o = globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota; o.lastSeen = Date.now(); o.mostrada = o.version; globalThis.__fakeDb.notificar(); });
+    await pagina.waitForFunction(() => /En la TV/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    const alVolver = await pagina.textContent('#estadoTexto');
+    await navegador.close();
+    return informe('H-06: con la TV recién apagada sale "sin conexión" y al volver "En la TV ✅"', /lo mostrará cuando se conecte/.test(sinConexion) && /En la TV/.test(alVolver), JSON.stringify({ sinConexion, alVolver }));
   }
 };
 

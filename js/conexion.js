@@ -88,18 +88,31 @@ export function crearConexion({ leerElementos, turnoEnvio }) {
     if (avisoSigueIgual(a)) marcarEstado('En la TV ✅', 'ok', E());
   }
 
+  // Probado en la TV real (2026-11-16): antes se revisaba UNA vez a los 20 s. Una TV recién apagada sigue
+  // pareciendo "en línea" hasta 25 s después de su último latido, así que el aviso de "sin conexión" podía no
+  // salir nunca; y pasados los 20 s se dejaba de esperar el acuse, así que al encenderla no pasaba a "En la TV".
+  // Ahora se sigue revisando cada 5 s hasta que llega el acuse, la persona hace otra cosa o pasan 10 minutos.
+  const REVISAR_ACUSE_MS = 5000;
+  const ESPERA_ACUSE_MAXIMA_MS = 10 * 60 * 1000;
+
   function esperarAcuse(version) {
     cerrarAcuse();
-    const a = {
-      version,
-      turno: turnoEnvio(),
-      texto: E().estadoTexto.textContent,
-      temporizador: setTimeout(() => {
-        if (acuseEsperado !== a) return;
-        acuseEsperado = null;
-        if (avisoSigueIgual(a) && !tvEnLinea()) marcarEstado('La TV está sin conexión: lo mostrará cuando se conecte.', null, E());
-      }, ESPERA_ACUSE_MS)
+    const inicio = Date.now();
+    const a = { version, turno: turnoEnvio(), texto: E().estadoTexto.textContent, temporizador: null, avisoSinConexion: false };
+    const revisar = () => {
+      if (acuseEsperado !== a) return;
+      if (!avisoSigueIgual(a) || Date.now() - inicio > ESPERA_ACUSE_MAXIMA_MS) {
+        acuseEsperado = null; // la persona hizo otra cosa (o ya pasó demasiado): no se toca el aviso
+        return;
+      }
+      if (!a.avisoSinConexion && !tvEnLinea()) {
+        marcarEstado('La TV está sin conexión: lo mostrará cuando se conecte.', null, E());
+        a.texto = E().estadoTexto.textContent; // así el acuse que llegue después lo reemplaza
+        a.avisoSinConexion = true;
+      }
+      a.temporizador = setTimeout(revisar, REVISAR_ACUSE_MS);
     };
+    a.temporizador = setTimeout(revisar, ESPERA_ACUSE_MS);
     acuseEsperado = a;
     mostrarAcuseSiCorresponde();
   }
