@@ -1,0 +1,55 @@
+name: Pruebas
+
+# Corre todo el banco (panel con Firebase falso + reglas con el emulador). Tarda ~40 minutos.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  banco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Dependencias del banco
+        run: npm ci
+        working-directory: pruebas
+
+      - name: Dependencias de las herramientas (para probar-migracion y probar-biblioteca)
+        run: npm ci
+        working-directory: herramientas
+
+      - name: Navegador de las pruebas de panel
+        run: npx playwright install --with-deps chromium
+        working-directory: pruebas
+
+      - name: Copia del panel para la APK (la usa apk-sin-internet)
+        run: |
+          npm ci
+          node copiar-web.mjs
+        working-directory: app-android
+
+      - name: Todo el banco
+        run: bash pruebas/todo-el-banco.sh
+        env:
+          SALIDA: ${{ runner.temp }}
+
+      - name: Detalle de cada suite
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detalle-del-banco
+          path: ${{ runner.temp }}/b-*.txt
