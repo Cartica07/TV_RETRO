@@ -13,6 +13,7 @@ Proyecto Firebase: `lorenita-6ad1e`, Realtime Database: `https://lorenita-6ad1e-
 ├── oled_remota/              lo que la TV muestra ahora (el ESP lo lee)
 │   ├── version               entero; un número nuevo en cada envío (el ESP escucha este campo)
 │   ├── contadorVersion       entero; reserva el número del próximo envío (transacción del panel; el ESP no lo lee)
+│   ├── mostrada              entero; la versión que la TV ya aplicó (la escribe el firmware; el panel la lee: acuse de recibo, 2026-11-15)
 │   ├── lastSeen              heartbeat: hora del servidor (ms, {".sv":"timestamp"}) que escribe el ESP cada 10 s; la web solo lo lee
 │   ├── pantalla/             el contenido (ver §2)
 │   └── archivo/              solo con contenido pesado (z1 o m1); si no, no existe
@@ -199,3 +200,16 @@ invitaciones/{codigo}: { id: "<id de la TV>", creado: <hora del servidor> }   vi
 - **Señal de desvinculación (sin campo nuevo):** al desvincular, el panel deja `oled_remota/version = -2` (`VERSION_DESVINCULADA`). La TV ya escucha esa ruta con su streaming y, al verlo, muestra un código nuevo sin hacer consultas periódicas; una versión real (≥ 0) la desarma. Desde el 2026-11-15 (auditoría H-34) el mismo `update()` también borra `oled_remota/pantalla`, `oled_remota/archivo`, `alarma` y `ajustes` de la TV, para que quien reciba la TV no vea el último contenido del dueño anterior ni herede sus alarmas; son nodos que ya existían (no hay campos nuevos) y la TV, al ver la señal, vuelve a leer alarma y ajustes y olvida el contenido que tenía en memoria. Un firmware que no la conoce la toma como una versión más: baja otra vez lo mismo y listo.
 - **Vinculación automática de la TV (firmware):** al encender, la TV comprueba UNA vez si tiene dueño. Si no lo tiene, muestra su código en la pantalla de contenido: vence a los 10 min; si no se usa, genera un segundo de 10 min; si tampoco, la pantalla pide reiniciar (aviso que rebota por toda la pantalla, para no marcar la OLED) y no hace más tráfico. Ya no existe el gesto de mantener el botón. Sin conexión reintenta cada 15 s.
 - **Orden de puesta en marcha:** primero el dueño publica las reglas nuevas; después se sube el panel (el nuevo "Desvincular" escribe `miembros`, que las reglas viejas no permiten).
+
+### Acuse de recibo y listas livianas de la Galería (aprobados el 2026-11-15; reglas SIN publicar)
+
+Dos cambios de datos, los dos **aditivos** (un firmware o un panel que no los conocen siguen funcionando):
+
+- **`dispositivos/{id}/oled_remota/mostrada`** (H-06): entero entre 0 y 2.000.000.000 = la `version` que la TV ya aplicó (contenido u orden). La escribe solo la TV (`auth.token.dispositivo === id`); el dueño y los miembros la leen. El panel, tras un envío, espera `mostrada >= version`: si llega, "En la TV ✅"; tras 20 s sin acuse y con la TV sin conexión, "La TV está sin conexión: lo mostrará cuando se conecte"; con un firmware que no la escribe queda el aviso de siempre. La TV la escribe con un PUT de un número (reintenta cada 15 s si falla; un 401 ahí no invalida el token).
+- **`usuarios/{uid}/imagenes_indice/{clave}`, `usuarios/{uid}/animaciones_indice/{clave}`, `biblioteca/imagenes_indice/{clave}` y `biblioteca/animaciones_indice/{clave}`** (H-12): lista liviana de la Galería, con la misma clave que el elemento. Se escribe **en la misma escritura** que el elemento (guardar, reemplazar, borrar) y las reglas no dejan que exista sin él.
+  - Imagen: `{ datos, ancho, alto, meta?, editable? }` (sin `preprocesada`; `editable: true` = el elemento tiene copia editable).
+  - Animación: `{ ancho, alto, cantidad, miniatura, meta? }` (`miniatura` = el primer cuadro, base64 1bpp; sin el resto de los cuadros).
+  - La Galería escucha solo estas listas (en la biblioteca real: de ~420 KB a ~60 KB). La copia editable (`.../imagenes/{clave}/preprocesada`) y los cuadros (`.../animaciones/{clave}/cuadros`) se piden al elegir.
+  - **Elementos anteriores a las listas:** si una lista está vacía, el panel lee el catálogo completo una vez y la rellena (la cuenta, sola; la biblioteca, solo un administrador). `herramientas/mover-a-biblioteca.cjs` ya escribe la lista de lo que copia.
+  - **Limitación:** si una cuenta ya tiene lista y se guarda un elemento con un panel/APK anterior a este cambio, ese elemento no tiene entrada en la lista y no se ve en la Galería nueva hasta que se vuelva a guardar o se vacíe la lista. Conviene actualizar la APK y la web juntas.
+- **Orden de puesta en marcha (importante):** 1) el dueño **publica las reglas** (`database.rules.json`; las publicadas hasta hoy quedan en `database.rules.sin-acuse-indice.json` para volver atrás); 2) push del panel; 3) APK nueva; 4) grabar el firmware. Con el panel nuevo y las reglas viejas, guardar y borrar en la Galería fallaría (las listas no tienen regla); con el firmware nuevo y las reglas viejas, la TV reintenta su aviso cada 15 s sin consecuencias.

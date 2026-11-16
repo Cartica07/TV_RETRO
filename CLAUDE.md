@@ -65,6 +65,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 
 - `index.html` + `js/main.js` (orquestador: estado, eventos, vista previa, envío) + `js/ui.js` (IDs del DOM y ayudas visuales).
 - `js/firebase.js`: único acceso a Firebase.
+- `js/utilidades.js` (detectar la APK, `sinRepetir`, `esperarFinal`, avisos) y `js/conexion.js` (estado de conexión de la TV y acuse de recibo): salieron de `main.js` en la etapa 1 de H-13 (2026-11-15).
 - `js/renderer.js` + `js/fonts.js`: réplica de la OLED con la fuente clásica 5×7 (glcdfont, orden CP437; tabla `LATIN1_A_CP437` para tildes/ñ/¿/¡).
 - `js/fuentesTexto.js` + `js/fuentesGfx.js`: fuentes FreeSans/FreeSerif (GFXfont, generadas desde CancionesMiniTV/fuentes.js).
 - `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF → animación; avisos de peso), `js/dibujo.js`, `js/lienzoZoom.js` (zoom/expandido del lienzo de Dibujo; clase `body.dibujo-expandido`).
@@ -94,6 +95,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - `enviarEstado` usa **`update()`** sobre `oled_remota` (escribe `version`, `pantalla` y `archivo` sin borrar `lastSeen`). `version` es un número nuevo en cada envío; el firmware solo descarga cuando cambia.
 - `oled_remota/contadorVersion` (aprobado 2026-11-10): entero que reserva el número de cada envío con una transacción (`max(contador, version) + 1`), justo antes del `update()`. Así dos envíos nunca salen con la misma `version`. `version` se sigue escribiendo solo en el `update()`, junto con `pantalla` y `archivo`. La TV no lo lee; si falta, arranca desde `version`.
 - `oled_remota/version = -2` (aprobado 2026-11-12, `VERSION_DESVINCULADA`): señal de "esta TV fue desvinculada". La deja el panel en el mismo `update()` que quita al dueño; la TV ya escucha esa ruta con su streaming y muestra un código nuevo. Una versión real nunca es negativa; un firmware viejo la toma como una versión más.
+- `oled_remota/mostrada` (aprobado 2026-11-15, **reglas SIN publicar**): entero = la `version` que la TV ya aplicó; la escribe solo la TV (acuse de recibo). Ver `docs/formatos-datos.md`.
 - `oled_remota/lastSeen`: heartbeat que escribe el ESP cada 10 s; la web solo lo lee (en línea si tiene menos de 25 s).
 - `config.fuente` (aprobado): `clasica` | `sans` | `sansb` | `serif` | `serifi`. Si falta = `clasica`. El panel usa `sans` por defecto.
 - `config.manual`, `config.x`, `config.y` (aprobados): posición manual del bloque de texto. `config.tamano` 1..5 (en las fuentes nuevas 6/10/12/16/18 pt).
@@ -107,6 +109,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 ### Catálogos (hermanos de `oled_remota`; el ESP no los lee)
 - `imagenes/<clave>` = `{datos, ancho, alto, meta, preprocesada?}`
 - `animaciones/<clave>` = `{ancho, alto, cuadros, meta}`; los GIF llevan `meta.origen: "gif"` (lista GIF de la Galería).
+- `imagenes_indice/<clave>` y `animaciones_indice/<clave>` (en `usuarios/{uid}/` y en `biblioteca/`; aprobados 2026-11-15, **reglas SIN publicar**): lista liviana de la Galería, escrita junto al elemento. Ver `docs/formatos-datos.md`.
 - `canciones/<clave>` = `{notas, meta}`: catálogo viejo de canciones de solo ritmo. **Borrado el 2026-11-10** a pedido del dueño; el respaldo está en `C:\Proyectos\TV_RETRO-respaldos\canciones-2026-11-10.json`. Las funciones de `firebase.js` que lo usan se conservan (regla: no borrar funciones). La sección de canciones de `carga-masiva.html` está oculta (sus funciones siguen).
 - `musicales/indice/<clave>` = `{nombre, archivo, duracion, repetir, imagenes, bytes, origen:"ino", fecha}` y `musicales/datos/<clave>` = Base64 m1 (aprobado). La clave es el nombre del archivo sin `.ino`.
 
@@ -172,6 +175,14 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 ## 9. Panorama pendiente (al 2026-11-15, para retomar en otra conversación)
 
 Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
+
+**PASOS PARA PONER EN MARCHA LO DEL 2026-11-15 (H-06, H-12, H-18; el orden importa)**
+1. El dueño **publica las reglas** de `database.rules.json` en la consola (nodos `mostrada`, `imagenes_indice` y `animaciones_indice`). Antes, comprobar que lo publicado hoy es igual a `database.rules.sin-acuse-indice.json` (así se sabe que solo cambia eso).
+2. Push del panel (`rediseno-app` y `main`): sube también el banco en `pruebas/` y la CI.
+3. APK nueva instalada.
+4. Grabar el firmware (acuse de recibo).
+5. Probar: enviar un texto debe pasar de "Enviado ✅" a "En la TV ✅"; la Galería debe abrir rápido y al elegir un GIF pedir sus cuadros.
+Estado: **nada de esto está publicado ni subido** (commits `bdc80dc` … en el panel, `643e481` en el firmware).
 
 **Auditoría 2026-11-15: decisiones tomadas (el dueño, 2026-11-15)**
 - **H-31 (opción b, sin campos nuevos):** la TV guarda en `/ultimo.json` lo último que mostró (texto, imagen, GIF o musical) y, si al encender Firebase solo trae una orden (alarma, ajustes, juego), lo repone (`ultimo.cpp`, firmware `7410d43`). Limitación aceptada: el panel, al recargar, sigue abriendo en Texto. Si más adelante se quiere arreglar también el panel, la opción (c) es un campo nuevo `oled_remota/orden` aparte de `pantalla` (necesita aprobación).
