@@ -245,6 +245,23 @@ const escenarios = {
     await navegador.close();
     return informe('Dibujo: 6 trazos y un envío sin avisos de willReadFrequently', avisos.length === 0, JSON.stringify({ avisos: avisos.length }));
   },
+  // H-21: la web ya no pide las tipografías a Google (fuga de la IP del cliente a un tercero y dependencia de internet):
+  // salen de fonts/. Se comprueba en el panel, en carga-masiva.html y que de verdad se cargue la fuente local.
+  async 'H-21: las tipografías salen de fonts/ y la web no pide nada a Google Fonts'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    const aGoogle = [], locales = [];
+    const esGoogleFonts = /fonts\.(googleapis|gstatic)\.com/;
+    pagina.on('request', (r) => { if (esGoogleFonts.test(r.url())) aGoogle.push(r.url()); });
+    pagina.on('response', (r) => { if (/\/fonts\/[^/]+\.woff2$/.test(r.url()) && r.status() === 200) locales.push(r.url().split('/').pop()); });
+    await pagina.reload(); await pagina.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 12000 });
+    await pagina.waitForTimeout(800);
+    const familias = await pagina.evaluate(async () => { await document.fonts.ready; return { ui: document.fonts.check('16px "Space Grotesk"'), mono: document.fonts.check('16px "JetBrains Mono"'), cargadas: [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/"/g, '') + ' ' + f.weight) }; });
+    await navegador.close();
+    const { readFileSync } = await import('node:fs');
+    const masiva = readFileSync(new URL('../carga-masiva.html', import.meta.url), 'utf8');
+    const ok = aGoogle.length === 0 && locales.length >= 2 && familias.ui && familias.mono && !esGoogleFonts.test(masiva) && masiva.includes('css/fuentes.css');
+    return informe('H-21: 0 pedidos a Google Fonts, las fuentes se bajan de fonts/ (Space Grotesk y JetBrains Mono) y carga-masiva.html tampoco enlaza a Google', ok, JSON.stringify({ aGoogle: aGoogle.length, locales: [...new Set(locales)].length, familias }));
+  },
   async 'H-15: los grupos de botones marcan cuál está elegido con aria-pressed'() {
     const { navegador, pagina } = await abrirApp(semilla());
     await pagina.click('#grupoTamano button[data-valor="3"]'); await pagina.waitForTimeout(200);

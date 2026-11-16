@@ -8,7 +8,7 @@ import { chromium } from 'playwright';
 
 export const REPO = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const FALSO = fileURLToPath(new URL('./falso', import.meta.url));
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.txt': 'text/plain' };
 
 let servidor = null;
 export async function iniciarServidor(puerto = 8765) {
