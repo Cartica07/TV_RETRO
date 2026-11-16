@@ -13,6 +13,7 @@ import {
   guardarMusicalCatalogo,
   borrarMusicalCatalogo,
   suscribirLastSeen,
+  suscribirMostrada,
   listarImagenes,
   suscribirImagenes,
   suscribirAnimaciones,
@@ -250,10 +251,63 @@ function evaluarConexionDispositivo() {
   marcarUltimaVista(formatearHaceCuanto(ultimoLastSeen), elementos);
 }
 
+// ---- Acuse de recibo (auditoría 2026-11-15, H-06) ----
+// "Enviado" solo quería decir que Firebase aceptó la escritura. La TV ahora escribe oled_remota/mostrada con la
+// versión que ya aplicó; si llega (o ya estaba) el aviso pasa a "En la TV ✅". Con la TV sin conexión se avisa
+// que lo mostrará al conectarse; con un firmware que no informa queda el aviso de siempre.
+let versionMostradaTV = null;
+let acuseEsperado = null; // { version, turno, texto, temporizador }
+const ESPERA_ACUSE_MS = 20000;
+
+function tvEnLinea() {
+  return ultimoLastSeen !== null && Date.now() - ultimoLastSeen <= UMBRAL_DESCONEXION_MS;
+}
+
+function cerrarAcuse() {
+  if (acuseEsperado) {
+    clearTimeout(acuseEsperado.temporizador);
+    acuseEsperado = null;
+  }
+}
+
+// Solo se toca el aviso si sigue siendo el del envío (la persona pudo haber hecho otra cosa mientras tanto).
+function avisoSigueIgual(a) {
+  return a.turno === turnoEnvio && elementos.estadoTexto.textContent === a.texto;
+}
+
+function mostrarAcuseSiCorresponde() {
+  const a = acuseEsperado;
+  if (!a || versionMostradaTV === null || versionMostradaTV < a.version) return;
+  cerrarAcuse();
+  if (avisoSigueIgual(a)) marcarEstado('En la TV ✅', 'ok', elementos);
+}
+
+function esperarAcuse(version) {
+  cerrarAcuse();
+  const a = {
+    version,
+    turno: turnoEnvio,
+    texto: elementos.estadoTexto.textContent,
+    temporizador: setTimeout(() => {
+      if (acuseEsperado !== a) return;
+      acuseEsperado = null;
+      if (avisoSigueIgual(a) && !tvEnLinea()) marcarEstado('La TV está sin conexión: lo mostrará cuando se conecte.', null, elementos);
+    }, ESPERA_ACUSE_MS)
+  };
+  acuseEsperado = a;
+  mostrarAcuseSiCorresponde();
+}
+
 function iniciarMonitoreoConexion() {
   suscribirLastSeen((valor) => {
     ultimoLastSeen = valor;
     evaluarConexionDispositivo();
+  });
+
+  // Acuse de recibo (H-06): cuando la TV dice que ya aplicó la versión enviada, el aviso pasa a "En la TV".
+  suscribirMostrada((valor) => {
+    versionMostradaTV = valor;
+    mostrarAcuseSiCorresponde();
   });
 
   // lastSeen solo cambia cuando la TV escribe -- si se apaga,
@@ -2982,13 +3036,14 @@ function mostrarResultadoEnvio(resultado, textoOk) {
   };
   if (resultado.exito) {
     marcarEstado(mensajeOk(resultado.version), 'ok', elementos);
+    esperarAcuse(resultado.version);
     return;
   }
   if (resultado.pendiente && resultado.escritura) {
     marcarEstado('La conexión está lenta: se enviará solo cuando vuelva la señal.', null, elementos);
     resultado.escritura.then((final) => {
       if (turno !== turnoEnvio) return;
-      if (final.exito) marcarEstado(mensajeOk(final.version), 'ok', elementos);
+      if (final.exito) { marcarEstado(mensajeOk(final.version), 'ok', elementos); esperarAcuse(final.version); }
       else marcarEstado(`No se pudo enviar: ${describirError(final.error)}.`, 'error', elementos);
     });
     return;

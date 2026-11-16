@@ -957,6 +957,18 @@ export function suscribirLastSeen(callback) {
 }
 
 /**
+ * Acuse de recibo (auditoría 2026-11-15, H-06): última versión que la TV dice haber aplicado
+ * (oled_remota/mostrada, la escribe el firmware). callback(null) si la TV no informa (firmware anterior).
+ * Devuelve la función para cancelar la escucha.
+ */
+export function suscribirMostrada(callback) {
+  return onValue(ref(db, rutaOled('mostrada')), (snap) => {
+    const v = snap.exists() ? Number(snap.val()) : null;
+    callback(Number.isFinite(v) ? v : null);
+  }, () => callback(null));
+}
+
+/**
  * Escucha en tiempo real un catálogo completo (imagenes/ o animaciones/).
  * Se baja entero la primera vez y después Firebase solo manda lo que
  * cambia (lo que se guarda o borra desde este panel u otro dispositivo),

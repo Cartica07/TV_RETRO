@@ -216,6 +216,56 @@ const escenarios = {
     await navegador.close();
     const ok = tamanos.join() === 'false,false,true,false,false' && pestanas.every((x) => x === false);
     return informe('H-15: tamaño 3 con aria-pressed=true y los demás false; las pestañas de Alarma sin aria-pressed', ok, JSON.stringify({ tamanos, pestanas }));
+  },
+  async 'H-06: al llegar el acuse de la TV el aviso pasa a "En la TV"'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    const antes = await pagina.textContent('#estadoTexto');
+    await pagina.evaluate(() => { const o = globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota; o.mostrada = o.version; globalThis.__fakeDb.notificar(); });
+    await pagina.waitForFunction(() => /En la TV/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 5000 });
+    const despues = await pagina.textContent('#estadoTexto');
+    await navegador.close();
+    return informe('H-06: "Enviado…" y, con el acuse, "En la TV ✅"', /Enviado/.test(antes) && /En la TV/.test(despues), JSON.stringify({ antes, despues }));
+  },
+  async 'H-06: el acuse de una versión vieja no cuenta para el envío nuevo'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    const version = () => pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    const v1 = await version();
+    await pagina.click('#enviar');
+    await pagina.waitForFunction((v) => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version > v, v1, { timeout: 8000 });
+    await pagina.waitForTimeout(300);
+    const v2 = await version();
+    await pagina.evaluate((v) => { globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.mostrada = v; globalThis.__fakeDb.notificar(); }, v1);
+    await pagina.waitForTimeout(500);
+    const conViejo = await pagina.textContent('#estadoTexto');
+    await pagina.evaluate((v) => { globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.mostrada = v; globalThis.__fakeDb.notificar(); }, v2);
+    await pagina.waitForFunction(() => /En la TV/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 5000 });
+    await navegador.close();
+    return informe('H-06: con mostrada = versión anterior sigue "Enviado"; con la nueva pasa a "En la TV"', v2 > v1 && /Enviado/.test(conViejo) && !/En la TV/.test(conViejo), JSON.stringify({ v1, v2, conViejo }));
+  },
+  async 'H-06: sin acuse y con la TV sin conexión avisa que lo mostrará al conectarse'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    await pagina.waitForFunction(() => /sin conexión/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 30000 });
+    const msg = await pagina.textContent('#estadoTexto');
+    await navegador.close();
+    return informe('H-06: tras 20 s sin acuse y sin señal de la TV, "La TV está sin conexión…"', /lo mostrará cuando se conecte/.test(msg), msg);
+  },
+  async 'H-06: sin acuse pero con la TV en línea el aviso de siempre se queda'() {
+    const sem = semilla();
+    const { navegador, pagina } = await abrirApp(sem);
+    await pagina.evaluate(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.lastSeen = Date.now(); globalThis.__fakeDb.notificar(); });
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    await pagina.evaluate(() => { const iv = setInterval(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.lastSeen = Date.now(); globalThis.__fakeDb.notificar(); }, 2000); globalThis.__iv = iv; });
+    await pagina.waitForTimeout(23000);
+    const msg = await pagina.textContent('#estadoTexto');
+    await navegador.close();
+    return informe('H-06: con la TV en línea y firmware sin acuse queda "Enviado ✅ Ya va camino a la TV."', /Ya va camino/.test(msg), msg);
   }
 };
 
