@@ -84,10 +84,18 @@ function mascaraPincel(d) {
 }
 
 // Apoya el pincel con su centro en el píxel (x, y).
+// Goma (auditoría 2026-11-15, H-16): mientras está activa el trazo pinta con el color de fondo.
+let gomaActiva = false;
+
+/** Activa o desactiva la goma. */
+export function ponerGoma(activa) {
+  gomaActiva = !!activa;
+}
+
 function estampar(x, y) {
   const d = Math.max(1, Math.round(grosorActual));
   const o = Math.floor((d - 1) / 2);
-  ctx.fillStyle = COLOR_TRAZO;
+  ctx.fillStyle = gomaActiva ? COLOR_FONDO : COLOR_TRAZO;
   for (const [i, j] of mascaraPincel(d)) ctx.fillRect(x - o + i, y - o + j, 1, 1);
 }
 

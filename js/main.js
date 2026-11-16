@@ -70,6 +70,7 @@ import {
   deshacerTrazo,
   rehacerTrazo,
   limpiarLienzo,
+  ponerGoma,
   hayHistorial,
   hayRehistorial,
   obtenerResultadoImagen,
@@ -2732,6 +2733,14 @@ function configurarEventos() {
         actualizarPreviewDesdeLienzo();
       }
       actualizarBotonesHistorialDibujo();
+    });
+  }
+  // Goma (H-16): alterna entre lápiz y goma; el botón queda marcado mientras la goma está activa.
+  if (elementos.botonGomaDibujo) {
+    elementos.botonGomaDibujo.addEventListener('click', () => {
+      const activa = elementos.botonGomaDibujo.getAttribute('aria-pressed') !== 'true';
+      elementos.botonGomaDibujo.setAttribute('aria-pressed', activa ? 'true' : 'false');
+      ponerGoma(activa);
     });
   }
   if (elementos.botonLimpiarDibujo) {

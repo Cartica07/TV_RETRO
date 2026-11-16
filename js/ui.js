@@ -294,6 +294,7 @@ export function obtenerElementos() {
     grupoGrosor: document.getElementById('grupoGrosor'),
     botonDeshacerDibujo: document.getElementById('botonDeshacerDibujo'),
     botonRehacerDibujo: document.getElementById('botonRehacerDibujo'),
+    botonGomaDibujo: document.getElementById('botonGomaDibujo'),
     botonLimpiarDibujo: document.getElementById('botonLimpiarDibujo'),
     nombreGaleriaDibujo: document.getElementById('nombreGaleriaDibujo'),
     botonGuardarGaleriaDibujo: document.getElementById('botonGuardarGaleriaDibujo'),
