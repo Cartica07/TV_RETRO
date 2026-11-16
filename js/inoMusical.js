@@ -36,6 +36,11 @@ const ESPERA_QUIETO_MS = 15000;
 const DURACION_MAXIMA_MS = 30 * 60 * 1000;
 // Tope de pasos del intérprete (evita colgar la página con un .ino raro).
 const PASOS_MAXIMOS = 20_000_000;
+// Auditoría 2026-11-15 (H-50): topes que antes no había. Un .ino raro no debe cerrar la pestaña con una
+// recursión sin fin ni producir una grabación que la TV no acepta (el firmware rechaza más de 200 000 notas
+// o cuadros: MAX_ELEMENTOS_MUSICAL en musical.cpp).
+const PROFUNDIDAD_MAXIMA = 200;
+const ELEMENTOS_MAXIMOS = 200_000;
 
 class ErrorIno extends Error {}
 class Parar { constructor(motivo) { this.motivo = motivo; } }
@@ -808,6 +813,7 @@ class Interprete {
     this.global = new Ambito(null);
     this.ahora = 0;
     this.pasos = 0;
+    this.profundidad = 0;
     this.notas = [];
     this.cuadros = [];
     this.tonosProgramados = []; // cortes de tone(pin, f, dur): [{ t, f: 0 }]
@@ -828,14 +834,20 @@ class Interprete {
     const ultimo = this.cuadros[this.cuadros.length - 1];
     if (ultimo && iguales(ultimo.bitmap, foto)) return;
     if (ultimo && ultimo.t === this.ahora) ultimo.bitmap = foto; // dos display() en el mismo ms: vale el último
-    else this.cuadros.push({ t: this.ahora, bitmap: foto });
+    else {
+      if (this.cuadros.length >= ELEMENTOS_MAXIMOS) throw new ErrorIno('el .ino produce demasiados cambios de pantalla');
+      this.cuadros.push({ t: this.ahora, bitmap: foto });
+    }
     this.evento();
   }
   grabarTono(f) {
     const ultima = this.notas[this.notas.length - 1];
     if (ultima && ultima.f === f) return;
     if (ultima && ultima.t === this.ahora) ultima.f = f;
-    else this.notas.push({ t: this.ahora, f });
+    else {
+      if (this.notas.length >= ELEMENTOS_MAXIMOS) throw new ErrorIno('el .ino produce demasiadas notas');
+      this.notas.push({ t: this.ahora, f });
+    }
     this.evento();
   }
   // Descarta los cortes de tone(pin, f, dur) que todavía no llegaron (ver tone()).
@@ -940,11 +952,14 @@ class Interprete {
       if (!p.tipo.ref && !p.tipo.ptr && typeof v === 'number') v = ajustarEntero(v, p.tipo);
       amb.vars.set(p.nombre, { v, tipo: p.tipo });
     });
+    if (++this.profundidad > PROFUNDIDAD_MAXIMA) throw new ErrorIno('el .ino se llama a sí mismo demasiadas veces');
     try {
       this.ejecutar(f.cuerpo, amb);
     } catch (e) {
       if (e instanceof Retorno) return e.valor;
       throw e;
+    } finally {
+      this.profundidad--;
     }
     return undefined;
   }
