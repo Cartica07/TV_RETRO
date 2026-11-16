@@ -3742,6 +3742,15 @@ function cerrarCapaSuperior() {
   if (dibujoExpandido) {
     contraerDibujo();
     return true;
+        if (falloMientrasLogin) {
+          falloMientrasLogin = false;
+          setTimeout(() => {
+            if (panelBloqueado || document.querySelector('main.controles[inert]')) {
+              arranqueVigente = false;
+              bloquearPanel(false);
+            }
+          }, ESPERA_ARRANQUE_MS);
+        }
   }
   const el = elementos;
   // Dentro de una opción de Más (Galería, Juegos, Alarma, Config): Atrás vuelve un paso
@@ -3794,8 +3803,14 @@ function avisarFalloInesperado(origen, detalle, mensaje = '') {
   // siempre. index.html lo trae `inert` desde el principio, así que se libera
   // aunque el fallo ocurra antes de que inicializar() lo bloquee por código.
   if (panelBloqueado || document.querySelector('main.controles[inert]')) {
-    arranqueVigente = false;
-    bloquearPanel(false);
+    // H-27: con la pantalla de inicio de sesión a la vista NO se libera el panel (quedaría alcanzable
+    // con el teclado por debajo del login): se libera ESPERA_ARRANQUE_MS después de que la persona entre.
+    if (elementos && elementos.pantallaLogin && !elementos.pantallaLogin.hidden) {
+      falloMientrasLogin = true;
+    } else {
+      arranqueVigente = false;
+      bloquearPanel(false);
+    }
   }
 }
 window.addEventListener('error', (e) => avisarFalloInesperado('error', e.error || e.message, String(e.message || '')));
@@ -3807,3 +3822,4 @@ if (document.readyState === 'loading') {
 } else {
   inicializar();
 }
+let falloMientrasLogin = false;
