@@ -17,7 +17,7 @@ fi
 export REGLAS_ARCHIVO="${REGLAS_ARCHIVO:-$AQUI/../database.rules.json}"
 FALLOS=0
 resumen() { # nombre, salida
-  local f="$2"; local ok=$(grep -c "^OK" "$f"); local mal=$(grep -c "^FALLA|^MAL|^FALLÓ|^PROBLEMA" "$f"\|^MAL\|^FALLÓ" "$f")
+  local f="$2"; local ok=$(grep -c "^OK" "$f"); local mal=$(grep -c "^FALLA\|^MAL\|^FALLÓ\|^PROBLEMA" "$f")
   local ult=$(grep -E "escenarios:|todo bien|FALLAS|Resultado" "$f" | tail -1 | cut -c1-120)
   echo "== $1: OK=$ok FALLAS=$mal | $ult"
   [ "$mal" -gt 0 ] && FALLOS=$((FALLOS+1))
