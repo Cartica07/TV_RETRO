@@ -31,6 +31,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - **Al cerrar una sesión que cambió código: añadir su fila en `docs/auditoria-alcance.md` sección 8** (fecha, commits de cada repo, qué cambió, qué mirar). Así la auditoría final sabe qué es nuevo.
 
 ### Código
+- **Política de seguridad (CSP, H-21):** `index.html` lleva un `<meta http-equiv="Content-Security-Policy">` que solo permite lo que la app usa (scripts propios + SDK de Firebase en `www.gstatic.com` + `apis.google.com`; conexiones a `*.firebaseio.com`/`*.firebasedatabase.app` (HTTPS y WebSocket) y a `identitytoolkit`/`securetoken`/`www.googleapis.com`; marcos de `lorenita-6ad1e.firebaseapp.com` y `accounts.google.com`; imágenes `data:`/`blob:`). **Si se añade un servicio externo, un CDN o un recurso de otro dominio, hay que añadirlo a esa política o el navegador lo bloqueará** (no usar `eval`, `new Function` ni scripts en línea). La copia de la APK (`copiar-web.mjs`) NO lleva la política. Las pruebas corren con la política activa (`banco.mjs`; solo `sinCSP` para las que usan `new Function` dentro de la página).
 - **No migrar a React/Vue/otro framework.** HTML/CSS/JS puro, módulos ES.
 - **No borrar ninguna función existente** (se puede dejar de usar, no eliminar).
 - **Mantener los IDs del DOM** que usa `js/ui.js` (`obtenerElementos`) y los `data-valor` de los botones. Un ID faltante rompe todo (`null.addEventListener`).
@@ -76,6 +77,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - `js/compresion.js`: formatos `z1` (animaciones) y `m1` (musicales).
 - `js/inoMusical.js`: intérprete de los `.ino` de canciones (C reducido + SSD1306/buzzer virtuales, tiempo virtual) que graba notas y pantallas.
 - `css/tokens.css` (colores, fuentes, medidas; compartido) y `css/style.css` (estilos del panel).
+- `css/fuentes.css` + `fonts/` (2026-11-16, H-21): Space Grotesk y JetBrains Mono locales (subconjunto latino, licencias SIL OFL en `fonts/LICENCIA-*.txt`). **La web ya no pide nada a Google Fonts.** La APK genera su propia copia (`copiar-web.mjs`).
 - `carga-masiva.html`: página aparte (no enlazada) para subir contenido en lote; usa `css/tokens.css` + estilos inline; su `<script>` inline no se toca en pasos visuales.
 - `database.rules.json`: copia de las reglas de Firebase.
 - `docs/`: documentación (ver sección 8).
