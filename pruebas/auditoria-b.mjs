@@ -333,6 +333,17 @@ const escenarios = {
     const alVolver = await pagina.textContent('#estadoTexto');
     await navegador.close();
     return informe('H-06: con la TV recién apagada sale "sin conexión" y al volver "En la TV ✅"', /lo mostrará cuando se conecte/.test(sinConexion) && /En la TV/.test(alVolver), JSON.stringify({ sinConexion, alVolver }));
+  },
+  async 'H-06: si la escucha de "mostrada" no entrega, la lectura directa confirma igual'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    await pagina.click('#enviar');
+    await pagina.waitForFunction(() => /Enviado/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 8000 });
+    // La TV confirma, pero el aviso a la escucha del panel se pierde (no se llama a notificar()).
+    await pagina.evaluate(() => { const o = globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota; o.mostrada = o.version; });
+    await pagina.waitForFunction(() => /En la TV/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 40000 });
+    const msg = await pagina.textContent('#estadoTexto');
+    await navegador.close();
+    return informe('H-06: sin evento de la escucha, la consulta cada 5 s encuentra el acuse y dice "En la TV ✅"', /En la TV/.test(msg), msg);
   }
 };
 

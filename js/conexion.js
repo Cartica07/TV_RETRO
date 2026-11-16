@@ -5,7 +5,7 @@
  */
 
 import { marcarConexion, marcarEstado, marcarUltimaVista } from './ui.js';
-import { suscribirLastSeen, suscribirMostrada } from './firebase.js';
+import { suscribirLastSeen, suscribirMostrada, leerMostrada } from './firebase.js';
 
 export function crearConexion({ leerElementos, turnoEnvio }) {
   const E = () => leerElementos();
@@ -85,7 +85,12 @@ export function crearConexion({ leerElementos, turnoEnvio }) {
     const a = acuseEsperado;
     if (!a || versionMostradaTV === null || versionMostradaTV < a.version) return;
     cerrarAcuse();
-    if (avisoSigueIgual(a)) marcarEstado('En la TV ✅', 'ok', E());
+    if (avisoSigueIgual(a)) {
+      console.info(`[TV RETRO] Acuse: la TV confirmó la v${a.version} (mostrada = ${versionMostradaTV})`);
+      marcarEstado('En la TV ✅', 'ok', E());
+    } else {
+      console.info(`[TV RETRO] Acuse de la v${a.version} descartado: el aviso de pantalla ya era otro`);
+    }
   }
 
   // Probado en la TV real (2026-11-16): antes se revisaba UNA vez a los 20 s. Una TV recién apagada sigue
@@ -99,11 +104,21 @@ export function crearConexion({ leerElementos, turnoEnvio }) {
     cerrarAcuse();
     const inicio = Date.now();
     const a = { version, turno: turnoEnvio(), texto: E().estadoTexto.textContent, temporizador: null, avisoSinConexion: false };
-    const revisar = () => {
+    const revisar = async () => {
       if (acuseEsperado !== a) return;
       if (!avisoSigueIgual(a) || Date.now() - inicio > ESPERA_ACUSE_MAXIMA_MS) {
+        console.info(`[TV RETRO] Acuse de la v${version}: se deja de esperar (${avisoSigueIgual(a) ? 'pasaron 10 minutos' : 'el aviso de pantalla cambió'})`);
         acuseEsperado = null; // la persona hizo otra cosa (o ya pasó demasiado): no se toca el aviso
         return;
+      }
+      // Respaldo: si la escucha de "mostrada" no entregó (por ejemplo, la conexión del celular se reinició), se lee directo.
+      const leida = await leerMostrada();
+      if (acuseEsperado !== a) return;
+      if (leida !== null && (versionMostradaTV === null || leida > versionMostradaTV)) {
+        console.info(`[TV RETRO] Acuse: la lectura directa encontró mostrada = ${leida} (la escucha tenía ${versionMostradaTV})`);
+        versionMostradaTV = leida;
+        mostrarAcuseSiCorresponde();
+        if (acuseEsperado !== a) return;
       }
       if (!a.avisoSinConexion && !tvEnLinea()) {
         marcarEstado('La TV está sin conexión: lo mostrará cuando se conecte.', null, E());
@@ -112,6 +127,7 @@ export function crearConexion({ leerElementos, turnoEnvio }) {
       }
       a.temporizador = setTimeout(revisar, REVISAR_ACUSE_MS);
     };
+    console.info(`[TV RETRO] Esperando el acuse de la v${version} (mostrada actual: ${versionMostradaTV})`);
     a.temporizador = setTimeout(revisar, ESPERA_ACUSE_MS);
     acuseEsperado = a;
     mostrarAcuseSiCorresponde();

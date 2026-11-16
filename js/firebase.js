@@ -1108,6 +1108,18 @@ export function suscribirMostrada(callback) {
   }, () => callback(null));
 }
 
+/** Lectura directa (sin escucha) de oled_remota/mostrada: respaldo del acuse si la escucha no entrega. null si no hay o no se pudo leer. */
+export async function leerMostrada() {
+  try {
+    const snap = await esperarHasta(get(ref(db, rutaOled('mostrada'))), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA || !snap.exists()) return null;
+    const v = Number(snap.val());
+    return Number.isFinite(v) ? v : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 /**
  * Escucha en tiempo real un catálogo completo (imagenes/ o animaciones/).
  * Se baja entero la primera vez y después Firebase solo manda lo que
