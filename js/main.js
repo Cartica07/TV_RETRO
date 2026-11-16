@@ -880,27 +880,39 @@ function leerAjustesDePantalla() {
   });
 }
 
+// Auditoría 2026-11-15 (H-29): mientras los ajustes no se hayan leído bien, Guardar queda bloqueado. Antes
+// estaba habilitado con los valores por defecto a la vista, y guardar antes de que llegara la lectura (o
+// después de un fallo sin señal) escribía esos valores por defecto encima de los reales.
+let ajustesCargados = false;
+
 async function abrirAjustesTV() {
   const turno = ++turnoAjustes;
+  ajustesCargados = false;
+  elementos.botonGuardarAjustes.disabled = true;
   volcarAjustesEnPantalla();
   const r = await cargarAjustes();
   if (turno !== turnoAjustes || masVista !== 'config' || configVista !== 'tv') return; // se fue mientras tanto
   if (r.exito) {
     ajustesDatos = r.ajustes;
+    ajustesCargados = true;
+    elementos.botonGuardarAjustes.disabled = false;
     volcarAjustesEnPantalla();
   } else {
-    marcarEstado('No se pudieron leer los ajustes de la TV. Revisa tu internet.', 'error', elementos);
+    marcarEstado('No se pudieron leer los ajustes de la TV. Revisa tu internet y vuelve a abrir esta pantalla.', 'error', elementos);
   }
 }
 
 async function guardarAjustesEnLaTV() {
+  if (!ajustesCargados) return;
   await sinRepetir('ajustes', elementos.botonGuardarAjustes, async () => {
     leerAjustesDePantalla();
     turnoEnvio++;
     marcarEstado('Guardando…', null, elementos);
     activarLedTransmision(elementos);
     try {
-      mostrarResultadoEnvio(await guardarAjustes(ajustesDatos, estadoActual), 'Ajustes guardados ✅ Ya van camino a la TV.');
+      // esperarFinal: con la conexión lenta avisa y espera a que termine (el botón sigue ocupado, H-37).
+      const r = await esperarFinal(await guardarAjustes(ajustesDatos, estadoActual), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, elementos));
+      mostrarResultadoEnvio(r, 'Ajustes guardados ✅ Ya van camino a la TV.');
     } catch (err) {
       console.error('Error al guardar los ajustes:', err);
       marcarEstado('Error desconocido al guardar los ajustes.', 'error', elementos);
@@ -983,9 +995,15 @@ function poblarTonosAlarma() {
   sel.value = alarmaDatos.tono || '';
 }
 
+// Auditoría 2026-11-15 (H-29): igual que los ajustes, Guardar alarma queda bloqueado hasta leer bien las
+// alarmas de la TV (si no, guardar a tiempo de carga dejaba las 3 alarmas apagadas).
+let alarmaCargada = false;
+
 async function abrirAlarma() {
   const turno = ++turnoAlarma;
   alarmaSel = 0;
+  alarmaCargada = false;
+  elementos.botonGuardarAlarma.disabled = true;
   volcarAlarmaEnPantalla();
   if (!Object.keys(musicalesCatalogo).length) {
     const lista = await listarMusicales();
@@ -996,13 +1014,16 @@ async function abrirAlarma() {
   if (turno !== turnoAlarma || masVista !== 'alarma') return; // se fue de la pantalla mientras tanto
   if (r.exito) {
     alarmaDatos = r.alarma;
+    alarmaCargada = true;
+    elementos.botonGuardarAlarma.disabled = false;
     volcarAlarmaEnPantalla();
   } else {
-    marcarEstado('No se pudo leer la alarma de la TV. Revisa tu internet.', 'error', elementos);
+    marcarEstado('No se pudo leer la alarma de la TV. Revisa tu internet y vuelve a abrir esta pantalla.', 'error', elementos);
   }
 }
 
 async function guardarAlarmaEnLaTV() {
+  if (!alarmaCargada) return;
   await sinRepetir('alarma', elementos.botonGuardarAlarma, async () => {
     if (!leerAlarmaDePantalla()) {
       marcarEstado('Pon la hora de la alarma.', 'error', elementos);
@@ -1017,7 +1038,8 @@ async function guardarAlarmaEnLaTV() {
     marcarEstado('Guardando…', null, elementos);
     activarLedTransmision(elementos);
     try {
-      mostrarResultadoEnvio(await guardarAlarma(alarmaDatos, estadoActual), 'Alarma guardada ✅ Ya va camino a la TV.');
+      const r = await esperarFinal(await guardarAlarma(alarmaDatos, estadoActual), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, elementos));
+      mostrarResultadoEnvio(r, 'Alarma guardada ✅ Ya va camino a la TV.');
     } catch (err) {
       console.error('Error al guardar la alarma:', err);
       marcarEstado('Error desconocido al guardar la alarma.', 'error', elementos);

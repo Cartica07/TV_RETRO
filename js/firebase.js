@@ -1286,15 +1286,31 @@ export async function guardarAlarma(datos, estado) {
       tono: alarma.tono,
       alarmas: Object.fromEntries(alarma.alarmas.map((a, i) => [String(i), a]))
     }));
-    if (lento) {
-      const final = await lento.escritura;
-      if (!final.exito) return { exito: false, error: final.error };
-    }
+    if (lento) return seguirConOrden(lento, estado, 'alarma');
   } catch (error) {
     console.error('Error al guardar la alarma:', error);
     return { exito: false, error: describirError(error) };
   }
   return await enviarEstado(Object.assign({}, estado, { tipo: 'alarma' }));
+}
+
+/**
+ * La escritura de la alarma o de los ajustes quedó esperando por falta de señal (conTope). Antes se
+ * esperaba aquí sin avisar y el botón quedaba "Guardando…" sin decir nada (auditoría 2026-11-15, H-37).
+ * Ahora se devuelve ya un resultado "pendiente" (como enviarEstado) cuya promesa "escritura" termina
+ * cuando la escritura por fin se hace Y la orden a la TV también.
+ */
+function seguirConOrden(lento, estado, tipo) {
+  return {
+    exito: false,
+    pendiente: true,
+    error: lento.error,
+    escritura: lento.escritura.then(async (final) => {
+      if (!final.exito) return { exito: false, error: final.error };
+      const r = await enviarEstado(Object.assign({}, estado, { tipo }));
+      return r.pendiente && r.escritura ? await r.escritura : r;
+    })
+  };
 }
 
 // ===================================================
@@ -1335,10 +1351,7 @@ export async function guardarAjustes(datos, estado) {
   const ajustes = normalizarAjustes(datos);
   try {
     const lento = await conTope(set(ref(db, rutaAjustes()), ajustes));
-    if (lento) {
-      const final = await lento.escritura;
-      if (!final.exito) return { exito: false, error: final.error };
-    }
+    if (lento) return seguirConOrden(lento, estado, 'ajustes');
   } catch (error) {
     console.error('Error al guardar los ajustes de la TV:', error);
     return { exito: false, error: describirError(error) };
