@@ -153,6 +153,25 @@ const escenarios = {
     await navegador.close();
     return informe('H-27: login visible y el panel de abajo sigue inerte tras un error inesperado', login && inerte, JSON.stringify({ login, inerte }));
   },
+  // H-13 (paso 3, js/cuentas.js): tras un fallo con el login a la vista, entrar libera el panel y el aviso programado
+  // (liberarPanelDespuesDeLogin, 8 s después) corre sin errores nuevos.
+  async 'H-13: error con el login a la vista y luego entrar: el panel queda libre y sin errores nuevos'() {
+    const { navegador, pagina } = await abrir(semilla(), { ruta: '/index.html', esperar: false, antes: async (p) => {
+      await p.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: USUARIOS, actual: null });
+    } });
+    const errores = [];
+    pagina.on('pageerror', (e) => errores.push(e.message));
+    await pagina.waitForTimeout(1200);
+    const login = await vis(pagina, '#pantallaLogin');
+    await pagina.evaluate(() => { setTimeout(() => { throw new Error('error de prueba'); }, 0); });
+    await pagina.waitForTimeout(500);
+    await pagina.fill('#loginEmail', 'ana@correo.com'); await pagina.fill('#loginPassword', 'secreta1'); await pagina.click('#botonLogin');
+    await pagina.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 12000 });
+    await pagina.waitForTimeout(9500); // pasa ESPERA_ARRANQUE_MS (8 s): corre el aviso programado al entrar
+    const libre = await pagina.evaluate(() => !document.querySelector('main.controles').inert && document.getElementById('pantallaLogin').hidden);
+    await navegador.close();
+    return informe('H-13: tras el fallo con login a la vista, entrar libera el panel y no aparece ningún error nuevo', login && libre && errores.length === 1 && /error de prueba/.test(errores[0]), JSON.stringify({ login, libre, errores }));
+  },
   async 'H-46: a 360x740 en modo cuentas ninguna pestaña tiene scroll de página'() {
     const { navegador, pagina } = await abrirApp(semilla(), { ancho: 360, alto: 740 });
     const medidas = {};

@@ -41,7 +41,6 @@ export function crearMas({
   let masVista = 'menu';
   // Dentro de Config: 'lista' | 'cuenta' | 'tv' | 'ayuda' | 'legal'.
   let configVista = 'lista';
-  const TITULOS_CONFIG = { lista: 'Config', cuenta: 'Mi cuenta', tv: 'Ajustes de la TV', ayuda: 'Ayuda y contacto', legal: 'Legal' };
 
   function cambiarMasVista(vista) {
     masVista = ['juegos', 'galeria', 'alarma', 'config'].includes(vista) ? vista : 'menu';
