@@ -23,7 +23,33 @@ export async function iniciarServidor(puerto = 8765) {
   await new Promise((r) => servidor.listen(puerto, '127.0.0.1', r));
   return `http://127.0.0.1:${puerto}`;
 }
-export function cerrarServidor() { if (servidor) servidor.close(); servidor = null; }
+// Navegadores abiertos por abrir(): si un escenario falla antes de cerrar el suyo, el proceso de Node se quedaba
+// esperando para siempre (varias suites no llaman a process.exit). cerrarServidor() los cierra y deja un tope.
+const navegadoresAbiertos = new Set();
+export function cerrarServidor() {
+  if (servidor) servidor.close();
+  servidor = null;
+  for (const n of navegadoresAbiertos) n.close().catch(() => {});
+  navegadoresAbiertos.clear();
+  // Tope: pase lo que pase, el proceso termina (con el código que la suite haya dejado) a los 15 s.
+  setTimeout(() => process.exit(process.exitCode || 0), 15000).unref();
+}
+
+// Un clic que termina en location.reload() (desvincular, salir de una TV, baja de cuenta) destruye la página: una
+// consulta justo en ese momento fallaba con "Execution context was destroyed". Se espera la carga y se repite.
+const REINTENTOS_RECARGA = 8;
+function tolerarRecargas(pagina) {
+  const original = pagina.evaluate.bind(pagina);
+  pagina.evaluate = async (...args) => {
+    for (let i = 0; ; i++) {
+      try { return await original(...args); } catch (e) {
+        if (i >= REINTENTOS_RECARGA || !/Execution context was destroyed|most likely because of a navigation/i.test(String(e && e.message))) throw e;
+        await pagina.waitForLoadState('load').catch(() => {});
+        await pagina.waitForTimeout(250).catch(() => {});
+      }
+    }
+  };
+}
 
 /**
  * Abre el panel con la base sembrada. Devuelve { navegador, pagina, errores }.
@@ -32,8 +58,11 @@ export function cerrarServidor() { if (servidor) servidor.close(); servidor = nu
 export async function abrir(semilla = {}, { ancho = 390, alto = 844, antes = null, esperar = true, retrasos = null, ruta = '/index.html?sincuentas=1' } = {}) {
   const base = await iniciarServidor();
   const navegador = await chromium.launch(process.env.CI ? {} : { channel: 'msedge' });
+  navegadoresAbiertos.add(navegador);
+  navegador.on('disconnected', () => navegadoresAbiertos.delete(navegador));
   const contexto = await navegador.newContext({ viewport: { width: ancho, height: alto } });
   const pagina = await contexto.newPage();
+  tolerarRecargas(pagina);
   const errores = [];
   pagina.on('console', (m) => { if (m.type() === 'error') errores.push('consola: ' + m.text()); });
   pagina.on('pageerror', (e) => errores.push('página: ' + e.message));

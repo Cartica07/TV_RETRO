@@ -16,26 +16,31 @@ if [ -z "$JAVA_HOME" ] && [ -d "C:/Program Files/Android/Android Studio/jbr" ]; 
 fi
 export REGLAS_ARCHIVO="${REGLAS_ARCHIVO:-$AQUI/../database.rules.json}"
 FALLOS=0
-resumen() { # nombre, salida
-  local f="$2"; local ok=$(grep -c "^OK" "$f"); local mal=$(grep -c "^FALLA\|^MAL\|^FALLÓ\|^PROBLEMA" "$f")
+TOPE="${TOPE:-900}"   # segundos máximos por suite: una que no termina ya no deja colgado todo el banco
+resumen() { # nombre, salida, código de salida de la suite
+  local f="$2"; local cod="${3:-0}"; local ok=$(grep -c "^OK" "$f"); local mal=$(grep -c "^FALLA\|^MAL\|^FALLÓ\|^PROBLEMA" "$f")
   local ult=$(grep -E "escenarios:|todo bien|FALLAS|Resultado" "$f" | tail -1 | cut -c1-120)
-  echo "== $1: OK=$ok FALLAS=$mal | $ult"
+  local aviso=""
+  # Una suite que se corta por tiempo, o que no deja ni un solo OK (por ejemplo, el emulador se cayó), NO es "0 fallas".
+  if [ "$cod" -eq 124 ]; then aviso=" | TIEMPO AGOTADO (${TOPE} s)"; mal=$((mal+1))
+  elif [ "$ok" -eq 0 ]; then aviso=" | SIN NINGÚN OK (código $cod): la suite no corrió bien"; mal=$((mal+1)); fi
+  echo "== $1: OK=$ok FALLAS=$mal | $ult$aviso"
   [ "$mal" -gt 0 ] && FALLOS=$((FALLOS+1))
 }
 echo "### PANEL (Playwright, Firebase falso)"
 for t in pruebas-panel bobos login tv compartir cuotas verificacion login-google atras baja-cuenta baja-ui sin-red-arranque apk-sin-internet etapa1-sin-firebase etapa1-topes etapa1-admin-canciones mas alarma config auditoria-b carga-masiva-cuentas; do
   [ -f "$t.mjs" ] || continue
-  node "$t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt"
+  timeout "$TOPE" node "$t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?
 done
 echo "### INTÉRPRETE DE .ino"
-node ino-infinito.mjs > "$SALIDA/b-ino-infinito.txt" 2>&1; echo "== ino-infinito: $(grep -c 'error:' "$SALIDA/b-ino-infinito.txt") casos cortados a tiempo (esperado: 4)"
+timeout "$TOPE" node ino-infinito.mjs > "$SALIDA/b-ino-infinito.txt" 2>&1; echo "== ino-infinito: $(grep -c 'error:' "$SALIDA/b-ino-infinito.txt") casos cortados a tiempo (esperado: 4)"
 echo "### REGLAS (emulador, con $REGLAS_ARCHIVO)"
 for t in reglas reglas-etapa2 reglas-atomico reglas-envios-reales reglas-borrar-cuenta reglas-desvincular reglas-acuse reglas-indice reglas-juego reglas-alarma reglas-ajustes; do
-  npx firebase emulators:exec --only database --project "demo-$t" "node $t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt"; sleep 4
+  timeout "$TOPE" npx firebase emulators:exec --only database --project "demo-$t" "node $t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?; sleep 4
 done
-npx firebase emulators:exec --only auth,database --project demo-tvretro "node simular-tv.cjs" > "$SALIDA/b-sim.txt" 2>&1; resumen simular-tv "$SALIDA/b-sim.txt"; sleep 4
+timeout "$TOPE" npx firebase emulators:exec --only auth,database --project demo-tvretro "node simular-tv.cjs" > "$SALIDA/b-sim.txt" 2>&1; resumen simular-tv "$SALIDA/b-sim.txt" $?; sleep 4
 for t in probar-migracion probar-biblioteca; do
-  npx firebase emulators:exec --only auth,database --project "demo-$t" "node $t.cjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt"; sleep 4
+  timeout "$TOPE" npx firebase emulators:exec --only auth,database --project "demo-$t" "node $t.cjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?; sleep 4
 done
 echo "### FIN (suites con fallas: $FALLOS)"
 [ "$FALLOS" -eq 0 ]
