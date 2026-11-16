@@ -92,12 +92,12 @@ Informe completo: `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-15.md` (con
 | H-28 | ALTO | La TV queda muda tras entrar a Juegos (`pinMode` suelta el PWM) | **Arreglado** (firmware `3d2e198`); falta probar en la TV |
 | H-29 | ALTO | Guardar Alarma/Ajustes antes de cargar pisa lo guardado | **Arreglado** (panel `5b733cf`, prueba `auditoria-b`) |
 | H-30 | MEDIO | m1 malformado deja la TV reiniciándose | **Arreglado** (firmware `cfa6b89`); falta probar en la TV |
-| H-31 | MEDIO | Las órdenes (alarma, ajustes, juego) reemplazan `pantalla` | **Abierto: decide el dueño** (opciones b o c, ver `CLAUDE.md` sección 9) |
+| H-31 | MEDIO | Las órdenes (alarma, ajustes, juego) reemplazan `pantalla` | **Arreglado en la TV** con la opción (b) (firmware `7410d43`, `ultimo.cpp`); el panel sigue reabriendo en Texto (aceptado); falta probar en la TV |
 | H-32 | MEDIO | La orden de alarma/ajustes se puede perder | **Arreglado** (firmware `b193e51`) |
 | H-33 | MEDIO | Tras la alarma la OLED queda en "ALARMA" con un musical | **Arreglado** (firmware `cfa6b89`, `b193e51`); falta probar en la TV |
 | H-34 | MEDIO | Desvincular deja contenido y alarmas al siguiente dueño | **Arreglado** (panel `96c8c6e`, firmware `b193e51`; reglas comprobadas en el emulador) |
 | H-35 | MEDIO | "Volver" atrapado en la Galería con un GIF elegido | **Arreglado** (panel `ea3deaa`) |
-| H-36 | MEDIO | Sin Wi-Fi al encender, la TV no llega al `loop()` | **Abierto: decide el dueño** |
+| H-36 | MEDIO | Sin Wi-Fi al encender, la TV no llega al `loop()` | **Arreglado** (firmware `3ec3784`, `ayuda.html` `c5f9762`); falta probar en la TV |
 | H-37 | BAJO | Guardar alarma/ajustes sin aviso de conexión lenta | **Arreglado** (panel `5b733cf`) |
 | H-38 | BAJO | Carrera sobre el archivo del tono | **Arreglado** (firmware `b193e51`) |
 | H-39 | BAJO | Sin tope de píxeles para una imagen fija | **Arreglado** (panel `3b7a12a`) |
@@ -186,4 +186,4 @@ Todo lo que figure aquí también se audita. **Cada conversación que cambie có
 
 | Fecha | Commits (panel / firmware) | Qué cambió | Puntos a mirar |
 |---|---|---|---|
-| 2026-11-15 (auditoría y arreglos) | **Panel:** `ea3deaa`, `96c8c6e`, `3b7a12a`, `5b733cf` (más los de documentación). **Firmware:** `3d2e198`, `cfa6b89`, `b193e51` | Arreglos de la auditoría del 2026-11-15: H-28, H-29, H-30, H-32, H-33, H-34, H-35, H-37, H-38, H-39 (ver 2b) | Que `sonido_tono()` se reconecte sin perder el volumen; que un m1 válido siga sonando (topes: 200 000 notas o cuadros, 65 535 imágenes); que `olvidarContenido()` no borre contenido de una TV con dueño; que la limpieza de `desvincularDispositivo` no choque con las reglas (probado en el emulador); **todo el firmware está compilado pero NO grabado ni probado en la TV** |
+| 2026-11-15 (auditoría y arreglos) | **Panel:** `ea3deaa`, `96c8c6e`, `3b7a12a`, `5b733cf` (más los de documentación). **Firmware:** `3d2e198`, `cfa6b89`, `b193e51`, `3ec3784` (H-36), `7410d43` (H-31) | Arreglos de la auditoría del 2026-11-15: H-28, H-29, H-30, H-31, H-36, H-32, H-33, H-34, H-35, H-37, H-38, H-39 (ver 2b) | Que `sonido_tono()` se reconecte sin perder el volumen; que un m1 válido siga sonando (topes: 200 000 notas o cuadros, 65 535 imágenes); que `olvidarContenido()` no borre contenido de una TV con dueño; que la limpieza de `desvincularDispositivo` no choque con las reglas (probado en el emulador); **todo el firmware está compilado pero NO grabado ni probado en la TV** |

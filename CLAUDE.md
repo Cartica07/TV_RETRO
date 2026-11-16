@@ -172,9 +172,9 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
 
-**Decisiones pendientes de la auditoría 2026-11-15 (las toma el dueño)**
-- **H-31:** guardar una alarma, un ajuste o pulsar Jugar reemplaza `pantalla` por la orden y borra `archivo`; si la TV se reinicia muestra el texto viejo y el panel reabre en Texto. Opciones: (b) solo firmware, la TV guarda el último contenido y lo repone al encender (arregla la TV, no el panel); (c) campo nuevo `oled_remota/orden = {tipo, version, juego?}` aparte de `pantalla` (arregla las dos cosas; necesita aprobación).
-- **H-36:** si al encender no hay ninguna red Wi-Fi conocida, la TV queda reiniciando el portal y no llega al `loop()` (sin reloj ni alarma). Propuesta: con redes guardadas, seguir funcionando sin red y reintentar en segundo plano; el portal solo a pedido o en la primera configuración.
+**Auditoría 2026-11-15: decisiones tomadas (el dueño, 2026-11-15)**
+- **H-31 (opción b, sin campos nuevos):** la TV guarda en `/ultimo.json` lo último que mostró (texto, imagen, GIF o musical) y, si al encender Firebase solo trae una orden (alarma, ajustes, juego), lo repone (`ultimo.cpp`, firmware `7410d43`). Limitación aceptada: el panel, al recargar, sigue abriendo en Texto. Si más adelante se quiere arreglar también el panel, la opción (c) es un campo nuevo `oled_remota/orden` aparte de `pantalla` (necesita aprobación).
+- **H-36:** sin Wi-Fi al encender, con redes guardadas, la TV sigue funcionando (juegos) y reintenta las redes cada 30 s; el portal se abre solo la primera vez o al mantener 5 s el botón de la rueda sin Wi-Fi (firmware `3ec3784`; texto en `ayuda.html`).
 
 **Siguiente: JUEGOS (conversación aparte)**
 - Reescribir desde cero Snake, Breakout, Flappy e Invaders (derivan de un repo sin licencia, `chifunt/phone-project`; Jump es Unlicense y se queda), pulir tiempos y estética, récords en NVS, botón A capacitivo. Detalle en `docs/juegos-y-controles.md`. La carpeta `Juegos/` del firmware (sketches originales del dueño) sigue sin versionar.

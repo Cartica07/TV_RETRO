@@ -417,3 +417,8 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - Pruebas nuevas (fuera del repo, ya en `todo-el-banco.sh`): `auditoria-b.mjs` (7 escenarios de panel) y `reglas-desvincular.mjs` (emulador). Corridas sueltas en verde: las nuevas y `mas`, `atras`, `alarma`, `config`, `compartir`, `baja-cuenta`, `baja-ui` y `etapa1-topes`; el banco completo se corre cuando el dueño confirme la versión final.
 - Firmware compilado (1 516 446 bytes, sin avisos); **sin grabar en la placa**.
 - Siguen abiertos H-31 y H-36 (decisión del dueño), H-40 a H-50 (bajos) y la lectura línea por línea de lo que la auditoría base solo miró por encima.
+
+**Auditoría 2026-11-15, decisiones del dueño (H-31 y H-36), firmware grabado en la TV:**
+- **H-36** (firmware `3ec3784`, panel `c5f9762`): sin Wi-Fi al encender, con redes guardadas, la TV ya no abre el portal ni se reinicia en bucle: sigue funcionando (juegos) y `wifi_reintentarSiHaceFalta()` prueba las redes cada 30 s desde la tarea de red. El portal se abre solo la primera vez o al mantener 5 s el botón de la rueda sin Wi-Fi (`wifi_pedirPortal()`: marca en la NVS y reinicia). Al encender sin red se ve "Sin WiFi" 6 s. `ayuda.html` actualizada.
+- **H-31, opción (b)** (firmware `7410d43`): `ultimo.cpp` guarda en `/ultimo.json` el último texto, imagen, GIF o musical; al encender, si Firebase solo trae una orden (alarma, ajustes o juego), lo repone (un musical, sin sonido); se borra al desvincular. Sin campos nuevos. El panel sigue reabriendo en Texto tras una orden (aceptado).
+- Firmware compilado (1 523 894 bytes) y **grabado en la placa por COM6** (hash verificado). Pendiente: probarlo en la TV.
