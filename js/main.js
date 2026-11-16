@@ -12,8 +12,6 @@ import {
   leerMusical,
   guardarMusicalCatalogo,
   borrarMusicalCatalogo,
-  suscribirLastSeen,
-  suscribirMostrada,
   listarImagenes,
   suscribirImagenes,
   suscribirAnimaciones,
@@ -64,6 +62,8 @@ import {
 } from './imageProcessor.js';
 import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido, comprobarTamanoArchivo, ArchivoDemasiadoGrande } from './gif.js';
 import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical, notasParaCancion } from './compresion.js';
+import { enApp, pluginNativo, accionesEnCurso, sinRepetir, esperarFinal, TEXTO_GUARDADO_LENTO, TEXTO_BORRADO_LENTO, mostrarAviso } from './utilidades.js';
+import { crearConexion } from './conexion.js';
 // inoMusical.js (el intérprete de .ino, ~50 KB) solo lo necesita quien importa canciones: se carga en
 // importarCanciones() con import() (auditoría 2026-11-15, H-23).
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
@@ -89,7 +89,6 @@ import {
   mostrarSubvistaGaleria,
   marcarEstado,
   marcarConexion,
-  marcarUltimaVista,
   setBotonEnviarEstado,
   activarLedTransmision,
   desactivarLedTransmision
@@ -205,120 +204,9 @@ function hayGifDe(origen) {
 // Opciones de encuadre de la pestaña Imagen (ver acomodarEnDestino).
 const geometriaImagen = { escala: 'ajustar', fondo: 'negro', rotar: 0, volteoH: false, volteoV: false };
 
-// ===================================================
-// Estado de conexión del DISPOSITIVO (heartbeat)
-// ===================================================
-// La TV (ESP32-S3) escribe oled_remota/lastSeen cada 10 s desde su tarea
-// de red (red.cpp, latido(); TIEMPO_ACTUALIZACION en config.cpp). Si pasó
-// mucho más que eso desde el último valor visto, asumimos que el
-// dispositivo está apagado o sin WiFi -- aunque Firebase en sí responda
-// perfecto. El umbral es más alto que el intervalo real para dar
-// margen (jitter de red, un latido que se salteó una vez, etc.).
-const UMBRAL_DESCONEXION_MS = 25000;
-const INTERVALO_CHEQUEO_CONEXION_MS = 5000;
+// Estado de conexión de la TV y acuse de recibo: js/conexion.js (H-13).
+const { iniciarMonitoreoConexion, esperarAcuse } = crearConexion({ leerElementos: () => elementos, turnoEnvio: () => turnoEnvio });
 
-let ultimoLastSeen = null; // ms desde época (heartbeat), o null si nunca llegó nada
-
-// Texto relativo para la última señal: "hace 4 s", "hace 12 min",
-// "hace 3 h", o fecha y hora si pasó más de un día. Se recalcula cada
-// INTERVALO_CHEQUEO_CONEXION_MS junto con el estado de conexión.
-function formatearHaceCuanto(timestampMs) {
-  const seg = Math.max(0, Math.round((Date.now() - timestampMs) / 1000));
-  if (seg < 60) return `hace ${seg} s`;
-  const min = Math.floor(seg / 60);
-  if (min < 60) return `hace ${min} min`;
-  const horas = Math.floor(min / 60);
-  if (horas < 24) return `hace ${horas} h`;
-  const f = new Date(timestampMs);
-  const dd = String(f.getDate()).padStart(2, '0');
-  const mm = String(f.getMonth() + 1).padStart(2, '0');
-  const hh = String(f.getHours()).padStart(2, '0');
-  const mi = String(f.getMinutes()).padStart(2, '0');
-  return `el ${dd}/${mm} ${hh}:${mi}`;
-}
-
-function evaluarConexionDispositivo() {
-  if (ultimoLastSeen === null) {
-    marcarConexion('sin señal del dispositivo', 'error', elementos);
-    marcarUltimaVista('', elementos);
-    return;
-  }
-
-  const antiguedad = Date.now() - ultimoLastSeen;
-
-  if (antiguedad <= UMBRAL_DESCONEXION_MS) {
-    marcarConexion('en línea', 'ok', elementos);
-  } else {
-    marcarConexion('desconectado', 'error', elementos);
-  }
-  marcarUltimaVista(formatearHaceCuanto(ultimoLastSeen), elementos);
-}
-
-// ---- Acuse de recibo (auditoría 2026-11-15, H-06) ----
-// "Enviado" solo quería decir que Firebase aceptó la escritura. La TV ahora escribe oled_remota/mostrada con la
-// versión que ya aplicó; si llega (o ya estaba) el aviso pasa a "En la TV ✅". Con la TV sin conexión se avisa
-// que lo mostrará al conectarse; con un firmware que no informa queda el aviso de siempre.
-let versionMostradaTV = null;
-let acuseEsperado = null; // { version, turno, texto, temporizador }
-const ESPERA_ACUSE_MS = 20000;
-
-function tvEnLinea() {
-  return ultimoLastSeen !== null && Date.now() - ultimoLastSeen <= UMBRAL_DESCONEXION_MS;
-}
-
-function cerrarAcuse() {
-  if (acuseEsperado) {
-    clearTimeout(acuseEsperado.temporizador);
-    acuseEsperado = null;
-  }
-}
-
-// Solo se toca el aviso si sigue siendo el del envío (la persona pudo haber hecho otra cosa mientras tanto).
-function avisoSigueIgual(a) {
-  return a.turno === turnoEnvio && elementos.estadoTexto.textContent === a.texto;
-}
-
-function mostrarAcuseSiCorresponde() {
-  const a = acuseEsperado;
-  if (!a || versionMostradaTV === null || versionMostradaTV < a.version) return;
-  cerrarAcuse();
-  if (avisoSigueIgual(a)) marcarEstado('En la TV ✅', 'ok', elementos);
-}
-
-function esperarAcuse(version) {
-  cerrarAcuse();
-  const a = {
-    version,
-    turno: turnoEnvio,
-    texto: elementos.estadoTexto.textContent,
-    temporizador: setTimeout(() => {
-      if (acuseEsperado !== a) return;
-      acuseEsperado = null;
-      if (avisoSigueIgual(a) && !tvEnLinea()) marcarEstado('La TV está sin conexión: lo mostrará cuando se conecte.', null, elementos);
-    }, ESPERA_ACUSE_MS)
-  };
-  acuseEsperado = a;
-  mostrarAcuseSiCorresponde();
-}
-
-function iniciarMonitoreoConexion() {
-  suscribirLastSeen((valor) => {
-    ultimoLastSeen = valor;
-    evaluarConexionDispositivo();
-  });
-
-  // Acuse de recibo (H-06): cuando la TV dice que ya aplicó la versión enviada, el aviso pasa a "En la TV".
-  suscribirMostrada((valor) => {
-    versionMostradaTV = valor;
-    mostrarAcuseSiCorresponde();
-  });
-
-  // lastSeen solo cambia cuando la TV escribe -- si se apaga,
-  // Firebase no dispara ningún evento nuevo (no hay nada que cambiar).
-  // Este timer aparte es el que nota que "ya pasó demasiado tiempo"
-  // aunque no haya llegado ningún dato nuevo.
-  setInterval(evaluarConexionDispositivo, INTERVALO_CHEQUEO_CONEXION_MS);
-}
 
 // ===================================================
 // Animación del Scroll
@@ -715,14 +603,6 @@ function actualizarPreviewDesdeLienzo() {
 // pide pantalla completa y se bloquea la rotación en horizontal (Chrome
 // en Android); si no (iPhone, escritorio), queda igual de grande y en
 // vertical se muestra "Girá el teléfono".
-// Dentro de la APK (Capacitor) el panel corre en un WebView de Android. Ahí la
-// pantalla completa del navegador y el bloqueo de rotación web no sirven (al
-// contraer, el WebView queda con el tamaño roto y tapa los botones del
-// sistema), así que se usan los plugins nativos. En el navegador todo sigue
-// igual. Los plugins se leen de window.Capacitor.Plugins: el panel no usa
-// bundler, no puede importarlos.
-const enApp = () => !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
-const pluginNativo = (nombre) => (enApp() && window.Capacitor.Plugins && window.Capacitor.Plugins[nombre]) || null;
 
 let dibujoExpandido = false;
 let zoomDibujo = null;              // control de zoom del lienzo (lienzoZoom.js)
@@ -1592,47 +1472,6 @@ function mensajeDeArchivo(error) {
   return 'No se pudo leer ese archivo como imagen. Prueba con un PNG, JPG o GIF.';
 }
 
-// Guardar, borrar e importar se ejecutan de a una por vez: un segundo toque
-// (o un doble clic) mientras la acción sigue en curso se ignora. Si hay un
-// botón, queda apagado mientras trabaja (así se nota que está ocupado). Los
-// botones de borrar NO se pasan: su estado lo maneja la selección.
-const accionesEnCurso = new Set();
-async function sinRepetir(clave, boton, accion) {
-  if (accionesEnCurso.has(clave)) return;
-  accionesEnCurso.add(clave);
-  if (boton) boton.disabled = true;
-  try {
-    return await accion();
-  } finally {
-    accionesEnCurso.delete(clave);
-    if (boton) boton.disabled = false;
-  }
-}
-
-// Si el guardado o borrado quedó esperando por falta de señal (ver conTope
-// en firebase.js), avisa y espera a que termine de verdad; devuelve el
-// resultado final para seguir como siempre. El botón sigue ocupado hasta
-// entonces, así nadie repite la acción creyendo que no funcionó.
-async function esperarFinal(resultado, avisarLento) {
-  if (!resultado || !resultado.pendiente || !resultado.escritura) return resultado;
-  avisarLento();
-  return await resultado.escritura;
-}
-const TEXTO_GUARDADO_LENTO = 'La conexión está lenta: se guardará solo cuando vuelva la señal.';
-const TEXTO_BORRADO_LENTO = 'La conexión está lenta: se borrará solo cuando vuelva la señal.';
-
-// Muestra (o con texto vacío, oculta) un recuadro de aviso. tipo
-// 'error' lo pinta en rojo. Quita el amarillo del aviso de peso del GIF
-// (clase "advertencia"), que solo se pone en los avisos de la Galería.
-// La usan setAvisoGaleria, setAvisoGaleriaDibujo, setAvisoGaleriaNueva y
-// setAvisoCancion (antes cada una repetía este código).
-function mostrarAviso(el, text, tipo = null) {
-  if (!el) return;
-  el.style.display = text ? 'block' : 'none';
-  el.textContent = text || '';
-  el.classList.remove('advertencia');
-  el.classList.toggle('error', tipo === 'error');
-}
 
 function setAvisoGaleria(text, tipo = null) {
   mostrarAviso(elementos.avisoGaleria, text, tipo);
