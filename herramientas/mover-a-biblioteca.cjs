@@ -63,8 +63,21 @@ async function principal(argv) {
   console.log(`Respaldo guardado: ${respaldo}`);
 
   const cambios = {};
-  for (const [k, v] of Object.entries(imagenes)) cambios[`biblioteca/imagenes/${k}`] = v;
-  for (const [k, v] of Object.entries(animaciones)) cambios[`biblioteca/animaciones/${k}`] = v;
+  for (const [k, v] of Object.entries(imagenes)) {
+    cambios[`biblioteca/imagenes/${k}`] = v;
+    // Lista liviana de la Galería (auditoría 2026-11-15, H-12): sin el PNG editable.
+    const i = { datos: String(v.datos || ''), ancho: Number(v.ancho) || 0, alto: Number(v.alto) || 0 };
+    if (v.meta && typeof v.meta === 'object' && Object.keys(v.meta).length) i.meta = v.meta;
+    if (v.preprocesada) i.editable = true;
+    cambios[`biblioteca/imagenes_indice/${k}`] = i;
+  }
+  for (const [k, v] of Object.entries(animaciones)) {
+    cambios[`biblioteca/animaciones/${k}`] = v;
+    const cuadros = Array.isArray(v.cuadros) ? v.cuadros : Object.values(v.cuadros || {});
+    const i = { ancho: Number(v.ancho) || 0, alto: Number(v.alto) || 0, cantidad: cuadros.length, miniatura: String((cuadros[0] && cuadros[0].datos) || '') };
+    if (v.meta && typeof v.meta === 'object' && Object.keys(v.meta).length) i.meta = v.meta;
+    cambios[`biblioteca/animaciones_indice/${k}`] = i;
+  }
   if (Object.keys(cambios).length === 0) {
     console.log('No hay nada en el catálogo personal: no se copia nada.');
     return { uid, respaldo, imagenes: 0, animaciones: 0 };
