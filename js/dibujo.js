@@ -287,7 +287,8 @@ export function obtenerResultadoImagen(canvas, conPng = true) {
   const copia = document.createElement('canvas');
   copia.width = canvas.width;
   copia.height = canvas.height;
-  copia.getContext('2d').drawImage(canvas, 0, 0);
+  // willReadFrequently: enseguida se leen sus píxeles (grises y monocromático); sin esto el navegador avisa de lecturas lentas.
+  copia.getContext('2d', { willReadFrequently: true }).drawImage(canvas, 0, 0);
 
   const gris = convertirAEscalaGrises(copia);
   const { bitmap, width, height } = convertirAMonocromatico(gris, 127);

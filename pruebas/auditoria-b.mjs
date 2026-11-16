@@ -226,6 +226,25 @@ const escenarios = {
     await navegador.close();
     return informe('H-16: trazo pinta, la goma lo borra (botón marcado), y sin goma vuelve a pintar', conTrazo > vacio + 100 && marcado === 'true' && tras === vacio && desmarcado === 'false' && otraVez > vacio + 100, JSON.stringify({ vacio, conTrazo, marcado, tras, desmarcado, otraVez }));
   },
+  // Rendimiento: la copia del lienzo que se pasa a grises/monocromático se creaba sin willReadFrequently y el navegador
+  // avisaba (decenas de veces) de lecturas de píxeles lentas. Dibujar, mandar y guardar no deben dejar ese aviso.
+  async 'Dibujo: dibujar y enviar no deja avisos de lectura lenta de Canvas2D (willReadFrequently)'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    const avisos = [];
+    pagina.on('console', (m) => { if (/willReadFrequently/.test(m.text())) avisos.push(m.type()); });
+    await pagina.click('#grupoTipo button[data-valor="dibujo"]'); await pagina.waitForTimeout(400);
+    const caja = await pagina.evaluate(() => { const r = document.getElementById('lienzoDibujo').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+    for (let i = 0; i < 6; i++) {
+      await pagina.mouse.move(caja.x + caja.w * 0.15, caja.y + caja.h * (0.2 + i * 0.1));
+      await pagina.mouse.down();
+      await pagina.mouse.move(caja.x + caja.w * 0.85, caja.y + caja.h * (0.2 + i * 0.1), { steps: 10 });
+      await pagina.mouse.up();
+    }
+    await pagina.waitForTimeout(300);
+    await pagina.click('#enviar'); await pagina.waitForTimeout(1200);
+    await navegador.close();
+    return informe('Dibujo: 6 trazos y un envío sin avisos de willReadFrequently', avisos.length === 0, JSON.stringify({ avisos: avisos.length }));
+  },
   async 'H-15: los grupos de botones marcan cuál está elegido con aria-pressed'() {
     const { navegador, pagina } = await abrirApp(semilla());
     await pagina.click('#grupoTamano button[data-valor="3"]'); await pagina.waitForTimeout(200);
