@@ -422,3 +422,21 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - **H-36** (firmware `3ec3784`, panel `c5f9762`): sin Wi-Fi al encender, con redes guardadas, la TV ya no abre el portal ni se reinicia en bucle: sigue funcionando (juegos) y `wifi_reintentarSiHaceFalta()` prueba las redes cada 30 s desde la tarea de red. El portal se abre solo la primera vez o al mantener 5 s el botón de la rueda sin Wi-Fi (`wifi_pedirPortal()`: marca en la NVS y reinicia). Al encender sin red se ve "Sin WiFi" 6 s. `ayuda.html` actualizada.
 - **H-31, opción (b)** (firmware `7410d43`): `ultimo.cpp` guarda en `/ultimo.json` el último texto, imagen, GIF o musical; al encender, si Firebase solo trae una orden (alarma, ajustes o juego), lo repone (un musical, sin sonido); se borra al desvincular. Sin campos nuevos. El panel sigue reabriendo en Texto tras una orden (aceptado).
 - Firmware compilado (1 523 894 bytes) y **grabado en la placa por COM6** (hash verificado). Pendiente: probarlo en la TV.
+
+**Auditoría 2026-11-15, segunda tanda (panel y APK; sin cambios de firmware):**
+
+| Commit | Qué |
+|---|---|
+| `b3f85cd` | **H-23:** `notasParaCancion` pasa a `compresion.js` y `inoMusical.js` (~50 KB) se carga con `import()` solo al importar canciones. |
+| `c746290` | **H-27:** un error inesperado con el login a la vista ya no libera el panel de abajo (se libera 8 s después de entrar). |
+| `5f6cdff` | **H-24:** el panel anota la última invitación creada y borra la anterior si ya venció (nunca una vigente). |
+| `c48a0c5` | **H-46 (visual):** la barra superior en celulares pequeños llevaba botones de 44 px sobre un alto pensado para 36: sobraban 7 px de scroll a 360×740 en modo cuentas. Botón de 36 px con área de toque de 44. |
+| `a111acb` | **H-50:** topes de recursión (200) y de notas o cuadros (200 000) en `inoMusical.js`. |
+| `ed03393` | **H-41 y H-40:** `dataExtractionRules` (nada sale del teléfono por copia o transferencia) y lockfile sincronizado; `npm audit` sin arreglo posible (`@grpc/grpc-js` lo fija `firebase`, y no entra en la APK). |
+| `f3fa2bc` | **H-51 (nuevo):** la lectura de `renderer.js` e `imageProcessor.js` mostró que un miembro podía romper la vista previa del dueño (`tamano` 100 → "Algo salió mal") o congelarla (imagen de 4096×4096). Ahora se acota al cargar y se ignoran imágenes imposibles. |
+| `d0367e3` + `6a2ff91` | **H-16:** botón Goma en Dibujo (aria-pressed; se puede deshacer) y Limpiar con ícono de papelera; la fila se junta a 360 px para que quepan 5 botones. |
+| `b2e72ee` + `fd44969` | **H-15:** Jugar de 44 px, interruptores con área de toque de 44 px y `aria-pressed` en los grupos de botones. |
+
+- Pruebas nuevas en `auditoria-b.mjs` (fuera del repo): H-15, H-16, H-23, H-24, H-27, H-46 y H-51 (ya son 14 escenarios). Suites sueltas en verde: `login`, `bobos`, `compartir`, `tv`, `alarma`, `mas`, `config`, `verificacion`, `pruebas-panel`, `etapa1-admin-canciones`, `cache-canciones`, `pintar-igual` (1 792 combinaciones iguales); las 57 canciones se graban igual (`comparar-ino`). Capturas: las 12 pantallas sin scroll a 390×844 y 360×740.
+- APK de depuración recompilada e instalada en el teléfono del dueño (con `--no-daemon`: el daemon de Gradle se cayó una vez con `EXCEPTION_ACCESS_VIOLATION`).
+- Quedan abiertos: H-06, H-12, H-13, H-18, H-19, H-20, H-21, H-22, H-25, H-26 y los de legal y juegos.

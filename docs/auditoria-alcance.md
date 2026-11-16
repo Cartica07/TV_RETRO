@@ -101,9 +101,21 @@ Informe completo: `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-15.md` (con
 | H-37 | BAJO | Guardar alarma/ajustes sin aviso de conexión lenta | **Arreglado** (panel `5b733cf`) |
 | H-38 | BAJO | Carrera sobre el archivo del tono | **Arreglado** (firmware `b193e51`) |
 | H-39 | BAJO | Sin tope de píxeles para una imagen fija | **Arreglado** (panel `3b7a12a`) |
-| H-40 … H-50 | BAJO | `npm audit` de la APK, copia entre dispositivos, textos legales, licencias, id de los juegos, documentación (H-45, puesta al día en esta sesión), 7 px de scroll en Texto a 360×740, tamaño del slot OTA, zonas horarias, fechas de TLS, topes de `inoMusical` | Abiertos (ver informe) |
+| H-15 | BAJO | Accesibilidad: objetivos táctiles y ARIA | **Mejorado** (visual `b2e72ee`, lógica `fd44969`): Jugar de 44 px, interruptores con área de 44 px y `aria-pressed` en los grupos de botones. Quedan los botones de tamaño 1-5 y los días de la alarma con 31-41 px de ancho (no caben más en una fila) |
+| H-16 | BAJO | Dibujo sin goma | **Arreglado** (visual `d0367e3`, lógica `6a2ff91`): botón Goma y Limpiar con ícono de papelera |
+| H-23 | OPT | `inoMusical.js` cargado para todos | **Arreglado** (`b3f85cd`, `import()` solo al importar canciones) |
+| H-24 | BAJO | Invitaciones vencidas sin limpiar | **Arreglado en parte** (`5f6cdff`): el panel borra la última que anotó si ya venció; las creadas desde otro equipo siguen sin limpiarse (las reglas no dejan listar) |
+| H-27 | BAJO | Panel liberado bajo el login ante un error | **Arreglado** (`c746290`) |
+| H-40 | BAJO | `npm audit` de la APK (5 altas) | **Sin arreglo posible hoy:** `@grpc/grpc-js` lo fija el propio `firebase` (`~1.9`, también en la última versión) y la APK no lo incluye. Lockfile sincronizado (`ed03393`) |
+| H-41 | BAJO | Copia entre dispositivos (Android 12+) | **Arreglado** (`ed03393`): `dataExtractionRules` excluye todo; el Manifest final lo lleva |
+| H-46 | BAJO | 7 px de scroll en Texto a 360×740 en modo cuentas | **Arreglado** (visual `c48a0c5`); las 12 pantallas dan 740/740 |
+| H-50 | BAJO | Topes del intérprete de `.ino` | **Arreglado** (`a111acb`): recursión 200, notas y cuadros 200 000 (igual que el firmware); las 57 canciones se graban igual |
+| H-51 | MEDIO | **Nuevo** (lectura de `renderer.js` e `imageProcessor.js`): un miembro podía romper o congelar la vista previa del dueño con `tamano` 100 o una imagen de 4096×4096 / Base64 inválido | **Arreglado** (`f3fa2bc`) |
+| H-42 … H-45, H-47 … H-49 | BAJO | Legales (H-42, H-43), id de los juegos (H-44, con la reescritura), documentación (H-45, hecha), tamaño del slot OTA (H-47), zonas horarias (H-48) y fechas de TLS (H-49) | Abiertos o aplazados (ver informe) |
 
-**Pendiente de la lectura línea por línea (sección 1.2):** `renderer.js`, `imageProcessor.js` (solo se miró el tamaño del lienzo), `ui.js` fuera de los IDs, `carga-masiva.html`, el CSS y la lógica interna de los 5 juegos. La auditoría no sacó conclusiones de esos archivos.
+**Lectura línea por línea (sección 1.2): hecha el 2026-11-15** para `renderer.js`, `imageProcessor.js`, `ui.js` (149 IDs, todos presentes en `index.html` y sin repetidos) y los scripts de `carga-masiva.html` (solo `textContent`; `innerHTML` solo con texto fijo; no aplica ningún tope de tamaño de archivo, es la herramienta del dueño). **Sigue sin leerse:** el CSS completo (presentación, cubierto por capturas) y la lógica interna de los 5 juegos (se reescriben).
+
+
 
 ## 3. ZONA B: todo lo hecho en la sesión 2026-11-12 → 2026-11-15 (hay que auditarlo)
 
@@ -187,3 +199,4 @@ Todo lo que figure aquí también se audita. **Cada conversación que cambie có
 | Fecha | Commits (panel / firmware) | Qué cambió | Puntos a mirar |
 |---|---|---|---|
 | 2026-11-15 (auditoría y arreglos) | **Panel:** `ea3deaa`, `96c8c6e`, `3b7a12a`, `5b733cf` (más los de documentación). **Firmware:** `3d2e198`, `cfa6b89`, `b193e51`, `3ec3784` (H-36), `7410d43` (H-31) | Arreglos de la auditoría del 2026-11-15: H-28, H-29, H-30, H-31, H-36, H-32, H-33, H-34, H-35, H-37, H-38, H-39 (ver 2b) | Que `sonido_tono()` se reconecte sin perder el volumen; que un m1 válido siga sonando (topes: 200 000 notas o cuadros, 65 535 imágenes); que `olvidarContenido()` no borre contenido de una TV con dueño; que la limpieza de `desvincularDispositivo` no choque con las reglas (probado en el emulador); **todo el firmware está compilado pero NO grabado ni probado en la TV** |
+| 2026-11-15 (segunda tanda) | **Panel:** `b3f85cd` (H-23), `c746290` (H-27), `5f6cdff` (H-24), `c48a0c5` (H-46), `a111acb` (H-50), `ed03393` (H-40/H-41), `f3fa2bc` (H-51), `d0367e3` y `6a2ff91` (H-16), `b2e72ee` y `fd44969` (H-15). **Firmware:** sin cambios | Arreglos de H-15, H-16, H-23, H-24, H-27, H-40, H-41, H-46, H-50 y H-51 (ver 2b) | Que `import()` de `inoMusical.js` funcione en la APK sin conexión; que la limpieza de invitaciones no borre una vigente; que la goma se pueda deshacer; que el recorte de `tamano` a 1..5 no cambie lo que ven los dueños con datos viejos |
