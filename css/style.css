@@ -1318,6 +1318,7 @@ input[type="text"]:focus {
   display: block;
   font-family: var(--fuente-data);
   font-size: 11px;
+  line-height: 1.1; /* sin esto JetBrains Mono (normal ~1,32) deja 1-2 px de más por campo y la pestaña Texto se pasa 3 px a 360x740 */
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ambar-suave);
