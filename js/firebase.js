@@ -858,7 +858,9 @@ export async function cargarEstado() {
         // "juego", "alarma" y "ajustes" son órdenes para la TV, no contenido: el panel las muestra como Texto.
         tipo: (['juego', 'alarma', 'ajustes'].includes(pantalla.tipo) ? 'texto' : pantalla.tipo) || 'texto',
         texto: (typeof pantalla.texto === 'string') ? pantalla.texto : 'Hola Mundo',
-        tamano: Number(config.tamano) || 2,
+        // H-51 (auditoría 2026-11-15): las reglas dejan que un miembro guarde un tamaño de 0 a 100; la vista previa
+        // solo conoce 1..5 (fontMetrics[100] no existe y rompía el panel del dueño).
+        tamano: Math.min(5, Math.max(1, Math.round(Number(config.tamano)) || 2)),
         alineacion: config.alineacion || 'centro',
         alineacionV: config.alineacionV || 'centro',
         invertido: !!config.invertido,

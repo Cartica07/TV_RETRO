@@ -534,8 +534,20 @@ export async function procesarImagen(file, targetWidth = 128, targetHeight = 64,
  *                                ya resuelto según invertido por el llamador.
  */
 export function dibujarPreviewImagen(canvas, base64Data, width, height, colorFrente = '#ffffff') {
+  // H-51 (auditoría 2026-11-15): ancho, alto y datos vienen de Firebase y un miembro de la TV puede escribir
+  // cualquier cosa (las reglas aceptan hasta 4096 y cualquier texto): una imagen de 4096×4096 congelaba la
+  // vista previa del dueño y un Base64 inválido hacía fallar atob(). La OLED es de 128×64: lo que no
+  // tenga sentido simplemente no se dibuja.
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > 256 || height > 128) return;
+
   // Decodificar Base64 a bytes
-  const binaryString = atob(base64Data);
+  let binaryString;
+  try {
+    binaryString = atob(base64Data);
+  } catch (e) {
+    return;
+  }
+  if (binaryString.length < Math.ceil(width / 8) * height) return; // datos incompletos
   const bitmap = new Uint8Array(binaryString.length);
 
   for (let i = 0; i < binaryString.length; i++) {
