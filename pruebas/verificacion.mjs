@@ -8,6 +8,7 @@ const semilla = (extra = {}) => Object.assign({
 }, extra);
 async function abrirCon(verificado, db) {
   const r = await abrir(db, {
+    sinCSP: true, // usa new Function dentro de la página (ayudante modulo)
     ruta: '/index.html', esperar: false,
     antes: async (p) => {
       await p.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: { 'ana@correo.com': { password: 'secreta1', uid: 'uid-ana', verificado } }, actual: 'ana@correo.com' });

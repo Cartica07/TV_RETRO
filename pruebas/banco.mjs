@@ -55,12 +55,14 @@ function tolerarRecargas(pagina) {
  * Abre el panel con la base sembrada. Devuelve { navegador, pagina, errores }.
  * errores: errores de consola y de página (las pruebas esperan que quede vacío).
  */
-export async function abrir(semilla = {}, { ancho = 390, alto = 844, antes = null, esperar = true, retrasos = null, ruta = '/index.html?sincuentas=1' } = {}) {
+// sinCSP: solo para pruebas que ejecutan texto como código dentro de la página (new Function): la política de index.html lo prohíbe,
+// con razón (la app no usa eval). Todas las demás corren CON la política, así una violación en cualquier pantalla las hace fallar.
+export async function abrir(semilla = {}, { ancho = 390, alto = 844, antes = null, esperar = true, retrasos = null, ruta = '/index.html?sincuentas=1', sinCSP = false } = {}) {
   const base = await iniciarServidor();
   const navegador = await chromium.launch(process.env.CI ? {} : { channel: 'msedge' });
   navegadoresAbiertos.add(navegador);
   navegador.on('disconnected', () => navegadoresAbiertos.delete(navegador));
-  const contexto = await navegador.newContext({ viewport: { width: ancho, height: alto } });
+  const contexto = await navegador.newContext({ viewport: { width: ancho, height: alto }, bypassCSP: sinCSP });
   const pagina = await contexto.newPage();
   tolerarRecargas(pagina);
   const errores = [];

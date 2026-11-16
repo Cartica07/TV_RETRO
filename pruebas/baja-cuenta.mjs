@@ -27,7 +27,7 @@ const googleInicial = (g) => ({ fn: (arg) => {
   const t = setInterval(() => { if (globalThis.__fakeAuth) { globalThis.__fakeAuth.google = globalThis.__googleInicial; clearInterval(t); } }, 1);
 }, arg: g });
 async function abrirCon(correo, extraConArg = null) {
-  const r = await abrir(semilla(), { ruta: '/index.html', esperar: false, antes: async (p) => {
+  const r = await abrir(semilla(), { ruta: '/index.html', esperar: false, sinCSP: true /* usa new Function (ayudante modulo) */, antes: async (p) => {
     await p.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: USUARIOS, actual: correo });
     if (extraConArg) await p.addInitScript(extraConArg.fn, extraConArg.arg);
   } });

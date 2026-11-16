@@ -17,6 +17,7 @@ function semilla(extra = {}) {
 }
 async function abrirCuentas(db) {
   const r = await abrir(db, {
+    sinCSP: true, // usa new Function dentro de la página (ayudante modulo)
     ruta: '/index.html', esperar: false,
     antes: async (p) => { await p.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: USUARIOS, actual: 'ana@correo.com' }); }
   });

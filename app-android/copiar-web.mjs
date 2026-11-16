@@ -94,7 +94,15 @@ const sinGoogleFonts = htmlConGoogleFonts
   .replace(/[ \t]*<link rel="preconnect" href="https:\/\/fonts\.(?:googleapis|gstatic)\.com"[^>]*>\r?\n/g, '')
   .replace(/<link href="https:\/\/fonts\.googleapis\.com\/css2[^>]*>/, '<link rel="stylesheet" href="css/fuentes.css" />');
 if (/fonts\.(?:googleapis|gstatic)\.com/.test(sinGoogleFonts)) throw new Error('index.html todavía enlaza a Google Fonts: revisa copiar-web.mjs');
-fs.writeFileSync(copiaIndex, sinGoogleFonts);
+
+// 3) H-21: la política de seguridad (meta Content-Security-Policy) es para la web publicada. La APK carga todo en
+// local (SDK empaquetado, fuentes locales) y habla con el puente de Capacitor; esa combinación no se puede probar
+// sin teléfono, así que la copia NO la lleva (la APK queda como estaba, sin política).
+const sinCsp = sinGoogleFonts
+  .replace(/[ \t]*<!-- H-21: política de seguridad[\s\S]*?-->\r?\n/, '')
+  .replace(/[ \t]*<meta http-equiv="Content-Security-Policy"[^>]*>\r?\n/, '');
+if (/Content-Security-Policy/i.test(sinCsp)) throw new Error('index.html todavía lleva la política de seguridad: revisa copiar-web.mjs');
+fs.writeFileSync(copiaIndex, sinCsp);
 
 const contar = (dir) => fs.readdirSync(dir, { withFileTypes: true })
   .reduce((n, e) => n + (e.isDirectory() ? contar(path.join(dir, e.name)) : 1), 0);

@@ -16,8 +16,8 @@ function semilla(pantalla = pant) {
     usuarios: { 'uid-ana': { dispositivos: { tv1: true }, animaciones: { gato: { ancho: 128, alto: 64, cuadros: [{ datos: bmp, dur: 100 }, { datos: bmp, dur: 100 }], meta: { origen: 'gif' } } } } }
   };
 }
-async function abrirApp(sem, { retrasos = null, app = false, alIniciar = null, ancho = 390, alto = 844 } = {}) {
-  const r = await abrir(sem, { ruta: '/index.html', esperar: false, retrasos, ancho, alto, antes: async (p) => {
+async function abrirApp(sem, { retrasos = null, app = false, alIniciar = null, ancho = 390, alto = 844, sinCSP = false } = {}) {
+  const r = await abrir(sem, { ruta: '/index.html', esperar: false, retrasos, ancho, alto, sinCSP, antes: async (p) => {
     await p.addInitScript((s) => {
       globalThis.__semillaAuth = s.auth; globalThis.__persistirDb = true;
       if (s.app) globalThis.Capacitor = { isNativePlatform: () => true, Plugins: { App: { addListener: (ev, cb) => { globalThis.__atras = cb; return Promise.resolve({}); }, exitApp: () => { globalThis.__salio = (globalThis.__salio || 0) + 1; } } } };
@@ -262,6 +262,37 @@ const escenarios = {
     const ok = aGoogle.length === 0 && locales.length >= 2 && familias.ui && familias.mono && !esGoogleFonts.test(masiva) && masiva.includes('css/fuentes.css');
     return informe('H-21: 0 pedidos a Google Fonts, las fuentes se bajan de fonts/ (Space Grotesk y JetBrains Mono) y carga-masiva.html tampoco enlaza a Google', ok, JSON.stringify({ aGoogle: aGoogle.length, locales: [...new Set(locales)].length, familias }));
   },
+  // H-21: política de seguridad de contenido (meta en index.html). Se exige que la app ENTERA la cumpla (0 violaciones al
+  // recorrer pestañas, Más, Config, Mi TV/Compartir, Dibujo y subir una imagen) y que esté activa (bloquea lo ajeno).
+  // Contra los servicios REALES de Google y Firebase se probó a mano (login, base por WebSocket, ventana de Google).
+  async 'H-21: la política de seguridad está en index.html, la app entera la cumple y bloquea lo ajeno'() {
+    const violaciones = [];
+    const { navegador, pagina } = await abrirApp(semilla(), { alIniciar: async (p) => {
+      await p.exposeFunction('__csp', (v) => violaciones.push(v));
+      await p.addInitScript(() => document.addEventListener('securitypolicyviolation', (e) => window.__csp(e.violatedDirective + ' ' + e.blockedURI)));
+    } });
+    const meta = await pagina.evaluate(() => { const m = document.querySelector('meta[http-equiv="Content-Security-Policy"]'); return m ? m.content : ''; });
+    for (const t of ['imagen', 'dibujo', 'cancion', 'galeria', 'texto']) { await pagina.click('#grupoTipo button[data-valor="' + t + '"]'); await pagina.waitForTimeout(250); }
+    await pagina.click('#grupoTipo button[data-valor="galeria"]'); await pagina.waitForTimeout(250);
+    for (const op of ['galeria', 'juegos', 'alarma']) { await pagina.click('#grupoMas button[data-mas="' + op + '"]'); await pagina.waitForTimeout(300); await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(200); }
+    await pagina.click('#grupoMas button[data-mas="config"]'); await pagina.waitForTimeout(300);
+    for (const ap of ['cuenta', 'tv', 'ayuda', 'legal']) { await pagina.click('#grupoConfig button[data-config="' + ap + '"]'); await pagina.waitForTimeout(300); await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(200); }
+    await pagina.click('#botonMiTV'); await pagina.waitForTimeout(300);
+    await pagina.evaluate(() => { [...document.querySelectorAll('#listaTV button')].find((b) => /Compartir/.test(b.textContent)).click(); }); await pagina.waitForTimeout(500);
+    await pagina.click('#grupoTipo button[data-valor="dibujo"]', { force: true }).catch(() => {});
+    await pagina.evaluate(() => { document.getElementById('pantallaTV').hidden = true; }); await pagina.waitForTimeout(200);
+    await pagina.click('#grupoTipo button[data-valor="imagen"]'); await pagina.waitForTimeout(300);
+    const png = await pagina.evaluate(() => { const c = document.createElement('canvas'); c.width = 200; c.height = 100; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 100, 100); return c.toDataURL('image/png').split(',')[1]; });
+    await pagina.setInputFiles('#cargadorImagen', { name: 'p.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') }); await pagina.waitForTimeout(800);
+    const legitimas = violaciones.length;
+    await pagina.evaluate(() => { fetch('https://example.com/x').catch(() => {}); }); await pagina.waitForTimeout(600); // esto SÍ debe bloquearse
+    await navegador.close();
+    const directivas = ['default-src \'self\'', 'script-src \'self\' https://www.gstatic.com', 'frame-src https://lorenita-6ad1e.firebaseapp.com', 'object-src \'none\'', 'base-uri \'self\''];
+    const scriptSrc = (meta.match(/script-src[^;]*/) || [''])[0];
+    const ok = directivas.every((d) => meta.includes(d)) && !/unsafe-eval|unsafe-inline/.test(scriptSrc) && !/fonts\.(googleapis|gstatic)/.test(meta)
+      && legitimas === 0 && violaciones.length === 1 && /connect-src/.test(violaciones[0]);
+    return informe('H-21: index.html lleva la política (sin unsafe-eval ni unsafe-inline en scripts), recorrer la app no la viola y un fetch ajeno sí se bloquea', ok, JSON.stringify({ legitimas, total: violaciones.length, violaciones, meta: meta.length }));
+  },
   async 'H-15: los grupos de botones marcan cuál está elegido con aria-pressed'() {
     const { navegador, pagina } = await abrirApp(semilla());
     await pagina.click('#grupoTamano button[data-valor="3"]'); await pagina.waitForTimeout(200);
@@ -323,7 +354,7 @@ const escenarios = {
     return informe('H-06: con la TV en línea y firmware sin acuse queda "Enviado ✅ Ya va camino a la TV."', /Ya va camino/.test(msg), msg);
   },
   async 'H-12: guardar y borrar escriben/quitan la lista liviana junto al elemento'() {
-    const { navegador, pagina } = await abrirApp(semilla());
+    const { navegador, pagina } = await abrirApp(semilla(), { sinCSP: true }); // usa new Function dentro de la página
     const modulo = (cuerpo) => pagina.evaluate(async (c) => { const m = await import('/js/firebase.js'); return await (new Function('m', 'return (async () => {' + c + '})()'))(m); }, cuerpo);
     const u = () => pagina.evaluate(() => globalThis.__fakeDb.raiz.usuarios['uid-ana']);
     await modulo("return await m.guardarImagenCatalogo('foto', 'AAAA', 128, 64, 'data:image/png;base64,PRE', { origen: 'subida', umbral: 128 });");
