@@ -1,0 +1,163 @@
+{
+ "texto": {
+  "version": 1,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 2,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "sans",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "texto"
+  },
+  "archivo": null
+ },
+ "texto-fuente-tamano3": {
+  "version": 2,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 3,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "serif",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "texto"
+  },
+  "archivo": null
+ },
+ "gif": {
+  "version": 3,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 3,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "serif",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "animacion",
+   "animacion": {
+    "nombre": "a",
+    "ancho": 128,
+    "alto": 64,
+    "formato": "z1",
+    "cantidad": 3
+   }
+  },
+  "archivo": {
+   "version": 3,
+   "datos": "ZAAAAAsAY2AYBaNgFIxUAABkAAAAEwBjYGBg+A8FDFAwyh/lj/JHBh8AZAAAAAsAY2AYBaNgFIxUAAA="
+  }
+ },
+ "dibujo": {
+  "version": 4,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 3,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "serif",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "imagen",
+   "imagen": {
+    "ancho": 128,
+    "alto": 64,
+    "datos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAAAPgAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAD8AAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAD+AAAAAAAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAAAAPwAAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAD8AAAAAAAAAAAAAAAAAAAAPwAAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAD4AAAAAAAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+   }
+  },
+  "archivo": null
+ },
+ "musical-con-letra": {
+  "version": 5,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 3,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "serif",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "musical",
+   "musical": {
+    "nombre": "cancionA",
+    "repeticiones": 1,
+    "formato": "m1"
+   }
+  },
+  "archivo": {
+   "version": 5,
+   "datos": "TTEBAdAHAAADAAAAAAAAALgBLAEAAO4BWAIAAAAAAQAAAAsA+/9/FIyCUTBSAQABAAAAAAAAAAAA"
+  }
+ },
+ "cancion-sin-letra": {
+  "version": 6,
+  "pantalla": {
+   "texto": "Hola ñandú ¿qué tal?",
+   "config": {
+    "tamano": 3,
+    "alineacion": "centro",
+    "alineacionV": "centro",
+    "invertido": false,
+    "modoTexto": "ajustar",
+    "fuente": "serif",
+    "manual": false,
+    "x": 0,
+    "y": 0,
+    "direccion": "h"
+   },
+   "tipo": "cancion",
+   "cancion": {
+    "nombre": "cancionA",
+    "repeticiones": 1,
+    "notas": [
+     [
+      440,
+      300
+     ],
+     [
+      494,
+      300
+     ],
+     [
+      0,
+      1400
+     ]
+    ]
+   }
+  },
+  "archivo": null
+ }
+}

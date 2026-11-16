@@ -8,7 +8,7 @@ const env = await initializeTestEnvironment({ projectId: 'demo-envios', database
 await env.withSecurityRulesDisabled(async (c) => {
   await set(ref(c.database(), '/'), { dispositivos: { T: { dueno: 'D', miembros: { M: 'ABCDEF' }, oled_remota: { version: 5 } } } });
 });
-const capturas = JSON.parse(fs.readFileSync('envios-capturados.json', 'utf8'));
+const capturas = JSON.parse(fs.readFileSync(new URL('./envios-capturados.json', import.meta.url), 'utf8'));
 let fallas = 0;
 for (const quien of ['D', 'M']) {
   const db = env.authenticatedContext(quien).database();

@@ -418,6 +418,112 @@
           "$otro": {
             ".validate": false
           }
+        },
+        "imagenes_indice": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || ((auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && newData.parent().parent().child('imagenes').child($clave).exists()))",
+            ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+            "datos": {
+              ".validate": "newData.isString() && newData.val().length <= 100000"
+            },
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "editable": {
+              ".validate": "newData.isBoolean()"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        },
+        "animaciones_indice": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || ((auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && newData.parent().parent().child('animaciones').child($clave).exists()))",
+            ".validate": "newData.hasChildren(['ancho', 'alto', 'cantidad', 'miniatura'])",
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "cantidad": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000"
+            },
+            "miniatura": {
+              ".validate": "newData.isString() && newData.val().length <= 2048"
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
         }
       }
     },
@@ -488,6 +594,60 @@
                 ".validate": false
               }
             }
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "imagenes_indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+          "datos": {
+            ".validate": "newData.isString() && newData.val().length <= 100000"
+          },
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "editable": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "animaciones_indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['ancho', 'alto', 'cantidad', 'miniatura'])",
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "cantidad": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "miniatura": {
+            ".validate": "newData.isString() && newData.val().length <= 4096"
           },
           "meta": {
             "$k": {
