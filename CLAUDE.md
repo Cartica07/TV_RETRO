@@ -176,13 +176,12 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
 
-**PASOS PARA PONER EN MARCHA LO DEL 2026-11-15 (H-06, H-12, H-18; el orden importa)**
-1. El dueño **publica las reglas** de `database.rules.json` en la consola (nodos `mostrada`, `imagenes_indice` y `animaciones_indice`). Antes, comprobar que lo publicado hoy es igual a `database.rules.sin-acuse-indice.json` (así se sabe que solo cambia eso).
-2. Push del panel (`rediseno-app` y `main`): sube también el banco en `pruebas/` y la CI.
-3. APK nueva instalada.
-4. Grabar el firmware (acuse de recibo).
-5. Probar: enviar un texto debe pasar de "Enviado ✅" a "En la TV ✅"; la Galería debe abrir rápido y al elegir un GIF pedir sus cuadros.
-Estado: **nada de esto está publicado ni subido** (commits `bdc80dc` … en el panel, `643e481` en el firmware).
+**ESTADO AL 2026-11-16 (cierre de la sesión larga) Y QUÉ SIGUE**
+- **Todo subido y en producción:** panel `9b4f914` (`rediseno-app` y `main`), firmware `7b0c2a2` (grabado en la TV con el acuse de recibo), reglas publicadas por el dueño (`mostrada`, `imagenes_indice`, `animaciones_indice`; la copia de vuelta atrás es `database.rules.sin-acuse-indice.json`), APK de depuración instalada. Banco completo en verde (31 suites + intérprete) y la CI de GitHub en verde. Probado por el dueño en teléfono y TV reales: acuse de recibo, Galería liviana, guardar y borrar.
+- **Siguiente conversación (nueva, con contexto limpio): H-13, H-19, H-21 y H-22.** H-13: seguir partiendo `main.js` de a una parte con su prueba (Más/Alarma/Config ~290 líneas, cuentas y Mi TV ~650, Galería ~570, canciones ~280; patrón: `crearX({ leerElementos, ... })` con el estado compartido por funciones, como `js/conexion.js`). H-19: OTA y restablecimiento de fábrica. H-21: fuentes locales y CSP en la web publicada. H-22: musical por referencia (cambia el contrato y toca el firmware).
+- **Conversación aparte, antes de vender:** `ENTRADA_LOG` a 0 en el firmware de producción; respaldar el keystore y confirmar nombre y paquete de la APK (luego el AAB para Google Play); revisión de un abogado (preguntas en el informe de la auditoría); fabricar las TV con el buzzer detrás del transistor; H-20 (cifrado de flash, al fabricar en serie); H-44 (id fijo de los juegos, junto con su reescritura), H-47 (aviso del tamaño del slot OTA), H-48 (más zonas horarias) y H-49 (fechas de certificados en TLS).
+- **Lo último:** reescribir los 4 juegos sin licencia (H-01).
+- **Lecciones de trabajo para no repetir:** (1) compilar la APK exige `node copiar-web.mjs` Y `npx cap sync android`, y comprobar el APK con `unzip -p`; (2) los archivos del repo mezclan CRLF y LF: editar con herramientas que respeten el salto de línea de cada archivo; (3) nunca elegir bloques de un diff por número después de un commit (se desplazan): elegirlos por contenido o commitear por archivo; (4) los resúmenes del banco deben contar también las líneas `PROBLEMA`.
 
 **Auditoría 2026-11-15: decisiones tomadas (el dueño, 2026-11-15)**
 - **H-31 (opción b, sin campos nuevos):** la TV guarda en `/ultimo.json` lo último que mostró (texto, imagen, GIF o musical) y, si al encender Firebase solo trae una orden (alarma, ajustes, juego), lo repone (`ultimo.cpp`, firmware `7410d43`). Limitación aceptada: el panel, al recargar, sigue abriendo en Texto. Si más adelante se quiere arreglar también el panel, la opción (c) es un campo nuevo `oled_remota/orden` aparte de `pantalla` (necesita aprobación).
