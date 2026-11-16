@@ -72,7 +72,11 @@ export function marcarModoPosicion(manual, elementos) {
  */
 export function marcarSegmentoActivo(grupo, valor) {
   grupo.querySelectorAll('button').forEach(b => {
-    b.classList.toggle('activo', b.dataset.valor === String(valor));
+    const activo = b.dataset.valor === String(valor);
+    b.classList.toggle('activo', activo);
+    // H-15 (auditoría 2026-11-15): un lector de pantalla no veía cuál estaba elegido (solo la clase CSS).
+    // Las pestañas (role="tab") ya usan aria-selected y no llevan aria-pressed.
+    if (b.getAttribute('role') !== 'tab') b.setAttribute('aria-pressed', activo ? 'true' : 'false');
   });
 }
 
