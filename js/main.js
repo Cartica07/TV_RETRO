@@ -736,7 +736,9 @@ function mostrarSeccionSegunTipo(tipo) {
   // Si lo activo es una animación, la Galería abre en esa lista.
   if (tipo === 'animacion') {
     subvistaGaleria = esAnimacionDeGif(animacionesCatalogo[estadoActual.animacion]) ? 'gif' : 'animaciones';
-    masVista = 'galeria'; // la animación activa se ve en la Galería, no en Juegos
+    // OJO (auditoría 2026-11-15, H-35): acá se forzaba masVista = 'galeria' en CADA llamada, y por eso
+    // "volver" y el Atrás de la APK no salían de la Galería con una animación elegida. Ahora solo se
+    // fuerza al abrir el panel (cargarEstadoInicial).
   }
   actualizarVistaGaleria();
 
@@ -2865,7 +2867,10 @@ async function cargarEstadoInicial() {
       // (ESPERA_ARRANQUE_MS) mientras todavía bajan las canciones o la Galería,
       // lo que se ve y lo que Enviar manda siguen siendo lo mismo.
       poblarControles(estadoActual, elementos);
-      if (estadoActual.tipo === 'animacion') animacionSeleccionActual = estadoActual.animacion || null;
+      if (estadoActual.tipo === 'animacion') {
+        animacionSeleccionActual = estadoActual.animacion || null;
+        masVista = 'galeria'; // al abrir, la animación activa se ve en la Galería (H-35: solo acá)
+      }
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();
       actualizarControlesEdicionImagen();
