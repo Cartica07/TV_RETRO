@@ -66,6 +66,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 - `index.html` + `js/main.js` (orquestador: estado, eventos, vista previa, envío) + `js/ui.js` (IDs del DOM y ayudas visuales).
 - `js/firebase.js`: único acceso a Firebase.
 - `js/utilidades.js` (detectar la APK, `sinRepetir`, `esperarFinal`, avisos) y `js/conexion.js` (estado de conexión de la TV y acuse de recibo): salieron de `main.js` en la etapa 1 de H-13 (2026-11-15).
+- `js/mas.js` (pestaña Más: menú, Mi cuenta, Ajustes de la TV, Alarma y Jugar; `crearMas({ ... })`, 2026-11-16, H-13 paso 2): recibe lo compartido de `main.js` por funciones (`estado()`, `sesion()`, `musicales()`, `avanzarTurnoEnvio()`…) y exporta `TITULOS_CONFIG`; `main.js` solo asigna la vista con `fijarMasVista` (sin efectos) y la lee con `obtenerMasVista`/`obtenerConfigVista`.
 - `js/renderer.js` + `js/fonts.js`: réplica de la OLED con la fuente clásica 5×7 (glcdfont, orden CP437; tabla `LATIN1_A_CP437` para tildes/ñ/¿/¡).
 - `js/fuentesTexto.js` + `js/fuentesGfx.js`: fuentes FreeSans/FreeSerif (GFXfont, generadas desde CancionesMiniTV/fuentes.js).
 - `js/imageProcessor.js` (difuminado Atkinson, encuadre: escala/fondo/rotar/voltear), `js/gif.js` (GIF → animación; avisos de peso), `js/dibujo.js`, `js/lienzoZoom.js` (zoom/expandido del lienzo de Dibujo; clase `body.dibujo-expandido`).
