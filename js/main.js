@@ -59,8 +59,9 @@ import {
   procesarImagenConOpciones
 } from './imageProcessor.js';
 import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoComprimido, comprobarTamanoArchivo, ArchivoDemasiadoGrande } from './gif.js';
-import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical } from './compresion.js';
-import { grabarIno, nombreDelIno, notasParaCancion } from './inoMusical.js';
+import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical, notasParaCancion } from './compresion.js';
+// inoMusical.js (el intérprete de .ino, ~50 KB) solo lo necesita quien importa canciones: se carga en
+// importarCanciones() con import() (auditoría 2026-11-15, H-23).
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
 import {
   inicializarDibujo,
@@ -2335,6 +2336,7 @@ async function importarCanciones(archivos) {
     await new Promise(r => setTimeout(r, 30));
     try {
       const texto = await archivo.text();
+      const { grabarIno, nombreDelIno } = await import('./inoMusical.js');
       const grab = grabarIno(texto);
       const m = await codificarMusical(grab);
       const nombre = nombreDelIno(texto) || archivo.name.replace(/\.ino$/i, '').replace(/\.ino$/i, '');

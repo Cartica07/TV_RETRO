@@ -1332,14 +1332,4 @@ export function grabarIno(texto) {
  * Notas en el formato de las canciones de siempre ([[frecuencia, duración], ...])
  * para enviar la canción "sin letra".
  */
-export function notasParaCancion(grabacion) {
-  const out = [];
-  const n = grabacion.notas;
-  for (let i = 0; i < n.length; i++) {
-    const fin = i + 1 < n.length ? n[i + 1].t : grabacion.duracion;
-    const dur = fin - n[i].t;
-    if (dur > 0) out.push([n[i].f, dur]);
-  }
-  if (n.length && n[0].t > 0) out.unshift([0, n[0].t]);
-  return out;
-}
+export { notasParaCancion } from './compresion.js'; // ahora vive en compresion.js (H-23)

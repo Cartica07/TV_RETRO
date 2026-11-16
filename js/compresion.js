@@ -115,6 +115,23 @@ export async function descomprimirCuadros(datosBase64) {
 
 export const FORMATO_MUSICAL = 'm1';
 
+/**
+ * De una grabación a las notas de las canciones "sin letra": [[Hz, ms], ...]. Vive acá (y no en
+ * inoMusical.js, que la re-exporta) para que solo quien IMPORTA canciones cargue el intérprete de .ino
+ * (auditoría 2026-11-15, H-23).
+ */
+export function notasParaCancion(grabacion) {
+  const out = [];
+  const n = grabacion.notas;
+  for (let i = 0; i < n.length; i++) {
+    const fin = i + 1 < n.length ? n[i + 1].t : grabacion.duracion;
+    const dur = fin - n[i].t;
+    if (dur > 0) out.push([n[i].f, dur]);
+  }
+  if (n.length && n[0].t > 0) out.unshift([0, n[0].t]);
+  return out;
+}
+
 function unir(partes) {
   const total = partes.reduce((s, p) => s + p.length, 0);
   const todo = new Uint8Array(total);
