@@ -312,8 +312,12 @@
             <button id="botonRehacerDibujo" type="button" class="boton-icono" aria-label="Rehacer" title="Rehacer">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
             </button>
-            <button id="botonLimpiarDibujo" type="button" class="boton-icono" aria-label="Limpiar el lienzo" title="Limpiar el lienzo">
+            <!-- Goma: mientras está activa, el trazo borra (pinta con el color de fondo). -->
+            <button id="botonGomaDibujo" type="button" class="boton-icono" aria-label="Goma de borrar" title="Goma de borrar" aria-pressed="false">
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+            </button>
+            <button id="botonLimpiarDibujo" type="button" class="boton-icono" aria-label="Limpiar el lienzo" title="Limpiar todo el lienzo">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
             <!-- Solo en modo expandido: zoom y contraer. -->
             <button id="botonZoomMenosDibujo" type="button" class="boton-icono solo-expandido" aria-label="Alejar" title="Alejar">

@@ -1851,6 +1851,12 @@ body.sin-barra-accion .barra-accion {
   .fila-subida .zona-subida-titulo {
     font-size: var(--texto-sm);
   }
+
+  /* Con el botón de goma, la fila de herramientas de Dibujo lleva 5 botones: se junta un poco para que
+     no se pase del borde de la tarjeta a 360 px. */
+  .acciones-lienzo {
+    gap: var(--esp-1);
+  }
 }
 
 /* Celulares: vista previa más baja para dejar más lugar al contenido. */
