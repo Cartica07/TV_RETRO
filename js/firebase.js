@@ -644,6 +644,21 @@ export async function crearInvitacion(id) {
   }
 }
 
+/**
+ * Borra una invitación (el dueño puede borrar las de sus TV). Se usa para limpiar las que vencieron sin
+ * usarse (auditoría 2026-11-15, H-24). Es de mejor esfuerzo: si ya no existe o no se puede, no pasa nada.
+ */
+export async function borrarInvitacion(codigoTexto) {
+  const codigo = normalizarCodigo(codigoTexto);
+  if (!CODIGO_TV.test(codigo)) return { exito: false };
+  try {
+    await esperarHasta(remove(ref(db, `invitaciones/${codigo}`)), ESPERA_MAXIMA_ENVIO_MS);
+    return { exito: true };
+  } catch (error) {
+    return { exito: false };
+  }
+}
+
 /** El dueño quita a una persona de su TV. */
 export async function quitarMiembro(id, uidMiembro) {
   try {

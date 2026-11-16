@@ -41,6 +41,7 @@ import {
   listarMiembros,
   crearInvitacion,
   quitarMiembro,
+  borrarInvitacion,
   salirDeTV,
   esAdministrador,
   cargarAlarma,
@@ -2335,8 +2336,8 @@ async function importarCanciones(archivos) {
     // Deja que la página se actualice antes de cada canción (grabar lleva un rato).
     await new Promise(r => setTimeout(r, 30));
     try {
-      const texto = await archivo.text();
       const { grabarIno, nombreDelIno } = await import('./inoMusical.js');
+      const texto = await archivo.text();
       const grab = grabarIno(texto);
       const m = await codificarMusical(grab);
       const nombre = nombreDelIno(texto) || archivo.name.replace(/\.ino$/i, '').replace(/\.ino$/i, '');
@@ -3443,6 +3444,25 @@ async function manejarSalirDeTV(id, numero) {
 let compartirVista = null;           // { id, codigo, venceEn } mientras se ve la pantalla de compartir
 let relojCompartir = null;
 
+// H-24: las invitaciones vencidas que nadie usó quedaban en la base para siempre. El panel anota la
+// última que creó y, al abrir Compartir o crear otra, borra la anterior si ya venció (no se borra una
+// vigente: el dueño puede haberle pasado el código a alguien que entra más tarde).
+const CLAVE_ULTIMA_INVITACION = 'tvretro.ultimaInvitacion';
+
+function limpiarInvitacionVencida() {
+  try {
+    const anotada = JSON.parse(localStorage.getItem(CLAVE_ULTIMA_INVITACION) || 'null');
+    if (anotada && anotada.codigo && anotada.venceEn <= Date.now()) {
+      localStorage.removeItem(CLAVE_ULTIMA_INVITACION);
+      borrarInvitacion(anotada.codigo); // sin esperar: es limpieza
+    }
+  } catch (e) { /* sin almacenamiento: no se limpia */ }
+}
+
+function anotarInvitacion(codigo, venceEn) {
+  try { localStorage.setItem(CLAVE_ULTIMA_INVITACION, JSON.stringify({ codigo, venceEn })); } catch (e) { /* nada */ }
+}
+
 function detenerRelojCompartir() {
   if (relojCompartir) {
     clearInterval(relojCompartir);
@@ -3472,6 +3492,7 @@ function pintarVenceCompartir() {
 async function generarCodigoCompartir() {
   const v = compartirVista;
   mostrarErrorCompartir('');
+  limpiarInvitacionVencida();
   const r = await crearInvitacion(v.id);
   if (compartirVista !== v) return false; // ya se fue de esta pantalla
   if (!r.exito) {
@@ -3480,6 +3501,7 @@ async function generarCodigoCompartir() {
   }
   v.codigo = r.codigo;
   v.venceEn = r.venceEn;
+  anotarInvitacion(r.codigo, r.venceEn);
   elementos.compartirCodigo.textContent = r.codigo;
   elementos.botonCompartirCopiar.textContent = 'Copiar código';
   pintarVenceCompartir();
@@ -3574,6 +3596,7 @@ async function manejarEliminarCuenta() {
 }
 
 async function abrirCompartir(id, numero) {
+  limpiarInvitacionVencida();
   const el = elementos;
   detenerRelojCompartir();
   const vista = { id, codigo: '', venceEn: 0 };
@@ -3719,6 +3742,15 @@ function requerirSesion() {
       if (usuario) {
         elementos.pantallaLogin.hidden = true;
         elementos.botonCerrarSesion.hidden = false;
+        if (falloMientrasLogin) {
+          falloMientrasLogin = false;
+          setTimeout(() => {
+            if (panelBloqueado || document.querySelector('main.controles[inert]')) {
+              arranqueVigente = false;
+              bloquearPanel(false);
+            }
+          }, ESPERA_ARRANQUE_MS);
+        }
         if (!entro) {
           entro = true;
           resolver(usuario);
@@ -3742,15 +3774,6 @@ function cerrarCapaSuperior() {
   if (dibujoExpandido) {
     contraerDibujo();
     return true;
-        if (falloMientrasLogin) {
-          falloMientrasLogin = false;
-          setTimeout(() => {
-            if (panelBloqueado || document.querySelector('main.controles[inert]')) {
-              arranqueVigente = false;
-              bloquearPanel(false);
-            }
-          }, ESPERA_ARRANQUE_MS);
-        }
   }
   const el = elementos;
   // Dentro de una opción de Más (Galería, Juegos, Alarma, Config): Atrás vuelve un paso
@@ -3813,6 +3836,7 @@ function avisarFalloInesperado(origen, detalle, mensaje = '') {
     }
   }
 }
+let falloMientrasLogin = false;
 window.addEventListener('error', (e) => avisarFalloInesperado('error', e.error || e.message, String(e.message || '')));
 window.addEventListener('unhandledrejection', (e) => avisarFalloInesperado('promesa', e.reason, String((e.reason && e.reason.message) || e.reason || '')));
 
@@ -3822,4 +3846,3 @@ if (document.readyState === 'loading') {
 } else {
   inicializar();
 }
-let falloMientrasLogin = false;
