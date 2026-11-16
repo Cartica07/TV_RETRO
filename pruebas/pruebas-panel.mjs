@@ -218,6 +218,37 @@ const ESCENARIOS = {
     return informe('borrar de la galería pide confirmación', trasCancelar && !trasAceptar && errores.length === 0, `cancelar: sigue=${trasCancelar}; aceptar: sigue=${trasAceptar}`);
   },
 
+  // H-22: un musical con letra se manda POR REFERENCIA (clave del catálogo) y la grabación ya no se sube a oled_remota/archivo.
+  async musicalPorReferencia() {
+    const { navegador, pagina, errores } = await abrir(SEMILLA_CANCIONES);
+    await pagina.click('#grupoTipo button[data-valor="cancion"]');
+    await pagina.selectOption('#seleccionCancion', 'a');
+    await pagina.waitForTimeout(500);
+    await pagina.click('#enviar');
+    await pagina.waitForTimeout(500);
+    const con = await pagina.evaluate((datosA) => {
+      const o = globalThis.__fakeDb.raiz.oled_remota || {};
+      return { tipo: o.pantalla && o.pantalla.tipo, musical: o.pantalla && o.pantalla.musical, archivo: o.archivo === undefined ? null : o.archivo, contieneGrabacion: JSON.stringify(o).includes(datosA) };
+    }, M1.a);
+    // Sin letra: sigue siendo la canción de siempre (notas dentro de pantalla), sin clave ni archivo.
+    await pagina.click('#grupoLetra button[data-valor="sin"]');
+    await pagina.click('#enviar');
+    await pagina.waitForTimeout(500);
+    const sin = await pagina.evaluate(() => { const o = globalThis.__fakeDb.raiz.oled_remota || {}; return { tipo: o.pantalla.tipo, notas: ((o.pantalla.cancion || {}).notas || []).length, musical: o.pantalla.musical === undefined ? null : o.pantalla.musical, archivo: o.archivo === undefined ? null : o.archivo }; });
+    // Qué claves se pueden mandar por referencia (las mismas condiciones que las reglas).
+    const claves = await pagina.evaluate(async () => {
+      const m = await import('/js/firebase.js');
+      const casos = ['cumpleanos_feliz', 'TuFaltaDeQuerer_2', 'a'.repeat(150), 'a'.repeat(151), '', 'a/b', '../x', 'a.b', 'a$b', 'a#b', 'a[b', 'a]b', 12, null, undefined];
+      return casos.map((c) => m.claveMusicalValida(c));
+    });
+    await navegador.close();
+    const ok = con.tipo === 'musical' && con.musical && con.musical.clave === 'a' && con.musical.nombre === 'a' && con.musical.formato === 'm1' && con.archivo === null && !con.contieneGrabacion
+      && sin.tipo === 'cancion' && sin.notas > 0 && sin.musical === null && sin.archivo === null
+      && JSON.stringify(claves) === JSON.stringify([true, true, true, false, false, false, false, false, false, false, false, false, false, false, false])
+      && errores.length === 0;
+    return informe('H-22: con letra manda solo la clave (sin archivo ni la grabación); sin letra sigue igual; claves inválidas se rechazan', ok, JSON.stringify({ con: { tipo: con.tipo, musical: con.musical, archivo: con.archivo, contieneGrabacion: con.contieneGrabacion }, sin, claves: claves.join(',') }));
+  },
+
   async repeticionesValidas() {
     const semilla = {
       ...SEMILLA_CANCIONES,

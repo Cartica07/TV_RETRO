@@ -1855,12 +1855,13 @@ async function enviarAFirebase() {
       const repeticiones = estadoActual.cancionRepeticiones;
 
       if (letraCanciones === 'con') {
-        // Con letra: la grabación entera (tipo "musical"), reemplaza la pantalla.
+        // Con letra: tipo "musical" (por referencia a musicales/<clave>), reemplaza la pantalla.
         aEnviar = Object.assign({}, estadoActual, {
           tipo: 'musical',
           musicalNombre: estadoActual.cancion,
           musicalRepeticiones: repeticiones,
-          musicalDatos: obtenerMusicalCargado().datos
+          // H-22: se manda la clave del catálogo (no la grabación entera): la TV la baja de musicales/datos/<clave>.
+          musicalClave: obtenerMusicalCargado().clave
         });
       } else {
         // Sin letra: solo las notas, de fondo (tipo "cancion" de siempre).

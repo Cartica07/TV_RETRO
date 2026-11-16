@@ -1386,6 +1386,14 @@ export async function leerMusical(clave) {
   }
 }
 
+/**
+ * true si es una clave de musicales/ que se puede mandar por referencia (H-22): texto de 1 a 150 caracteres sin / . $ # [ ]
+ * (las mismas condiciones que exigen las reglas en pantalla.musical.clave).
+ */
+export function claveMusicalValida(clave) {
+  return typeof clave === 'string' && clave.length >= 1 && clave.length <= 150 && !/[/.$#[\]]/.test(clave);
+}
+
 /** Guarda (o reemplaza, si la clave ya existe) un musical. */
 export async function guardarMusicalCatalogo(nombre, datos, meta = {}) {
   try {
@@ -1607,15 +1615,22 @@ export async function enviarEstado(estado) {
         notas: estado.cancionNotas || []
       };
     } else if (estado.tipo === 'musical') {
-      // Canción "con letra": la grabación del .ino (formato m1) va en
-      // oled_remota/archivo, igual que las animaciones comprimidas.
+      // Canción "con letra" (formato m1).
       pantallaPayload.tipo = 'musical';
       pantallaPayload.musical = {
         nombre: estado.musicalNombre || '',
         repeticiones: Number(estado.musicalRepeticiones || 1),
         formato: FORMATO_MUSICAL
       };
-      archivo = { version: nuevaVersion, datos: estado.musicalDatos || '' };
+      if (claveMusicalValida(estado.musicalClave)) {
+        // H-22 (aprobado por el dueño, 2026-11-16): POR REFERENCIA. Se manda solo la clave del catálogo y la TV baja la
+        // grabación de musicales/datos/<clave> (como ya hace con el tono de la alarma): ya no se re-sube entera (~100 KB)
+        // en cada envío. oled_remota/archivo queda null. Requiere el firmware nuevo y las reglas con pantalla.musical.clave.
+        pantallaPayload.musical.clave = estado.musicalClave;
+      } else {
+        // Forma anterior (sin clave válida): la grabación va en oled_remota/archivo, igual que las animaciones comprimidas.
+        archivo = { version: nuevaVersion, datos: estado.musicalDatos || '' };
+      }
     } else if (estado.tipo === 'alarma') {
       // Orden "vuelve a leer la alarma" (Más > Alarma). No lleva datos: viven en dispositivos/{id}/alarma.
       pantallaPayload.tipo = 'alarma';
