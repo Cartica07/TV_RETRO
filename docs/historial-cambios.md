@@ -401,3 +401,19 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - **Push** de `rediseno-app` y `main` (panel) y de `esp32` y `main` (firmware); **APK de depuración** nueva instalada en el teléfono del dueño.
 - **Documentación de cierre:** `docs/auditoria-alcance.md` reescrito con las tres zonas (A ya auditado, B esta sesión, C sesiones posteriores) para la auditoría final; recordatorio de la subida a Google Play en `CLAUDE.md` sección 9; reglas nuevas de trabajo (pruebas largas solo con la versión final confirmada; cada sesión añade su fila a la sección 8 de la auditoría).
 - **Siguiente conversación:** Juegos (reescribir los 4 sin licencia).
+
+**Auditoría independiente del 2026-11-15 y sus arreglos (2026-11-15):** informe en `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-15.md` (zona B: hallazgos H-28 a H-50; las sondas, capturas y la evidencia están en esa carpeta). Todo el banco en verde (31 suites) antes de tocar nada.
+
+| Repo | Commit | Qué |
+|---|---|---|
+| Firmware | `3d2e198` | **H-28 (ALTO):** `AudioOutService::begin()` hacía `pinMode()` sobre el buzzer; en el núcleo esp32 3.3.x eso suelta el PWM de `sonido.cpp` y la TV quedaba muda hasta reiniciar (alarma incluida). Ahora solo llama a `sonido_silencio()`, y `sonido_tono()` se reconecta si el PWM se perdió. |
+| Firmware | `cfa6b89` | **H-30:** `musical_iniciar()` comprueba que los conteos del m1 quepan en el archivo y tengan tope (antes, un m1 malformado escrito por un miembro dejaba la TV reiniciándose en bucle). **H-33:** `musical_reabrirUltimaImagen()`. |
+| Firmware | `b193e51` | **H-32:** alarma y ajustes se releen en cada reconexión del streaming. **H-33:** al terminar la alarma se recupera la imagen del musical; `aplicarPendiente()` ya no lo corta; la NVS solo se escribe si algo cambió. **H-38:** no se baja otro tono con una configuración pendiente. **H-34:** al desvincular, la TV olvida el contenido en memoria y relee alarma y ajustes. |
+| Panel | `ea3deaa` | **H-35:** con un GIF elegido, "volver" y Atrás salen de la Galería (la Galería solo se fuerza al abrir). |
+| Panel | `5b733cf` | **H-29:** Guardar alarma y Guardar ajustes quedan bloqueados hasta leerlos bien (antes pisaban lo guardado con los valores por defecto). **H-37:** avisan cuando la conexión está lenta. |
+| Panel | `96c8c6e` | **H-34:** desvincular borra también `pantalla`, `archivo`, `alarma` y `ajustes` de la TV (nodos existentes; sin campos nuevos). |
+| Panel | `3b7a12a` | **H-39:** tope de 8000 px por lado y 40 MP para una imagen fija. |
+
+- Pruebas nuevas (fuera del repo, ya en `todo-el-banco.sh`): `auditoria-b.mjs` (7 escenarios de panel) y `reglas-desvincular.mjs` (emulador). Corridas sueltas en verde: las nuevas y `mas`, `atras`, `alarma`, `config`, `compartir`, `baja-cuenta`, `baja-ui` y `etapa1-topes`; el banco completo se corre cuando el dueño confirme la versión final.
+- Firmware compilado (1 516 446 bytes, sin avisos); **sin grabar en la placa**.
+- Siguen abiertos H-31 y H-36 (decisión del dueño), H-40 a H-50 (bajos) y la lectura línea por línea de lo que la auditoría base solo miró por encima.

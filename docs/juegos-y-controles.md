@@ -9,7 +9,7 @@
 | Botón A | GPIO 5 (`PIN_BOTON`) | Pulsador a GND con pull-up. Más adelante será el botón **capacitivo** del ESP32-S3 (el GPIO 5 admite táctil): solo cambia `leerA()` en `entrada.cpp`. |
 | Rueda (encoder KY-040) | CLK 6 / DT 7 | 4 pasos por clic (`ENCODER_PASOS_POR_CLIC`), sentido en `ENCODER_INVERTIR`. Decodificador por interrupción con tabla de transiciones (tolera rebotes). |
 | Botón de la rueda (SW) | GPIO 10 (`PIN_BOTON_RUEDA`) | Difícil de apretar: se usa solo para iniciar, pausar, reiniciar. |
-| Buzzer | GPIO 4 | `tone()`/`noTone()`. |
+| Buzzer | GPIO 4 | Detrás de un transistor NPN (ver `README.md` del firmware). Todos los sonidos pasan por `sonido.cpp` (PWM propio con volumen); los juegos no deben tocar el pin con `pinMode()` (auditoría H-28). |
 | OLED | SDA 8 / SCL 9 | SSD1306 128×64, 0x3C. |
 
 Todo se lee en **`entrada.cpp`** (único lugar que toca esos pines). Eventos no bloqueantes, válidos hasta la siguiente llamada a `actualizarEntrada()` (una por vuelta de `loop()`): `entrada_aApretado/aSoltado/aAbajo/aMs/aDuracion/aMantenido(ms)`, lo mismo con `entrada_sw…`, y `entrada_giro()` (clics, + derecha). `ENTRADA_LOG` (en `entrada.h`, hoy 1) escribe `[entrada] …` por el serial para probar los controles; ponerlo en 0 para producción.
@@ -67,7 +67,7 @@ Los sketches originales del dueño (con su `.zip`) están en `Juegos/` del repo 
 - Pulir tiempos (1,5 s / 3 s / 1 s) y detalles estéticos de portada y lista (el dueño lo hará "luego").
 - Reescribir y mejorar los 4 juegos con licencia dudosa (más mundos, mecánicas, sonidos propios).
 - **Récords** de cada juego en la NVS de la TV (no hecho).
-- **Abrir un juego desde la app (hecho el 2026-11-14, falta probar en la TV real):** panel Más > Juegos > Jugar manda `pantalla.tipo = "juego"` + `pantalla.juego.id` (ver `formatos-datos.md`). Firmware: `OLED_Remota.ino` entra al modo Juegos e inicia el juego con `juegos_iniciarPorId()`; no obedece órdenes viejas al encender; descarta las que llegan durante una partida. Requiere publicar las reglas propuestas.
+- **Abrir un juego desde la app (hecho el 2026-11-14 y probado por el dueño en la TV real):** panel Más > Juegos > Jugar manda `pantalla.tipo = "juego"` + `pantalla.juego.id` (ver `formatos-datos.md`). Firmware: `OLED_Remota.ino` entra al modo Juegos e inicia el juego con `juegos_iniciarPorId()`; no obedece órdenes viejas al encender; descarta las que llegan durante una partida. Las reglas ya están publicadas.
 - Mando por el celular (WebSocket local o BLE): idea aparte, más grande.
 - Cambiar el botón A por el capacitivo del ESP32-S3.
 - Menú de "Otros/Más" del panel y alarma: ver la sección de pendientes de `CLAUDE.md`.

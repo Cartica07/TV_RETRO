@@ -139,6 +139,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
   - **Firmware:** `sonido.cpp` (todos los sonidos con PWM propio y volumen), `alarma.cpp`, `ajustes.cpp`. **Hardware:** el buzzer ahora va detrás de un transistor NPN (esquema en el `README.md` del firmware; las TV nuevas deben llevarlo).
   - **Probado por el dueño en teléfono y TV reales:** todo lo anterior, el portal Wi-Fi con clave y 9 envíos seguidos del mismo GIF con la memoria estable (~105 KB libres). Banco completo de pruebas en verde (31 suites; detalle en `docs/auditoria-alcance.md` sección 5).
   - **Auditoría final:** lo hecho en esta sesión NO está auditado por un tercero; `docs/auditoria-alcance.md` dice exactamente qué auditar y qué no.
+- **Auditoría independiente del 2026-11-15 (zona B) y sus arreglos (misma fecha):** informe en `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-15.md` (hallazgos H-28 a H-50; las sondas y capturas están junto a él). Banco completo en verde (31 suites). Arreglado y commiteado, **sin push y con el firmware compilado pero NO grabado ni probado en la TV**: panel `ea3deaa` (H-35), `96c8c6e` (H-34), `3b7a12a` (H-39), `5b733cf` (H-29 y H-37); firmware `3d2e198` (H-28, la TV quedaba muda tras Juegos), `cfa6b89` (H-30 y H-33), `b193e51` (H-32, H-33, H-34 y H-38). Pruebas nuevas FUERA del repo: `auditoria-b.mjs` y `reglas-desvincular.mjs` (ya en `todo-el-banco.sh`). Siguen abiertos H-31 y H-36 (decide el dueño) y el resto de la lista (ver `docs/auditoria-alcance.md` sección 2b).
 - Las funciones `listar*` de `firebase.js` devuelven `null` si no se pudo leer y `{}` si el catálogo está vacío.
 
 ## 6. Fases
@@ -170,6 +171,10 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 ## 9. Panorama pendiente (al 2026-11-15, para retomar en otra conversación)
 
 Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
+
+**Decisiones pendientes de la auditoría 2026-11-15 (las toma el dueño)**
+- **H-31:** guardar una alarma, un ajuste o pulsar Jugar reemplaza `pantalla` por la orden y borra `archivo`; si la TV se reinicia muestra el texto viejo y el panel reabre en Texto. Opciones: (b) solo firmware, la TV guarda el último contenido y lo repone al encender (arregla la TV, no el panel); (c) campo nuevo `oled_remota/orden = {tipo, version, juego?}` aparte de `pantalla` (arregla las dos cosas; necesita aprobación).
+- **H-36:** si al encender no hay ninguna red Wi-Fi conocida, la TV queda reiniciando el portal y no llega al `loop()` (sin reloj ni alarma). Propuesta: con redes guardadas, seguir funcionando sin red y reintentar en segundo plano; el portal solo a pedido o en la primera configuración.
 
 **Siguiente: JUEGOS (conversación aparte)**
 - Reescribir desde cero Snake, Breakout, Flappy e Invaders (derivan de un repo sin licencia, `chifunt/phone-project`; Jump es Unlicense y se queda), pulir tiempos y estética, récords en NVS, botón A capacitivo. Detalle en `docs/juegos-y-controles.md`. La carpeta `Juegos/` del firmware (sketches originales del dueño) sigue sin versionar.

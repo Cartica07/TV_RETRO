@@ -83,6 +83,28 @@ Leyenda: **Hecho** = arreglado y probado (pruebas del banco y, donde se indica, 
 | H-26 | `herramientas/` con 8 vulnerabilidades moderadas | **Pendiente** (solo si se vuelve a usar) | — | — |
 | H-27 | El panel se libera con el login visible ante un error inesperado | **Pendiente** | — | — |
 
+## 2b. Resultado de la auditoría del 2026-11-15 (zona B) y estado de sus hallazgos
+
+Informe completo: `C:\Proyectos\TV_RETRO-auditoria\auditoria-2026-11-15.md` (con sondas, capturas y evidencia). **Líneas base auditadas:** panel `3f880dc`, firmware `c2c9a0d`. Cambió el estado de varios H-01…H-27 (en el informe, con evidencia): **cerrados** H-02, H-05, H-07, H-08, H-09, H-10, H-14 y H-17 (en código); **parciales** H-03 (falta la revisión legal; H-34 ya está hecho), H-04, H-11 (H-39, hecho), H-15 y H-21; el resto sigue abierto (H-13 empeoró: `main.js` ~3 800 líneas).
+
+| ID | Gravedad | Tema | Estado |
+|---|---|---|---|
+| H-28 | ALTO | La TV queda muda tras entrar a Juegos (`pinMode` suelta el PWM) | **Arreglado** (firmware `3d2e198`); falta probar en la TV |
+| H-29 | ALTO | Guardar Alarma/Ajustes antes de cargar pisa lo guardado | **Arreglado** (panel `5b733cf`, prueba `auditoria-b`) |
+| H-30 | MEDIO | m1 malformado deja la TV reiniciándose | **Arreglado** (firmware `cfa6b89`); falta probar en la TV |
+| H-31 | MEDIO | Las órdenes (alarma, ajustes, juego) reemplazan `pantalla` | **Abierto: decide el dueño** (opciones b o c, ver `CLAUDE.md` sección 9) |
+| H-32 | MEDIO | La orden de alarma/ajustes se puede perder | **Arreglado** (firmware `b193e51`) |
+| H-33 | MEDIO | Tras la alarma la OLED queda en "ALARMA" con un musical | **Arreglado** (firmware `cfa6b89`, `b193e51`); falta probar en la TV |
+| H-34 | MEDIO | Desvincular deja contenido y alarmas al siguiente dueño | **Arreglado** (panel `96c8c6e`, firmware `b193e51`; reglas comprobadas en el emulador) |
+| H-35 | MEDIO | "Volver" atrapado en la Galería con un GIF elegido | **Arreglado** (panel `ea3deaa`) |
+| H-36 | MEDIO | Sin Wi-Fi al encender, la TV no llega al `loop()` | **Abierto: decide el dueño** |
+| H-37 | BAJO | Guardar alarma/ajustes sin aviso de conexión lenta | **Arreglado** (panel `5b733cf`) |
+| H-38 | BAJO | Carrera sobre el archivo del tono | **Arreglado** (firmware `b193e51`) |
+| H-39 | BAJO | Sin tope de píxeles para una imagen fija | **Arreglado** (panel `3b7a12a`) |
+| H-40 … H-50 | BAJO | `npm audit` de la APK, copia entre dispositivos, textos legales, licencias, id de los juegos, documentación (H-45, puesta al día en esta sesión), 7 px de scroll en Texto a 360×740, tamaño del slot OTA, zonas horarias, fechas de TLS, topes de `inoMusical` | Abiertos (ver informe) |
+
+**Pendiente de la lectura línea por línea (sección 1.2):** `renderer.js`, `imageProcessor.js` (solo se miró el tamaño del lienzo), `ui.js` fuera de los IDs, `carga-masiva.html`, el CSS y la lógica interna de los 5 juegos. La auditoría no sacó conclusiones de esos archivos.
+
 ## 3. ZONA B: todo lo hecho en la sesión 2026-11-12 → 2026-11-15 (hay que auditarlo)
 
 Rango: panel `b7fc571..38e8a3c` (56 commits, `git diff --stat b7fc571..38e8a3c`) y firmware `ad5b6ad..9f2c529` (13 commits). Todo fue escrito y probado por la misma IA que lo arregló y ningún tercero lo ha leído. Cada fila dice qué cambió y qué mirar.
@@ -164,4 +186,4 @@ Todo lo que figure aquí también se audita. **Cada conversación que cambie có
 
 | Fecha | Commits (panel / firmware) | Qué cambió | Puntos a mirar |
 |---|---|---|---|
-| _(aún ninguna sesión posterior al cierre del 2026-11-15)_ | | | |
+| 2026-11-15 (auditoría y arreglos) | **Panel:** `ea3deaa`, `96c8c6e`, `3b7a12a`, `5b733cf` (más los de documentación). **Firmware:** `3d2e198`, `cfa6b89`, `b193e51` | Arreglos de la auditoría del 2026-11-15: H-28, H-29, H-30, H-32, H-33, H-34, H-35, H-37, H-38, H-39 (ver 2b) | Que `sonido_tono()` se reconecte sin perder el volumen; que un m1 válido siga sonando (topes: 200 000 notas o cuadros, 65 535 imágenes); que `olvidarContenido()` no borre contenido de una TV con dueño; que la limpieza de `desvincularDispositivo` no choque con las reglas (probado en el emulador); **todo el firmware está compilado pero NO grabado ni probado en la TV** |
