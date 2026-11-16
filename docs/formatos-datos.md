@@ -67,7 +67,8 @@ Solo va el sub-objeto del `tipo` actual (`imagen`, `cancion`, `animacion` o `mus
 | `config.manual`, `x`, `y` | rediseño (aprobado) | Esquina superior izquierda del bloque, limitada para no salirse. |
 | `config.direccion` | rediseño (aprobado) | Scroll vertical: 1 s quieto, sube a 12 px/s, 1 s quieto, repite. |
 | `animacion.formato/cantidad` | z1 (aprobado) | Sin `cuadros`; los cuadros van en `archivo`. |
-| `musical` | musicales (aprobado) | La grabación va en `archivo`. |
+| `musical` | musicales (aprobado) | Forma anterior: la grabación va en `archivo`. Desde H-22, con `clave`, no hay `archivo` (ver la fila siguiente). |
+| `musical.clave` | H-22, musical por referencia (aprobado 2026-11-16) | Clave del musical en `musicales/datos/<clave>` (texto de 1 a 150 caracteres sin `/ . $ # [ ]`). Opcional: **con** `clave` el panel NO sube la grabación (`archivo` = null) y la TV la baja del catálogo; **sin** `clave` todo funciona como antes (la grabación va en `archivo`). Orden de puesta en marcha: reglas → firmware → panel (un panel con `clave` y un firmware sin ella no reproduce el musical). |
 | `tipo = "alarma"` + nodo `dispositivos/{id}/alarma` | Más > Alarma (aprobado 2026-11-14) | La alarma NO va en `pantalla`: vive en `dispositivos/{id}/alarma` = `{ tono, alarmas: { "0": {activa, hora, minuto, dias}, "1": …, "2": … } }` (hasta 3; `tono` = clave de `musicales/` o vacío = aviso simple de la TV; `hora` 0..23, `minuto` 0..59, `dias` = máscara de bits 0..127 con bit 0 = domingo … bit 6 = sábado; por defecto 07:00 de lunes a viernes). Lo escribe el dueño o un miembro (la TV solo lo lee). La orden `pantalla.tipo = "alarma"` (mismo `update()` de siempre, sin datos propios) le dice a la TV que vuelva a leerlo; la TV también lo lee al conectarse y lo guarda en su memoria (NVS), así suena sin celular ni Wi-Fi siempre que sepa la hora (NTP; sin batería de reloj, tras un corte sin Wi-Fi no suena hasta sincronizar). Si el tono es una canción, la TV baja `musicales/datos/{clave}` (m1) a su memoria. Es una orden como `juego`: no cambia lo mostrado, no se obedece al encender y el panel la lee como Texto. Reglas publicadas (ver `database.rules.json`). |
 | `tipo = "ajustes"` + nodo `dispositivos/{id}/ajustes` | Más > Config > Ajustes de la TV (aprobado 2026-11-14) | `dispositivos/{id}/ajustes` = `{ brillo: 1..3, volumen: 0..3, zona }` (brillo 1 Bajo / 2 Medio / 3 Alto; volumen 0 Silencio … 3 Alto; `zona` = minutos respecto de la hora universal, -720..840, ej. -300 = Colombia). Por defecto `{3, 3, -300}` (como era antes). Lo escribe el dueño o un miembro; la TV solo lo lee. Igual que la alarma: la orden `pantalla.tipo = "ajustes"` hace que la TV lo vuelva a leer; también lo lee al conectarse y lo guarda en la NVS. En la TV: brillo = contraste de la OLED, volumen = ancho del pulso del buzzer (todos los sonidos pasan por `sonido.cpp`), zona = `TZ` del reloj y de la alarma. La alarma suena aunque el volumen esté en Silencio (a volumen Medio). |
 | `tipo = "juego"` + `juego.id` | Más > Juegos (aprobado 2026-11-14) | Es una **orden**, no contenido: la TV entra al modo Juegos y arranca ese juego (`snake`, `breakout`, `flappy`, `invaders`, `jump`); lo que mostraba se queda como estaba. Va en el mismo `update()` de siempre (`version` nueva, `texto` y `config` como siempre, `archivo` = null). Un firmware viejo la toma como contenido sin imagen y no hace nada especial. La TV no obedece una orden vieja al encender (la muestra como texto) y descarta la que llega mientras hay una partida. El panel, al recargar, la lee como Texto. Las reglas piden `juego.id` = `^[a-z]{1,12}$` y ningún otro hijo. |
@@ -95,7 +96,7 @@ Es un arreglo de `[frecuencia Hz, duración ms]`, donde 0 Hz es silencio. El fir
 
 ## 4. Formato m1: musicales
 
-`oled_remota/archivo/datos` (al enviar) y `musicales/datos/<clave>` (en el catálogo) = Base64 de:
+`musicales/datos/<clave>` (en el catálogo; también `oled_remota/archivo/datos` en la forma anterior de envío) = Base64 de:
 
 ```
 "M1"                         2 bytes: 0x4D 0x31
@@ -126,7 +127,7 @@ Es un arreglo de `[frecuencia Hz, duración ms]`, donde 0 Hz es silencio. El fir
 - Si se importa de nuevo un archivo con la misma clave, se reemplaza.
 
 ### Con letra y sin letra
-- **Con letra:** se envía `tipo: "musical"` + `archivo` m1. Reemplaza la pantalla.
+- **Con letra:** se envía `tipo: "musical"` con `pantalla.musical.clave` (por referencia; H-22). La TV baja la grabación m1 de `musicales/datos/<clave>` y reemplaza la pantalla. (Forma anterior, sin `clave`: la grabación m1 va en `oled_remota/archivo`; el firmware la sigue aceptando.)
 - **Sin letra:** se envía `tipo: "cancion"` con `notas` sacadas de la grabación (`notasParaCancion`), sin `archivo`. Suena de fondo y no toca la pantalla.
 
 ## 5. Archivos en el ESP32 (LittleFS, ~7,9 MB)

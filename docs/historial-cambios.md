@@ -466,3 +466,10 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 - `dcecc53` — al usar las fuentes reales en las pruebas apareció que **Texto se pasaba 3 px de scroll a 360x740** (ya pasaba en producción con las fuentes reales de Google: el banco las servía vacías y medía con las del sistema). `.rotulo` pasa a `line-height: 1.1`; las 12 pantallas quedan sin scroll en 390x844 y 360x740 medidas con las fuentes reales.
 - `26567b6` + `c95f0a7` — **H-21, CSP:** meta `Content-Security-Policy` en `index.html`, probada contra Google y Firebase reales (login falso, base por WebSocket, ventana de Google: 0 violaciones) y activa (bloquea fetch, imagen y script ajenos). La copia de la APK se queda sin ella. Las pruebas corren con la política activa (`sinCSP` solo donde se usa `new Function` en la página). **Si se añade un servicio externo, hay que añadirlo a la política.**
 - `4d83f14` — banco: cierra los navegadores abiertos y termina solo (se había colgado ~4 h), repite `evaluate` tras un `location.reload()` y pone tiempo límite por suite.
+
+**2026-11-16, H-22: musical por referencia (sin publicar, sin grabar):**
+- **Contrato (aprobado por el dueño):** `pantalla.musical.clave` opcional = clave de `musicales/datos/<clave>`. Con ella el panel no manda `archivo` (null) y la TV baja la grabación del catálogo; sin ella, todo como antes. Ahorra ~100 KB de subida desde el celular por envío.
+- **Reglas** (`ae0d3f7`, copia de vuelta atrás `database.rules.sin-musical-referencia.json`): `clave` de 1 a 150 caracteres sin `/ . $ # [ ]` (11 casos nuevos en `reglas-etapa2`; con las reglas anteriores 3 fallan, con las nuevas todo bien).
+- **Panel** (`cee292f`): `claveMusicalValida()` y envío por referencia; prueba nueva en `pruebas-panel`.
+- **Firmware** (repo del firmware): `descargarMusicalPorClave()` en `github.cpp` (streaming a LittleFS, valida la clave y que empiece con "M1", reintenta como cualquier descarga fallida). Compilado (1 525 754 bytes); **sin grabar ni probar en la TV**.
+- **Orden de puesta en marcha:** reglas publicadas → firmware grabado → panel/APK. Un panel nuevo con un firmware viejo no reproduce el musical.

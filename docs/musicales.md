@@ -101,7 +101,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
   - sin letra, la pantalla no cambia: si antes se estaba viendo la vista previa con letra, se vuelve a mostrar lo que había.
 - **Borrar:** el tacho, con confirmación, borra `indice` y `datos` de esa clave.
 - **Enviar:**
-  - con letra: `tipo: "musical"`, `musicalNombre`, `musicalRepeticiones` y `musicalDatos` (m1), que van a `archivo`;
+  - con letra: `tipo: "musical"`, `musicalNombre`, `musicalRepeticiones` y `musicalClave` (la clave del catálogo). **Desde H-22 (2026-11-16) se envía por referencia**: `pantalla.musical.clave` y NADA en `archivo` (antes se re-subía la grabación entera, ~100 KB, en cada envío); la TV la baja de `musicales/datos/<clave>`. La forma anterior (`musicalDatos` → `archivo`) queda como respaldo si no hay clave válida;
   - sin letra: `tipo: "cancion"` con `cancionNotas = notasParaCancion(grab)`;
   - si no se eligió nada: "Elige una canción.";
   - **todas** las canciones se mandan con el número de Repeticiones que puso el usuario, con letra y sin letra, también las 3 cuyo `.ino` no repite (*culpable_ono*, *en_otra_vida*, *vuelvepetro*): eran casos especiales de la TV ESP8266. La fila Repeticiones se ve siempre.
@@ -109,7 +109,7 @@ Está descrito byte a byte en [formatos-datos.md §4](formatos-datos.md).
 
 ## 6. El firmware (`musical.cpp`, commit `54dce85`)
 
-- **Descarga** (`github.cpp`): con `tipo == "musical"`, baja `archivo/datos` en streaming, decodificando Base64, a `/nuevo_musical.bin`, y marca `musicalListo`.
+- **Descarga** (`github.cpp`): con `tipo == "musical"`, baja la grabación en streaming, decodificando Base64, a `/nuevo_musical.bin`, y marca `musicalListo`. **Con `pantalla.musical.clave` (H-22)** la baja de `musicales/datos/<clave>` (`descargarMusicalPorClave`, igual que el tono de la alarma; comprueba que empiece con "M1"); **sin clave**, de `oled_remota/archivo/datos` como antes (`descargarArchivoA`).
 - **Aplicar** (`OLED_Remota.ino`, `aplicarArchivosNuevos`): detiene el buzzer, la animación y el musical anterior (`musical_liberar`), mueve el archivo a `/current_musical.bin` y llama a `musical_iniciar(ruta, repeticiones)`.
 - **Reproducir:**
   - `musical_actualizar(dibujar)` en cada `loop()` avanza las notas (`tone()`/`noTone()`) y las imágenes según `millis()`;
