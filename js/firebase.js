@@ -541,6 +541,13 @@ export async function desvincularDispositivo(uid, id) {
       [`dispositivos/${id}/codigoUsado`]: null,
       [`dispositivos/${id}/miembros`]: null,
       [`dispositivos/${id}/oled_remota/version`]: VERSION_DESVINCULADA,
+      // Auditoría 2026-11-15 (H-34): se limpia también lo que la TV guardaba del dueño anterior (último
+      // contenido, GIF o musical, alarmas y ajustes). Si no, quien reciba la TV vería su último mensaje
+      // y heredaría sus alarmas. Son nodos que ya existen: no cambia el contrato de datos.
+      [`dispositivos/${id}/oled_remota/pantalla`]: null,
+      [`dispositivos/${id}/oled_remota/archivo`]: null,
+      [`dispositivos/${id}/alarma`]: null,
+      [`dispositivos/${id}/ajustes`]: null,
       [`usuarios/${uid}/dispositivos/${id}`]: null
     }), ESPERA_MAXIMA_ENVIO_MS);
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
