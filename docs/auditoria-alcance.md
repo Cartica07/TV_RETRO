@@ -72,7 +72,7 @@ Leyenda: **Hecho** = arreglado y probado (pruebas del banco y, donde se indica, 
 | H-15 | Accesibilidad: objetivos táctiles y ARIA | **Pendiente** (los botones nuevos de volumen usan `aria-pressed`) | — | — |
 | H-16 | Dibujo sin goma | **Pendiente** | — | — |
 | H-17 | APK lista para publicar: firma, versión, copia de seguridad, botón Atrás | **Hecho, probado en el teléfono** (Google, Atrás, cuenta nueva). Falta respaldar el keystore y confirmar nombre y paquete | `5a4ea2b`, `87f7fcf`, `4f5f839` | Firma de release real; `versionCode` automático; `allowBackup=false` |
-| H-18 | Pruebas dentro del repo y CI | **Pendiente.** Las pruebas siguen FUERA del repo (`C:\Proyectos\pruebas-tv-retro`), ahora 31 suites (sección 5) | — | Moverlas a `pruebas/` con rutas relativas y automatizarlas |
+| H-18 | Pruebas dentro del repo y CI | **Hecho en parte (2026-11-15).** Las 31 suites viven en `pruebas/` (rutas relativas, README) y hay un flujo de CI (`.github/workflows/pruebas.yml`) **que no se pudo probar aquí [N]**: se comprueba en el primer push a `main` | — | Que el flujo corra en verde en GitHub; quedan fuera del repo `mono.mjs`, las pruebas de medición en el teléfono y `escuchar-serie.ps1` |
 | H-19 | OTA y restablecimiento de fábrica | **Pendiente** | — | — |
 | H-20 | Cifrado de flash (NVS) | **Pendiente** (al fabricar en serie; ahora la NVS guarda también alarmas y ajustes, sin datos sensibles) | — | — |
 | H-21 | CSP, SRI, fuentes de terceros | **Parcial:** la APK ya usa fuentes locales; la web publicada sigue con Google Fonts y sin CSP | `126182f` | — |
@@ -158,7 +158,7 @@ Revisado a fondo en la auditoría base y sin cambios de fondo desde entonces. La
 - Los **puntos fuertes** del informe base (sección M): modelo de permisos, protocolo de envío por versiones, formatos `z1`/`m1`, privacidad en los logs, documentación.
 - Lo que se confirmó **no aplica**: Firestore, Storage, Cloud Functions.
 
-## 5. Pruebas disponibles (FUERA del repo, en `C:\Proyectos\pruebas-tv-retro`)
+## 5. Pruebas disponibles (DENTRO del repo, en `pruebas/`)
 
 **Última corrida completa: 2026-11-15, todo en verde** (en la primera vuelta `mas` falló por una expectativa vieja de la prueba, que esperaba tres opciones de menú en vez de cuatro; corregida, 10 de 10).
 
@@ -166,7 +166,7 @@ Revisado a fondo en la auditoría base y sin cambios de fondo desde entonces. La
 - **Reglas (emulador con `REGLAS_ARCHIVO=…database.rules.json`):** `reglas` 244, `reglas-etapa2` 30, `reglas-atomico` 10, `reglas-envios-reales` 12, `reglas-borrar-cuenta` 12, `reglas-juego` 15, `reglas-alarma` 33, `reglas-ajustes` 22, `simular-tv` 19, `probar-migracion` 12, `probar-biblioteca` 5.
 - **Probado a mano por el dueño en el teléfono y la TV reales:** Google, correo, envío a la TV, botón Atrás, cuenta nueva con invitación, aviso de verificar correo, baja de cuenta, arranque sin internet, portal Wi-Fi con clave (2026-11-15), alarma (suena, se calla al minuto, pospone, saca del juego, sobrevive a reiniciar), Config (brillo, volumen, zona horaria) y **memoria estable con 9 envíos seguidos del mismo GIF** (2026-11-15, por el monitor serie: memoria libre 104 a 105 KB sin bajar, descarga de 23 233 B en 0,85 a 1,03 s, sin reinicios ni errores).
 - **Lo que no cubren (la auditoría final debe mirarlo):** la baja de cuenta contra el Firebase real, la clave del portal contra un ataque real, el contenido de `terminos.html` y `privacidad.html` (abogado), el rendimiento de `main.js` (~3 800 líneas) y todo lo de la sección 1.2.
-- Cómo correrlas: **todo el banco** con `bash C:/Proyectos/pruebas-tv-retro/todo-el-banco.sh` (deja una línea por suite; el detalle de cada una en `/tmp/b-<suite>.txt`; tarda ~40 min: lanzarlo como proceso aparte para que no se corte). **Monitor serie de la TV:** `powershell -File C:/Proyectos/pruebas-tv-retro/escuchar-serie.ps1 > archivo.txt` (escribe a la salida estándar; correrlo en segundo plano y redirigir). Abrir el puerto reinicia la TV.
+- Cómo correrlas: **todo el banco** con `bash pruebas/todo-el-banco.sh` (deja una línea por suite; el detalle de cada una en `/tmp/b-<suite>.txt`; tarda ~40 min: lanzarlo como proceso aparte para que no se corte). **Monitor serie de la TV:** `powershell -File C:/Proyectos/pruebas-tv-retro/escuchar-serie.ps1 > archivo.txt` (escribe a la salida estándar; correrlo en segundo plano y redirigir). Abrir el puerto reinicia la TV.
 - Entorno: Node 22 (Node 26 se cae) y, para el emulador, el JDK de Android Studio (`C:\Program Files\Android\Android Studio\jbr`). Las suites `.cjs` se corren con `--only auth,database` y `simular-tv.cjs` con `--project demo-tvretro`. Las suites con Playwright usan el puerto 8765: una corrida cortada puede dejar un `tv.mjs` ocupándolo (hay que cerrarlo antes de repetir).
 
 ## 6. Lo que falta hacer (todo será zona C: auditar al terminar)
