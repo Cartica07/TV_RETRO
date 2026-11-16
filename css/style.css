@@ -2421,6 +2421,21 @@ body.sin-barra-accion .barra-accion {
     min-height: 36px;
   }
 
+  /* H-46 (auditoría 2026-11-15): en modo cuentas la barra superior lleva dos botones de 44 px y crecía 8 px
+     más que en el modo sin botones para el que se ajustó este alto: sobraban 7 px de scroll a 360×740.
+     El botón se ve de 36 px y el área de toque sigue siendo de 44 px. */
+  .barra-superior-derecha .boton-icono {
+    position: relative;
+    width: 36px;
+    height: 36px;
+  }
+
+  .barra-superior-derecha .boton-icono::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+
   .marco-pantalla canvas {
     height: min(96px, 14vh);
   }
