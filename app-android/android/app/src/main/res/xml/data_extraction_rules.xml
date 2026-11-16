@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12 o superior: qué datos de la app pueden salir del teléfono (copia en la nube y transferencia
+  a otro teléfono). La sesión de Firebase vive en el almacenamiento del WebView; no debe viajar a otro
+  dispositivo: la persona vuelve a entrar. Todo excluido (auditoría 2026-11-15, H-41).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
