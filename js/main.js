@@ -44,14 +44,7 @@ import {
   quitarMiembro,
   borrarInvitacion,
   salirDeTV,
-  esAdministrador,
-  cargarAlarma,
-  guardarAlarma,
-  normalizarAlarma,
-  CANTIDAD_ALARMAS,
-  cargarAjustes,
-  guardarAjustes,
-  normalizarAjustes
+  esAdministrador
 } from './firebase.js';
 import {
   procesarImagen,
@@ -64,6 +57,7 @@ import { esGif, leerGif, construirCuadrosGif, evaluarPesoAnimacion, evaluarPesoC
 import { puedeComprimir, comprimirCuadros, codificarMusical, decodificarMusical, notasParaCancion } from './compresion.js';
 import { enApp, pluginNativo, accionesEnCurso, sinRepetir, esperarFinal, TEXTO_GUARDADO_LENTO, TEXTO_BORRADO_LENTO, mostrarAviso } from './utilidades.js';
 import { crearConexion } from './conexion.js';
+import { crearMas, TITULOS_CONFIG } from './mas.js';
 // inoMusical.js (el intérprete de .ino, ~50 KB) solo lo necesita quien importa canciones: se carga en
 // importarCanciones() con import() (auditoría 2026-11-15, H-23).
 import { OPCIONES_GEOMETRIA_DEFECTO } from './imageProcessor.js';
@@ -206,6 +200,21 @@ const geometriaImagen = { escala: 'ajustar', fondo: 'negro', rotar: 0, volteoH: 
 
 // Estado de conexión de la TV y acuse de recibo: js/conexion.js (H-13).
 const { iniciarMonitoreoConexion, esperarAcuse } = crearConexion({ leerElementos: () => elementos, turnoEnvio: () => turnoEnvio });
+
+// Pestaña Más (menú, Mi cuenta, Ajustes de la TV, Alarma, Jugar): js/mas.js (H-13).
+const { obtenerMasVista, obtenerConfigVista, fijarMasVista, volverEnMas, configurarEventosMas } = crearMas({
+  leerElementos: () => elementos,
+  estado: () => estadoActual,
+  sesion: () => sesionActual,
+  musicales: () => musicalesCatalogo,
+  fijarMusicales: (lista) => { musicalesCatalogo = lista; },
+  nombreMusical: (clave) => nombreMusical(clave),
+  avanzarTurnoEnvio: () => { turnoEnvio++; },
+  mostrarResultadoEnvio: (resultado, textoOk) => mostrarResultadoEnvio(resultado, textoOk),
+  mostrarSeccionSegunTipo: (tipo) => mostrarSeccionSegunTipo(tipo),
+  renderizar: () => renderizar(),
+  estaBloqueado: () => panelBloqueado
+});
 
 
 // ===================================================
@@ -696,11 +705,11 @@ function mostrarSeccionSegunTipo(tipo) {
   // La pestaña "Más" (tipo "galeria") abre un menú; cada opción (Galería, Juegos) es su
   // propia pantalla con título y "volver".
   const enMas = tipoSeccion === 'galeria';
-  const enMenu = enMas && masVista === 'menu';
-  const enJuegos = enMas && masVista === 'juegos';
-  const enAlarma = enMas && masVista === 'alarma';
-  const enConfig = enMas && masVista === 'config';
-  const enGaleria = enMas && masVista === 'galeria';
+  const enMenu = enMas && obtenerMasVista() === 'menu';
+  const enJuegos = enMas && obtenerMasVista() === 'juegos';
+  const enAlarma = enMas && obtenerMasVista() === 'alarma';
+  const enConfig = enMas && obtenerMasVista() === 'config';
+  const enGaleria = enMas && obtenerMasVista() === 'galeria';
 
   Object.keys(secciones).forEach((clave) => {
     const el = secciones[clave];
@@ -721,12 +730,12 @@ function mostrarSeccionSegunTipo(tipo) {
   // Config: la lista de apartados o uno de ellos.
   const apartados = { lista: elementos.seccionConfig, cuenta: elementos.configCuenta, tv: elementos.configTV, ayuda: elementos.configAyuda, legal: elementos.configLegal };
   Object.entries(apartados).forEach(([clave, el]) => {
-    if (el) el.style.display = (enConfig && configVista === clave) ? 'block' : 'none';
+    if (el) el.style.display = (enConfig && obtenerConfigVista() === clave) ? 'block' : 'none';
   });
   if (elementos.cabeceraMas) {
     elementos.cabeceraMas.style.display = (enMas && !enMenu) ? '' : 'none';
     if (elementos.tituloMas) {
-      elementos.tituloMas.textContent = enJuegos ? 'Juegos' : enAlarma ? 'Alarma' : enConfig ? TITULOS_CONFIG[configVista] : 'Galería';
+      elementos.tituloMas.textContent = enJuegos ? 'Juegos' : enAlarma ? 'Alarma' : enConfig ? TITULOS_CONFIG[obtenerConfigVista()] : 'Galería';
     }
   }
   // En el menú y en Juegos (cada fila tiene su "Jugar") no se usa el botón general de enviar.
@@ -741,275 +750,9 @@ function mostrarSeccionSegunTipo(tipo) {
   }
 }
 
-// ---- Más: menú (Galería, Juegos, Alarma, Config) ----
-// 'menu' | 'galeria' | 'juegos' | 'alarma' | 'config'. Al tocar "Más" abajo siempre se ve el menú.
-let masVista = 'menu';
-// Dentro de Config: 'lista' | 'cuenta' | 'tv' | 'ayuda' | 'legal'.
-let configVista = 'lista';
-const TITULOS_CONFIG = { lista: 'Config', cuenta: 'Mi cuenta', tv: 'Ajustes de la TV', ayuda: 'Ayuda y contacto', legal: 'Legal' };
-
-function cambiarMasVista(vista) {
-  masVista = ['juegos', 'galeria', 'alarma', 'config'].includes(vista) ? vista : 'menu';
-  configVista = 'lista';
-  mostrarSeccionSegunTipo(estadoActual.tipo);
-  if (window.scrollY > 0) window.scrollTo(0, 0);
-  renderizar();
-  if (masVista === 'alarma') abrirAlarma();
-}
-
-// Un apartado de Config (o de vuelta a su lista).
-function abrirApartadoConfig(apartado) {
-  configVista = Object.prototype.hasOwnProperty.call(TITULOS_CONFIG, apartado) ? apartado : 'lista';
-  mostrarSeccionSegunTipo(estadoActual.tipo);
-  if (window.scrollY > 0) window.scrollTo(0, 0);
-  if (configVista === 'cuenta') mostrarMiCuenta();
-  if (configVista === 'tv') abrirAjustesTV();
-}
-
-// "Volver" (y el Atrás de la APK) dentro de Más: de un apartado de Config a su lista; si no, al menú.
-function volverEnMas() {
-  if (masVista === 'config' && configVista !== 'lista') abrirApartadoConfig('lista');
-  else cambiarMasVista('menu');
-}
-
-// ---- Config > Mi cuenta ----
-function mostrarMiCuenta() {
-  const correo = sesionActual && sesionActual.email ? sesionActual.email : '';
-  elementos.configCorreo.textContent = correo || 'Sin sesión';
-  // Sin cuentas (solo pruebas locales) no hay nada que cerrar ni eliminar.
-  elementos.botonConfigCerrarSesion.disabled = !sesionActual;
-  elementos.botonConfigEliminarCuenta.disabled = !sesionActual;
-  elementos.botonConfigMisTV.disabled = !sesionActual;
-}
-
-// ---- Config > Ajustes de la TV ----
-let ajustesDatos = normalizarAjustes(null);
-let turnoAjustes = 0;
-
-function marcarOpcion(grupo, valor) {
-  grupo.querySelectorAll('button[data-valor]').forEach((b) => {
-    b.setAttribute('aria-pressed', b.dataset.valor === String(valor) ? 'true' : 'false');
-  });
-}
-
-function volcarAjustesEnPantalla() {
-  marcarOpcion(elementos.grupoBrillo, ajustesDatos.brillo);
-  marcarOpcion(elementos.grupoVolumen, ajustesDatos.volumen);
-  const sel = elementos.ajusteZona;
-  const valor = String(ajustesDatos.zona);
-  // Una zona guardada que no está en la lista (ej. puesta desde otro lado) se muestra igual.
-  if (![...sel.options].some((o) => o.value === valor)) {
-    const opt = document.createElement('option');
-    const horas = ajustesDatos.zona / 60;
-    opt.value = valor;
-    opt.textContent = `UTC${horas >= 0 ? '+' : '−'}${Math.abs(horas)}`;
-    sel.appendChild(opt);
-  }
-  sel.value = valor;
-}
-
-function leerAjustesDePantalla() {
-  const elegido = (grupo, defecto) => {
-    const b = grupo.querySelector('button[aria-pressed="true"]');
-    return b ? Number(b.dataset.valor) : defecto;
-  };
-  ajustesDatos = normalizarAjustes({
-    brillo: elegido(elementos.grupoBrillo, ajustesDatos.brillo),
-    volumen: elegido(elementos.grupoVolumen, ajustesDatos.volumen),
-    zona: Number(elementos.ajusteZona.value)
-  });
-}
-
-// Auditoría 2026-11-15 (H-29): mientras los ajustes no se hayan leído bien, Guardar queda bloqueado. Antes
-// estaba habilitado con los valores por defecto a la vista, y guardar antes de que llegara la lectura (o
-// después de un fallo sin señal) escribía esos valores por defecto encima de los reales.
-let ajustesCargados = false;
-
-async function abrirAjustesTV() {
-  const turno = ++turnoAjustes;
-  ajustesCargados = false;
-  elementos.botonGuardarAjustes.disabled = true;
-  volcarAjustesEnPantalla();
-  const r = await cargarAjustes();
-  if (turno !== turnoAjustes || masVista !== 'config' || configVista !== 'tv') return; // se fue mientras tanto
-  if (r.exito) {
-    ajustesDatos = r.ajustes;
-    ajustesCargados = true;
-    elementos.botonGuardarAjustes.disabled = false;
-    volcarAjustesEnPantalla();
-  } else {
-    marcarEstado('No se pudieron leer los ajustes de la TV. Revisa tu internet y vuelve a abrir esta pantalla.', 'error', elementos);
-  }
-}
-
-async function guardarAjustesEnLaTV() {
-  if (!ajustesCargados) return;
-  await sinRepetir('ajustes', elementos.botonGuardarAjustes, async () => {
-    leerAjustesDePantalla();
-    turnoEnvio++;
-    marcarEstado('Guardando…', null, elementos);
-    activarLedTransmision(elementos);
-    try {
-      // esperarFinal: con la conexión lenta avisa y espera a que termine (el botón sigue ocupado, H-37).
-      const r = await esperarFinal(await guardarAjustes(ajustesDatos, estadoActual), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, elementos));
-      mostrarResultadoEnvio(r, 'Ajustes guardados ✅ Ya van camino a la TV.');
-    } catch (err) {
-      console.error('Error al guardar los ajustes:', err);
-      marcarEstado('Error desconocido al guardar los ajustes.', 'error', elementos);
-    } finally {
-      desactivarLedTransmision(elementos);
-    }
-  });
-}
-
-// ---- Más > Alarma ----
-// Hasta 3 alarmas (se edita una por vez) y un solo tono (canción del catálogo). Vive en la TV; acá
-// solo se configura (firebase.js: cargarAlarma / guardarAlarma).
-let alarmaDatos = normalizarAlarma(null); // copia que se edita
-let alarmaSel = 0;
-let turnoAlarma = 0;
-
-const dosDigitos = (n) => String(n).padStart(2, '0');
-
-// Pasa la alarma elegida (y el tono) de los datos a los controles.
-function volcarAlarmaEnPantalla() {
-  const el = elementos;
-  const a = alarmaDatos.alarmas[alarmaSel];
-  el.alarmaHora.value = `${dosDigitos(a.hora)}:${dosDigitos(a.minuto)}`;
-  el.alarmaActiva.checked = a.activa;
-  el.grupoAlarmaDias.querySelectorAll('button[data-dia]').forEach((b) => {
-    b.setAttribute('aria-pressed', (a.dias >> Number(b.dataset.dia)) & 1 ? 'true' : 'false');
-  });
-  el.grupoAlarmaNumero.querySelectorAll('button[data-alarma]').forEach((b) => {
-    const n = Number(b.dataset.alarma);
-    const activo = n === alarmaSel;
-    b.classList.toggle('activo', activo);
-    b.setAttribute('aria-selected', activo ? 'true' : 'false');
-    b.classList.toggle('alarma-activa', alarmaDatos.alarmas[n].activa);
-  });
-  poblarTonosAlarma();
-}
-
-// Pasa lo que muestran los controles a los datos. false si falta la hora.
-function leerAlarmaDePantalla() {
-  const el = elementos;
-  const a = alarmaDatos.alarmas[alarmaSel];
-  const m = /^(\d{1,2}):(\d{2})/.exec(el.alarmaHora.value || '');
-  const hayHora = !!m;
-  if (m) {
-    a.hora = Math.min(23, Number(m[1]));
-    a.minuto = Math.min(59, Number(m[2]));
-  }
-  a.activa = el.alarmaActiva.checked;
-  let dias = 0;
-  el.grupoAlarmaDias.querySelectorAll('button[data-dia]').forEach((b) => {
-    if (b.getAttribute('aria-pressed') === 'true') dias |= 1 << Number(b.dataset.dia);
-  });
-  a.dias = dias;
-  alarmaDatos.tono = el.alarmaTono.value || '';
-  el.grupoAlarmaNumero.querySelectorAll('button[data-alarma]').forEach((b) => {
-    b.classList.toggle('alarma-activa', alarmaDatos.alarmas[Number(b.dataset.alarma)].activa);
-  });
-  return hayHora;
-}
-
-// Lista de tonos = las canciones del catálogo (musicales/). La primera opción es el sonido simple de la TV.
-function poblarTonosAlarma() {
-  const sel = elementos.alarmaTono;
-  const claves = Object.keys(musicalesCatalogo)
-    .sort((a, b) => nombreMusical(a).localeCompare(nombreMusical(b), 'es', { sensitivity: 'base' }));
-  sel.innerHTML = '';
-  const simple = document.createElement('option');
-  simple.value = '';
-  simple.textContent = 'Sonido simple de la TV';
-  sel.appendChild(simple);
-  const opcion = (clave, texto) => {
-    const opt = document.createElement('option');
-    opt.value = clave;
-    opt.textContent = texto;
-    sel.appendChild(opt);
-  };
-  claves.forEach((clave) => opcion(clave, nombreMusical(clave)));
-  // Si la canción elegida ya no está en el catálogo se conserva (la TV ya la tiene), con su clave.
-  if (alarmaDatos.tono && !musicalesCatalogo[alarmaDatos.tono]) opcion(alarmaDatos.tono, alarmaDatos.tono);
-  sel.value = alarmaDatos.tono || '';
-}
-
-// Auditoría 2026-11-15 (H-29): igual que los ajustes, Guardar alarma queda bloqueado hasta leer bien las
-// alarmas de la TV (si no, guardar a tiempo de carga dejaba las 3 alarmas apagadas).
-let alarmaCargada = false;
-
-async function abrirAlarma() {
-  const turno = ++turnoAlarma;
-  alarmaSel = 0;
-  alarmaCargada = false;
-  elementos.botonGuardarAlarma.disabled = true;
-  volcarAlarmaEnPantalla();
-  if (!Object.keys(musicalesCatalogo).length) {
-    const lista = await listarMusicales();
-    if (turno !== turnoAlarma || masVista !== 'alarma') return;
-    if (lista) musicalesCatalogo = lista;
-  }
-  const r = await cargarAlarma();
-  if (turno !== turnoAlarma || masVista !== 'alarma') return; // se fue de la pantalla mientras tanto
-  if (r.exito) {
-    alarmaDatos = r.alarma;
-    alarmaCargada = true;
-    elementos.botonGuardarAlarma.disabled = false;
-    volcarAlarmaEnPantalla();
-  } else {
-    marcarEstado('No se pudo leer la alarma de la TV. Revisa tu internet y vuelve a abrir esta pantalla.', 'error', elementos);
-  }
-}
-
-async function guardarAlarmaEnLaTV() {
-  if (!alarmaCargada) return;
-  await sinRepetir('alarma', elementos.botonGuardarAlarma, async () => {
-    if (!leerAlarmaDePantalla()) {
-      marcarEstado('Pon la hora de la alarma.', 'error', elementos);
-      return;
-    }
-    const sinDias = alarmaDatos.alarmas.findIndex((a) => a.activa && a.dias === 0);
-    if (sinDias >= 0) {
-      marcarEstado(`Elige al menos un día para la alarma ${sinDias + 1}.`, 'error', elementos);
-      return;
-    }
-    turnoEnvio++;
-    marcarEstado('Guardando…', null, elementos);
-    activarLedTransmision(elementos);
-    try {
-      const r = await esperarFinal(await guardarAlarma(alarmaDatos, estadoActual), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, elementos));
-      mostrarResultadoEnvio(r, 'Alarma guardada ✅ Ya va camino a la TV.');
-    } catch (err) {
-      console.error('Error al guardar la alarma:', err);
-      marcarEstado('Error desconocido al guardar la alarma.', 'error', elementos);
-    } finally {
-      desactivarLedTransmision(elementos);
-    }
-  });
-}
-
-// "Jugar": le dice a la TV que abra ese juego (tipo "juego"; no cambia lo que ya muestra).
-async function jugarEnLaTV(id, boton) {
-  await sinRepetir('jugar', boton, async () => {
-    turnoEnvio++;
-    marcarEstado('Enviando…', null, elementos);
-    activarLedTransmision(elementos);
-    try {
-      const resultado = await enviarEstado(Object.assign({}, estadoActual, { tipo: 'juego', juegoId: id }));
-      mostrarResultadoEnvio(resultado);
-    } catch (err) {
-      console.error('Error al abrir el juego:', err);
-      marcarEstado('Error desconocido al enviar.', 'error', elementos);
-    } finally {
-      desactivarLedTransmision(elementos);
-    }
-  });
-}
-
 function cambiarTipo(nuevoTipo) {
   // "Más" (tipo galeria) siempre abre en su menú de opciones.
-  if (nuevoTipo === 'galeria') masVista = 'menu';
+  if (nuevoTipo === 'galeria') fijarMasVista('menu');
   estadoActual.tipo = nuevoTipo;
   mostrarSeccionSegunTipo(nuevoTipo);
 
@@ -2561,23 +2304,7 @@ function configurarEventos() {
     });
   }
 
-  // Más: menú de opciones, "volver" y botones "Jugar".
-  if (elementos.grupoMas) {
-    elementos.grupoMas.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-mas]');
-      if (btn) cambiarMasVista(btn.dataset.mas);
-    });
-  }
-  if (elementos.botonMasVolver) {
-    elementos.botonMasVolver.addEventListener('click', volverEnMas);
-  }
-  // Config: apartados, Mi cuenta y Ajustes de la TV.
-  if (elementos.grupoConfig) {
-    elementos.grupoConfig.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-config]');
-      if (btn) abrirApartadoConfig(btn.dataset.config);
-    });
-  }
+  configurarEventosMas();
   if (elementos.botonConfigMisTV) {
     elementos.botonConfigMisTV.addEventListener('click', () => { if (sesionActual) mostrarPantallaTV('gestionar'); });
   }
@@ -2591,38 +2318,6 @@ function configurarEventos() {
       if (!sesionActual) return;
       mostrarPantallaTV('gestionar'); // la baja vive en Mi TV (Cancelar vuelve a Mis TV)
       abrirEliminarCuenta();
-    });
-  }
-  [elementos.grupoBrillo, elementos.grupoVolumen].forEach((grupo) => {
-    if (!grupo) return;
-    grupo.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-valor]');
-      if (btn) marcarOpcion(grupo, btn.dataset.valor);
-    });
-  });
-  if (elementos.botonGuardarAjustes) elementos.botonGuardarAjustes.addEventListener('click', guardarAjustesEnLaTV);
-  // Alarma: elegir cuál (1, 2 o 3), días, interruptor y guardar.
-  if (elementos.grupoAlarmaNumero) {
-    elementos.grupoAlarmaNumero.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-alarma]');
-      if (!btn) return;
-      leerAlarmaDePantalla(); // lo que se estaba editando no se pierde al cambiar de alarma
-      alarmaSel = Number(btn.dataset.alarma);
-      volcarAlarmaEnPantalla();
-    });
-  }
-  if (elementos.grupoAlarmaDias) {
-    elementos.grupoAlarmaDias.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-dia]');
-      if (btn) btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
-    });
-  }
-  if (elementos.alarmaActiva) elementos.alarmaActiva.addEventListener('change', leerAlarmaDePantalla);
-  if (elementos.botonGuardarAlarma) elementos.botonGuardarAlarma.addEventListener('click', guardarAlarmaEnLaTV);
-  if (elementos.seccionJuegos) {
-    elementos.seccionJuegos.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-juego]');
-      if (btn && !panelBloqueado) jugarEnLaTV(btn.dataset.juego, btn);
     });
   }
 
@@ -2824,7 +2519,7 @@ async function cargarEstadoInicial() {
       poblarControles(estadoActual, elementos);
       if (estadoActual.tipo === 'animacion') {
         animacionSeleccionActual = estadoActual.animacion || null;
-        masVista = 'galeria'; // al abrir, la animación activa se ve en la Galería (H-35: solo acá)
+        fijarMasVista('galeria'); // al abrir, la animación activa se ve en la Galería (H-35: solo acá)
       }
       mostrarSeccionSegunTipo(estadoActual.tipo);
       renderizar();
@@ -3709,7 +3404,7 @@ function cerrarCapaSuperior() {
   const el = elementos;
   // Dentro de una opción de Más (Galería, Juegos, Alarma, Config): Atrás vuelve un paso
   // (de un apartado de Config a su lista; si no, al menú de Más).
-  if (el.pantallaLogin.hidden && el.pantallaTV.hidden && masVista !== 'menu' &&
+  if (el.pantallaLogin.hidden && el.pantallaTV.hidden && obtenerMasVista() !== 'menu' &&
       (estadoActual.tipo === 'galeria' || estadoActual.tipo === 'animacion')) {
     volverEnMas();
     return true;

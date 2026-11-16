@@ -344,6 +344,29 @@ const escenarios = {
     const msg = await pagina.textContent('#estadoTexto');
     await navegador.close();
     return informe('H-06: sin evento de la escucha, la consulta cada 5 s encuentra el acuse y dice "En la TV ✅"', /En la TV/.test(msg), msg);
+  },
+  // H-13 (paso 2, js/mas.js): el botón Jugar sigue sin hacer nada mientras el panel arranca (estaBloqueado()).
+  async 'H-13: Jugar no manda nada mientras el panel arranca, y después sí'() {
+    const { navegador, pagina } = await abrir(semilla(), { ruta: '/index.html', esperar: false, retrasos: { 'dispositivos/tv1/oled_remota': 2500 }, antes: async (p) => {
+      await p.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: USUARIOS, actual: 'ana@correo.com' });
+    } });
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.waitForSelector('[data-juego="snake"]', { state: 'attached' });
+    await pagina.waitForTimeout(400);
+    const bloqueado = await pagina.evaluate(() => document.querySelector('main.controles').inert);
+    const v0 = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
+    await pagina.evaluate(() => document.querySelector('[data-juego="snake"]').click()); // clic programático: el panel está inert pero el clic llega
+    await pagina.waitForTimeout(600);
+    const durante = await pagina.evaluate(() => ({ v: globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version, estado: document.getElementById('estadoTexto').textContent }));
+    await pagina.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 10000 });
+    await pagina.waitForTimeout(600);
+    await entrarMas(pagina, 'juegos');
+    await pagina.click('[data-juego="snake"]');
+    await pagina.waitForFunction((v) => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version > v, v0, { timeout: 10000 }).catch(() => {}); // las lecturas de esa ruta siguen demoradas
+    const despues = await dbTv(pagina);
+    await navegador.close();
+    const ok = bloqueado && durante.v === v0 && !/Enviando|Enviado/.test(durante.estado) && despues.oled_remota.version === v0 + 1 && despues.oled_remota.pantalla.tipo === 'juego';
+    return informe('H-13: Jugar no hace nada con el panel bloqueado y, ya libre, manda la orden', ok, JSON.stringify({ bloqueado, v0, durante, despuesVersion: despues.oled_remota.version, tipo: despues.oled_remota.pantalla.tipo }));
   }
 };
 
