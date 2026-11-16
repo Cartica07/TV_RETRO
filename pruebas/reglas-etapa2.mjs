@@ -32,6 +32,19 @@ await v('pantalla cancion con 922 notas', true, env1({ texto: 'x', tipo: 'cancio
 await v('pantalla animacion z1 + archivo', true, env1({ texto: 'x', tipo: 'animacion', config: cfg, animacion: { nombre: 'g', ancho: 128, alto: 64, formato: 'z1', cantidad: 40 } }, { version: 10, datos: 'QUJD' }));
 await v('pantalla animacion con cuadros (formato viejo)', true, env1({ texto: 'x', tipo: 'animacion', config: cfg, animacion: { nombre: 'g', ancho: 128, alto: 64, cuadros: [{ datos: b64, dur: 100 }, { datos: b64, dur: 200 }] } }));
 await v('pantalla musical + archivo', true, env1({ texto: 'x', tipo: 'musical', config: cfg, musical: { nombre: 'm', repeticiones: 1, formato: 'm1' } }, { version: 10, datos: 'QUJD' }));
+// H-22: musical por referencia (pantalla.musical.clave = clave de musicales/datos; sin archivo)
+const mus = (m) => ({ texto: 'x', tipo: 'musical', config: cfg, musical: Object.assign({ nombre: 'Cumpleaños feliz', repeticiones: 1, formato: 'm1' }, m) });
+await v('H-22 musical por referencia: clave y sin archivo', true, env1(mus({ clave: 'cumpleanos_feliz' })));
+await v('H-22 musical por referencia: clave con mayúsculas, números y guion bajo', true, env1(mus({ clave: 'TuFaltaDeQuerer_2' })));
+await v('H-22 clave con barra (otra ruta)', false, env1(mus({ clave: '../dispositivos/T' })));
+await v('H-22 clave con barra simple', false, env1(mus({ clave: 'a/b' })));
+await v('H-22 clave con punto', false, env1(mus({ clave: 'a.b' })));
+await v('H-22 clave con $ # [ ]', false, env1(mus({ clave: 'a$b' })));
+await v('H-22 clave vacía', false, env1(mus({ clave: '' })));
+await v('H-22 clave que no es texto', false, env1(mus({ clave: 12 })));
+await v('H-22 clave de 151 caracteres', false, env1(mus({ clave: 'a'.repeat(151) })));
+await v('H-22 clave de 150 caracteres', true, env1(mus({ clave: 'a'.repeat(150) })));
+await v('H-22 musical con clave y un campo extra', false, env1(mus({ clave: 'x', otro: 'y' })));
 // pantalla envenenada
 await v('hijo extra de 1 MB en pantalla', false, env1({ texto: 'x', tipo: 'texto', config: cfg, basura: 'Z'.repeat(1000000) }));
 await v('hijo extra dentro de config', false, env1({ texto: 'x', tipo: 'texto', config: Object.assign({ extra: 'x' }, cfg) }));

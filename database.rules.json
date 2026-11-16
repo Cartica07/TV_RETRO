@@ -170,6 +170,9 @@
               "formato": {
                 ".validate": "newData.isString() && newData.val().length <= 10"
               },
+              "clave": {
+                ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150 && !newData.val().contains('/') && !newData.val().contains('.') && !newData.val().contains('$') && !newData.val().contains('#') && !newData.val().contains('[') && !newData.val().contains(']')"
+              },
               "$otro": {
                 ".validate": false
               }
