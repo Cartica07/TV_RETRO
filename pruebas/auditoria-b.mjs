@@ -266,6 +266,58 @@ const escenarios = {
     const msg = await pagina.textContent('#estadoTexto');
     await navegador.close();
     return informe('H-06: con la TV en línea y firmware sin acuse queda "Enviado ✅ Ya va camino a la TV."', /Ya va camino/.test(msg), msg);
+  },
+  async 'H-12: guardar y borrar escriben/quitan la lista liviana junto al elemento'() {
+    const { navegador, pagina } = await abrirApp(semilla());
+    const modulo = (cuerpo) => pagina.evaluate(async (c) => { const m = await import('/js/firebase.js'); return await (new Function('m', 'return (async () => {' + c + '})()'))(m); }, cuerpo);
+    const u = () => pagina.evaluate(() => globalThis.__fakeDb.raiz.usuarios['uid-ana']);
+    await modulo("return await m.guardarImagenCatalogo('foto', 'AAAA', 128, 64, 'data:image/png;base64,PRE', { origen: 'subida', umbral: 128 });");
+    await modulo("return await m.guardarAnimacionCatalogo('baile', 128, 64, [{ datos: 'FRAME0', dur: 100 }, { datos: 'FRAME1', dur: 100 }], { origen: 'gif' });");
+    const a = await u();
+    const imagenOk = a.imagenes.foto.preprocesada === 'data:image/png;base64,PRE' && a.imagenes_indice.foto.datos === 'AAAA' && a.imagenes_indice.foto.editable === true && !('preprocesada' in a.imagenes_indice.foto) && a.imagenes_indice.foto.meta.umbral === 128;
+    const animOk = a.animaciones.baile.cuadros.length === 2 && a.animaciones_indice.baile.cantidad === 2 && a.animaciones_indice.baile.miniatura === 'FRAME0' && !('cuadros' in a.animaciones_indice.baile);
+    await modulo("await m.borrarImagenCatalogo('foto'); return await m.borrarAnimacionCatalogo('baile');");
+    const d = await u();
+    const borrado = !(d.imagenes && d.imagenes.foto) && !(d.imagenes_indice && d.imagenes_indice.foto) && !(d.animaciones && d.animaciones.baile) && !(d.animaciones_indice && d.animaciones_indice.baile);
+    await navegador.close();
+    return informe('H-12: imagen y animación guardadas con su lista liviana (sin lo pesado); al borrar desaparecen las dos', imagenOk && animOk && borrado, JSON.stringify({ imagenOk, animOk, borrado, cuotas: d.cuotas }));
+  },
+  async 'H-12: con la lista liviana la Galería no baja cuadros ni copias editables, y los pide al elegir'() {
+    const gif = { ancho: 128, alto: 64, cuadros: [{ datos: bmp, dur: 100 }, { datos: bmp, dur: 100 }], meta: { origen: 'gif' } };
+    const sem = semilla();
+    sem.usuarios['uid-ana'].animaciones = { gato: gif };
+    sem.usuarios['uid-ana'].animaciones_indice = { gato: { ancho: 128, alto: 64, cantidad: 2, miniatura: bmp, meta: { origen: 'gif' } } };
+    sem.usuarios['uid-ana'].imagenes = { foto: { datos: bmp, ancho: 128, alto: 64, preprocesada: 'data:image/png;base64,PRE' } };
+    sem.usuarios['uid-ana'].imagenes_indice = { foto: { datos: bmp, ancho: 128, alto: 64, editable: true } };
+    sem.biblioteca = { animaciones: { baile: gif }, animaciones_indice: { baile: { ancho: 128, alto: 64, cantidad: 2, miniatura: bmp, meta: { origen: 'gif' } } }, imagenes: {}, imagenes_indice: {} };
+    const { navegador, pagina } = await abrirApp(sem);
+    await entrarMas(pagina, 'galeria');
+    await pagina.waitForTimeout(800);
+    const lecturas = () => pagina.evaluate(() => globalThis.__fakeDb.lecturas);
+    const l1 = await lecturas();
+    const pesadas = l1.filter((r) => /^(usuarios\/uid-ana|biblioteca)\/(animaciones|imagenes)$/.test(r));
+    const escuchaIndice = l1.some((r) => r === 'onValue:usuarios/uid-ana/animaciones_indice') && l1.some((r) => r === 'onValue:biblioteca/animaciones_indice');
+    // Imagen: al elegirla se pide solo su copia editable.
+    await pagina.click('#gridGaleria .item-galeria'); await pagina.waitForTimeout(800);
+    const copia = (await lecturas()).some((r) => r === 'usuarios/uid-ana/imagenes/foto/preprocesada');
+    // Animación: al elegirla se piden sus cuadros.
+    await pagina.click('#grupoSubvistaGaleria button[data-subvista="gif"]'); await pagina.waitForTimeout(300);
+    const items = await pagina.$$eval('#gridGifs .item-galeria', (els) => els.map((e) => e.dataset.clave));
+    await pagina.click('#gridGifs .item-galeria'); await pagina.waitForTimeout(1000);
+    const cuadros = (await lecturas()).some((r) => /\/animaciones\/(gato|baile)\/cuadros$/.test(r));
+    const cargada = await pagina.evaluate(() => /cargado desde la galería/.test(document.getElementById('estadoTexto').textContent));
+    await navegador.close();
+    return informe('H-12: sin lecturas del catálogo completo; escucha las listas; al elegir pide la copia editable y los cuadros', pesadas.length === 0 && escuchaIndice && copia && cuadros && cargada && items.length === 2, JSON.stringify({ pesadas, escuchaIndice, copia, cuadros, cargada, items }));
+  },
+  async 'H-12: lo anterior a la lista se sigue viendo y se rellena la lista'() {
+    // semilla() trae la animación "gato" SIN lista (como una cuenta anterior a este cambio).
+    const { navegador, pagina } = await abrirApp(semilla());
+    await entrarMas(pagina, 'galeria');
+    await pagina.click('#grupoSubvistaGaleria button[data-subvista="gif"]'); await pagina.waitForTimeout(1200);
+    const items = await pagina.$$eval('#gridGifs .item-galeria', (els) => els.map((e) => e.dataset.clave));
+    const lista = await pagina.evaluate(() => (globalThis.__fakeDb.raiz.usuarios['uid-ana'].animaciones_indice || {}));
+    await navegador.close();
+    return informe('H-12: la animación anterior se ve y queda su entrada en animaciones_indice', items.includes('gato') && lista.gato && lista.gato.cantidad === 2 && lista.gato.miniatura === bmp, JSON.stringify({ items, lista: Object.keys(lista) }));
   }
 };
 

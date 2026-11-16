@@ -355,6 +355,127 @@ async function comprobarCorreoVerificado() {
   return { ok: false, reenviado };
 }
 
+// ===================================================
+// Listas livianas de la Galería (auditoría 2026-11-15, H-12)
+// ===================================================
+// Antes la Galería bajaba los catálogos ENTEROS (con el PNG editable de cada imagen y todos los cuadros de
+// cada animación) solo para pintar miniaturas: ~420 KB con la biblioteca predeterminada, y hasta decenas de MB
+// con los GIF de una cuenta. Ahora cada catálogo tiene al lado una lista liviana, imagenes_indice /
+// animaciones_indice (misma clave), que se escribe EN LA MISMA ESCRITURA que el elemento:
+//   imagen    -> { datos, ancho, alto, meta, editable }       (sin la preprocesada; editable = tiene copia editable)
+//   animación -> { ancho, alto, cantidad, miniatura, meta }  (miniatura = el primer cuadro; sin el resto)
+// La Galería escucha solo la lista. Lo pesado se pide al elegir (leerPreprocesada / leerCuadrosAnimacion).
+// Si una lista está vacía se lee el catálogo completo (elementos anteriores a este cambio) y se rellena la lista.
+// Solo en modo cuentas; el modo viejo (?sincuentas=1) sigue como antes.
+const rutaIndice = (tipo) => rutaCatalogo(tipo + '_indice');
+
+/** Primer cuadro de una animación guardada (los cuadros vuelven como arreglo, o como objeto si faltan índices). */
+function primerCuadro(cuadros) {
+  if (!cuadros) return null;
+  if (Array.isArray(cuadros)) return cuadros[0] || null;
+  const claves = Object.keys(cuadros).sort((a, b) => Number(a) - Number(b));
+  return claves.length ? cuadros[claves[0]] : null;
+}
+
+function contarCuadros(cuadros) {
+  if (!cuadros) return 0;
+  return Array.isArray(cuadros) ? cuadros.length : Object.keys(cuadros).length;
+}
+
+/** La entrada de la lista liviana para un elemento ya armado (payload de guardarEnCatalogo o lo leído del catálogo). */
+function construirIndice(tipo, p) {
+  const meta = p.meta && typeof p.meta === 'object' ? JSON.parse(JSON.stringify(p.meta)) : null;
+  if (tipo === 'imagenes') {
+    const i = { datos: String(p.datos || ''), ancho: Number(p.ancho) || 0, alto: Number(p.alto) || 0 };
+    if (meta && Object.keys(meta).length) i.meta = meta;
+    if (p.preprocesada) i.editable = true;
+    return i;
+  }
+  const primero = primerCuadro(p.cuadros);
+  const i = { ancho: Number(p.ancho) || 0, alto: Number(p.alto) || 0, cantidad: contarCuadros(p.cuadros), miniatura: String((primero && primero.datos) || '') };
+  if (meta && Object.keys(meta).length) i.meta = meta;
+  return i;
+}
+
+/** De la lista liviana a lo que usa la Galería (parcial: true = falta lo pesado, se pide al elegir). */
+function entradasDesdeIndice(tipo, lista) {
+  const salida = {};
+  for (const [clave, v] of Object.entries(lista || {})) {
+    if (!v) continue;
+    if (tipo === 'imagenes') {
+      salida[clave] = { datos: v.datos, ancho: v.ancho, alto: v.alto, meta: v.meta || {}, editable: !!v.editable, parcial: true };
+    } else {
+      salida[clave] = { ancho: v.ancho, alto: v.alto, cantidad: v.cantidad, meta: v.meta || {}, cuadros: [{ datos: v.miniatura, dur: 0 }], parcial: true };
+    }
+  }
+  return salida;
+}
+
+/**
+ * Escucha una fuente (la cuenta o la biblioteca) por su lista liviana. Si la lista está vacía lee el catálogo
+ * completo UNA vez (elementos anteriores a la lista) y, si "rellenar" lo permite, escribe la lista: desde ahí la
+ * misma escucha pasa sola a la lista liviana.
+ */
+function suscribirFuenteIndexada(tipo, rutaItems, rutaLista, rellenar, callback, alError) {
+  let cancelado = false;
+  const baja = onValue(ref(db, rutaLista), async (snap) => {
+    if (snap.exists()) {
+      callback(entradasDesdeIndice(tipo, snap.val()));
+      return;
+    }
+    try {
+      const completo = await get(ref(db, rutaItems));
+      if (cancelado) return;
+      const valor = completo.exists() ? completo.val() : {};
+      callback(valor);
+      if (completo.exists() && rellenar) rellenar(valor);
+    } catch (err) {
+      console.error('Error al leer ' + rutaItems + ':', err);
+      if (!cancelado && alError) alError(err);
+    }
+  }, (err) => {
+    console.error('Error al escuchar ' + rutaLista + ':', err);
+    if (alError) alError(err);
+  });
+  return () => { cancelado = true; baja(); };
+}
+
+/** Escribe la lista liviana de elementos anteriores a ella (mejor esfuerzo: sin permiso o sin red no pasa nada). */
+function rellenarLista(tipo, rutaLista, valor) {
+  const cambios = {};
+  for (const [clave, v] of Object.entries(valor || {})) {
+    if (v && typeof v === 'object') cambios[`${rutaLista}/${clave}`] = construirIndice(tipo, v);
+  }
+  if (Object.keys(cambios).length === 0) return;
+  update(ref(db), cambios).catch((err) => console.warn('[TV RETRO] No se pudo rellenar la lista de la Galería:', err && err.code));
+}
+
+/** Pide solo la copia editable (PNG) de una imagen del catálogo. null si no hay o no se pudo leer. */
+export async function leerPreprocesada(clave, { predeterminada = false } = {}) {
+  try {
+    const base = predeterminada ? 'biblioteca/imagenes' : rutaCatalogo('imagenes');
+    const snap = await esperarHasta(get(ref(db, `${base}/${clave}/preprocesada`)), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap === ESPERA_LENTA || !snap.exists()) return null;
+    return String(snap.val());
+  } catch (error) {
+    console.error('Error al leer la copia editable:', error);
+    return null;
+  }
+}
+
+/** Pide los cuadros completos de una animación del catálogo (arreglo u objeto, como vengan). null si no se pudo. */
+export async function leerCuadrosAnimacion(clave, { predeterminada = false } = {}) {
+  try {
+    const base = predeterminada ? 'biblioteca/animaciones' : rutaCatalogo('animaciones');
+    const snap = await esperarHasta(get(ref(db, `${base}/${clave}/cuadros`)), ESPERA_MAXIMA_ENVIO_MS * 2);
+    if (snap === ESPERA_LENTA || !snap.exists()) return null;
+    return snap.val();
+  } catch (error) {
+    console.error('Error al leer los cuadros de la animación:', error);
+    return null;
+  }
+}
+
 /**
  * Guarda un elemento en el catálogo de la cuenta ('imagenes' | 'animaciones').
  * Reemplazar uno que ya existe no cambia el contador; uno nuevo lo suma (si cabe).
@@ -376,7 +497,11 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
   const prefijo = tipo === 'imagenes' ? 'i' : 'a';
   for (let intento = 0; intento < 2; intento++) {
     if ((await get(refItem)).exists()) {
-      const lento = await conTope(set(refItem, payload), { exito: true, key: safeKey });
+      // Reemplazar no cambia el contador; la lista liviana se actualiza en la misma escritura (H-12).
+      const lento = await conTope(update(ref(db), {
+        [`${base}/${safeKey}`]: payload,
+        [`${rutaIndice(tipo)}/${safeKey}`]: construirIndice(tipo, payload)
+      }), { exito: true, key: safeKey });
       return lento || { exito: true, key: safeKey };
     }
     const cuota = await leerCuota();
@@ -391,6 +516,18 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
       [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${safeKey}`
     };
     if (esGif) cambios[`usuarios/${contexto.uid}/cuotas/gifs`] = cuota.gifs + 1;
+    // Lista liviana (H-12): el elemento nuevo y, si la cuenta tiene elementos anteriores a la lista (y esta sigue
+    // vacía), también esos: si no, al haber ya una lista los demás desaparecerían de la Galería.
+    cambios[`${rutaIndice(tipo)}/${safeKey}`] = construirIndice(tipo, payload);
+    const hayAnteriores = esGif ? cuota.gifs > 0 : cuota.usados - cuota.gifs > 0;
+    if (hayAnteriores && !(await get(ref(db, rutaIndice(tipo)))).exists()) {
+      const todos = await get(ref(db, base));
+      if (todos.exists()) {
+        for (const [clave, v] of Object.entries(todos.val())) {
+          if (v && typeof v === 'object' && clave !== safeKey) cambios[`${rutaIndice(tipo)}/${clave}`] = construirIndice(tipo, v);
+        }
+      }
+    }
     try {
       const lento = await conTope(update(ref(db), cambios), { exito: true, key: safeKey });
       return lento || { exito: true, key: safeKey };
@@ -410,7 +547,8 @@ async function guardarEnCatalogo(tipo, safeKey, payload) {
  */
 async function borrarDeCatalogo(tipo, nombre, { predeterminada = false } = {}) {
   if (predeterminada) {
-    const lento = await conTope(remove(ref(db, `biblioteca/${tipo}/${nombre}`)));
+    // Se borra también de la lista liviana (H-12).
+    const lento = await conTope(update(ref(db), { [`biblioteca/${tipo}/${nombre}`]: null, [`biblioteca/${tipo}_indice/${nombre}`]: null }));
     return lento || { exito: true };
   }
   const base = rutaCatalogo(tipo);
@@ -435,12 +573,14 @@ async function borrarDeCatalogo(tipo, nombre, { predeterminada = false } = {}) {
         const cambios = {
           [`${base}/${nombre}`]: null,
           [`usuarios/${contexto.uid}/cuotas/usados`]: usados - 1,
-          [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${nombre}`
+          [`usuarios/${contexto.uid}/cuotas/ultimo`]: `${prefijo}:${nombre}`,
+          [`${rutaIndice(tipo)}/${nombre}`]: null // lista liviana (H-12)
         };
         if (esGif) cambios[`usuarios/${contexto.uid}/cuotas/gifs`] = gifs - 1;
         escritura = update(ref(db), cambios);
       } else {
-        escritura = remove(refItem); // sin contador (cosa de administrador): se borra a secas
+        // sin contador (cosa de administrador): se borra a secas
+        escritura = update(ref(db), { [`${base}/${nombre}`]: null, [`${rutaIndice(tipo)}/${nombre}`]: null });
       }
       const lento = await conTope(escritura);
       return lento || { exito: true };
@@ -1004,8 +1144,14 @@ function suscribirCatalogoConBiblioteca(tipo, callback, alError) {
     for (const [clave, valor] of Object.entries(propio)) mezcla[clave] = valor;
     callback(mezcla);
   };
-  const cancelarPropio = suscribirCatalogo(rutaCatalogo(tipo), (obj) => { propio = obj; emitir(); }, alError);
-  const cancelarBiblioteca = suscribirCatalogo(`biblioteca/${tipo}`, (obj) => { predeterminadas = obj; emitir(); }, () => { predeterminadas = {}; emitir(); });
+  // H-12: cada fuente se escucha por su lista liviana (ver suscribirFuenteIndexada). La cuenta rellena su lista
+  // sola; la biblioteca solo la rellena un administrador (las reglas no dejan a nadie más).
+  const cancelarPropio = suscribirFuenteIndexada(tipo, rutaCatalogo(tipo), rutaIndice(tipo),
+    (valor) => rellenarLista(tipo, rutaIndice(tipo), valor),
+    (obj) => { propio = obj; emitir(); }, alError);
+  const cancelarBiblioteca = suscribirFuenteIndexada(tipo, `biblioteca/${tipo}`, `biblioteca/${tipo}_indice`,
+    async (valor) => { if (await esAdministrador()) rellenarLista(tipo, `biblioteca/${tipo}_indice`, valor); },
+    (obj) => { predeterminadas = obj; emitir(); }, () => { predeterminadas = {}; emitir(); });
   return () => { cancelarPropio(); cancelarBiblioteca(); };
 }
 

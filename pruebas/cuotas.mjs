@@ -141,10 +141,10 @@ const escenarios = {
     pagina.on('dialog', (d) => { pregunta = d.message(); d.accept(); });
     await pagina.click('#botonBorrarGaleria'); await pagina.waitForTimeout(900);
     const r = await raiz(pagina);
-    const esc = await pagina.evaluate(() => globalThis.__fakeDb.escrituras.map((e) => e.ruta));
+    const esc = await pagina.evaluate(() => globalThis.__fakeDb.escrituras.flatMap((e) => (e.op === 'update' ? Object.keys(e.valor).map((k) => (e.ruta ? e.ruta + '/' : '') + k) : [e.ruta])));
     const copiaDelUsuario = r.usuarios['uid-ana'].cuotas.usados;
     await navegador.close();
-    return informe('administrador: puede borrar una predeterminada (con aviso de que se pierde para todas) y no toca sus contadores', habilitado && /predeterminadas/.test(pregunta) && !(r.biblioteca.imagenes && r.biblioteca.imagenes.base1) && esc.includes('biblioteca/imagenes/base1') && copiaDelUsuario === 1 && !erroresPagina(errores).length, JSON.stringify({ habilitado, pregunta, esc }));
+    return informe('administrador: puede borrar una predeterminada (con aviso de que se pierde para todas) y no toca sus contadores', habilitado && /predeterminadas/.test(pregunta) && !(r.biblioteca.imagenes && r.biblioteca.imagenes.base1) && esc.includes('biblioteca/imagenes/base1') && esc.includes('biblioteca/imagenes_indice/base1') && copiaDelUsuario === 1 && !erroresPagina(errores).length, JSON.stringify({ habilitado, pregunta, esc }));
   },
 
   async 'el administrador borra una animación predeterminada'() {

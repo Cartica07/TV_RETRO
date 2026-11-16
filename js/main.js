@@ -17,6 +17,8 @@ import {
   listarImagenes,
   suscribirImagenes,
   suscribirAnimaciones,
+  leerPreprocesada,
+  leerCuadrosAnimacion,
   guardarImagenCatalogo,
   borrarImagenCatalogo,
   listarAnimaciones,
@@ -161,6 +163,7 @@ let animacionesCatalogo = {};
 // Galería -- mismo criterio que galeriaSeleccionActual pero para el
 // segundo recuadro (Animaciones).
 let animacionSeleccionActual = null;
+let turnoAnimacion = 0; // sube con cada elección: los cuadros que llegan tarde de una elección vieja no se aplican (H-12)
 
 // V1.14: clave (nombre) de la imagen actualmente seleccionada en la
 // Galería -- separado de estadoActual.imagenData porque necesitamos
@@ -1792,18 +1795,29 @@ function renderizarGaleria() {
       // se está por activar acá.
       if (elementos.cargadorImagenGaleria) elementos.cargadorImagenGaleria.value = '';
 
-      if (entry.preprocesada) {
+      if (entry.preprocesada || entry.editable) {
         // Esta imagen tiene copia editable: se puede seguir reajustando
         // el umbral y el dithering como si se acabara de subir. Restauramos
         // los controles de Galería a los valores con los que se guardó,
         // para que el preview y los sliders arranquen sincronizados.
-        imagenFuenteActual = entry.preprocesada;
+        // (H-12: con la lista liviana la copia editable no viene en la lista: se pide ahora, solo de esta imagen.)
+        imagenFuenteActual = entry.preprocesada || null;
         if (entry.meta && typeof entry.meta.umbral === 'number') {
           elementos.umbralGaleria.value = entry.meta.umbral;
           elementos.valorUmbralGaleria.textContent = String(entry.meta.umbral);
         }
         if (entry.meta && typeof entry.meta.dithering === 'boolean') {
           elementos.ditheringGaleria.checked = entry.meta.dithering;
+        }
+        if (!entry.preprocesada) {
+          const turnoCopia = turnoReprocesoImagen;
+          leerPreprocesada(key, { predeterminada: !!entry.predeterminada }).then((copia) => {
+            // Solo si sigue elegida esta imagen y no se hizo otra cosa mientras tanto.
+            if (!copia || galeriaSeleccionActual !== key || turnoCopia !== turnoReprocesoImagen) return;
+            entry.preprocesada = copia;
+            imagenFuenteActual = copia;
+            actualizarControlesEdicionImagen();
+          });
         }
       } else {
         // Guardada con una versión anterior de la galería: no hay fuente
@@ -2017,7 +2031,21 @@ function renderizarAnimaciones() {
     nombre.className = 'item-galeria-nombre';
     nombre.textContent = key;
 
-    item.addEventListener('click', () => {
+    item.addEventListener('click', async () => {
+      // H-12: con la lista liviana el catálogo trae solo el primer cuadro; los cuadros completos se piden al elegir.
+      const turno = ++turnoAnimacion;
+      if (entry.parcial) {
+        marcarEstado('Cargando…', null, elementos);
+        const crudo = await leerCuadrosAnimacion(key, { predeterminada: !!entry.predeterminada });
+        if (turno !== turnoAnimacion) return; // se eligió otra mientras tanto
+        const completos = normalizarCuadros(crudo);
+        if (completos.length === 0) {
+          marcarEstado('No se pudo cargar esa animación. Revisa tu internet y vuelve a intentarlo.', 'error', elementos);
+          return;
+        }
+        entry.cuadros = completos;
+        entry.parcial = false;
+      }
       estadoActual.tipo = 'animacion';
       estadoActual.animacion = key;
       estadoActual.animacionAncho = entry.ancho || 128;
