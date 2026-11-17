@@ -23,6 +23,7 @@ resumen() { # nombre, salida, código de salida de la suite
   local aviso=""
   # Una suite que se corta por tiempo, o que no deja ni un solo OK (por ejemplo, el emulador se cayó), NO es "0 fallas".
   if [ "$cod" -eq 124 ]; then aviso=" | TIEMPO AGOTADO (${TOPE} s)"; mal=$((mal+1))
+  elif [ "$ok" -eq 0 ] && [ "$cod" -eq 0 ] && grep -q "omitida" "$f"; then aviso=" | omitida a propósito (no es una falla)"
   elif [ "$ok" -eq 0 ]; then aviso=" | SIN NINGÚN OK (código $cod): la suite no corrió bien"; mal=$((mal+1)); fi
   echo "== $1: OK=$ok FALLAS=$mal | $ult$aviso"
   [ "$mal" -gt 0 ] && FALLOS=$((FALLOS+1))
