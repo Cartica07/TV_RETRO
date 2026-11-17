@@ -460,7 +460,7 @@ Pendiente: push del panel a `main`, instalar la APK nueva (compilada, sin teléf
 
 **Fallos del propio banco: ARREGLADOS (2026-11-16, solo `pruebas/`, sin tocar el panel):** `banco.mjs` cierra los navegadores que un escenario deja abiertos y termina el proceso a los 15 s (así se colgó el banco ~4 h) y repite `page.evaluate` cuando una recarga destruye la página justo durante la consulta (causa de los fallos intermitentes de `compartir`, `baja-cuenta` y H-34); `todo-el-banco.sh` pone tiempo límite por suite (`TOPE`, 900 s) y cuenta como falla una suite cortada o sin ningún OK. Comprobado: `compartir` 5/5, `baja-cuenta` 3/3 y H-34 4/4 en verde.
 
-**2026-11-16, H-21 y avisos de la consola (sin subir todavía):**
+**2026-11-16, H-21 y avisos de la consola (subido a `main` el mismo día):**
 - `cb1ecaf` — la copia del lienzo de Dibujo se crea con `willReadFrequently` (la consola mostraba decenas de avisos "Canvas2D: Multiple readback operations"; con 6 trazos y un envío pasaba de 62 avisos a 0).
 - `9679fb5` + `53481ab` — **H-21, fuentes:** Space Grotesk y JetBrains Mono salen de `fonts/` (+ `css/fuentes.css`, licencias OFL); `index.html` y `carga-masiva.html` ya no enlazan a Google Fonts (cada visita le contaba la IP del cliente a Google). La APK sigue generando su copia.
 - `dcecc53` — al usar las fuentes reales en las pruebas apareció que **Texto se pasaba 3 px de scroll a 360x740** (ya pasaba en producción con las fuentes reales de Google: el banco las servía vacías y medía con las del sistema). `.rotulo` pasa a `line-height: 1.1`; las 12 pantallas quedan sin scroll en 390x844 y 360x740 medidas con las fuentes reales.
