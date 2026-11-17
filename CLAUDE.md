@@ -102,6 +102,7 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 - `oled_remota/contadorVersion` (aprobado 2026-11-10): entero que reserva el número de cada envío con una transacción (`max(contador, version) + 1`), justo antes del `update()`. Así dos envíos nunca salen con la misma `version`. `version` se sigue escribiendo solo en el `update()`, junto con `pantalla` y `archivo`. La TV no lo lee; si falta, arranca desde `version`.
 - `oled_remota/version = -2` (aprobado 2026-11-12, `VERSION_DESVINCULADA`): señal de "esta TV fue desvinculada". La deja el panel en el mismo `update()` que quita al dueño; la TV ya escucha esa ruta con su streaming y muestra un código nuevo. Una versión real nunca es negativa; un firmware viejo la toma como una versión más.
 - `oled_remota/mostrada` (aprobado 2026-11-15, **reglas SIN publicar**): entero = la `version` que la TV ya aplicó; la escribe solo la TV (acuse de recibo). Ver `docs/formatos-datos.md`.
+- `dispositivos/{id}/apodos/{uid}` (aprobado 2026-11-17, **reglas SIN publicar**): texto de 1 a 20 caracteres = el nombre que el DUEÑO le pone a cada persona con acceso (miembro). Solo el dueño lo escribe; dueño, miembros y la TV lo leen (la TV no lo usa: sin cambio de firmware). Se borra al quitar, salir o desvincular. Si falta se muestra "Persona N". Si las reglas aún no lo incluyen, el panel repite las escrituras de quitar, salir y desvincular sin él (`actualizarConRespaldoDeApodos`). Ver `docs/formatos-datos.md` sección 6.
 - `oled_remota/lastSeen`: heartbeat que escribe el ESP cada 10 s; la web solo lo lee (en línea si tiene menos de 25 s).
 - `config.fuente` (aprobado): `clasica` | `sans` | `sansb` | `serif` | `serifi`. Si falta = `clasica`. El panel usa `sans` por defecto.
 - `config.manual`, `config.x`, `config.y` (aprobados): posición manual del bloque de texto. `config.tamano` 1..5 (en las fuentes nuevas 6/10/12/16/18 pt).
@@ -208,7 +209,7 @@ Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/audit
 
 **Panel y app**
 - **Configuración de Wi-Fi por Bluetooth** desde la app y vinculación automática (decidido el 2026-11-14; web e iOS conservan el portal).
-- **Miembros con nombre:** hoy se ven como "Persona 1…5"; el límite de 5 lo aplica solo el panel.
+- **Miembros con nombre:** HECHO el 2026-11-17 (apodos que pone el dueño en `dispositivos/{id}/apodos`; reglas pendientes de publicar). El límite de 5 lo sigue aplicando solo el panel.
 - **QR** en vez de escribir el código (dibujo difícil en la OLED 128×64).
 - **Tutorial guiado** (por eso las pestañas no llevan textos explicativos).
 - **Anuncios con recompensa:** necesitan un servidor que verifique el anuncio (idea: Cloudflare Worker); sin diseñar.
