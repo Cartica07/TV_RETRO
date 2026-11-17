@@ -176,6 +176,81 @@ const escenarios = {
     return informe('si leer el dueño de una TV da "sin permiso" (ya no es tuya ni te comparten), se saca de Mi TV y de tu lista',
       filas.length === 1 && /TV 1/.test(filas[0]) && !raiz.usuarios['uid-ana'].dispositivos.tv2 && raiz.usuarios['uid-ana'].dispositivos.tv1 === true,
       JSON.stringify({ filas, lista: raiz.usuarios['uid-ana'].dispositivos }));
+  },
+
+  async 'dueño: ponerle nombre a una persona, cancelar, cambiarlo, dejarlo vacío y quitarla'() {
+    const db = semilla();
+    db.dispositivos.tv1.miembros = { 'uid-beto': 'ZZZZZ2', 'uid-cris': 'YYYYY2' };
+    const { navegador, pagina, errores } = await abrirCuentas({ db });
+    await esperarPanel(pagina);
+    await pagina.click('#botonMiTV'); await pagina.waitForTimeout(300);
+    await clicBoton(pagina, '#listaTV', 'Compartir'); await pagina.waitForTimeout(500);
+    const nombres = () => pagina.evaluate(() => [...document.querySelectorAll('#listaMiembros .fila-tv .nombre-tv')].map((f) => f.textContent.trim()));
+    const apodos = async () => ((await raizDb(pagina)).dispositivos.tv1.apodos) || {};
+    const inicial = await nombres();
+    // Cancelar no escribe nada.
+    await clicBoton(pagina, '#listaMiembros', 'Nombre');
+    await pagina.fill('#listaMiembros input', 'Descartado');
+    await clicBoton(pagina, '#listaMiembros', 'Cancelar'); await pagina.waitForTimeout(400);
+    const trasCancelar = { nombres: await nombres(), apodos: await apodos() };
+    // Nombre con espacios de más: se limpia.
+    await clicBoton(pagina, '#listaMiembros', 'Nombre');
+    await pagina.fill('#listaMiembros input', '  Mamá   Rosa ');
+    await clicBoton(pagina, '#listaMiembros', 'Guardar'); await pagina.waitForTimeout(500);
+    const conNombre = { nombres: await nombres(), apodos: await apodos() };
+    // A la segunda persona.
+    await clicBoton(pagina, '#listaMiembros', 'Nombre', 1);
+    await pagina.fill('#listaMiembros input', 'Tío');
+    await pagina.press('#listaMiembros input', 'Enter'); await pagina.waitForTimeout(500);
+    const conDos = { nombres: await nombres(), apodos: await apodos() };
+    // Quitar a la primera: su nombre se va con ella y el otro se queda.
+    await clicBoton(pagina, '#listaMiembros', 'Quitar'); await pagina.waitForTimeout(500);
+    const trasQuitar = { nombres: await nombres(), apodos: await apodos(), miembros: Object.keys((await raizDb(pagina)).dispositivos.tv1.miembros) };
+    // Vacío: vuelve a "Persona 1".
+    await clicBoton(pagina, '#listaMiembros', 'Nombre');
+    await pagina.fill('#listaMiembros input', '');
+    await clicBoton(pagina, '#listaMiembros', 'Guardar'); await pagina.waitForTimeout(500);
+    const vacio = { nombres: await nombres(), apodos: await apodos() };
+    await navegador.close();
+    return informe('dueño: nombra a las personas (se limpia el texto), Cancelar no escribe, Quitar borra su nombre y vacío vuelve a "Persona N"',
+      inicial.join('|') === 'Persona 1|Persona 2'
+      && trasCancelar.nombres.join('|') === 'Persona 1|Persona 2' && Object.keys(trasCancelar.apodos).length === 0
+      && conNombre.nombres.join('|') === 'Mamá Rosa|Persona 2' && conNombre.apodos['uid-beto'] === 'Mamá Rosa'
+      && conDos.nombres.join('|') === 'Mamá Rosa|Tío' && conDos.apodos['uid-cris'] === 'Tío'
+      && trasQuitar.nombres.join('|') === 'Tío' && !trasQuitar.apodos['uid-beto'] && trasQuitar.apodos['uid-cris'] === 'Tío' && trasQuitar.miembros.join() === 'uid-cris'
+      && vacio.nombres.join('|') === 'Persona 1' && !vacio.apodos['uid-cris'] && !erroresPagina(errores).length,
+      JSON.stringify({ inicial, trasCancelar, conNombre, conDos, trasQuitar, vacio, errores }));
+  },
+
+  async 'dueño: con las reglas anteriores (sin apodos) quitar, desvincular y ver la lista siguen funcionando'() {
+    const db = semilla();
+    db.dispositivos.tv1.miembros = { 'uid-beto': 'ZZZZZ2' };
+    const { navegador, pagina } = await abrirCuentas({ db, antes: async (p) => { await p.addInitScript(() => { globalThis.__fallarInicial = { 'dispositivos/tv1/apodos': true }; }); } });
+    await esperarPanel(pagina);
+    await pagina.click('#botonMiTV'); await pagina.waitForTimeout(300);
+    await clicBoton(pagina, '#listaTV', 'Compartir'); await pagina.waitForTimeout(500);
+    const lista = await pagina.evaluate(() => [...document.querySelectorAll('#listaMiembros .fila-tv .nombre-tv')].map((f) => f.textContent.trim()));
+    await clicBoton(pagina, '#listaMiembros', 'Quitar'); await pagina.waitForTimeout(600);
+    const raiz = await raizDb(pagina);
+    await navegador.close();
+    return informe('sin reglas de apodos: la lista muestra "Persona N" y Quitar igual le quita el acceso (repite la escritura sin los apodos)',
+      lista.join('|') === 'Persona 1' && !(raiz.dispositivos.tv1.miembros || {})['uid-beto'],
+      JSON.stringify({ lista, miembros: raiz.dispositivos.tv1.miembros }));
+  },
+
+  async 'miembro: al salir también se borra su nombre'() {
+    const db = semilla({ usuarios: { 'uid-ana': { dispositivos: { tv1: true } }, 'uid-beto': { dispositivos: { tv1: true } } } });
+    db.dispositivos.tv1.miembros = { 'uid-beto': 'ZZZZZ2' };
+    db.dispositivos.tv1.apodos = { 'uid-beto': 'Mamá' };
+    const { navegador, pagina } = await abrirCuentas({ db, actual: 'beto@correo.com' });
+    await esperarPanel(pagina);
+    await pagina.click('#botonMiTV'); await pagina.waitForTimeout(300);
+    await clicBoton(pagina, '#listaTV', 'Salir'); await pagina.waitForTimeout(1200);
+    const raiz = await raizDb(pagina);
+    await navegador.close();
+    return informe('miembro: al salirse se quita de miembros y su nombre se borra',
+      !(raiz.dispositivos.tv1.miembros || {})['uid-beto'] && !(raiz.dispositivos.tv1.apodos || {})['uid-beto'],
+      JSON.stringify({ miembros: raiz.dispositivos.tv1.miembros, apodos: raiz.dispositivos.tv1.apodos }));
   }
 };
 

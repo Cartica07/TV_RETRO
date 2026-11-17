@@ -678,10 +678,11 @@ export async function reclamarDispositivo(uid, codigoTexto) {
  */
 export async function desvincularDispositivo(uid, id) {
   try {
-    const paso = await esperarHasta(update(ref(db), {
+    const paso = await actualizarConRespaldoDeApodos({
       [`dispositivos/${id}/dueno`]: null,
       [`dispositivos/${id}/codigoUsado`]: null,
       [`dispositivos/${id}/miembros`]: null,
+      [`dispositivos/${id}/apodos`]: null,
       [`dispositivos/${id}/oled_remota/version`]: VERSION_DESVINCULADA,
       // Auditoría 2026-11-15 (H-34): se limpia también lo que la TV guardaba del dueño anterior (último
       // contenido, GIF o musical, alarmas y ajustes). Si no, quien reciba la TV vería su último mensaje
@@ -691,7 +692,7 @@ export async function desvincularDispositivo(uid, id) {
       [`dispositivos/${id}/alarma`]: null,
       [`dispositivos/${id}/ajustes`]: null,
       [`usuarios/${uid}/dispositivos/${id}`]: null
-    }), ESPERA_MAXIMA_ENVIO_MS);
+    });
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
     return { exito: true };
   } catch (error) {
@@ -745,12 +746,38 @@ export async function quitarTVDeMiLista(uid, id) {
   }
 }
 
-/** Quién más tiene acceso a la TV: { exito, miembros: [uid…] } (lo lee el dueño o un miembro). */
+/**
+ * Los apodos (dispositivos/{id}/apodos) necesitan las reglas publicadas. Con las anteriores esa ruta no tiene
+ * regla y rechazaría TODA la escritura: si pasa, se repite sin ella, para que quitar, salir y desvincular
+ * nunca fallen por eso. Devuelve lo mismo que esperarHasta (ESPERA_LENTA si tardó demasiado).
+ */
+async function actualizarConRespaldoDeApodos(cambios) {
+  try {
+    return await esperarHasta(update(ref(db), cambios), ESPERA_MAXIMA_ENVIO_MS);
+  } catch (error) {
+    if (!esPermisoDenegado(error)) throw error;
+    const sinApodos = {};
+    for (const [ruta, valor] of Object.entries(cambios)) {
+      if (!/\/apodos(\/|$)/.test(ruta)) sinApodos[ruta] = valor;
+    }
+    return await esperarHasta(update(ref(db), sinApodos), ESPERA_MAXIMA_ENVIO_MS);
+  }
+}
+
+/** Quién más tiene acceso a la TV: { exito, miembros: [uid…], apodos: { uid: nombre } } (lo lee el dueño o un miembro). */
 export async function listarMiembros(id) {
   try {
     const snap = await esperarHasta(get(ref(db, `dispositivos/${id}/miembros`)), ESPERA_MAXIMA_ENVIO_MS);
     if (snap === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
-    return { exito: true, miembros: snap.exists() ? Object.keys(snap.val()).sort() : [] };
+    // Los nombres son un extra: si no se pueden leer, se muestra "Persona N" y listo.
+    let apodos = {};
+    try {
+      const nombres = await esperarHasta(get(ref(db, `dispositivos/${id}/apodos`)), ESPERA_MAXIMA_ENVIO_MS);
+      if (nombres !== ESPERA_LENTA && nombres.exists() && typeof nombres.val() === 'object') apodos = nombres.val();
+    } catch (error) {
+      console.warn('[TV RETRO] No se pudieron leer los nombres de las personas:', error);
+    }
+    return { exito: true, miembros: snap.exists() ? Object.keys(snap.val()).sort() : [], apodos };
   } catch (error) {
     console.error('Error al listar las personas con acceso:', error);
     return { exito: false, error: 'No se pudo leer quién tiene acceso: ' + describirError(error) + '.' };
@@ -804,7 +831,10 @@ export async function borrarInvitacion(codigoTexto) {
 /** El dueño quita a una persona de su TV. */
 export async function quitarMiembro(id, uidMiembro) {
   try {
-    const paso = await esperarHasta(remove(ref(db, `dispositivos/${id}/miembros/${uidMiembro}`)), ESPERA_MAXIMA_ENVIO_MS);
+    const paso = await actualizarConRespaldoDeApodos({
+      [`dispositivos/${id}/miembros/${uidMiembro}`]: null,
+      [`dispositivos/${id}/apodos/${uidMiembro}`]: null
+    });
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
     return { exito: true };
   } catch (error) {
@@ -813,13 +843,35 @@ export async function quitarMiembro(id, uidMiembro) {
   }
 }
 
+/** Largo máximo del nombre de una persona (igual que las reglas). */
+export const MAXIMO_APODO = 20;
+
+/**
+ * El dueño le pone nombre a una persona con acceso a su TV. Vacío = vuelve a "Persona N".
+ * Devuelve { exito, nombre } con el nombre ya limpio.
+ */
+export async function guardarApodoMiembro(id, uidMiembro, nombre) {
+  const limpio = String(nombre || '').replace(/\s+/g, ' ').trim();
+  if (limpio.length > MAXIMO_APODO) return { exito: false, error: `Usa ${MAXIMO_APODO} letras o menos.` };
+  try {
+    const ruta = ref(db, `dispositivos/${id}/apodos/${uidMiembro}`);
+    const paso = await esperarHasta(limpio ? set(ruta, limpio) : remove(ruta), ESPERA_MAXIMA_ENVIO_MS);
+    if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    return { exito: true, nombre: limpio };
+  } catch (error) {
+    console.error('Error al guardar el nombre de una persona:', error);
+    return { exito: false, error: 'No se pudo guardar el nombre: ' + describirError(error) + '.' };
+  }
+}
+
 /** Un miembro deja de tener acceso a la TV (la TV sigue siendo de su dueño). */
 export async function salirDeTV(uid, id) {
   try {
-    const paso = await esperarHasta(update(ref(db), {
+    const paso = await actualizarConRespaldoDeApodos({
       [`dispositivos/${id}/miembros/${uid}`]: null,
+      [`dispositivos/${id}/apodos/${uid}`]: null,
       [`usuarios/${uid}/dispositivos/${id}`]: null
-    }), ESPERA_MAXIMA_ENVIO_MS);
+    });
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
     return { exito: true };
   } catch (error) {

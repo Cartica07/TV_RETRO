@@ -22,6 +22,8 @@ import {
   listarMiembros,
   crearInvitacion,
   quitarMiembro,
+  guardarApodoMiembro,
+  MAXIMO_APODO,
   borrarInvitacion,
   salirDeTV,
   esAdministrador
@@ -369,10 +371,18 @@ export function crearCuentas({ leerElementos, liberarPanelDespuesDeLogin }) {
     r.miembros.forEach((uidMiembro, i) => {
       const fila = document.createElement('div');
       fila.className = 'fila-tv';
+      const porDefecto = 'Persona ' + (i + 1);
+      const apodo = r.apodos && typeof r.apodos[uidMiembro] === 'string' ? r.apodos[uidMiembro] : '';
       const nombre = document.createElement('span');
       nombre.className = 'nombre-tv';
-      nombre.textContent = 'Persona ' + (i + 1);
+      nombre.textContent = apodo || porDefecto;
       fila.appendChild(nombre);
+      const poner = document.createElement('button');
+      poner.type = 'button';
+      poner.className = 'boton-enlace';
+      poner.textContent = 'Nombre';
+      poner.addEventListener('click', () => editarNombreMiembro(id, uidMiembro, fila, apodo, porDefecto));
+      fila.appendChild(poner);
       const quitar = document.createElement('button');
       quitar.type = 'button';
       quitar.className = 'boton-enlace peligro';
@@ -381,6 +391,42 @@ export function crearCuentas({ leerElementos, liberarPanelDespuesDeLogin }) {
       fila.appendChild(quitar);
       lista.appendChild(fila);
     });
+  }
+
+  // El dueño le pone nombre a una persona: la fila se cambia por un campo corto con Guardar y Cancelar.
+  function editarNombreMiembro(id, uidMiembro, fila, apodoActual, porDefecto) {
+    fila.textContent = '';
+    const caja = document.createElement('div');
+    caja.className = 'fila-guardar-galeria fila-guardar-inline';
+    const campo = document.createElement('input');
+    campo.type = 'text';
+    campo.maxLength = MAXIMO_APODO;
+    campo.value = apodoActual;
+    campo.placeholder = porDefecto;
+    campo.autocomplete = 'off';
+    campo.setAttribute('aria-label', 'Nombre de la persona');
+    const guardar = document.createElement('button');
+    guardar.type = 'button';
+    guardar.className = 'boton-secundario';
+    guardar.textContent = 'Guardar';
+    const cancelar = document.createElement('button');
+    cancelar.type = 'button';
+    cancelar.className = 'boton-enlace';
+    cancelar.textContent = 'Cancelar';
+    const confirmar = () => sinRepetir('apodo-miembro', guardar, async () => {
+      mostrarErrorCompartir('');
+      const r = await guardarApodoMiembro(id, uidMiembro, campo.value);
+      if (!r.exito) return mostrarErrorCompartir(r.error);
+      await pintarMiembros(id);
+    });
+    guardar.addEventListener('click', confirmar);
+    campo.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmar(); } });
+    cancelar.addEventListener('click', () => { mostrarErrorCompartir(''); pintarMiembros(id); });
+    caja.appendChild(campo);
+    caja.appendChild(guardar);
+    fila.appendChild(caja);
+    fila.appendChild(cancelar);
+    campo.focus();
   }
 
   async function manejarQuitarMiembro(id, uidMiembro) {
