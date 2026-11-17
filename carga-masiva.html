@@ -284,6 +284,20 @@
     <!-- Todo lo de abajo queda bloqueado (inert) hasta que se inicie sesión. -->
     <div id="contenidoProtegido" inert>
 
+    <!-- ===== Destino (solo se muestra a un administrador) ===== -->
+    <section class="tarjeta" id="tarjetaDestino" hidden>
+      <div class="campo switch-fila">
+        <span>
+          <span class="fila-titulo">Biblioteca predeterminada</span>
+          <p class="descripcion" style="margin-top:2px;">Activado: lo que subas (imágenes y animaciones) lo verán TODAS las cuentas y no cuenta en ningún límite. Desactivado: se guarda solo en tu galería.</p>
+        </span>
+        <label class="switch">
+          <input type="checkbox" id="destinoBiblioteca" aria-label="Guardar en la biblioteca predeterminada" />
+          <span class="via"><span class="perilla"></span></span>
+        </label>
+      </div>
+    </section>
+
     <!-- ===== Imágenes ===== -->
     <section class="tarjeta">
       <div class="tarjeta-cabecera">
@@ -371,7 +385,7 @@
       <ul id="listaResultadosAnimaciones"></ul>
     </section>
 
-    <h2 class="subtitulo-seccion">Animaciones guardadas</h2>
+    <h2 class="subtitulo-seccion" id="tituloAnimacionesGuardadas">Animaciones guardadas</h2>
     <section class="tarjeta">
       <p class="tarjeta-desc">Reprodúcela para ver el bucle completo, descarga el JSON para editarla, cámbiale el nombre o bórrala.</p>
       <ul id="listaAnimacionesGuardadas" class="lista-guardadas">
