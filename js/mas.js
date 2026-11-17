@@ -94,9 +94,11 @@ export function crearMas({
     // Una zona guardada que no está en la lista (ej. puesta desde otro lado) se muestra igual.
     if (![...sel.options].some((o) => o.value === valor)) {
       const opt = document.createElement('option');
-      const horas = ajustesDatos.zona / 60;
+      const total = Math.abs(ajustesDatos.zona);
+      const horas = Math.floor(total / 60);
+      const minutos = total % 60;
       opt.value = valor;
-      opt.textContent = `UTC${horas >= 0 ? '+' : '−'}${Math.abs(horas)}`;
+      opt.textContent = `UTC${ajustesDatos.zona >= 0 ? '+' : '−'}${horas}${minutos ? ':' + String(minutos).padStart(2, '0') : ''}`;
       sel.appendChild(opt);
     }
     sel.value = valor;
