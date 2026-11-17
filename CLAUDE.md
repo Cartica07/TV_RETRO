@@ -213,7 +213,7 @@ Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/audit
 - **QR** en vez de escribir el código (dibujo difícil en la OLED 128×64).
 - **Tutorial guiado** (por eso las pestañas no llevan textos explicativos).
 - **Anuncios con recompensa:** necesitan un servidor que verifique el anuncio (idea: Cloudflare Worker); sin diseñar.
-- **`carga-masiva.html`:** opción de administrador para gestionar la biblioteca predeterminada.
+- **`carga-masiva.html`:** HECHO el 2026-11-17: un administrador ve un interruptor "Biblioteca predeterminada" y, con él, sube imágenes y animaciones a `biblioteca/` (con su lista liviana, con aviso de que las verán todas las cuentas) y gestiona (renombrar, borrar) las animaciones de la biblioteca. Sin campos nuevos.
 - Calidad y arquitectura (hallazgos abiertos de la auditoría): H-12 (hecho), H-15 (parcial), H-18 (pruebas dentro del repo y CI: comprobar que corra en verde en GitHub), H-24 (parcial) y H-26. H-13, H-16, H-21, H-22, H-23 y H-27 están hechos.
 
 **Firmware**
