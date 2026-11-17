@@ -14,12 +14,17 @@ import {
   normalizarAlarma,
   cargarAjustes,
   guardarAjustes,
-  normalizarAjustes
+  normalizarAjustes,
+  cargarSistema,
+  suscribirFirmwareTV,
+  suscribirMostrada,
+  desvincularDispositivo,
+  dispositivoActual
 } from './firebase.js';
 import { sinRepetir, esperarFinal, TEXTO_GUARDADO_LENTO } from './utilidades.js';
 
 // Títulos de la cabecera de Más cuando se está dentro de Config (los lee main.js en mostrarSeccionSegunTipo).
-export const TITULOS_CONFIG = { lista: 'Config', cuenta: 'Mi cuenta', tv: 'Ajustes de la TV', ayuda: 'Ayuda y contacto', legal: 'Legal' };
+export const TITULOS_CONFIG = { lista: 'Config', cuenta: 'Mi cuenta', tv: 'Ajustes de la TV', sistema: 'Sistema', ayuda: 'Ayuda y contacto', legal: 'Legal' };
 
 /**
  * leerElementos()      mapa de IDs del DOM (se asigna al arrancar).
@@ -39,10 +44,11 @@ export function crearMas({
   // ---- Más: menú (Galería, Juegos, Alarma, Config) ----
   // 'menu' | 'galeria' | 'juegos' | 'alarma' | 'config'. Al tocar "Más" abajo siempre se ve el menú.
   let masVista = 'menu';
-  // Dentro de Config: 'lista' | 'cuenta' | 'tv' | 'ayuda' | 'legal'.
+  // Dentro de Config: 'lista' | 'cuenta' | 'tv' | 'sistema' | 'ayuda' | 'legal'.
   let configVista = 'lista';
 
   function cambiarMasVista(vista) {
+    turnoSistema++; // Sistema: se deja de esperar el resultado de una actualización o un restablecimiento
     masVista = ['juegos', 'galeria', 'alarma', 'config'].includes(vista) ? vista : 'menu';
     configVista = 'lista';
     mostrarSeccionSegunTipo(estado().tipo);
@@ -53,11 +59,13 @@ export function crearMas({
 
   // Un apartado de Config (o de vuelta a su lista).
   function abrirApartadoConfig(apartado) {
+    turnoSistema++;
     configVista = Object.prototype.hasOwnProperty.call(TITULOS_CONFIG, apartado) ? apartado : 'lista';
     mostrarSeccionSegunTipo(estado().tipo);
     if (window.scrollY > 0) window.scrollTo(0, 0);
     if (configVista === 'cuenta') mostrarMiCuenta();
     if (configVista === 'tv') abrirAjustesTV();
+    if (configVista === 'sistema') abrirSistema();
   }
 
   // "Volver" (y el Atrás de la APK) dentro de Más: de un apartado de Config a su lista; si no, al menú.
@@ -152,6 +160,184 @@ export function crearMas({
       } catch (err) {
         console.error('Error al guardar los ajustes:', err);
         marcarEstado('Error desconocido al guardar los ajustes.', 'error', E());
+      } finally {
+        desactivarLedTransmision(E());
+      }
+    });
+  }
+
+  // ---- Config > Sistema (H-19, aprobado 2026-11-17): actualizar y restablecer la TV ----
+  // Solo el dueño. "Actualizar" aparece solo si la versión publicada es más nueva que la de la TV (sin mostrar números).
+  // "Restablecer" manda la orden, espera el acuse EXACTO de esa versión (la TV solo baja la última: un acuse mayor no
+  // prueba que se borró) y recién entonces hace el "desvincular" de siempre. Sin acuse no se desvincula nada.
+  let sistemaDatos = null;
+  let turnoSistema = 0;
+  const ESPERA_ACTUALIZAR_MS = 4 * 60 * 1000;
+  const ESPERA_ACUSE_RESTABLECER_MS = 25 * 1000;
+
+  const MENSAJES_ACTUALIZAR = {
+    ocupada: 'La TV está ocupada (un juego o una alarma). Inténtalo en un momento.',
+    poca_memoria: 'A la TV le falta memoria ahora. Reiníciala y vuelve a intentarlo.',
+    sin_manifiesto: 'No se encontró la actualización. Inténtalo más tarde.',
+    no_cabe: 'No se pudo actualizar la TV. Vuelve a intentarlo más tarde.'
+  };
+  const TEXTO_ACTUALIZAR_ERROR = 'No se pudo actualizar la TV. Vuelve a intentarlo.';
+
+  function textoActualizar(texto) {
+    E().sistemaEstadoActualizar.textContent = texto;
+  }
+
+  // Qué se ve según lo que se leyó de la TV.
+  function pintarSistema() {
+    const el = E();
+    const d = sistemaDatos;
+    el.campoSistemaActualizar.style.display = 'none';
+    el.campoSistemaRestablecer.style.display = 'none';
+    if (!d) return;
+    if (!d.esDueno) {
+      marcarEstado('Solo el dueño de la TV puede actualizarla o restablecerla.', null, el);
+      return;
+    }
+    if (!d.firmware) {
+      marcarEstado('Esta TV todavía no admite estas opciones desde la app.', null, el);
+      return;
+    }
+    el.campoSistemaActualizar.style.display = '';
+    el.campoSistemaRestablecer.style.display = '';
+    const hayNueva = d.manifiestoBuild !== null && d.manifiestoBuild > d.firmware.build;
+    textoActualizar(hayNueva ? 'Hay una versión nueva para tu TV.' : 'Tu TV está al día ✅');
+    el.botonSistemaActualizar.style.display = hayNueva ? '' : 'none';
+  }
+
+  async function abrirSistema() {
+    const turno = ++turnoSistema;
+    sistemaDatos = null;
+    pintarSistema();
+    const r = await cargarSistema();
+    if (turno !== turnoSistema || masVista !== 'config' || configVista !== 'sistema') return; // se fue mientras tanto
+    if (!r.exito) {
+      marcarEstado('No se pudo leer el estado de la TV. Revisa tu internet y vuelve a abrir esta pantalla.', 'error', E());
+      return;
+    }
+    sistemaDatos = r;
+    pintarSistema();
+  }
+
+  // Espera lo que informa la TV tras la orden "actualizar". Resuelve { ok } | { error: estado } | { tiempo } | { cancelado }.
+  function esperarResultadoActualizar(turno, fechaAntes, versionPublicada) {
+    return new Promise((resolver) => {
+      let terminado = false;
+      let baja = () => {};
+      let reloj = null;
+      const terminar = (resultado) => {
+        if (terminado) return;
+        terminado = true;
+        clearTimeout(reloj);
+        baja();
+        resolver(resultado);
+      };
+      reloj = setTimeout(() => terminar({ tiempo: true }), ESPERA_ACTUALIZAR_MS);
+      baja = suscribirFirmwareTV((fw) => {
+        if (turno !== turnoSistema) return terminar({ cancelado: true });
+        if (!fw || fw.fecha === null || fw.fecha === fechaAntes) return; // todavía es el informe de antes
+        if (fw.estado === 'actualizando') textoActualizar('Actualizando… no desconectes la TV.');
+        else if (fw.estado === 'reiniciando') textoActualizar('Reiniciando la TV…');
+        else if (fw.estado === 'ok' && fw.build >= versionPublicada) terminar({ ok: true, firmware: fw });
+        else if (fw.estado === 'al_dia') terminar({ ok: true, firmware: fw });
+        else if (fw.estado !== 'ok') terminar({ error: fw.estado });
+      });
+      if (terminado) baja(); // el primer informe llegó antes de que "baja" estuviera asignada
+    });
+  }
+
+  async function actualizarLaTV() {
+    if (!sistemaDatos || !sistemaDatos.esDueno || !sistemaDatos.firmware) return;
+    await sinRepetir('sistema-actualizar', E().botonSistemaActualizar, async () => {
+      const turno = turnoSistema;
+      const fechaAntes = sistemaDatos.firmware.fecha;
+      const publicada = sistemaDatos.manifiestoBuild;
+      avanzarTurnoEnvio();
+      textoActualizar('Enviando la orden…');
+      activarLedTransmision(E());
+      try {
+        const r = await esperarFinal(await enviarEstado(Object.assign({}, estado(), { tipo: 'actualizar' })), () => textoActualizar('La conexión está lenta: la orden saldrá cuando vuelva la señal.'));
+        if (!r.exito) {
+          textoActualizar('');
+          marcarEstado('No se pudo enviar la orden: ' + (r.error || 'sin conexión') + '.', 'error', E());
+          return;
+        }
+        textoActualizar('Actualizando… no desconectes la TV.');
+        const fin = await esperarResultadoActualizar(turno, fechaAntes, publicada);
+        if (fin.cancelado) return;
+        if (fin.ok) {
+          sistemaDatos.firmware = fin.firmware;
+          pintarSistema();
+          textoActualizar('La TV se actualizó ✅');
+        } else if (fin.tiempo) {
+          textoActualizar('');
+          marcarEstado('La TV no respondió. Tiene que estar encendida y con internet.', 'error', E());
+        } else {
+          textoActualizar('');
+          marcarEstado(MENSAJES_ACTUALIZAR[fin.error] || TEXTO_ACTUALIZAR_ERROR, "error", E());
+        }
+      } catch (err) {
+        console.error('Error al actualizar la TV:', err);
+        textoActualizar('');
+        marcarEstado('Error desconocido al actualizar la TV.', 'error', E());
+      } finally {
+        desactivarLedTransmision(E());
+      }
+    });
+  }
+
+  // Espera que la TV diga que aplicó EXACTAMENTE esa versión (oled_remota/mostrada). true | false (tiempo agotado).
+  function esperarAcuseExacto(version, ms) {
+    return new Promise((resolver) => {
+      let terminado = false;
+      let baja = () => {};
+      const terminar = (valor) => {
+        if (terminado) return;
+        terminado = true;
+        clearTimeout(reloj);
+        baja();
+        resolver(valor);
+      };
+      const reloj = setTimeout(() => terminar(false), ms);
+      baja = suscribirMostrada((valor) => { if (valor === version) terminar(true); });
+      if (terminado) baja();
+    });
+  }
+
+  async function restablecerLaTV() {
+    if (!sistemaDatos || !sistemaDatos.esDueno || !sistemaDatos.firmware || !sesion()) return;
+    if (!window.confirm('¿Restablecer la TV? Se borrarán su Wi-Fi, sus alarmas, sus ajustes y su contenido, y dejará de ser tuya. Después tendrás que configurar su Wi-Fi y vincularla de nuevo.')) return;
+    await sinRepetir('sistema-restablecer', E().botonSistemaRestablecer, async () => {
+      avanzarTurnoEnvio();
+      marcarEstado('Restableciendo la TV…', null, E());
+      activarLedTransmision(E());
+      try {
+        const r = await esperarFinal(await enviarEstado(Object.assign({}, estado(), { tipo: 'restablecer' })), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, E()));
+        if (!r.exito) {
+          marcarEstado('No se pudo enviar la orden: ' + (r.error || 'sin conexión') + '.', 'error', E());
+          return;
+        }
+        // Acuse EXACTO (no "mayor o igual"): si otra persona envía algo justo después, la TV solo baja lo último y un
+        // acuse mayor no prueba que se haya borrado. Sin acuse no se desvincula nada.
+        const acuse = await esperarAcuseExacto(r.version, ESPERA_ACUSE_RESTABLECER_MS);
+        if (!acuse) {
+          marcarEstado('La TV no respondió. Tiene que estar encendida y con internet. Revisa su estado y vuelve a intentarlo.', 'error', E());
+          return;
+        }
+        marcarEstado('La TV se restableció. Soltándola de tu cuenta…', null, E());
+        const d = await desvincularDispositivo(sesion().uid, dispositivoActual());
+        if (!d.exito) {
+          marcarEstado('La TV se restableció, pero no se pudo soltar de tu cuenta: ' + (d.error || '') + ' Pulsa Desvincular en Mi TV.', 'error', E());
+          return;
+        }
+        location.reload();
+      } catch (err) {
+        console.error('Error al restablecer la TV:', err);
+        marcarEstado('Error desconocido al restablecer la TV.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
@@ -338,6 +524,8 @@ export function crearMas({
       });
     });
     if (E().botonGuardarAjustes) E().botonGuardarAjustes.addEventListener('click', guardarAjustesEnLaTV);
+    if (E().botonSistemaActualizar) E().botonSistemaActualizar.addEventListener('click', actualizarLaTV);
+    if (E().botonSistemaRestablecer) E().botonSistemaRestablecer.addEventListener('click', restablecerLaTV);
     // Alarma: elegir cuál (1, 2 o 3), días, interruptor y guardar.
     if (E().grupoAlarmaNumero) {
       E().grupoAlarmaNumero.addEventListener('click', (e) => {

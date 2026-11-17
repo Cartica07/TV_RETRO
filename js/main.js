@@ -731,7 +731,7 @@ function mostrarSeccionSegunTipo(tipo) {
   if (elementos.seccionJuegos) elementos.seccionJuegos.style.display = enJuegos ? 'block' : 'none';
   if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';
   // Config: la lista de apartados o uno de ellos.
-  const apartados = { lista: elementos.seccionConfig, cuenta: elementos.configCuenta, tv: elementos.configTV, ayuda: elementos.configAyuda, legal: elementos.configLegal };
+  const apartados = { lista: elementos.seccionConfig, cuenta: elementos.configCuenta, tv: elementos.configTV, sistema: elementos.configSistema, ayuda: elementos.configAyuda, legal: elementos.configLegal };
   Object.entries(apartados).forEach(([clave, el]) => {
     if (el) el.style.display = (enConfig && obtenerConfigVista() === clave) ? 'block' : 'none';
   });

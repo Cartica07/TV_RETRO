@@ -30,12 +30,12 @@ const escenarios = {
     const titulo = await txt(pagina, '#tituloMas'), lista = await vis(pagina, '#seccionConfig'), menu = await vis(pagina, '#seccionMasSelector'), enviar = await vis(pagina, '.barra-accion');
     const filas = await pagina.$$eval('#grupoConfig button', (bs) => bs.map((b) => b.textContent.trim()));
     await navegador.close();
-    return informe('Config: título, lista Mi cuenta / Ajustes de la TV / Ayuda y contacto / Legal, sin el menú ni Enviar', titulo === 'Config' && lista && !menu && !enviar && filas.join('|') === 'Mi cuenta|Ajustes de la TV|Ayuda y contacto|Legal', JSON.stringify({ titulo, lista, menu, enviar, filas }));
+    return informe('Config: título, lista Mi cuenta / Ajustes de la TV / Sistema / Ayuda y contacto / Legal, sin el menú ni Enviar', titulo === 'Config' && lista && !menu && !enviar && filas.join('|') === 'Mi cuenta|Ajustes de la TV|Sistema|Ayuda y contacto|Legal', JSON.stringify({ titulo, lista, menu, enviar, filas }));
   },
   async 'cada apartado con su título; volver lleva a la lista y de ahí al menú'() {
     const { navegador, pagina } = await abrirApp(); await abrirConfig(pagina);
     const titulos = [];
-    for (const a of ['cuenta', 'tv', 'ayuda', 'legal']) {
+    for (const a of ['cuenta', 'tv', 'sistema', 'ayuda', 'legal']) {
       await apartado(pagina, a);
       titulos.push(await txt(pagina, '#tituloMas'));
       await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(200);
@@ -44,7 +44,7 @@ const escenarios = {
     await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(200);
     const enMenu = await vis(pagina, '#seccionMasSelector');
     await navegador.close();
-    return informe('títulos de los apartados; volver: apartado → lista → menú de Más', titulos.join('|') === 'Mi cuenta|Ajustes de la TV|Ayuda y contacto|Legal' && enLista && enMenu, JSON.stringify({ titulos, enLista, enMenu }));
+    return informe('títulos de los apartados; volver: apartado → lista → menú de Más', titulos.join('|') === 'Mi cuenta|Ajustes de la TV|Sistema|Ayuda y contacto|Legal' && enLista && enMenu, JSON.stringify({ titulos, enLista, enMenu }));
   },
   async 'Mi cuenta: muestra el correo y lleva a Mis TV y a Eliminar mi cuenta'() {
     const { navegador, pagina } = await abrirApp(); await abrirConfig(pagina); await apartado(pagina, 'cuenta');
