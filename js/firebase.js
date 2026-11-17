@@ -23,6 +23,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 const auth = getAuth(app);
+// Los correos de Firebase (verificar correo, restablecer contraseña) salen en español.
+auth.languageCode = 'es';
 
 /**
  * Explica en pocas palabras por qué falló una operación de Firebase
