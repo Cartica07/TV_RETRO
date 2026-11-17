@@ -246,6 +246,13 @@
             ".write": "auth != null && ((data.parent().parent().child('dueno').val() === auth.uid && !newData.exists()) || (auth.uid === $uid && !newData.exists()) || (auth.uid === $uid && !data.exists() && newData.isString() && root.child('invitaciones').child(newData.val()).child('id').val() === $id && root.child('invitaciones').child(newData.val()).child('creado').val() > now - 600000 && data.parent().parent().child('dueno').exists() && data.parent().parent().child('dueno').val() !== auth.uid && !newData.parent().parent().parent().parent().child('invitaciones').child(newData.val()).exists()))",
             ".validate": "newData.isString() && newData.val().matches(/^[A-HJ-NP-Z2-9]{6}$/)"
           }
+        },
+        "apodos": {
+          ".write": "auth != null && !newData.exists() && data.parent().child('dueno').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && (data.parent().parent().child('dueno').val() === auth.uid || (auth.uid === $uid && !newData.exists()))",
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && newData.parent().parent().child('miembros').child($uid).exists()"
+          }
         }
       }
     },
