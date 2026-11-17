@@ -404,8 +404,16 @@
       guardarImagenCatalogo,
       guardarCancionCatalogo, listarCanciones, borrarCancionCatalogo,
       guardarAnimacionCatalogo, listarAnimaciones, borrarAnimacionCatalogo,
-      escucharSesion, iniciarSesion, cerrarSesion, usarCuenta
+      escucharSesion, iniciarSesion, cerrarSesion, usarCuenta, esAdministrador
     } from './js/firebase.js';
+
+    // Destino: la galería de la cuenta (por defecto) o, solo para un administrador, la biblioteca predeterminada
+    // que ven todas las cuentas. El interruptor está oculto para quien no es administrador.
+    const tarjetaDestino = document.getElementById('tarjetaDestino');
+    const destinoBiblioteca = document.getElementById('destinoBiblioteca');
+    const tituloAnimacionesGuardadas = document.getElementById('tituloAnimacionesGuardadas');
+    const aBiblioteca = () => !tarjetaDestino.hidden && destinoBiblioteca.checked;
+    const confirmarBiblioteca = () => confirm('Esto se guardará en la biblioteca predeterminada: lo verán TODAS las cuentas. ¿Seguir?');
 
     const inputArchivos = document.getElementById('archivos');
     const boton = document.getElementById('botonSubir');
@@ -470,6 +478,8 @@
       }
 
       const { umbral, dithering } = leerConfiguracion();
+      const predeterminada = aBiblioteca();
+      if (predeterminada && !confirmarBiblioteca()) return;
 
       boton.disabled = true;
       lista.innerHTML = '';
@@ -501,12 +511,13 @@
             resultado.imagenAncho,
             resultado.imagenAlto,
             resultado.preprocesada,
-            { origen: 'carga-masiva', umbral, dithering, fecha: Date.now() }
+            { origen: 'carga-masiva', umbral, dithering, fecha: Date.now() },
+            { predeterminada }
           );
 
           if (guardado.exito) {
             li.classList.add('ok');
-            span.textContent = `✅ guardada como "${guardado.key}"`;
+            span.textContent = `✅ guardada como "${guardado.key}"${predeterminada ? ' en la biblioteca predeterminada' : ''}`;
           } else {
             li.classList.add('error');
             span.textContent = `❌ ${guardado.error || 'error al guardar'}`;
@@ -825,6 +836,8 @@
         alert('Elige uno o más archivos JSON primero.');
         return;
       }
+      const predeterminada = aBiblioteca();
+      if (predeterminada && !confirmarBiblioteca()) return;
 
       botonAnimaciones.disabled = true;
       listaAnimaciones.innerHTML = '';
@@ -850,11 +863,11 @@
 
           dibujarCuadroAnimacion(canvas, cuadros[0].datos, ancho, alto);
 
-          const guardado = await guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, { origen: 'carga-masiva', fecha: Date.now() });
+          const guardado = await guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, { origen: 'carga-masiva', fecha: Date.now() }, { predeterminada });
 
           if (guardado.exito) {
             li.classList.add('ok');
-            span.textContent = `✅ "${guardado.key}" (${cuadros.length} cuadros)`;
+            span.textContent = `✅ "${guardado.key}" (${cuadros.length} cuadros)${predeterminada ? ' en la biblioteca predeterminada' : ''}`;
           } else {
             li.classList.add('error');
             span.textContent = `❌ ${guardado.error || 'error al guardar'}`;
@@ -875,11 +888,21 @@
     // ===================================================
     const listaAnimacionesGuardadas = document.getElementById('listaAnimacionesGuardadas');
     let animacionesCache = {};
+    let destinoListado = false;   // de dónde viene la lista que se ve ahora (renombrar y borrar actúan ahí)
+    let turnoListado = 0;         // descarta una lista tardía si se cambió el interruptor mientras cargaba
 
     async function cargarAnimacionesGuardadas() {
-      animacionesCache = await listarAnimaciones() || {};
+      const turno = ++turnoListado;
+      const predeterminada = aBiblioteca();
+      const lista = await listarAnimaciones({ predeterminada }) || {};
+      if (turno !== turnoListado) return;
+      destinoListado = predeterminada;
+      animacionesCache = lista;
+      tituloAnimacionesGuardadas.textContent = predeterminada ? 'Animaciones de la biblioteca predeterminada' : 'Animaciones guardadas';
       renderizarAnimacionesGuardadas();
     }
+
+    destinoBiblioteca.addEventListener('change', cargarAnimacionesGuardadas);
 
     function renderizarAnimacionesGuardadas() {
       listaAnimacionesGuardadas.innerHTML = '';
@@ -976,22 +999,25 @@
       if (nuevoNombre === nombreOriginal) return;
 
       const entry = animacionesCache[nombreOriginal];
-      const guardado = await guardarAnimacionCatalogo(nuevoNombre, entry.ancho, entry.alto, entry.cuadros, entry.meta || {});
+      const guardado = await guardarAnimacionCatalogo(nuevoNombre, entry.ancho, entry.alto, entry.cuadros, entry.meta || {}, { predeterminada: destinoListado });
 
       if (!guardado.exito) {
         alert('No se pudo renombrar: ' + (guardado.error || ''));
         return;
       }
       if (guardado.key !== nombreOriginal) {
-        await borrarAnimacionCatalogo(nombreOriginal);
+        await borrarAnimacionCatalogo(nombreOriginal, { predeterminada: destinoListado });
       }
       await cargarAnimacionesGuardadas();
     }
 
     async function borrarAnimacionGuardada(nombre) {
-      if (!confirm(`¿Borrar "${nombre}" de la galería? No se puede deshacer.`)) return;
+      const aviso = destinoListado
+        ? `¿Borrar "${nombre}" de la biblioteca predeterminada? Se pierde para TODAS las cuentas y no se puede deshacer.`
+        : `¿Borrar "${nombre}" de la galería? No se puede deshacer.`;
+      if (!confirm(aviso)) return;
 
-      const resultado = await borrarAnimacionCatalogo(nombre);
+      const resultado = await borrarAnimacionCatalogo(nombre, { predeterminada: destinoListado });
       if (!resultado.exito) {
         alert('No se pudo borrar: ' + (resultado.error || ''));
         return;
@@ -1039,6 +1065,8 @@
         contenidoProtegido.inert = true;
         formSesion.hidden = false;
         botonSalirSesion.hidden = true;
+        tarjetaDestino.hidden = true;
+        destinoBiblioteca.checked = false;
         document.getElementById('sesionTitulo').textContent = 'Inicia sesión';
         document.getElementById('sesionDescripcion').textContent = 'Entra con la cuenta del dueño: lo que subas se guarda en su galería.';
         return;
@@ -1049,6 +1077,8 @@
       botonSalirSesion.hidden = false;
       document.getElementById('sesionTitulo').textContent = 'Sesión iniciada';
       document.getElementById('sesionDescripcion').textContent = usuario.email + ': lo que subas se guarda en su galería.';
+      // El interruptor de la biblioteca predeterminada solo lo ve un administrador (las reglas también lo exigen).
+      esAdministrador().then((admin) => { tarjetaDestino.hidden = !admin; }).catch(() => {});
       if (!listadosCargados) {
         listadosCargados = true;
         cargarAnimacionesGuardadas();
