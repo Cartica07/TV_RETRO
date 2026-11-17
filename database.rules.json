@@ -36,8 +36,8 @@
             ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() < 2000000000"
           },
           "pantalla": {
-            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
-            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma' || newData.child('tipo').val() === 'ajustes')",
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || (root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists() && newData.child('tipo').val() !== 'actualizar' && newData.child('tipo').val() !== 'restablecer'))",
+            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma' || newData.child('tipo').val() === 'ajustes' || newData.child('tipo').val() === 'actualizar' || newData.child('tipo').val() === 'restablecer')",
             "texto": {
               ".validate": "newData.isString() && newData.val().length <= 5000"
             },
@@ -252,6 +252,22 @@
           "$uid": {
             ".write": "auth != null && (data.parent().parent().child('dueno').val() === auth.uid || (auth.uid === $uid && !newData.exists()))",
             ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && newData.parent().parent().child('miembros').child($uid).exists()"
+          }
+        },
+        "firmware": {
+          ".write": "auth != null && auth.token.dispositivo === $id",
+          ".validate": "newData.hasChildren(['build', 'estado'])",
+          "build": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() < 2000000000"
+          },
+          "estado": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z_]{1,30}$/)"
+          },
+          "fecha": {
+            ".validate": "newData.isNumber()"
+          },
+          "$otro": {
+            ".validate": false
           }
         }
       }
@@ -679,6 +695,38 @@
         },
         "animaciones": {
           ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "firmware": {
+      "estable": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+        ".validate": "newData.hasChildren(['build', 'tamano', 'sha256', 'firma'])",
+        "build": {
+          ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() < 2000000000"
+        },
+        "tamano": {
+          ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 3900000"
+        },
+        "sha256": {
+          ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+        },
+        "firma": {
+          ".validate": "newData.isString() && newData.val().length >= 100 && newData.val().length <= 700"
+        },
+        "url": {
+          ".validate": "newData.isString() && newData.val().length <= 300 && newData.val().beginsWith('https://')"
+        },
+        "$otro": {
+          ".validate": false
+        }
+      },
+      "datos": {
+        "$build": {
+          ".read": "auth != null && (auth.token.dispositivo != null || root.child('administradores').child(auth.uid).val() === true)",
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$build.matches(/^[0-9]{1,10}$/) && newData.isString() && newData.val().length <= 10000000"
         }
       }
     }
