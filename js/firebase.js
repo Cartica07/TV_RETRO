@@ -1575,6 +1575,61 @@ function seguirConOrden(lento, estado, tipo) {
 }
 
 // ===================================================
+// Sistema de la TV (Más > Config > Sistema): actualizar el firmware y restablecer (H-19, aprobado 2026-11-17)
+// ===================================================
+// - firmware/estable = { build, tamano, sha256, firma, url? }: lo publica un administrador (el panel solo lee el número).
+// - dispositivos/{id}/firmware = { build, estado, fecha }: lo escribe solo la TV (qué versión lleva y cómo salió el último intento).
+// - Órdenes: pantalla.tipo = "actualizar" | "restablecer" (enviarEstado); solo el dueño.
+
+/** El id de la TV con la que se está trabajando (null en el modo viejo, sin cuentas). */
+export function dispositivoActual() {
+  return contexto ? contexto.dispositivo : null;
+}
+
+function normalizarFirmwareTV(valor) {
+  if (!valor || typeof valor !== 'object') return null;
+  const build = Number(valor.build);
+  if (!Number.isFinite(build)) return null;
+  const fecha = Number(valor.fecha);
+  return { build, estado: String(valor.estado || ''), fecha: Number.isFinite(fecha) ? fecha : null };
+}
+
+/**
+ * Lo que necesita la pantalla Sistema: { exito, esDueno, firmware: {build, estado, fecha} | null, manifiestoBuild: n | null }.
+ * firmware = null si la TV no informa su versión (firmware anterior). manifiestoBuild = la versión publicada.
+ */
+export async function cargarSistema() {
+  if (!contexto) return { exito: true, esDueno: false, firmware: null, manifiestoBuild: null };
+  try {
+    const rol = await rolEnTV(contexto.uid, contexto.dispositivo);
+    if (!rol.exito) return { exito: false, error: rol.error };
+    const [fw, man] = await Promise.all([
+      esperarHasta(get(ref(db, `dispositivos/${contexto.dispositivo}/firmware`)), ESPERA_MAXIMA_ENVIO_MS),
+      esperarHasta(get(ref(db, 'firmware/estable/build')), ESPERA_MAXIMA_ENVIO_MS)
+    ]);
+    if (fw === ESPERA_LENTA || man === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
+    const publicada = man.exists() ? Number(man.val()) : null;
+    return {
+      exito: true,
+      esDueno: rol.rol === 'dueno',
+      firmware: fw.exists() ? normalizarFirmwareTV(fw.val()) : null,
+      manifiestoBuild: Number.isFinite(publicada) ? publicada : null
+    };
+  } catch (error) {
+    console.error('Error al leer el estado del sistema de la TV:', error);
+    return { exito: false, error: 'No se pudo leer el estado de la TV: ' + describirError(error) + '.' };
+  }
+}
+
+/** Escucha lo que informa la TV de su firmware (durante una actualización). callback(null) si no informa. Devuelve cómo cancelar. */
+export function suscribirFirmwareTV(callback) {
+  if (!contexto) { callback(null); return () => {}; }
+  return onValue(ref(db, `dispositivos/${contexto.dispositivo}/firmware`), (snap) => {
+    callback(snap.exists() ? normalizarFirmwareTV(snap.val()) : null);
+  }, () => callback(null));
+}
+
+// ===================================================
 // Ajustes de la TV (Más > Config > Ajustes de la TV)
 // ===================================================
 // dispositivos/{id}/ajustes = { brillo: 1..3, volumen: 0..3, zona: minutos respecto de la hora
@@ -1703,6 +1758,10 @@ export async function enviarEstado(estado) {
     } else if (estado.tipo === 'ajustes') {
       // Orden "vuelve a leer los ajustes" (Más > Config). Los datos viven en dispositivos/{id}/ajustes.
       pantallaPayload.tipo = 'ajustes';
+    } else if (estado.tipo === 'actualizar' || estado.tipo === 'restablecer') {
+      // H-19 (aprobado 2026-11-17): órdenes "instala la versión nueva del firmware" y "restablece la TV" (Config > Sistema).
+      // Sin datos propios. Las reglas solo dejan mandarlas al DUEÑO, y la TV no las obedece al encender.
+      pantallaPayload.tipo = estado.tipo;
     } else if (estado.tipo === 'juego') {
       // Orden "abre este juego" (Más > Juegos). No es contenido: la TV lo toma como
       // un comando y sigue mostrando lo que tenía. Un firmware que no lo conozca lo ignora.
