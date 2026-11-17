@@ -2383,6 +2383,32 @@ body.sin-barra-accion .barra-accion {
   color: var(--texto-2);
 }
 
+/* Ponerle nombre a una persona (Compartir): campo, Guardar y Cancelar en una sola fila,
+   sin salirse de la tarjeta a 360 px. */
+.fila-tv > .fila-guardar-inline {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.fila-tv .fila-guardar-inline {
+  gap: var(--esp-1);
+}
+
+.fila-tv .fila-guardar-inline input[type="text"] {
+  min-width: 0;
+  padding: 0 var(--esp-2);
+}
+
+.fila-tv .fila-guardar-inline .boton-secundario {
+  padding: 0 var(--esp-2);
+}
+
+.fila-tv > .fila-guardar-inline ~ .boton-enlace {
+  flex-shrink: 0;
+  padding: 0;
+  font-size: var(--texto-xs);
+}
+
 .login-enlaces {
   display: flex;
   flex-wrap: wrap;
