@@ -482,7 +482,19 @@ export async function leerCuadrosAnimacion(clave, { predeterminada = false } = {
  * Guarda un elemento en el catálogo de la cuenta ('imagenes' | 'animaciones').
  * Reemplazar uno que ya existe no cambia el contador; uno nuevo lo suma (si cabe).
  */
-async function guardarEnCatalogo(tipo, safeKey, payload) {
+async function guardarEnCatalogo(tipo, safeKey, payload, { predeterminada = false } = {}) {
+  if (predeterminada) {
+    // Biblioteca predeterminada (biblioteca/, la ven todas las cuentas): solo un administrador, sin contadores ni
+    // límites. El elemento y su lista liviana van en la misma escritura (H-12), como en el catálogo de la cuenta.
+    if (!contexto) return { exito: false, error: 'la biblioteca predeterminada solo existe con cuentas' };
+    if (safeKey.length > LARGO_MAXIMO_CLAVE) return { exito: false, error: `el nombre es demasiado largo (máximo ${LARGO_MAXIMO_CLAVE} caracteres)` };
+    if (!(await esAdministrador())) return { exito: false, error: 'solo un administrador puede guardar en la biblioteca predeterminada' };
+    const lento = await conTope(update(ref(db), {
+      [`biblioteca/${tipo}/${safeKey}`]: payload,
+      [`biblioteca/${tipo}_indice/${safeKey}`]: construirIndice(tipo, payload)
+    }), { exito: true, key: safeKey });
+    return lento || { exito: true, key: safeKey };
+  }
   const base = rutaCatalogo(tipo);
   if (!contexto) {
     const lento = await conTope(set(ref(db, `${base}/${safeKey}`), payload), { exito: true, key: safeKey });
@@ -1308,7 +1320,7 @@ export async function listarImagenes() {
  *   original. Es opcional: si no se manda, la imagen queda "fija"
  *   (comportamiento de versiones anteriores del catálogo).
  */
-export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preprocesada = null, meta = {}) {
+export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preprocesada = null, meta = {}, opciones = {}) {
   try {
     const safeKey = limpiarClave(nombre);
     if (!safeKey) return { exito: false, error: 'falta el nombre' };
@@ -1319,7 +1331,7 @@ export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preproce
       meta: meta
     };
     if (preprocesada) payload.preprocesada = preprocesada;
-    return await guardarEnCatalogo('imagenes', safeKey, payload);
+    return await guardarEnCatalogo('imagenes', safeKey, payload, opciones);
   } catch (err) {
     console.error('Error al guardar imagen en catálogo:', err);
     return { exito: false, error: err.message };
@@ -1363,9 +1375,9 @@ export async function borrarCancionCatalogo(nombre) {
  * Retorna un objeto { nombre: { ancho, alto, cuadros: [{datos, dur}, ...], meta: {...} }, ... }
  * ({} si está vacío, null si no se pudo leer).
  */
-export async function listarAnimaciones() {
+export async function listarAnimaciones({ predeterminada = false } = {}) {
   try {
-    const snap = await get(ref(db, rutaCatalogo('animaciones')));
+    const snap = await get(ref(db, predeterminada ? 'biblioteca/animaciones' : rutaCatalogo('animaciones')));
     if (!snap.exists()) return {};
     return snap.val();
   } catch (err) {
@@ -1379,12 +1391,12 @@ export async function listarAnimaciones() {
  * cuadros: array de { datos: base64 1bpp (mismo formato que imagenData
  *   / imagenAncho×imagenAlto), dur: milisegundos que dura ese cuadro }.
  */
-export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, meta = {}) {
+export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, meta = {}, opciones = {}) {
   try {
     const safeKey = limpiarClave(nombre);
     if (!safeKey) return { exito: false, error: 'falta el nombre' };
     const payload = { ancho, alto, cuadros, meta };
-    return await guardarEnCatalogo('animaciones', safeKey, payload);
+    return await guardarEnCatalogo('animaciones', safeKey, payload, opciones);
   } catch (err) {
     console.error('Error al guardar animación en catálogo:', err);
     return { exito: false, error: err.message };
