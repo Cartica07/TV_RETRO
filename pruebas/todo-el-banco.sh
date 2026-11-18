@@ -40,7 +40,7 @@ for t in reglas reglas-etapa2 reglas-atomico reglas-envios-reales reglas-borrar-
   timeout "$TOPE" npx firebase emulators:exec --only database --project "demo-$t" "node $t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?; sleep 4
 done
 timeout "$TOPE" npx firebase emulators:exec --only auth,database --project demo-tvretro "node simular-tv.cjs" > "$SALIDA/b-sim.txt" 2>&1; resumen simular-tv "$SALIDA/b-sim.txt" $?; sleep 4
-for t in probar-migracion probar-biblioteca; do
+for t in probar-migracion probar-biblioteca liberar-tv; do
   timeout "$TOPE" npx firebase emulators:exec --only auth,database --project "demo-$t" "node $t.cjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?; sleep 4
 done
 echo "### FIN (suites con fallas: $FALLOS)"
