@@ -225,7 +225,7 @@ export function crearMas({
   }
 
   // Espera lo que informa la TV tras la orden "actualizar". Resuelve { ok } | { error: estado } | { tiempo } | { cancelado }.
-  function esperarResultadoActualizar(turno, fechaAntes, versionPublicada) {
+  function esperarResultadoActualizar(turno, fechaAntes, versionPublicada, versionAntes) {
     return new Promise((resolver) => {
       let terminado = false;
       let baja = () => {};
@@ -250,7 +250,8 @@ export function crearMas({
           vistoActualizando = true;
           textoActualizar('Reiniciando la TV…');
         }
-        else if (fw.estado === 'ok' && fw.build >= versionPublicada) terminar({ ok: true, firmware: fw });
+        // Éxito solo si la versión de la TV SUBIÓ y llegó a la publicada (un "ok" con la misma versión de antes no lo es).
+        else if (fw.estado === 'ok' && fw.build >= versionPublicada && fw.build > versionAntes) terminar({ ok: true, firmware: fw });
         else if (fw.estado === 'ok' && vistoActualizando) terminar({ error: 'reinicio' }); // reinició (se cayó o se revirtió) y sigue en la versión vieja
         else if (fw.estado === 'al_dia') terminar({ ok: true, firmware: fw });
         else if (fw.estado !== 'ok') terminar({ error: fw.estado });
@@ -263,7 +264,21 @@ export function crearMas({
     if (!sistemaDatos || !sistemaDatos.esDueno || !sistemaDatos.firmware) return;
     await sinRepetir('sistema-actualizar', E().botonSistemaActualizar, async () => {
       const turno = turnoSistema;
+      // La pantalla puede llevar mucho rato abierta: se vuelven a leer la versión publicada y la de la TV antes de mandar nada
+      // (una vez dio por buena una actualización que no era, por usar la versión publicada de cuando se abrió).
+      textoActualizar('Comprobando…');
+      const fresco = await cargarSistema();
+      if (turno !== turnoSistema) return;
+      if (!fresco.exito) {
+        textoActualizar('');
+        marcarEstado('No se pudo leer el estado de la TV. Revisa tu internet e inténtalo de nuevo.', 'error', E());
+        return;
+      }
+      sistemaDatos = fresco;
+      pintarSistema(); // si ya no hay versión nueva dice que está al día y oculta el botón
+      if (!fresco.esDueno || !fresco.firmware || fresco.manifiestoBuild === null || fresco.manifiestoBuild <= fresco.firmware.build) return;
       const fechaAntes = sistemaDatos.firmware.fecha;
+      const versionAntes = sistemaDatos.firmware.build;
       const publicada = sistemaDatos.manifiestoBuild;
       avanzarTurnoEnvio();
       textoActualizar('Enviando la orden…');
@@ -276,7 +291,7 @@ export function crearMas({
           return;
         }
         textoActualizar('Actualizando… no desconectes la TV.');
-        const fin = await esperarResultadoActualizar(turno, fechaAntes, publicada);
+        const fin = await esperarResultadoActualizar(turno, fechaAntes, publicada, versionAntes);
         if (fin.cancelado) return;
         if (fin.ok) {
           sistemaDatos.firmware = fin.firmware;

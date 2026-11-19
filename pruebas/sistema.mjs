@@ -124,6 +124,30 @@ const escenarios = {
     return informe('un "ok" con la versión vieja antes de ver "Actualizando…" no es un fallo: sigue esperando', !/se reinició/.test(linea) && /Actualizando/.test(estado), JSON.stringify({ linea, estado }));
   },
 
+  async 'Actualizar con la pantalla vieja: vuelve a leer y NO da por buena una versión que no es'() {
+    // La pantalla se abrió cuando la publicada era la 3 y la TV llevaba la 2; mientras tanto se publicó la 4 y la TV pasó a la 3.
+    const { navegador, pagina } = await abrirApp({ publicada: 3 }); await abrirSistema(pagina);
+    await tvEscribe(pagina, 'firmware/estable/build', 4);
+    await tvEscribe(pagina, 'dispositivos/tv1/firmware', { build: 3, estado: 'ok', fecha: 5000 });
+    await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(700);
+    const orden = (await raiz(pagina)).dispositivos.tv1.oled_remota.pantalla.tipo;
+    const estado = await txt(pagina, '#sistemaEstadoActualizar');
+    await navegador.close();
+    return informe('pantalla vieja: se sigue esperando (la TV con la 3 no cumple la 4) y NO dice "se actualizó"',
+      orden === 'actualizar' && !/se actualizó/.test(estado) && /Actualizando/.test(estado), JSON.stringify({ orden, estado }));
+  },
+
+  async 'Actualizar con la pantalla vieja y la TV ya actualizada: no manda nada y dice que está al día'() {
+    const { navegador, pagina } = await abrirApp({ publicada: 3 }); await abrirSistema(pagina);
+    await tvEscribe(pagina, 'dispositivos/tv1/firmware', { build: 3, estado: 'ok', fecha: 5000 }); // la TV ya se actualizó por otro lado
+    await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(700);
+    const tipo = (await raiz(pagina)).dispositivos.tv1.oled_remota.pantalla.tipo;
+    const estado = await txt(pagina, '#sistemaEstadoActualizar');
+    const boton = await vis(pagina, '#botonSistemaActualizar');
+    await navegador.close();
+    return informe('ya actualizada: no se manda la orden, dice que está al día y el botón desaparece', tipo === 'texto' && /al día/.test(estado) && !boton, JSON.stringify({ tipo, estado, boton }));
+  },
+
   async 'Actualizar con la TV ocupada: mensaje claro'() {
     const { navegador, pagina } = await abrirApp(); await abrirSistema(pagina);
     await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(400);
