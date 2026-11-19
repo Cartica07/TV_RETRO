@@ -100,6 +100,30 @@ const escenarios = {
       /No se pudo actualizar la TV/.test(linea) && !/firma|hash|sha/i.test(linea) && boton, JSON.stringify({ linea, boton }));
   },
 
+  async 'Actualizar: si la TV reinicia sin actualizarse (se cayó o se revirtió) lo dice y deja reintentar'() {
+    const { navegador, pagina } = await abrirApp(); await abrirSistema(pagina);
+    await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(400);
+    await tvEscribe(pagina, 'dispositivos/tv1/firmware', { build: 2, estado: 'actualizando', fecha: 2000 }); await pagina.waitForTimeout(200);
+    await tvEscribe(pagina, 'dispositivos/tv1/firmware', { build: 2, estado: 'ok', fecha: 3000 }); await pagina.waitForTimeout(400); // reinició y sigue en la versión 2
+    const linea = await txt(pagina, '#estadoLinea');
+    const estado = await txt(pagina, '#sistemaEstadoActualizar');
+    const boton = await vis(pagina, '#botonSistemaActualizar');
+    const habilitado = await pagina.evaluate(() => !document.getElementById('botonSistemaActualizar').disabled);
+    await navegador.close();
+    return informe('TV reiniciada sin actualizarse: avisa, ya no dice "Actualizando…" y el botón queda activo para reintentar',
+      /se reinició sin terminar/.test(linea) && !/Actualizando/.test(estado) && boton && habilitado, JSON.stringify({ linea, estado, boton, habilitado }));
+  },
+
+  async 'Actualizar: un informe "ok" antes de que la TV empiece NO se toma por un fallo'() {
+    const { navegador, pagina } = await abrirApp(); await abrirSistema(pagina);
+    await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(400);
+    await tvEscribe(pagina, 'dispositivos/tv1/firmware', { build: 2, estado: 'ok', fecha: 2500 }); await pagina.waitForTimeout(400); // la TV se reinició por otro motivo justo antes de empezar
+    const linea = await txt(pagina, '#estadoLinea');
+    const estado = await txt(pagina, '#sistemaEstadoActualizar');
+    await navegador.close();
+    return informe('un "ok" con la versión vieja antes de ver "Actualizando…" no es un fallo: sigue esperando', !/se reinició/.test(linea) && /Actualizando/.test(estado), JSON.stringify({ linea, estado }));
+  },
+
   async 'Actualizar con la TV ocupada: mensaje claro'() {
     const { navegador, pagina } = await abrirApp(); await abrirSistema(pagina);
     await pagina.click('#botonSistemaActualizar'); await pagina.waitForTimeout(400);

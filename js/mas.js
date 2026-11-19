@@ -179,7 +179,8 @@ export function crearMas({
     ocupada: 'La TV está ocupada (un juego o una alarma). Inténtalo en un momento.',
     poca_memoria: 'A la TV le falta memoria ahora. Reiníciala y vuelve a intentarlo.',
     sin_manifiesto: 'No se encontró la actualización. Inténtalo más tarde.',
-    no_cabe: 'No se pudo actualizar la TV. Vuelve a intentarlo más tarde.'
+    no_cabe: 'No se pudo actualizar la TV. Vuelve a intentarlo más tarde.',
+    reinicio: 'La TV se reinició sin terminar la actualización. Vuelve a intentarlo.'
   };
   const TEXTO_ACTUALIZAR_ERROR = 'No se pudo actualizar la TV. Vuelve a intentarlo.';
 
@@ -229,6 +230,7 @@ export function crearMas({
       let terminado = false;
       let baja = () => {};
       let reloj = null;
+      let vistoActualizando = false; // ya empezó a bajar o a instalar: un 'ok' con la versión vieja después es un fallo
       const terminar = (resultado) => {
         if (terminado) return;
         terminado = true;
@@ -240,9 +242,16 @@ export function crearMas({
       baja = suscribirFirmwareTV((fw) => {
         if (turno !== turnoSistema) return terminar({ cancelado: true });
         if (!fw || fw.fecha === null || fw.fecha === fechaAntes) return; // todavía es el informe de antes
-        if (fw.estado === 'actualizando') textoActualizar('Actualizando… no desconectes la TV.');
-        else if (fw.estado === 'reiniciando') textoActualizar('Reiniciando la TV…');
+        if (fw.estado === 'actualizando') {
+          vistoActualizando = true;
+          textoActualizar('Actualizando… no desconectes la TV.');
+        }
+        else if (fw.estado === 'reiniciando') {
+          vistoActualizando = true;
+          textoActualizar('Reiniciando la TV…');
+        }
         else if (fw.estado === 'ok' && fw.build >= versionPublicada) terminar({ ok: true, firmware: fw });
+        else if (fw.estado === 'ok' && vistoActualizando) terminar({ error: 'reinicio' }); // reinició (se cayó o se revirtió) y sigue en la versión vieja
         else if (fw.estado === 'al_dia') terminar({ ok: true, firmware: fw });
         else if (fw.estado !== 'ok') terminar({ error: fw.estado });
       });
