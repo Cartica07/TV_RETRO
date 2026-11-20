@@ -71,3 +71,14 @@ Código listo y probado (`database.rules.propuesta.json`, 244 casos; `compartir.
 **Volver atrás:** publicar las reglas anteriores (`database.rules.json` actual). Los nodos `miembros` e `invitaciones` no estorban a las reglas anteriores.
 
 > **Hecho el 2026-11-12:** reglas publicadas por el dueño, firmware grabado, desvincular/vincular con la TV real y compartir con una segunda cuenta (ambas envían). `database.rules.json` es ahora lo publicado; las anteriores quedaron en `database.rules.sin-miembros.json`.
+
+
+## Paso 10: apodos de las personas y actualización de la TV (OTA) (2026-11-17)
+
+Reglas publicadas por el dueño el 2026-11-17 (`database.rules.json` = lo publicado). Copias de vuelta atrás: `database.rules.sin-apodos.json` (antes de los apodos) y `database.rules.sin-firmware.json` (antes de la OTA). Orden de puesta en marcha: **reglas (las publica el dueño) → firmware (la primera versión con OTA se graba por cable) → panel/APK**.
+
+- **Apodos:** `dispositivos/{id}/apodos/{uid}`. Si el panel nuevo corre con reglas anteriores, quitar, salir y desvincular repiten la escritura sin los apodos.
+- **OTA:** `firmware/estable`, `firmware/datos/{build}`, `dispositivos/{id}/firmware` y las órdenes `actualizar` y `restablecer` (solo el dueño). Las claves privadas de firma (`C:\Proyectos\TV_RETRO-claves\ota-principal.pem` y `ota-respaldo.pem`) NO están en ningún repositorio y hay que respaldarlas fuera del equipo; las públicas van dentro del firmware.
+- **Claves de servicio:** se generan solo cuando una herramienta las necesita (`publicar-firmware.cjs`, `liberar-tv.cjs`, `fabricar-tv.cjs`) y se borran al terminar (consola de Firebase: Configuración del proyecto > Cuentas de servicio; para BORRAR una clave: Google Cloud > IAM y administración > Cuentas de servicio > clic en el correo de la cuenta > pestaña **Claves** > Eliminar). Las tres que existían se borraron el 2026-11-20.
+
+**Volver atrás:** publicar `database.rules.sin-firmware.json` (o `…sin-apodos.json`). Los nodos nuevos no estorban a las reglas anteriores. Una TV con OTA no pierde nada si no hay manifiesto publicado.

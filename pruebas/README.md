@@ -7,6 +7,7 @@ Desde el 2026-11-15 el banco vive **dentro del repo** (antes estaba en `C:\Proye
 - **Panel (Playwright, Firebase falso en memoria):** `pruebas-panel`, `bobos` (usuario impaciente), `login`, `tv`, `compartir`, `cuotas`, `verificacion`, `login-google`, `atras`, `baja-cuenta`, `baja-ui`, `sin-red-arranque`, `apk-sin-internet`, `etapa1-*`, `mas`, `alarma`, `config`, `auditoria-b` y `carga-masiva-cuentas`. El panel se sirve desde esta misma copia del repo; `falso/` reemplaza el SDK de Firebase. **No tocan la base real.**
 - **Reglas (emulador de Firebase):** `reglas*.mjs`, contra `database.rules.json` (o contra otro archivo con `REGLAS_ARCHIVO`, por ejemplo lo publicado en la consola).
 - **Herramientas (emulador de Auth y base):** `simular-tv.cjs` (necesita el repo del firmware al lado, o `RUTA_FIRMWARE`), `probar-migracion.cjs` y `probar-biblioteca.cjs` (necesitan `npm ci` en `herramientas/`). Sin esos recursos se omiten.
+- **Añadidas el 2026-11-17/18:** panel `sistema` (Config > Sistema), reglas `reglas-apodos` y `reglas-firmware`, y la herramienta `liberar-tv.cjs` (soporte: suelta una TV de una cuenta perdida; necesita el repo del firmware al lado). Total: 40 suites y el intérprete.
 - **Intérprete de .ino:** `ino-infinito.mjs` (4 casos que deben cortarse a tiempo).
 
 ## Cómo correrlo

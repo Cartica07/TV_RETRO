@@ -210,7 +210,7 @@ invitaciones/{codigo}: { id: "<id de la TV>", creado: <hora del servidor> }   vi
 - **Vinculación automática de la TV (firmware):** al encender, la TV comprueba UNA vez si tiene dueño. Si no lo tiene, muestra su código en la pantalla de contenido: vence a los 10 min; si no se usa, genera un segundo de 10 min; si tampoco, la pantalla pide reiniciar (aviso que rebota por toda la pantalla, para no marcar la OLED) y no hace más tráfico. Ya no existe el gesto de mantener el botón. Sin conexión reintenta cada 15 s.
 - **Orden de puesta en marcha:** primero el dueño publica las reglas nuevas; después se sube el panel (el nuevo "Desvincular" escribe `miembros`, que las reglas viejas no permiten).
 
-### Acuse de recibo y listas livianas de la Galería (aprobados el 2026-11-15; reglas SIN publicar)
+### Acuse de recibo y listas livianas de la Galería (aprobados el 2026-11-15; reglas publicadas por el dueño el 2026-11-16)
 
 Dos cambios de datos, los dos **aditivos** (un firmware o un panel que no los conocen siguen funcionando):
 
