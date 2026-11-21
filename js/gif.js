@@ -56,11 +56,11 @@ export function evaluarPesoAnimacion(cuadros) {
   const n = lista.length;
   if (bytes > PESO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: 'GIF muy pesado: puede que no llegue a la TV. Prueba con uno más corto.' };
+      mensaje: 'GIF muy pesado, puede tardar en llegar' };
   }
   if (bytes > PESO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar a la TV.' };
+      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar' };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
@@ -92,11 +92,11 @@ export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
   const n = cantidadCuadros || 0;
   if (bytes > PESO_COMPRIMIDO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: 'GIF muy pesado: tardará bastante en llegar a la TV. Prueba con uno más corto.' };
+      mensaje: 'GIF muy pesado, puede tardar en llegar' };
   }
   if (bytes > PESO_COMPRIMIDO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar a la TV.' };
+      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar' };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
