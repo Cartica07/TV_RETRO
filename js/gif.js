@@ -56,11 +56,11 @@ export function evaluarPesoAnimacion(cuadros) {
   const n = lista.length;
   if (bytes > PESO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: `GIF muy pesado/largo: ${n} cuadros · ${kb} KB. Es muy probable que no entre en la memoria de la TV (máximo recomendado ~${Math.round(PESO_MAXIMO_BYTES / 1024)} KB). Conviene un GIF más corto.` };
+      mensaje: 'GIF muy pesado: puede que no llegue a la TV. Prueba con uno más corto.' };
   }
   if (bytes > PESO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB. Puede fallar si la TV tiene poca memoria libre (seguro hasta ~${Math.round(PESO_RECOMENDADO_BYTES / 1024)} KB).` };
+      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar a la TV.' };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
@@ -92,11 +92,11 @@ export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
   const n = cantidadCuadros || 0;
   if (bytes > PESO_COMPRIMIDO_MAXIMO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'muy-pesado',
-      mensaje: `GIF muy pesado: ${n} cuadros · ${kb} KB comprimido. Puede tardar más de 15 s en aparecer en la TV (recomendado hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB). Conviene un GIF más corto.` };
+      mensaje: 'GIF muy pesado: tardará bastante en llegar a la TV. Prueba con uno más corto.' };
   }
   if (bytes > PESO_COMPRIMIDO_RECOMENDADO_BYTES) {
     return { bytes, kb, cuadros: n, nivel: 'pesado',
-      mensaje: `GIF pesado: ${n} cuadros · ${kb} KB comprimido. Va a tardar unos segundos en aparecer en la TV (rápido hasta ~${Math.round(PESO_COMPRIMIDO_RECOMENDADO_BYTES / 1024)} KB).` };
+      mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar a la TV.' };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }
