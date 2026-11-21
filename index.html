@@ -61,7 +61,7 @@
     <!-- Resultado del último envío / lectura (marcarEstado en ui.js). -->
     <div class="estado-linea" id="estadoLinea">
       <span class="led" id="ledEstado"></span>
-      <span id="estadoTexto">Cargando estado actual…</span>
+      <span id="estadoTexto">Cargando…</span>
     </div>
   </section>
 
@@ -77,7 +77,7 @@
           <label class="rotulo" for="texto">Mensaje</label>
           <div class="contador"><span id="contador">0</span>/200</div>
         </div>
-        <textarea id="texto" rows="2" maxlength="200" placeholder="Escribe el mensaje para la OLED…"></textarea>
+        <textarea id="texto" rows="2" maxlength="200" placeholder="Escribe tu mensaje…"></textarea>
       </div>
 
       <!-- Letra (config.fuente) y tamaño 1..5 en una misma fila. -->
@@ -90,7 +90,7 @@
               <option value="sansb">Sans negrita</option>
               <option value="serif">Serif</option>
               <option value="serifi">Serif cursiva</option>
-              <option value="clasica">Clásica 5×7</option>
+              <option value="clasica">Clásica</option>
             </select>
             <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -258,8 +258,8 @@
             <select id="seleccionCancion"></select>
             <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <label class="boton-icono boton-subir" for="cargadorMusical" title="Importar canciones (.ino)">
-            <input type="file" id="cargadorMusical" accept=".ino" multiple aria-label="Importar canciones (.ino)" />
+          <label class="boton-icono boton-subir" for="cargadorMusical" title="Importar canciones">
+            <input type="file" id="cargadorMusical" accept=".ino" multiple aria-label="Importar canciones" />
             <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </label>
           <button type="button" id="botonBorrarMusical" class="boton-icono boton-icono-peligro" aria-label="Borrar la canción elegida" title="Borrar la canción elegida" disabled>
@@ -331,7 +331,7 @@
               <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
             </button>
             <!-- Solo en modo expandido: enviar sin tener que contraer. -->
-            <button id="botonEnviarDibujoExpandido" type="button" class="boton-icono boton-icono-enviar solo-expandido" aria-label="Enviar a la OLED" title="Enviar a la OLED">
+            <button id="botonEnviarDibujoExpandido" type="button" class="boton-icono boton-icono-enviar solo-expandido" aria-label="Enviar a la TV" title="Enviar a la TV">
               <svg class="icono icono-enviar" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
               <svg class="icono icono-ok" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
@@ -693,7 +693,7 @@
        la tarjeta del dispositivo, #estadoLinea). -->
   <div class="barra-accion" inert>
     <div class="barra-accion-interior">
-      <button id="enviar" type="button">Enviar a la OLED</button>
+      <button id="enviar" type="button">Enviar a la TV</button>
     </div>
   </div>
 
@@ -806,7 +806,7 @@
 
     <!-- Baja de la cuenta (se abre desde "Eliminar mi cuenta"). -->
     <div class="eliminar-cuenta" id="eliminarCuenta" hidden>
-      <p class="eliminar-texto">Se borrarán tu cuenta y todo lo que guardaste (imágenes, dibujos y GIF). Si una TV es tuya, quedará sin dueño y se quitará el acceso a quienes la comparten contigo. <strong>Esto no se puede deshacer.</strong></p>
+      <p class="eliminar-texto">Se borrará tu cuenta y todo lo que guardaste. Tu TV quedará sin dueño. <strong>Esto no se puede deshacer.</strong></p>
       <div class="campo" id="campoEliminarPassword">
         <label class="rotulo" for="eliminarPassword">Tu contraseña</label>
         <input type="password" id="eliminarPassword" class="campo-texto" autocomplete="current-password" placeholder="••••••••" />
