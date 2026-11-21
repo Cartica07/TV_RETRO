@@ -190,7 +190,7 @@ export function crearCanciones({ leerElementos, estado, renderizar, detenerPrevi
     const lista = [...(archivos || [])].filter(f => /\.ino$/i.test(f.name));
     if (lista.length === 0) return;
     if (!puedeComprimir()) {
-      setAvisoCancion('Este navegador no puede comprimir: usa Chrome, Edge o Safari actualizados.', 'error');
+      setAvisoCancion('Este navegador no es compatible. Prueba con Chrome o Edge.', 'error');
       return;
     }
 

@@ -827,7 +827,7 @@ function aplicarResultadoImagen(resultado) {
 
   renderizar();
   actualizarControlesEdicionImagen();
-  marcarEstado(`Imagen procesada: ${resultado.imagenAncho}×${resultado.imagenAlto}px`, 'ok', elementos);
+  marcarEstado('Imagen lista', 'ok', elementos);
 }
 
 // Pestaña Imagen: convierte la imagen original con el encuadre actual
@@ -861,7 +861,7 @@ function aplicarGif() {
   const avisoEl = deGaleria ? elementos.avisoGaleriaNueva : elementos.avisoGaleria;
   const mostrarPeso = (peso, sufijo) => {
     marcarEstado(
-      `GIF: ${anim.cuadros.length} cuadros · ${(totalMs / 1000).toFixed(1)} s · ${peso.kb} KB${sufijo}`,
+      'GIF listo',
       peso.nivel === 'ok' ? 'ok' : 'error',
       elementos
     );
@@ -1150,7 +1150,7 @@ async function manejarGuardarEnGaleria() {
   // lo que lo hace aparecer en la lista GIF de la Galería.
   if (estadoActual.tipo === 'imagen' && hayGifDe('imagen')) {
     if (!nombre) {
-      setAvisoGaleria('Pon un nombre para guardar el GIF en la galería.', 'error');
+      setAvisoGaleria('Pon un nombre para guardarlo.', 'error');
       return;
     }
     setAvisoGaleria('Guardando…');
@@ -1169,7 +1169,7 @@ async function manejarGuardarEnGaleria() {
     resultadoGif = await esperarFinal(resultadoGif, () => setAvisoGaleria(TEXTO_GUARDADO_LENTO));
     if (resultadoGif.exito) {
       await poblarCatalogoAnimaciones();
-      setAvisoGaleria(`GIF guardado en la galería como "${resultadoGif.key}"`);
+      setAvisoGaleria('Guardado en la galería');
     } else {
       setAvisoGaleria('No se pudo guardar: ' + describirError(resultadoGif.error), 'error');
     }
@@ -1177,12 +1177,12 @@ async function manejarGuardarEnGaleria() {
   }
 
   if (estadoActual.tipo !== 'imagen' || !estadoActual.imagenData) {
-    setAvisoGaleria('Primero sube y procesa una imagen para poder guardarla.', 'error');
+    setAvisoGaleria('Primero sube una imagen.', 'error');
     return;
   }
 
   if (!nombre) {
-    setAvisoGaleria('Pon un nombre para guardar la imagen en la galería.', 'error');
+    setAvisoGaleria('Pon un nombre para guardarlo.', 'error');
     return;
   }
 
@@ -1204,7 +1204,7 @@ async function manejarGuardarEnGaleria() {
 
   if (resultado.exito) {
     await poblarCatalogoImagenes();
-    setAvisoGaleria(`Guardada en la galería como "${resultado.key}"`);
+    setAvisoGaleria('Guardada en la galería');
   } else {
     setAvisoGaleria('No se pudo guardar: ' + describirError(resultado.error), 'error');
   }
@@ -1236,7 +1236,7 @@ function setAvisoGaleriaDibujo(text, tipo = null) {
 async function manejarGuardarDibujoEnGaleria() {
   const nombre = (elementos.nombreGaleriaDibujo && elementos.nombreGaleriaDibujo.value.trim()) || '';
   if (!nombre) {
-    setAvisoGaleriaDibujo('Pon un nombre para guardar el dibujo en la galería.', 'error');
+    setAvisoGaleriaDibujo('Pon un nombre para guardarlo.', 'error');
     return;
   }
 
@@ -1256,7 +1256,7 @@ async function manejarGuardarDibujoEnGaleria() {
 
   if (resultado.exito) {
     await poblarCatalogoImagenes();
-    setAvisoGaleriaDibujo(`Guardado en la galería como "${resultado.key}"`);
+    setAvisoGaleriaDibujo('Guardado en la galería');
   } else {
     setAvisoGaleriaDibujo('No se pudo guardar: ' + describirError(resultado.error), 'error');
   }
@@ -1874,7 +1874,7 @@ async function enviarAFirebase() {
     mostrarResultadoEnvio(resultado);
   } catch (err) {
     console.error('Error al enviar:', err);
-    marcarEstado('Error desconocido al enviar.', 'error', elementos);
+    marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', elementos);
   } finally {
     setBotonEnviarEstado(true, elementos);
     desactivarLedTransmision(elementos);

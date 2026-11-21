@@ -265,7 +265,7 @@ export function crearCuentas({ leerElementos, liberarPanelDespuesDeLogin }) {
   }
 
   async function manejarDesvincularTV(id, numero) {
-    if (!window.confirm('¿Desvincular la TV ' + numero + '? Dejará de ser tuya, se quitará el acceso a quienes la comparten contigo y mostrará un código nuevo.')) return;
+    if (!window.confirm('¿Desvincular la TV ' + numero + '? Dejará de ser tuya y perderán el acceso quienes la comparten.')) return;
     await sinRepetir('desvincular', null, async () => {
       mostrarErrorTV('');
       const r = await desvincularDispositivo(sesionActual.uid, id);
@@ -275,7 +275,7 @@ export function crearCuentas({ leerElementos, liberarPanelDespuesDeLogin }) {
   }
 
   async function manejarSalirDeTV(id, numero) {
-    if (!window.confirm('¿Salir de la TV ' + numero + '? Dejarás de poder enviarle contenido; sigue siendo de su dueño.')) return;
+    if (!window.confirm('¿Salir de la TV ' + numero + '? Ya no podrás enviarle contenido.')) return;
     await sinRepetir('salir-tv', null, async () => {
       mostrarErrorTV('');
       const r = await salirDeTV(sesionActual.uid, id);
@@ -430,7 +430,7 @@ export function crearCuentas({ leerElementos, liberarPanelDespuesDeLogin }) {
   }
 
   async function manejarQuitarMiembro(id, uidMiembro) {
-    if (!window.confirm('¿Quitar el acceso a esta persona? Dejará de poder enviarle contenido a tu TV.')) return;
+    if (!window.confirm('¿Quitar a esta persona? Ya no podrá enviar contenido a tu TV.')) return;
     await sinRepetir('quitar-miembro', null, async () => {
       mostrarErrorCompartir('');
       const r = await quitarMiembro(id, uidMiembro);

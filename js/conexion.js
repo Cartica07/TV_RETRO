@@ -42,7 +42,7 @@ export function crearConexion({ leerElementos, turnoEnvio }) {
 
   function evaluarConexionDispositivo() {
     if (ultimoLastSeen === null) {
-      marcarConexion('sin señal del dispositivo', 'error', E());
+      marcarConexion('desconectado', 'error', E());
       marcarUltimaVista('', E());
       return;
     }

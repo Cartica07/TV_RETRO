@@ -217,7 +217,7 @@ export function crearGaleria({
         actualizarResaltadoGaleria(); // solo mueve el resaltado "activo" (no reconstruye el grid)
         renderizar();
         actualizarControlesEdicionImagen();
-        marcarEstado(`Imagen "${key}" cargada desde la galería`, 'ok', E());
+        marcarEstado('Imagen cargada', 'ok', E());
       });
 
       item.appendChild(canvas);
@@ -261,7 +261,7 @@ export function crearGaleria({
     const key = galeriaSeleccionActual;
     const predeterminada = !!(imagenesCatalogo[key] && imagenesCatalogo[key].predeterminada);
     if (predeterminada && !obtenerEsAdmin()) {
-      marcarEstado('Esa imagen es predeterminada: se puede usar, pero no se puede borrar.', null, E());
+      marcarEstado('Es predeterminada y no se puede borrar.', null, E());
       return;
     }
     // Borrar es permanente (igual que con las canciones, se pregunta antes).
@@ -275,7 +275,7 @@ export function crearGaleria({
     if (resultado.exito) {
       galeriaSeleccionActual = null;
       await poblarCatalogoImagenes();
-      marcarEstado(`Imagen "${key}" borrada de la galería.`, 'ok', E());
+      marcarEstado('Imagen borrada', 'ok', E());
     } else {
       marcarEstado('No se pudo borrar la imagen: ' + describirError(resultado.error), 'error', E());
     }
@@ -444,7 +444,7 @@ export function crearGaleria({
         renderizar(); // arranca el preview en bucle en la pantalla de arriba
         actualizarBotonBorrarAnimacion();
         const queEs = esAnimacionDeGif(entry) ? 'GIF' : 'Animación';
-        marcarEstado(`${queEs} "${key}" cargado desde la galería`, 'ok', E());
+        marcarEstado(`${queEs} ${queEs === 'GIF' ? 'cargado' : 'cargada'}`, 'ok', E());
       });
 
       item.appendChild(canvas);
@@ -481,7 +481,7 @@ export function crearGaleria({
     const key = animacionSeleccionActual;
     const predeterminada = !!(animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada);
     if (predeterminada && !obtenerEsAdmin()) {
-      marcarEstado('Esa animación es predeterminada: se puede usar, pero no se puede borrar.', null, E());
+      marcarEstado('Es predeterminada y no se puede borrar.', null, E());
       return;
     }
     const pregunta = predeterminada
@@ -494,7 +494,7 @@ export function crearGaleria({
     if (resultado.exito) {
       animacionSeleccionActual = null;
       await poblarCatalogoAnimaciones();
-      marcarEstado(`Animación "${key}" borrada de la galería.`, 'ok', E());
+      marcarEstado('Animación borrada', 'ok', E());
     } else {
       marcarEstado('No se pudo borrar la animación: ' + describirError(resultado.error), 'error', E());
     }
@@ -572,7 +572,7 @@ export function crearGaleria({
     if (estado().tipo === 'galeria' && hayGifDe('galeria')) {
       const nombreGif = (E().nombreGaleriaNueva && E().nombreGaleriaNueva.value.trim()) || '';
       if (!nombreGif) {
-        setAvisoGaleriaNueva('Pon un nombre para guardar el GIF en la galería.', 'error');
+        setAvisoGaleriaNueva('Pon un nombre para guardarlo.', 'error');
         return;
       }
       setAvisoGaleriaNueva('Guardando…');
@@ -591,7 +591,7 @@ export function crearGaleria({
       resultadoGif = await esperarFinal(resultadoGif, () => setAvisoGaleriaNueva(TEXTO_GUARDADO_LENTO));
       if (resultadoGif.exito) {
         await poblarCatalogoAnimaciones();
-        setAvisoGaleriaNueva(`GIF guardado en la lista GIF como "${resultadoGif.key}"`);
+        setAvisoGaleriaNueva('Guardado en la galería');
       } else {
         setAvisoGaleriaNueva('No se pudo guardar: ' + describirError(resultadoGif.error), 'error');
       }
@@ -605,7 +605,7 @@ export function crearGaleria({
 
     const nombre = (E().nombreGaleriaNueva && E().nombreGaleriaNueva.value.trim()) || '';
     if (!nombre) {
-      setAvisoGaleriaNueva('Pon un nombre para guardar la imagen en la galería.', 'error');
+      setAvisoGaleriaNueva('Pon un nombre para guardarlo.', 'error');
       return;
     }
 
@@ -627,7 +627,7 @@ export function crearGaleria({
 
     if (resultado.exito) {
       await poblarCatalogoImagenes();
-      setAvisoGaleriaNueva(`Guardada en la galería como "${resultado.key}"`);
+      setAvisoGaleriaNueva('Guardada en la galería');
     } else {
       setAvisoGaleriaNueva('No se pudo guardar: ' + describirError(resultado.error), 'error');
     }

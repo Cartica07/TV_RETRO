@@ -159,7 +159,7 @@ export function crearMas({
         mostrarResultadoEnvio(r, 'Ajustes guardados ✅ Ya van camino a la TV.');
       } catch (err) {
         console.error('Error al guardar los ajustes:', err);
-        marcarEstado('Error desconocido al guardar los ajustes.', 'error', E());
+        marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
@@ -177,7 +177,7 @@ export function crearMas({
 
   const MENSAJES_ACTUALIZAR = {
     ocupada: 'La TV está ocupada (un juego o una alarma). Inténtalo en un momento.',
-    poca_memoria: 'A la TV le falta memoria ahora. Reiníciala y vuelve a intentarlo.',
+    poca_memoria: 'Pasó algo inesperado. Reinicia la TV e inténtalo de nuevo.',
     sin_manifiesto: 'No se encontró la actualización. Inténtalo más tarde.',
     no_cabe: 'No se pudo actualizar la TV. Vuelve a intentarlo más tarde.',
     reinicio: 'La TV se reinició sin terminar la actualización. Vuelve a intentarlo.'
@@ -281,13 +281,13 @@ export function crearMas({
       const versionAntes = sistemaDatos.firmware.build;
       const publicada = sistemaDatos.manifiestoBuild;
       avanzarTurnoEnvio();
-      textoActualizar('Enviando la orden…');
+      textoActualizar('Enviando…');
       activarLedTransmision(E());
       try {
         const r = await esperarFinal(await enviarEstado(Object.assign({}, estado(), { tipo: 'actualizar' })), () => textoActualizar('La conexión está lenta: la orden saldrá cuando vuelva la señal.'));
         if (!r.exito) {
           textoActualizar('');
-          marcarEstado('No se pudo enviar la orden: ' + (r.error || 'sin conexión') + '.', 'error', E());
+          marcarEstado('No se pudo enviar: ' + (r.error || 'sin conexión') + '.', 'error', E());
           return;
         }
         textoActualizar('Actualizando… no desconectes la TV.');
@@ -307,7 +307,7 @@ export function crearMas({
       } catch (err) {
         console.error('Error al actualizar la TV:', err);
         textoActualizar('');
-        marcarEstado('Error desconocido al actualizar la TV.', 'error', E());
+        marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
@@ -334,7 +334,7 @@ export function crearMas({
 
   async function restablecerLaTV() {
     if (!sistemaDatos || !sistemaDatos.esDueno || !sistemaDatos.firmware || !sesion()) return;
-    if (!window.confirm('¿Restablecer la TV? Se borrarán su Wi-Fi, sus alarmas, sus ajustes y su contenido, y dejará de ser tuya. Después tendrás que configurar su Wi-Fi y vincularla de nuevo.')) return;
+    if (!window.confirm('¿Restablecer la TV? Se borrarán todos los datos (Wi-Fi, alarmas, contenido) y quedará con la configuración de fábrica.')) return;
     await sinRepetir('sistema-restablecer', E().botonSistemaRestablecer, async () => {
       avanzarTurnoEnvio();
       marcarEstado('Restableciendo la TV…', null, E());
@@ -342,7 +342,7 @@ export function crearMas({
       try {
         const r = await esperarFinal(await enviarEstado(Object.assign({}, estado(), { tipo: 'restablecer' })), () => marcarEstado(TEXTO_GUARDADO_LENTO, null, E()));
         if (!r.exito) {
-          marcarEstado('No se pudo enviar la orden: ' + (r.error || 'sin conexión') + '.', 'error', E());
+          marcarEstado('No se pudo enviar: ' + (r.error || 'sin conexión') + '.', 'error', E());
           return;
         }
         // Acuse EXACTO (no "mayor o igual"): si otra persona envía algo justo después, la TV solo baja lo último y un
@@ -361,7 +361,7 @@ export function crearMas({
         location.reload();
       } catch (err) {
         console.error('Error al restablecer la TV:', err);
-        marcarEstado('Error desconocido al restablecer la TV.', 'error', E());
+        marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
@@ -488,7 +488,7 @@ export function crearMas({
         mostrarResultadoEnvio(r, 'Alarma guardada ✅ Ya va camino a la TV.');
       } catch (err) {
         console.error('Error al guardar la alarma:', err);
-        marcarEstado('Error desconocido al guardar la alarma.', 'error', E());
+        marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
@@ -506,7 +506,7 @@ export function crearMas({
         mostrarResultadoEnvio(resultado);
       } catch (err) {
         console.error('Error al abrir el juego:', err);
-        marcarEstado('Error desconocido al enviar.', 'error', E());
+        marcarEstado('Algo salió mal. Vuelve a intentarlo.', 'error', E());
       } finally {
         desactivarLedTransmision(E());
       }
