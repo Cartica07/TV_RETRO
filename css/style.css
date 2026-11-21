@@ -541,12 +541,17 @@ button#enviar:disabled {
   text-align: center;
 }
 
-/* Una sola línea: los mensajes largos se cortan con "…". */
+/* Hasta dos líneas: un mensaje largo ya no se corta con "…" (solo se corta pasadas dos líneas). Con un mensaje de
+   una línea el alto es el mismo de antes (line-height 1.3 x 10 px < min-height 14 px de la fila). */
 .dispositivo #estadoTexto {
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .dispositivo .estado-linea .led {
@@ -1401,7 +1406,7 @@ label.fila-ajuste-titulo {
 /* Dibujo: fila con rótulo Grosor y acciones del lienzo a la derecha. */
 .rotulo-fila.rotulo-fila-acciones {
   align-items: flex-end;
-  margin-bottom: 6px;
+  margin-bottom: 10px; /* más aire entre los botones del lienzo y el selector de grosor */
 }
 
 .rotulo-fila.rotulo-fila-acciones .rotulo {
