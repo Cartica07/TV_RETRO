@@ -69,7 +69,7 @@ const FUENTE_DEFECTO = 'sans';
 
 let estadoActual = {
   tipo: 'texto',
-  texto: 'Hola Mundo',
+  texto: 'Bienvenido',
   tamano: 2,
   alineacion: 'centro',
   alineacionV: 'centro',
