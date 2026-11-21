@@ -58,7 +58,7 @@ export function crearCanciones({ leerElementos, estado, renderizar, detenerPrevi
       E().seleccionCancion.innerHTML = '';
       const placeholder = document.createElement('option');
       placeholder.value = '';
-      placeholder.textContent = Object.keys(musicalesCatalogo).length ? '-- Selecciona --' : 'Importa canciones con +';
+      placeholder.textContent = Object.keys(musicalesCatalogo).length ? '-- Selecciona --' : 'Importa con +';
       E().seleccionCancion.appendChild(placeholder);
 
       Object.keys(musicalesCatalogo)
