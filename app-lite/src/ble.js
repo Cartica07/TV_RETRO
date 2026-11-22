@@ -225,6 +225,40 @@ export async function reconectar() {
   }
 }
 
+// ---------- TV ya emparejada desde los ajustes de Bluetooth del celular ----------
+const NOMBRE_TV = 'TV RETRO Lite';
+
+// Dispositivos vinculados con el celular (solo Android). Devuelve null si no se pudo saber (web de pruebas, sin permiso).
+async function vinculados() {
+  if (typeof window !== 'undefined' && typeof window.__vinculadosPrueba === 'function') return window.__vinculadosPrueba();
+  try {
+    await iniciar();
+    return await BleClient.getBondedDevices();
+  } catch (e) {
+    return null;
+  }
+}
+
+/** La TV Lite que ya está emparejada con este celular ({ deviceId, name }) o null. */
+export async function tvVinculada() {
+  const lista = await vinculados();
+  if (!lista) return null;
+  return lista.find((d) => String(d.name || '').startsWith(NOMBRE_TV)) || null;
+}
+
+/** Abre los ajustes de Bluetooth del celular (donde se empareja con el PIN que muestra la TV). */
+export async function abrirAjustesBluetooth() {
+  await iniciar();
+  await BleClient.openBluetoothSettings();
+}
+
+/** Recuerda la TV que la persona emparejó en los ajustes del celular y se conecta con ella. true si quedó conectada. */
+export async function usarTVVinculada(id) {
+  try { localStorage.setItem(CLAVE_TV, id); } catch (e) { /* sin almacenamiento */ }
+  reconexionPausada = false;
+  return reconectar();
+}
+
 // Muestra la lista de TV cercanas del sistema, conecta con la elegida y, si hace falta, la empareja (PIN).
 export async function buscar() {
   if (conectado) return;

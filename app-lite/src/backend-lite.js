@@ -9,6 +9,7 @@
 // empieza a importar un nombre nuevo de firebase.js y falta aquí, la compilación falla (no falla en silencio).
 
 import * as ble from './ble.js';
+import { iniciarPantallaConexion } from './inicio-conexion.js';
 import * as almacen from './almacen.js';
 import { comprimirCuadros, descomprimirCuadros, puedeComprimir, FORMATO_COMPRIMIDO, FORMATO_MUSICAL } from '../../js/compresion.js';
 import { LIMITE_GIF_TV_BYTES } from './gif-lite.js';
@@ -82,6 +83,7 @@ function iniciarLatido() {
     ble.reanudarReconexion();
     intentar();
   });
+  iniciarPantallaConexion(); // si no hay una TV emparejada, guía a emparejarla
 }
 
 export function suscribirLastSeen(callback) {
