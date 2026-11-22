@@ -67,6 +67,28 @@ cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|l
 cambiar(/(<div id="configLegal" class="config-apartado" style="display: none;">)/,
   '$1\n      <div class="campo"><p class="dato-cuenta" id="avisoGuardadoEnCelular">Tus imágenes y GIF se guardan en este celular, no en internet. Si borras la app o cambias de celular, se pierden.</p></div>',
   'el apartado Legal');
+// Pantalla de inicio para conectar la TV (se muestra solo en el celular Android cuando no hay una TV emparejada; ver
+// src/inicio-conexion.js). Mismo diseño que las pantallas completas de la Pro (Mi TV). Hijo directo de <body>, como el
+// tutorial, para no heredar el `inert` del panel. Textos PROPUESTOS: los aprueba el dueño.
+const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidden>
+  <div class="login-tarjeta">
+    <div class="login-marca">
+      <span class="login-logo" aria-hidden="true">
+        <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      </span>
+      <h1 class="login-titulo">Conecta tu TV</h1>
+    </div>
+    <ol class="pasos-conexion">
+      <li>Enciende la TV. Verás un PIN en su pantalla.</li>
+      <li>Toca "Abrir Bluetooth", elige "TV RETRO Lite" y escribe el PIN.</li>
+      <li>Vuelve a esta app. Se conecta sola.</li>
+    </ol>
+    <button type="button" id="botonAbrirBluetooth" class="boton-primario">Abrir Bluetooth</button>
+    <button type="button" id="botonAhoraNo" class="boton-secundario">Ahora no</button>
+  </div>
+</div>
+`;
+cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n$1`, 'el comentario del tutorial (donde va la pantalla de conexión)');
 if (html === original) throw new Error('el HTML no cambió');
 writeFileSync(join(www, 'index.html'), html);
 
