@@ -11,6 +11,7 @@
 import * as ble from './ble.js';
 import * as almacen from './almacen.js';
 import { comprimirCuadros, descomprimirCuadros, puedeComprimir, FORMATO_COMPRIMIDO, FORMATO_MUSICAL } from '../../js/compresion.js';
+import { LIMITE_GIF_TV_BYTES } from './gif-lite.js';
 
 // ===================================================
 // Utilidades
@@ -477,6 +478,8 @@ async function armarPantalla(estado) {
     if (!puedeComprimir()) throw new ble.ErrorTV('Este celular no puede enviar GIF.');
     pantalla.tipo = 'animacion';
     const z = await comprimirCuadros(estado.animacionCuadros || []);
+    // La TV guarda ~1,4 MB y por Bluetooth un GIF muy grande tardaría minutos: se rechaza antes de empezar.
+    if (z.bytes > LIMITE_GIF_TV_BYTES) throw new ble.ErrorTV('Ese GIF es demasiado pesado para la TV. Prueba con uno más corto.');
     pantalla.animacion = {
       nombre: estado.animacion || '', ancho: estado.animacionAncho, alto: estado.animacionAlto,
       formato: FORMATO_COMPRIMIDO, cantidad: z.cantidad,

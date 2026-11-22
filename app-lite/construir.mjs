@@ -18,6 +18,7 @@ const aqui = dirname(fileURLToPath(import.meta.url));
 const panel = join(aqui, '..'); // raíz del repo del panel (la app Pro: SOLO se lee)
 const proJs = join(panel, 'js') + sep;
 const backendLite = join(aqui, 'src', 'backend-lite.js');
+const gifLite = join(aqui, 'src', 'gif-lite.js');
 const www = join(aqui, 'www');
 
 rmSync(www, { recursive: true, force: true });
@@ -27,6 +28,9 @@ const cambiarFirebase = {
   name: 'lite-backend',
   setup(b) {
     b.onResolve({ filter: /^\.\/firebase\.js$/ }, (args) => (args.importer.startsWith(proJs) ? { path: backendLite } : undefined));
+    // Los avisos de peso del GIF: otros números para Bluetooth (src/gif-lite.js re-exporta todo lo de gif.js de la Pro).
+    b.onResolve({ filter: /^\.\/gif\.js$/ }, (args) => (args.importer.startsWith(proJs) ? { path: gifLite } : undefined));
+    b.onResolve({ filter: /^pro-gif-original$/ }, () => ({ path: join(proJs, 'gif.js') }));
   },
 };
 
