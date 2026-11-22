@@ -1,6 +1,39 @@
-# Plan del tutorial guiado (propuesta, sin implementar)
+# Tutorial guiado (plan y cómo quedó)
 
-> Estado: **solo propuesta** (2026-11-21). Nada de esto está construido. El dueño lo hará en otra conversación: este documento es el punto de partida. Antes de escribir código hay que explicar el plan y esperar su aprobación (regla del proyecto), y los **textos los dicta el dueño**: se ponen exactamente como los dicte, corrigiendo solo la ortografía (ver `CLAUDE.md`, sección 2).
+> **HECHO el 2026-11-21.** Lo de abajo (secciones 1 a 8) es el plan original, que se conserva como historia; esta sección dice cómo quedó construido.
+
+## 0. Cómo quedó construido
+
+**Decisiones del dueño (2026-11-21, todas las recomendadas):** (1) sale **la primera vez que la cuenta entra con una TV ya vinculada**; (2) lo "ya visto" se recuerda **en el celular** (`localStorage`, sin campo nuevo en Firebase); (3) lleva los **8 pasos del borrador tal cual**; (4) **Saltar cuenta como visto** y una fila **"Ver tutorial"** en Más > Config > Ayuda y contacto lo repite.
+
+**Archivos:**
+
+| Archivo | Qué hace |
+|---|---|
+| `js/tutorial.js` | `crearTutorial({ leerElementos, cambiarTipo, puedeAbrir })`. Los pasos y sus frases están en `PASOS` (arriba del archivo): **para cambiar una frase se edita ahí**. Recuerda lo visto con la clave `tvretro.tutorial.<uid>` (si el almacenamiento falla, solo durante la sesión). |
+| `index.html` | `#tutorial` (hijo directo de `<body>`, nace `hidden`) y la fila `#botonVerTutorial` al principio de `#configAyuda`. |
+| `css/style.css` | Bloque "Tutorial guiado" al final: capa fija, foco (sombra gigante), tarjeta, puntos y botones, con los tokens de `tokens.css`. |
+| `js/ui.js` | Los IDs `tutorial*` y `botonVerTutorial`. |
+| `js/main.js` | `crearTutorial` junto a los demás módulos; `tutorial.configurarEventos()` en `inicializar()`; `tutorial.iniciarSiCorresponde(uid)` al final de `inicializar()` (solo con cuentas, tras liberar el panel y el aviso post-login); y el botón Atrás de Android lo cierra primero. |
+| `pruebas/tutorial.mjs` | 11 escenarios. Está en `todo-el-banco.sh`. |
+| `pruebas/banco.mjs` | Por defecto el arnés da el tutorial por visto (`globalThis.__conTutorial` lo activa), para que no tape a las demás suites. La app no tiene ningún gancho de pruebas. |
+
+**Cómo se comporta:**
+- **No cambia de pestaña** mientras explica (`cambiarTipo()` cambia lo que envía Enviar): resalta desde donde esté el cliente. Un paso cuyo objetivo no se ve (por ejemplo Enviar en el menú Más) se **salta**. Solo "Ver tutorial" (desde Config, donde Enviar no se ve) pasa antes a Texto y no restaura la pestaña anterior.
+- Vuelve a medir con `ResizeObserver` y `resize` (la línea de estado puede pasar a dos líneas y mover lo resaltado).
+- La capa tapa la app (no se puede tocar Enviar), atrapa Tab, cierra con Escape y con el Atrás de Android (todo equivale a Saltar). Un doble toque en Siguiente cuenta como uno (250 ms).
+- No se abre con el login a la vista, con Mi TV abierto ni con el panel bloqueado.
+- **Para verlo de nuevo en un celular sin pasar por Config:** borrar los datos del sitio / de la app, o la clave `tvretro.tutorial.<uid>` de `localStorage`.
+
+**Propuestas mías que el dueño puede cambiar** (no las dictó): el botón del último paso dice **"Cerrar"**; el último paso no muestra "Saltar"; los puntos de avance (●●○○…) son decoración.
+
+**Lo que NO se hizo a propósito:** un campo en Firebase para recordar lo visto entre celulares (si reinstala la app lo ve una vez más); pasos de Compartir y Alarma (el dueño pidió los 8 del borrador).
+
+---
+
+# Plan original (propuesta del 2026-11-21)
+
+> Estado de este plan original: **ya construido** (ver la sección 0). Se conserva como historia. Antes de escribir código hay que explicar el plan y esperar su aprobación (regla del proyecto), y los **textos los dicta el dueño**: se ponen exactamente como los dicte, corrigiendo solo la ortografía (ver `CLAUDE.md`, sección 2).
 
 ## 1. Por qué existe
 

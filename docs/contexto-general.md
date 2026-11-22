@@ -105,6 +105,7 @@ El detalle commit por commit está en [historial-cambios.md](historial-cambios.m
 | `js/ui.js` | `obtenerElementos()` (mapa de IDs), `marcarSegmentoActivo`, `marcarEstado`, `marcarConexion`, etc. |
 | `js/firebase.js` | Único acceso a Firebase: `cargarEstado`, `enviarEstado`, catálogos (`imagenes`, `animaciones`, `canciones`, `musicales`), `suscribirLastSeen`. |
 | `js/renderer.js` | Dibuja la OLED en un `<canvas>`, igual que `pantalla.cpp`/`texto.cpp`. |
+| `js/tutorial.js` | Tutorial guiado (2026-11-21): capa con 8 pasos que resalta cada parte de la app; sale la primera vez y se repite desde Config > Ayuda. Ver `docs/plan-tutorial.md`. |
 | `js/fonts.js` | Fuente clásica 5×7 (glcdfont de Adafruit, orden CP437) y `LATIN1_A_CP437`. |
 | `js/fuentesTexto.js`, `js/fuentesGfx.js` | Texto con FreeSans/FreeSerif (GFXfont a 141 dpi, 164 caracteres). |
 | `js/imageProcessor.js` | Imagen → bitmap 1bpp: encuadre (Ajustar/Llenar/Estirar/Original, rotar, voltear, fondo), umbral, difuminado Atkinson. |
