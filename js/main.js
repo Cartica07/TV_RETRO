@@ -27,6 +27,7 @@ import { pluginNativo, accionesEnCurso, sinRepetir, esperarFinal, TEXTO_GUARDADO
 import { crearConexion } from './conexion.js';
 import { crearMas, TITULOS_CONFIG } from './mas.js';
 import { crearCuentas } from './cuentas.js';
+import { crearTutorial } from './tutorial.js';
 import { crearGaleria } from './galeria.js';
 import { crearCanciones } from './canciones.js';
 // inoMusical.js (el intérprete de .ino, ~50 KB) solo lo necesita quien importa canciones: se carga en
@@ -177,6 +178,14 @@ const {
       bloquearPanel(false);
     }
   }, ESPERA_ARRANQUE_MS)
+});
+
+// Tutorial guiado: js/tutorial.js (docs/plan-tutorial.md). Sale la primera vez que la cuenta entra con su TV vinculada y se
+// repite desde Más > Config > Ayuda y contacto > Ver tutorial. No abre con el login, Mi TV o el panel bloqueado.
+const tutorial = crearTutorial({
+  leerElementos: () => elementos,
+  cambiarTipo: (tipo) => cambiarTipo(tipo),
+  puedeAbrir: () => !hayLoginVisible() && elementos.pantallaTV.hidden && !panelBloqueado && !document.querySelector('main.controles[inert]')
 });
 
 // Galería (catálogos de imágenes y animaciones): js/galeria.js (H-13). El estado de la pestaña Imagen que comparte
@@ -1920,11 +1929,14 @@ async function inicializar() {
   }
 
   configurarEventos();
+  tutorial.configurarEventos();
   marcarControlesEncuadre();
   configurarBotonAtras();
+  let uidTutorial = null;
   if (USAR_CUENTAS) {
     configurarLogin();
     const sesion = await entrar();
+    uidTutorial = sesion.uid;
     // Desde acá todo va a la TV y al catálogo de esta cuenta (firebase.js, usarCuenta).
     usarCuenta(sesion.uid, await resolverDispositivo(sesion));
     await cargarEsAdmin();
@@ -1957,6 +1969,10 @@ async function inicializar() {
   if (avisoPostLogin) {
     marcarEstado(avisoPostLogin, 'ok', elementos);
   }
+
+  // Tutorial: solo con cuentas (en el modo viejo de las pruebas locales no hay a quién recordarle que ya lo vio) y recién
+  // cuando el panel ya está liberado y no hay login ni Mi TV a la vista.
+  if (USAR_CUENTAS) tutorial.iniciarSiCorresponde(uidTutorial);
 }
 
 // ===================================================
@@ -1974,6 +1990,10 @@ const USAR_CUENTAS = !new URLSearchParams(location.search).has('sincuentas');
 // sale de la app. Sin esto "Atrás" cerraba la app aunque hubiera Mi TV o Compartir abiertos.
 // Devuelve true si cerró algo.
 function cerrarCapaSuperior() {
+  if (tutorial.estaAbierto()) {
+    tutorial.saltar();
+    return true;
+  }
   if (dibujoExpandido) {
     contraerDibujo();
     return true;

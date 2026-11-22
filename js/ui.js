@@ -339,6 +339,15 @@ export function obtenerElementos() {
 
     // Cuentas: pantalla Mi TV (vincular, elegir, desvincular)
     botonMiTV: document.getElementById('botonMiTV'),
+    // Tutorial guiado (js/tutorial.js)
+    tutorial: document.getElementById('tutorial'),
+    tutorialFoco: document.getElementById('tutorialFoco'),
+    tutorialTarjeta: document.getElementById('tutorialTarjeta'),
+    tutorialTexto: document.getElementById('tutorialTexto'),
+    tutorialPuntos: document.getElementById('tutorialPuntos'),
+    tutorialSaltar: document.getElementById('tutorialSaltar'),
+    tutorialSiguiente: document.getElementById('tutorialSiguiente'),
+    botonVerTutorial: document.getElementById('botonVerTutorial'),
     pantallaTV: document.getElementById('pantallaTV'),
     tvTitulo: document.getElementById('tvTitulo'),
     tvSubtitulo: document.getElementById('tvSubtitulo'),
