@@ -46,6 +46,19 @@ function iniciar() {
     lite.abrirAjustesBluetooth().catch((e) => console.warn('[TV RETRO] No se pudieron abrir los ajustes de Bluetooth', e));
   });
   q('botonConexionVolver').addEventListener('click', cerrar);
+
+  // Una TV Lite no se comparte: en la lista de Mis TV sus filas (las últimas, después de las TV Pro) no llevan "Compartir".
+  const lista = q('listaTV');
+  if (lista) {
+    new MutationObserver(() => {
+      const usuario = usuarioActual();
+      const n = usuario ? lite.listarTVLite(usuario.uid).length : 0;
+      if (!n) return;
+      for (const fila of [...lista.querySelectorAll('.fila-tv')].slice(-n)) {
+        for (const b of fila.querySelectorAll('button')) if (b.textContent.trim() === 'Compartir') b.hidden = true;
+      }
+    }).observe(lista, { childList: true });
+  }
   // Al volver de los ajustes de Bluetooth (o de cualquier otra app) se revisa de nuevo.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') revisar();
