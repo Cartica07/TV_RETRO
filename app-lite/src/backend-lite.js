@@ -294,10 +294,13 @@ async function leerElemento(tipo, clave, predeterminada) {
     const v = await almacen.leer(tipo, clave);
     if (v) return v;
   }
+  await cargarPredeterminadas();
+  const e = predeterminadas[tipo][clave];
+  if (!e || !e.archivo) return null;
   try {
-    const r = await fetch(`predeterminadas/${tipo}/${encodeURIComponent(clave)}.json`);
+    const r = await fetch('predeterminadas/' + e.archivo);
     if (r.ok) return await r.json();
-  } catch (e) { /* no está */ }
+  } catch (err) { /* no está */ }
   return null;
 }
 
