@@ -167,6 +167,9 @@ async function esperarEnCurso() {
 // Se reanuda cuando la persona vuelve a emparejar desde "Enviar".
 let reconexionPausada = false;
 
+// Al volver a la app (por ejemplo, tras emparejar desde los ajustes de Bluetooth del celular) se permite un intento más.
+export function reanudarReconexion() { reconexionPausada = false; }
+
 // Reconecta con la última TV usada (sin buscar y sin emparejar). Devuelve true si quedó conectada.
 export async function reconectar() {
   if (conectado) return true;

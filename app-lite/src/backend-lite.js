@@ -77,6 +77,11 @@ function iniciarLatido() {
   };
   intentar();
   temporizadorReconexion = setInterval(intentar, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    ble.reanudarReconexion();
+    intentar();
+  });
 }
 
 export function suscribirLastSeen(callback) {
