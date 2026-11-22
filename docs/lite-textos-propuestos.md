@@ -25,6 +25,11 @@
 | 22 | Al emparejar desde la app, mientras se escribe el PIN (línea de estado) | Escribe el PIN que sale en la TV… | `backend-lite.js` |
 | 23 | El emparejamiento falla (PIN mal, tiempo agotado o la TV no tenía abierto el emparejamiento) | No se pudo emparejar. Mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo. | `ble.js` |
 | 24 | El celular figura como vinculado pero la TV no lo reconoce (la TV abrió el emparejamiento otra vez o se olvidó el vínculo de un solo lado) | La TV no reconoce este celular. Olvídala en Ajustes > Bluetooth del celular, mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo. | `ble.js` |
+| 25 | Pantalla de inicio, título (solo en el celular Android, cuando no hay una TV emparejada) | Conecta tu TV | `app-lite/construir.mjs` |
+| 26 | Pantalla de inicio, paso 1 | Enciende la TV. Verás un PIN en su pantalla. | `construir.mjs` |
+| 27 | Pantalla de inicio, paso 2 | Toca "Abrir Bluetooth", elige "TV RETRO Lite" y escribe el PIN. | `construir.mjs` |
+| 28 | Pantalla de inicio, paso 3 | Vuelve a esta app. Se conecta sola. | `construir.mjs` |
+| 29 | Pantalla de inicio, botones | Abrir Bluetooth / Ahora no | `construir.mjs` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
