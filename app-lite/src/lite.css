@@ -1,39 +1,34 @@
 /* =========================================================
-   TV RETRO Lite: estilos propios (lo demás viene del CSS de la app Pro, copiado sin cambios).
+   TV RETRO Lite: lo propio de la Lite sobre el diseño de la Pro (el CSS de la Pro se copia sin cambios).
+   Lo que la Lite no usa SE OCULTA, no se borra del HTML: un ID que falta rompe la app (regla de la Pro).
    ========================================================= */
 
-.grupo-botones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--esp-2);
+/* Juegos: la Lite no los tiene. */
+[data-mas="juegos"],
+#seccionJuegos {
+  display: none !important;
 }
 
-.diagnostico {
-  margin-top: var(--esp-4);
-  color: var(--texto-2);
-  font-size: var(--texto-sm);
+/* Cuentas, Mi TV, compartir y actualizar la TV: la Lite no tiene cuentas ni nube. */
+[data-config="cuenta"],
+[data-config="sistema"],
+#configCuenta,
+#configSistema,
+#botonMiTV,
+#botonCerrarSesion,
+#pantallaLogin,
+#pantallaTV {
+  display: none !important;
 }
 
-.diagnostico summary {
-  cursor: pointer;
-  padding: var(--esp-2) 0;
+/* Importar y borrar canciones del catálogo: en la Lite el catálogo viene dentro de la app. */
+label[for="cargadorMusical"],
+#botonBorrarMusical {
+  display: none !important;
 }
 
-.diagnostico .grupo-botones {
-  margin: var(--esp-2) 0;
-}
-
-.diagnostico progress {
-  width: 100%;
-}
-
-#registro {
-  height: 180px;
-  margin-top: var(--esp-2);
-  padding: var(--esp-2);
-  overflow: auto;
-  background: var(--superficie-hundida);
-  border-radius: var(--radio-sm);
-  font: var(--texto-xs) / 1.4 var(--fuente-data);
-  white-space: pre-wrap;
+/* El tutorial de la Pro habla de cuentas y de la TV por Wi-Fi: la Lite no lo muestra (por ahora). */
+#botonVerTutorial,
+#tutorial {
+  display: none !important;
 }
