@@ -33,7 +33,14 @@ async function abrirCuentas({ db = semilla(), actual = 'ana@correo.com', antes =
 const visible = (p, sel) => p.evaluate((s) => { const e = document.querySelector(s); return !!e && !e.hidden && getComputedStyle(e).display !== 'none'; }, sel);
 const texto = (p, sel) => p.evaluate((s) => (document.querySelector(s).textContent || '').trim(), sel);
 const esperarPanel = (p) => p.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 8000 });
-const raizDb = (p) => p.evaluate(() => globalThis.__fakeDb.raiz);
+// Salir, desvincular, etc. recargan la página: si la lectura cae justo en la recarga (sobre todo con la máquina cargada), el
+// contexto se destruye o la base falsa aún no existe. Se reintenta unas veces en vez de dar un falso fallo.
+const raizDb = async (p) => {
+  for (let i = 0; ; i++) {
+    try { return await p.evaluate(() => globalThis.__fakeDb.raiz); }
+    catch (e) { if (i >= 5) throw e; await p.waitForTimeout(400); }
+  }
+};
 const escrituras = (p) => p.evaluate(() => globalThis.__fakeDb.escrituras.flatMap((e) => (e.op === 'update' ? Object.keys(e.valor).map((k) => (e.ruta ? e.ruta + '/' : '') + k) : [e.ruta])));
 const erroresPagina = (e) => e.filter((x) => x.startsWith('página:'));
 const filasTV = (p) => p.evaluate(() => [...document.querySelectorAll('#listaTV .fila-tv')].map((f) => f.textContent.replace(/\s+/g, ' ').trim()));
