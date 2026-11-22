@@ -94,18 +94,36 @@ export function exclusivo(accion) {
 }
 
 // ---------- Conexión ----------
-async function prepararCanal() {
+// Tiempo que se espera a que la persona escriba el PIN (la ventana de la TV dura 2 minutos). El plugin espera
+// solo 5 s si no se le dice otra cosa, y eso no alcanza para leer el PIN en la TV y escribirlo.
+const ESPERA_VINCULO_MS = 100000;
+
+// El celular aún no está vinculado con la TV y la conexión no es de un toque de la persona (reintento de fondo):
+// no se debe iniciar el emparejamiento por sorpresa.
+class ErrorSinVinculo extends Error {}
+
+// Avisa a la pantalla en qué paso va la conexión (lo conecta backend-lite.js).
+let alEstado = () => {};
+export function alCambiarEstado(f) { alEstado = f; }
+
+// Con `vincular` falso (reconexión de fondo) un celular sin vínculo no empareja: avisa con ErrorSinVinculo.
+async function prepararCanal(vincular) {
   try { await BleClient.requestConnectionPriority(deviceId, ConnectionPriority.CONNECTION_PRIORITY_HIGH); } catch (e) { /* no es crítico */ }
 
   // Si todavía no hay vínculo, se crea (el celular pide el PIN que muestra la TV).
-  let vinculado = false;
+  // (En la web el plugin no lo ofrece y el navegador se ocupa solo: ahí no hay nada que vincular.)
+  let vinculado = true;
   try { vinculado = await BleClient.isBonded(deviceId); } catch (e) { /* no disponible */ }
   if (!vinculado) {
+    if (!vincular) throw new ErrorSinVinculo('sin vínculo');
+    alEstado('vincular');
     try {
-      await BleClient.createBond(deviceId);
+      await BleClient.createBond(deviceId, { timeout: ESPERA_VINCULO_MS });
     } catch (e) {
       // En la web (pruebas) el plugin no lo ofrece; en Android un fallo real sí corta la conexión.
-      if (!/not (implemented|available|supported)|unimplemented|unavailable/i.test(String((e && e.message) || e))) throw e;
+      if (!/not (implemented|available|supported)|unimplemented|unavailable/i.test(String((e && e.message) || e))) {
+        throw new ErrorTV('No se pudo emparejar. Mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo.');
+      }
     }
   }
 
@@ -113,10 +131,17 @@ async function prepararCanal() {
   await BleClient.startNotifications(deviceId, SERVICIO, CTRL, alRecibirAviso);
 }
 
-async function conectarA(id) {
+async function conectarA(id, vincular) {
   deviceId = id;
-  await BleClient.connect(id, () => { marcarConectado(false); });
-  await prepararCanal();
+  try {
+    await BleClient.connect(id, () => { marcarConectado(false); });
+    await prepararCanal(vincular);
+  } catch (e) {
+    // Una conexión a medias deja a la TV ocupada: mientras siga conectada no se anuncia y el celular no la encuentra.
+    try { await BleClient.disconnect(id); } catch (e2) { /* ya estaba desconectada */ }
+    marcarConectado(false);
+    throw e;
+  }
   try { localStorage.setItem(CLAVE_TV, id); } catch (e) { /* sin almacenamiento */ }
   marcarConectado(true);
   // La hora de la TV la da el celular en cada conexión (la TV no tiene internet).
@@ -137,38 +162,47 @@ async function esperarEnCurso() {
   try { await enCurso; } catch (e) { /* el que lo inició se ocupa del error */ }
 }
 
-// Reconecta con la última TV usada (sin buscar). Devuelve true si quedó conectada.
+// Si la última TV ya no reconoce a este celular (se olvidó el vínculo en el celular o la TV abrió el emparejamiento
+// otra vez), la reconexión de fondo se detiene: cada intento ocuparía la conexión de la TV y no la dejaría anunciarse.
+// Se reanuda cuando la persona vuelve a emparejar desde "Enviar".
+let reconexionPausada = false;
+
+// Reconecta con la última TV usada (sin buscar y sin emparejar). Devuelve true si quedó conectada.
 export async function reconectar() {
   if (conectado) return true;
   if (enCurso) { await esperarEnCurso(); return conectado; }
+  if (reconexionPausada) return false;
   let id = null;
   try { id = localStorage.getItem(CLAVE_TV); } catch (e) { /* sin almacenamiento */ }
   if (!id) return false;
-  enCurso = (async () => { await iniciar(); await conectarA(id); })();
+  enCurso = (async () => { await iniciar(); await conectarA(id, false); })();
   try {
     await enCurso;
     return true;
   } catch (e) {
     marcarConectado(false);
+    if (e instanceof ErrorSinVinculo) reconexionPausada = true;
     return false;
   } finally {
     enCurso = null;
   }
 }
 
-// Muestra la lista de TV cercanas del sistema y conecta con la elegida.
+// Muestra la lista de TV cercanas del sistema, conecta con la elegida y, si hace falta, la empareja (PIN).
 export async function buscar() {
   if (conectado) return;
   if (enCurso) { await esperarEnCurso(); if (conectado) return; }
   enCurso = (async () => {
     await iniciar();
     const d = await BleClient.requestDevice({ services: [SERVICIO] });
-    await conectarA(d.deviceId);
+    await conectarA(d.deviceId, true);
   })();
   try {
     await enCurso;
+    reconexionPausada = false;
   } catch (e) {
     marcarConectado(false);
+    if (e instanceof ErrorTV) throw e;
     const texto = String((e && e.message) || e);
     if (/cancel/i.test(texto)) throw new ErrorTV('No elegiste ninguna TV.');
     throw new ErrorTV('No se pudo conectar con la TV. Acércate y vuelve a intentarlo.');

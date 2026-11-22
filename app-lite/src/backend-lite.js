@@ -110,10 +110,28 @@ function avanceEnvio(p) {
   } catch (e) { /* sin pantalla */ }
 }
 
+// Mientras el celular se empareja con la TV (la persona escribe el PIN) la línea de estado lo dice, para que no
+// parezca que la app se quedó colgada. Solo si la pantalla sigue diciendo "Enviando…". Texto PROPUESTO: lo aprueba el dueño.
+ble.alCambiarEstado((paso) => {
+  if (paso !== 'vincular') return;
+  try {
+    const el = document.getElementById('estadoTexto');
+    if (el && /^Enviando/.test(el.textContent)) el.textContent = 'Escribe el PIN que sale en la TV…';
+  } catch (e) { /* sin pantalla */ }
+});
+
 async function asegurarConexion() {
   if (ble.estaConectado()) return;
   if (await ble.reconectar()) return;
-  await ble.buscar(); // muestra la lista de TV cercanas (se llega aquí desde un toque del usuario)
+  try {
+    await ble.buscar(); // muestra la lista de TV cercanas (se llega aquí desde un toque del usuario)
+  } finally {
+    // Terminó el emparejamiento (bien o mal): la línea de estado vuelve a lo que decía.
+    try {
+      const el = document.getElementById('estadoTexto');
+      if (el && /^Escribe el PIN/.test(el.textContent)) el.textContent = 'Enviando…';
+    } catch (e) { /* sin pantalla */ }
+  }
 }
 
 // ===================================================
