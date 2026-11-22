@@ -53,6 +53,19 @@
 | Quitar la corriente a la TV y encender sin abrir la app | Reloj con "Sin hora" y **la alarma no suena**; al abrir la app vuelve la hora |
 | Ajustes: brillo Bajo, volumen Bajo, otra zona | Se nota el brillo y el volumen; la hora cambia de zona |
 
+## 4b. Lo que llega mientras no se ve el contenido (igual que la Pro)
+
+| Qué hacer | Qué debe pasar |
+|---|---|
+| Estar en el **reloj** y enviar un texto | La TV **se queda en el reloj**, pita (dos tonos) y aparece un **sobre** arriba a la derecha |
+| Tocar el botón hasta llegar al contenido | Se ve el texto enviado y el sobre desaparece (aunque se vuelva al reloj) |
+| **Pantalla apagada** y enviar algo | Pita y la pantalla **sigue apagada**; al encenderla con toques se ve lo enviado |
+| Estar en el reloj y mandar una **canción** | Suena, **sin pitido de aviso**, la TV sigue en el reloj y aparece el sobre |
+| Estar viendo el contenido y enviar otro | Pita y se dibuja al momento (sin sobre) |
+| Enviar un texto **invertido** estando en el reloj | El reloj **no** se invierte ni se pisa; al volver al contenido sí se ve invertido |
+| Alarma **sin canción** | Suena con los mismos dos tonos de aviso de la Pro cada 1,4 s (¿se oyen bien con este buzzer?) |
+| Encender la TV | Arranca en el contenido (con nada guardado se ve el reloj) |
+
 ## 5. Botón y casos raros
 
 - **Toque corto sin nada sonando:** contenido → reloj → pantalla apagada → contenido.
