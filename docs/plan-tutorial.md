@@ -25,6 +25,8 @@
 - No se abre con el login a la vista, con Mi TV abierto ni con el panel bloqueado.
 - **Para verlo de nuevo en un celular sin pasar por Config:** borrar los datos del sitio / de la app, o la clave `tvretro.tutorial.<uid>` de `localStorage`.
 
+**Revisado en un Moto Edge 50 Neo (2026-11-21):** sale solo en el primer arranque, los 8 pasos resaltan lo que dicen, no vuelve al reabrir la app, "Ver tutorial" lo repite desde Config y el botón Atrás lo cierra sin salir de la app. Esa revisión encontró dos detalles que se pulieron (`ea0d469`): el aro del resalte quedaba cortado en los bordes de la pantalla (Texto, Más y la barra de abajo; ahora se recorta 3 px dentro) y "Siguiente" mostraba un aro de foco doble (el foco ahora va a la tarjeta, no al botón).
+
 **Propuestas mías que el dueño puede cambiar** (no las dictó): el botón del último paso dice **"Cerrar"**; el último paso no muestra "Saltar"; los puntos de avance (●●○○…) son decoración.
 
 **Lo que NO se hizo a propósito:** un campo en Firebase para recordar lo visto entre celulares (si reinstala la app lo ve una vez más); pasos de Compartir y Alarma (el dueño pidió los 8 del borrador).
