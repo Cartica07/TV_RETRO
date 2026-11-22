@@ -1,262 +1,204 @@
-// TV RETRO Lite: prueba de la app (paso 1 del plan de la app real).
-// Mismo protocolo que lite/prueba-ble.js (OLED_Lite en el firmware), pero con el plugin
-// @capacitor-community/bluetooth-le en vez de Web Bluetooth. Sirve para comprobar dos cosas:
-// que el plugin alcanza la velocidad de Edge y que vincular con el PIN funciona dentro de la app.
+// TV RETRO Lite: lógica de la app. El diseño es el de la app Pro (CSS copiado al armar); lo que cambia es
+// la forma de enviar: en vez de Firebase, Bluetooth LE hacia la TV (ver ble.js). Las canciones vienen
+// dentro de la app (canciones/) y la TV guarda en su memoria las que se usan (caché).
+//
+// Los textos de esta pantalla son una PROPUESTA (el dueño los revisa): sin datos técnicos, con "tú".
 
-import { BleClient, ConnectionPriority } from '@capacitor-community/bluetooth-le';
-
-const SERVICIO = '7a1c0001-5e7d-4f0e-9a3b-0c1d2e3f4a5b';
-const CTRL = '7a1c0002-5e7d-4f0e-9a3b-0c1d2e3f4a5b';
-const DATOS = '7a1c0003-5e7d-4f0e-9a3b-0c1d2e3f4a5b';
+import { marcarEstado, marcarConexion } from '../../js/ui.js';
+import { decodificarMusical } from '../../js/compresion.js';
+import { dibujarPreviewImagen } from '../../js/imageProcessor.js';
+import * as tv from './ble.js';
 
 const $ = (id) => document.getElementById(id);
+const elementos = {
+  estadoLinea: $('estadoLinea'), estadoTexto: $('estadoTexto'), ledEstado: $('ledEstado'),
+  textoConexion: $('textoConexion'), ledConexion: $('ledConexion'),
+};
 const el = {
-  conectar: $('conectar'), desconectar: $('desconectar'), estado: $('estado'),
-  enviarHora: $('enviarHora'), pedirEstado: $('pedirEstado'),
-  enviarPrueba: $('enviarPrueba'), repetir: $('repetir'), barrido: $('barrido'),
-  progreso: $('progreso'), resultado: $('resultado'), registro: $('registro'),
+  canvas: $('oled'), select: $('seleccionCancion'), grupoLetra: $('grupoLetra'), repeticiones: $('inputRepeticiones'),
+  aviso: $('avisoCancion'), enviar: $('enviar'), grupoTipo: $('grupoTipo'),
+  seccionCancion: $('seccionCancion'), seccionMas: $('seccionMas'),
+  botonConectar: $('botonConectar'), botonDesconectar: $('botonDesconectar'), botonHora: $('botonHora'),
+  botonEstado: $('botonEstado'), botonVelocidad: $('botonVelocidad'), botonVelocidad5: $('botonVelocidad5'),
+  progreso: $('progresoDiagnostico'), registro: $('registro'),
 };
 
-let deviceId = null;
-let ocupado = false;
-let conectado = false;
+let catalogo = [];          // [{ id, clave, nombre, archivo, bytes, duracion }]
+let conLetra = true;
+let ocupado = false;        // hay un envío en curso (a prueba de dobles toques)
+let turnoVistaPrevia = 0;   // descarta vistas previas que llegan tarde
 
-// ---------- Utilidades ----------
+const nombreBonito = (c) => c.nombre.replace(/_+/g, ' ').trim();
+const estado = (texto, tipo) => marcarEstado(texto, tipo, elementos);
+
+// ---------- Vista previa de la pantalla ----------
+function bytesABase64(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+function pantallaNegra() {
+  const ctx = el.canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 128, 64);
+}
+
+async function cargarCancion(c) {
+  const r = await fetch(`canciones/${c.archivo}`);
+  if (!r.ok) throw new Error('No se pudo leer la canción.');
+  return new Uint8Array(await r.arrayBuffer());
+}
+
+async function mostrarVistaPrevia(c) {
+  const turno = ++turnoVistaPrevia;
+  pantallaNegra();
+  if (!c) return;
+  try {
+    const bytes = await cargarCancion(c);
+    const grab = await decodificarMusical(bytesABase64(bytes));
+    if (turno !== turnoVistaPrevia || !grab.cuadros.length) return;
+    dibujarPreviewImagen(el.canvas, bytesABase64(grab.cuadros[0].bitmap), 128, 64, '#4dd2ff');
+  } catch (e) {
+    console.warn('[TV RETRO Lite] vista previa:', e);
+  }
+}
+
+// ---------- Canciones ----------
+function cancionElegida() {
+  return catalogo.find((c) => String(c.id) === el.select.value) || null;
+}
+
+async function cargarCatalogo() {
+  const r = await fetch('canciones/indice.json');
+  catalogo = await r.json();
+  el.select.textContent = '';
+  for (const c of catalogo) {
+    const o = document.createElement('option');
+    o.value = String(c.id);
+    o.textContent = nombreBonito(c);
+    el.select.append(o);
+  }
+  mostrarVistaPrevia(cancionElegida());
+}
+
+function mensajeDeError(e) {
+  if (e instanceof tv.ErrorTV) return e.message;
+  console.error('[TV RETRO Lite]', e);
+  return 'Algo salió mal. Vuelve a intentarlo.';
+}
+
+// Asegura que haya TV conectada: la última usada, o la lista de TV cercanas si no hay ninguna.
+async function asegurarConexion() {
+  if (tv.estaConectado()) return;
+  estado('Conectando con la TV…');
+  if (await tv.reconectar()) return;
+  await tv.buscar();
+}
+
+async function enviarCancion() {
+  if (ocupado) return;
+  const c = cancionElegida();
+  if (!c) { estado('Elige una canción.', 'error'); return; }
+  ocupado = true;
+  el.enviar.disabled = true;
+  try {
+    await asegurarConexion();
+    await tv.exclusivo(async () => {
+      const guardadas = await tv.listar();
+      if (!guardadas.has(c.id)) {
+        const datos = await cargarCancion(c);
+        const r = await tv.enviarArchivo(datos, {
+          id: c.id,
+          alProgreso: (p) => estado(`Enviando… ${Math.round(p * 100)} %`),
+        });
+        if (!r.ok) throw new tv.ErrorTV('La canción no llegó bien. Vuelve a intentarlo.');
+      }
+      await tv.tocar(c.id, Math.max(1, parseInt(el.repeticiones.value, 10) || 1), conLetra);
+    });
+    estado('Sonando en la TV', 'ok');
+  } catch (e) {
+    estado(mensajeDeError(e), 'error');
+  } finally {
+    ocupado = false;
+    el.enviar.disabled = false;
+  }
+}
+
+// ---------- Más ----------
+function cambiarPestana(valor) {
+  const mas = valor === 'mas';
+  el.seccionCancion.style.display = mas ? 'none' : '';
+  el.seccionMas.style.display = mas ? '' : 'none';
+  for (const b of el.grupoTipo.querySelectorAll('button')) b.classList.toggle('activo', b.dataset.valor === valor);
+  document.querySelector('.barra-accion').style.display = mas ? 'none' : '';
+}
+
+function actualizarConexion(si) {
+  marcarConexion(si ? 'Conectada' : 'Sin conexión', si ? 'ok' : null, elementos);
+  el.botonDesconectar.disabled = !si;
+  for (const b of [el.botonHora, el.botonEstado, el.botonVelocidad, el.botonVelocidad5]) b.disabled = !si;
+}
+
+async function accionMas(accion, textoOk) {
+  if (ocupado) return;
+  ocupado = true;
+  try {
+    await tv.exclusivo(accion);
+    if (textoOk) estado(textoOk, 'ok');
+  } catch (e) {
+    estado(mensajeDeError(e), 'error');
+  } finally { ocupado = false; }
+}
+
+// ---------- Diagnóstico (herramienta del dueño: medir la velocidad) ----------
 function registrar(texto) {
-  const t = new Date().toLocaleTimeString();
-  el.registro.textContent += `[${t}] ${texto}\n`;
+  el.registro.textContent += `[${new Date().toLocaleTimeString()}] ${texto}\n`;
   el.registro.scrollTop = el.registro.scrollHeight;
 }
 
-const u32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
-const leer32 = (dv, o) => dv.getUint32(o, true);
-const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
-const aDataView = (bytes) => { const u = Uint8Array.from(bytes); return new DataView(u.buffer, u.byteOffset, u.byteLength); };
-
-const TABLA_CRC = (() => {
-  const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c >>> 0;
-  }
-  return t;
-})();
-
-function crc32(bytes) {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < bytes.length; i++) c = TABLA_CRC[(c ^ bytes[i]) & 255] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-function datosDePrueba(n) {
-  const b = new Uint8Array(n);
-  let x = 0x12345678;
-  for (let i = 0; i < n; i++) {
-    x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0;
-    b[i] = x & 255;
-  }
-  return b;
-}
-
-// ---------- Avisos de la TV ----------
-const avisos = [];
-let despertar = null;
-
-function alRecibirAviso(valor) {
-  avisos.push(new DataView(valor.buffer.slice(valor.byteOffset, valor.byteOffset + valor.byteLength)));
-  if (despertar) { despertar(); despertar = null; }
-}
-
-function siguienteAviso(ms) {
-  if (avisos.length) return Promise.resolve(avisos.shift());
-  return new Promise((resolver) => {
-    const reloj = setTimeout(() => { despertar = null; resolver(null); }, ms);
-    despertar = () => { clearTimeout(reloj); resolver(avisos.shift() || null); };
-  });
-}
-
-async function esperarAvisoTipo(tipo, ms) {
-  const limite = performance.now() + ms;
-  while (performance.now() < limite) {
-    const a = await siguienteAviso(limite - performance.now());
-    if (!a) break;
-    if (a.getUint8(0) === tipo) return a;
-  }
-  return null;
-}
-
-const escribirCtrl = (bytes) => BleClient.write(deviceId, SERVICIO, CTRL, aDataView(bytes));
-
-// ---------- Conexión ----------
-function marcar() {
-  el.conectar.disabled = conectado;
-  el.desconectar.disabled = !conectado;
-  for (const b of [el.enviarHora, el.pedirEstado, el.enviarPrueba, el.repetir, el.barrido]) b.disabled = !conectado || ocupado;
-  el.estado.textContent = conectado ? 'conectado' : 'sin conexión';
-}
-
-async function conectar() {
-  try {
-    await BleClient.initialize({ androidNeverForLocation: true });
-    const dispositivo = await BleClient.requestDevice({ services: [SERVICIO] });
-    deviceId = dispositivo.deviceId;
-    registrar(`Conectando a ${dispositivo.name || 'la TV'}...`);
-    await BleClient.connect(deviceId, () => { registrar('Se desconectó.'); conectado = false; marcar(); });
-    conectado = true;
-    marcar();
-    try { await BleClient.requestConnectionPriority(deviceId, ConnectionPriority.CONNECTION_PRIORITY_HIGH); } catch (e) { registrar(`Prioridad alta: ${e.message || e}`); }
-
-    // Vincular (con el PIN que muestra la TV) si todavía no hay vínculo.
-    let vinculado = false;
-    try { vinculado = await BleClient.isBonded(deviceId); } catch (e) { /* no disponible */ }
-    if (!vinculado) {
-      registrar('Vinculando: escribe en el celular el PIN que muestra la TV.');
-      await BleClient.createBond(deviceId);
-      registrar('Vínculo creado.');
-    } else {
-      registrar('Ya estaba vinculado.');
-    }
-
-    await BleClient.startNotifications(deviceId, SERVICIO, CTRL, alRecibirAviso);
-    avisos.length = 0;
-    try { registrar(`MTU: ${await BleClient.getMtu(deviceId)}`); } catch (e) { registrar(`MTU: ${e.message || e}`); }
-    await pedirEstadoTV();
-  } catch (e) {
-    registrar(`No se pudo conectar: ${e.message || e}`);
-    conectado = false;
-    marcar();
-  }
-}
-
-async function desconectar() {
-  if (deviceId) { try { await BleClient.disconnect(deviceId); } catch (e) { /* ya estaba */ } }
-  conectado = false; marcar();
-}
-
-async function enviarHora() {
-  const ahora = Math.floor(Date.now() / 1000);
-  const zona = -new Date().getTimezoneOffset();
-  await escribirCtrl([0x01, ...u32(ahora), zona & 255, (zona >> 8) & 255]);
-  registrar((await esperarAvisoTipo(0x81, 3000)) ? 'Hora enviada.' : 'La TV no confirmó la hora.');
-}
-
-async function pedirEstadoTV() {
-  avisos.length = 0;
-  await escribirCtrl([0x04]);
-  const a = await esperarAvisoTipo(0x84, 3000);
-  if (!a) { registrar('La TV no respondió al estado.'); return; }
-  const vinculos = a.byteLength >= 10 ? a.getUint8(8) : '?';
-  registrar(`Estado de la TV: MTU ${a.getUint16(2, true)}, memoria libre ${leer32(a, 4)} bytes, celulares vinculados ${vinculos}.`);
-}
-
-// ---------- Envío de un archivo de prueba ----------
-async function enviarArchivo(tamano, trozo, ventana, banderas = 0) {
-  const datos = datosDePrueba(tamano);
-  const crc = crc32(datos);
-  const total = Math.ceil(tamano / trozo);
-  avisos.length = 0;
-
-  await escribirCtrl([0x02, ...u32(tamano), ...u32(crc), ventana, banderas]);
-  const inicio = await esperarAvisoTipo(0x82, 5000);
-  if (!inicio) throw new Error('La TV no confirmó el inicio.');
-  if (inicio.getUint8(1) !== 1) throw new Error('La TV no pudo preparar el archivo.');
-
-  let sig = 0;
-  let confirmado = 0;
-  let reenvios = 0;
-  const t0 = performance.now();
-
-  while (confirmado < total) {
-    while (sig < total && sig - confirmado < ventana * 2) {
-      const ini = sig * trozo;
-      const fin = Math.min(ini + trozo, tamano);
-      const paquete = new Uint8Array(2 + (fin - ini));
-      paquete[0] = sig & 255; paquete[1] = (sig >> 8) & 255;
-      paquete.set(datos.subarray(ini, fin), 2);
-      await BleClient.writeWithoutResponse(deviceId, SERVICIO, DATOS, new DataView(paquete.buffer));
-      sig++;
-    }
-    el.progreso.value = Math.round((confirmado / total) * 100);
-    const a = await siguienteAviso(4000);
-    if (!a) throw new Error(`Sin respuesta de la TV (confirmados ${confirmado} de ${total}).`);
-    const tipo = a.getUint8(0);
-    if (tipo === 0x85) {
-      confirmado = Math.max(confirmado, a.getUint16(1, true));
-    } else if (tipo === 0x86) {
-      const falta = a.getUint16(1, true);
-      reenvios++;
-      sig = falta; confirmado = falta;
-    }
-  }
-  const ms = performance.now() - t0;
-  el.progreso.value = 100;
-
-  await escribirCtrl([0x03]);
-  const fin = await esperarAvisoTipo(0x83, 10000);
-  if (!fin) throw new Error('La TV no dio el resultado final.');
-  const msTV = leer32(fin, 6);
-  return {
-    ok: fin.getUint8(1) === 1, ms, reenvios,
-    kbs: (tamano / 1024) / (ms / 1000),
-    kbsTV: msTV ? (leer32(fin, 2) / 1024) / (msTV / 1000) : 0,
-    bytesTV: leer32(fin, 2),
-  };
-}
-
-async function conOcupado(accion) {
-  if (ocupado) return;
-  ocupado = true; marcar();
-  try { await accion(); } catch (e) {
-    el.resultado.className = 'mal'; el.resultado.textContent = e.message || String(e);
-    registrar(`Falló: ${e.message || e}`);
-  } finally { ocupado = false; marcar(); }
-}
-
-async function correrPrueba(veces) {
-  el.resultado.className = ''; el.resultado.textContent = 'Enviando...';
+async function medirVelocidad(veces) {
   const velocidades = [];
   for (let i = 1; i <= veces; i++) {
-    const r = await enviarArchivo(102400, 500, 16, 0);
-    registrar(`#${i}: ${r.ok ? 'OK' : 'ERROR'} · 102400 bytes en ${Math.round(r.ms)} ms · ${r.kbs.toFixed(1)} KB/s (app) · ${r.kbsTV.toFixed(1)} KB/s (TV) · reenvíos ${r.reenvios}`);
-    if (!r.ok) { el.resultado.className = 'mal'; el.resultado.textContent = `ERROR en el envío #${i}`; return; }
+    const r = await tv.enviarArchivo(tv.datosDePrueba(102400), { alProgreso: (p) => { el.progreso.value = Math.round(p * 100); } });
+    registrar(`#${i}: ${r.ok ? 'OK' : 'ERROR'} · 102400 bytes en ${Math.round(r.ms)} ms · ${r.kbs.toFixed(1)} KB/s · reenvíos ${r.reenvios}`);
+    if (!r.ok) throw new tv.ErrorTV('El envío de prueba salió mal.');
     velocidades.push(r.kbs);
-    el.resultado.className = 'ok';
-    el.resultado.textContent = `100 KB en ${(r.ms / 1000).toFixed(1)} s (${r.kbs.toFixed(1)} KB/s)`;
-    await pausa(300);
+    await tv.pausa(300);
   }
   if (velocidades.length > 1) {
-    const media = velocidades.reduce((a, b) => a + b, 0) / velocidades.length;
-    registrar(`Promedio ${media.toFixed(1)} KB/s, la más lenta ${Math.min(...velocidades).toFixed(1)} KB/s.`);
+    registrar(`Promedio ${(velocidades.reduce((a, b) => a + b, 0) / velocidades.length).toFixed(1)} KB/s, la más lenta ${Math.min(...velocidades).toFixed(1)} KB/s.`);
   }
 }
 
-async function barrido() {
-  el.resultado.className = ''; el.resultado.textContent = 'Barrido en curso...';
-  for (const trozo of [244, 500]) {
-    for (const ventana of [8, 16]) {
-      const kbs = []; let fallos = 0, reenvios = 0;
-      for (let i = 0; i < 3; i++) {
-        try {
-          const r = await enviarArchivo(102400, trozo, ventana, 0);
-          if (r.ok) kbs.push(r.kbs); else fallos++;
-          reenvios += r.reenvios;
-        } catch (e) { fallos++; registrar(`  fallo: ${e.message || e}`); await pausa(500); }
-        await pausa(250);
-      }
-      const media = kbs.length ? kbs.reduce((a, b) => a + b, 0) / kbs.length : 0;
-      registrar(`trozo ${trozo} · ventana ${ventana}: ${media.toFixed(1)} KB/s (mín ${kbs.length ? Math.min(...kbs).toFixed(1) : '0'}), fallos ${fallos}, reenvíos ${reenvios}`);
-    }
-  }
-  el.resultado.className = 'ok'; el.resultado.textContent = 'Barrido terminado';
-  registrar('=== BARRIDO TERMINADO ===');
-}
+// ---------- Arranque ----------
+el.select.addEventListener('change', () => mostrarVistaPrevia(cancionElegida()));
+el.grupoLetra.addEventListener('click', (ev) => {
+  const b = ev.target.closest('button[data-valor]');
+  if (!b) return;
+  conLetra = b.dataset.valor === 'con';
+  for (const x of el.grupoLetra.querySelectorAll('button')) x.classList.toggle('activo', x === b);
+});
+el.enviar.addEventListener('click', enviarCancion);
+el.grupoTipo.addEventListener('click', (ev) => {
+  const b = ev.target.closest('button[data-valor]');
+  if (b) cambiarPestana(b.dataset.valor);
+});
 
-el.conectar.addEventListener('click', conectar);
-el.desconectar.addEventListener('click', desconectar);
-el.enviarHora.addEventListener('click', () => conOcupado(enviarHora));
-el.pedirEstado.addEventListener('click', () => conOcupado(pedirEstadoTV));
-el.enviarPrueba.addEventListener('click', () => conOcupado(() => correrPrueba(1)));
-el.repetir.addEventListener('click', () => conOcupado(() => correrPrueba(5)));
-el.barrido.addEventListener('click', () => conOcupado(barrido));
-registrar('Listo. Pulsa "Conectar a la TV".');
+el.botonConectar.addEventListener('click', async () => {
+  if (ocupado) return;
+  ocupado = true;
+  try { await tv.buscar(); estado('TV conectada', 'ok'); } catch (e) { estado(mensajeDeError(e), 'error'); } finally { ocupado = false; }
+});
+el.botonDesconectar.addEventListener('click', () => tv.desconectar());
+el.botonHora.addEventListener('click', () => accionMas(tv.ponerHora, 'Hora puesta en la TV'));
+el.botonEstado.addEventListener('click', () => accionMas(async () => {
+  const e = await tv.pedirEstado();
+  registrar(`Estado de la TV: MTU ${e.mtu}, memoria libre ${e.memoria} bytes, celulares vinculados ${e.vinculos}.`);
+}));
+el.botonVelocidad.addEventListener('click', () => accionMas(() => medirVelocidad(1)));
+el.botonVelocidad5.addEventListener('click', () => accionMas(() => medirVelocidad(5)));
+
+tv.alCambiarConexion(actualizarConexion);
+actualizarConexion(false);
+cargarCatalogo().catch((e) => { console.error('[TV RETRO Lite]', e); estado('Algo salió mal. Vuelve a intentarlo.', 'error'); });
