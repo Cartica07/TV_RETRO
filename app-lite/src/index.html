@@ -1,43 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TV RETRO Lite</title>
-<style>
-  :root { --fondo:#0B0F14; --panel:#141B24; --texto:#E6EDF3; --suave:#8B98A5; --acento:#4DD2FF; --ok:#3FB950; --mal:#F85149; }
-  * { box-sizing: border-box; }
-  body { margin:0; padding:16px; padding-top:calc(16px + env(safe-area-inset-top)); background:var(--fondo); color:var(--texto); font:16px/1.4 system-ui, sans-serif; }
-  h1 { font-size:1.2rem; margin:0 0 12px; }
-  .tarjeta { background:var(--panel); border-radius:12px; padding:12px; margin-bottom:12px; }
-  .fila { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:6px 0; }
-  button { font:inherit; padding:10px 12px; border-radius:8px; border:0; background:var(--acento); color:#001018; font-weight:600; }
-  button.sec { background:#223041; color:var(--texto); }
-  button:disabled { opacity:.4; }
-  #estado { font-weight:600; }
-  #resultado { font-size:1.1rem; font-weight:600; min-height:1.4em; }
-  #resultado.ok { color:var(--ok); } #resultado.mal { color:var(--mal); }
-  #registro { height:260px; overflow:auto; background:#0A0E13; border-radius:8px; padding:8px; font:12px/1.4 ui-monospace, monospace; white-space:pre-wrap; }
-  progress { width:100%; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B0F14" />
+  <meta name="color-scheme" content="dark" />
+  <title>TV RETRO Lite</title>
+  <link rel="stylesheet" href="css/fuentes.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/lite.css" />
 </head>
 <body>
-<h1>TV RETRO Lite: prueba de la app</h1>
 
-<div class="tarjeta">
-  <div class="fila"><button id="conectar">Conectar a la TV</button><button id="desconectar" class="sec" disabled>Desconectar</button></div>
-  <div class="fila">Estado: <span id="estado">sin conexión</span></div>
-  <div class="fila"><button id="enviarHora" class="sec" disabled>Enviar hora</button><button id="pedirEstado" class="sec" disabled>Pedir estado</button></div>
+<div class="hoja app">
+
+  <!-- Cabecera fija: barra superior + tarjeta del dispositivo (mismo diseño que la app Pro) -->
+  <div class="cabecera-fija">
+
+    <header class="barra-superior">
+      <h1 class="marca">TV RETRO</h1>
+    </header>
+
+    <section class="dispositivo" aria-label="Pantalla del dispositivo">
+      <div class="marco-pantalla">
+        <canvas id="oled" width="128" height="64"></canvas>
+      </div>
+
+      <div class="franja-inferior">
+        <span class="indicador">
+          <span class="led" id="ledConexion"></span>
+          <span id="textoConexion">Sin conexión</span>
+        </span>
+      </div>
+      <!-- Resultado de la última acción (enviar, tocar, hora…) -->
+      <div class="estado-linea" id="estadoLinea">
+        <span class="led" id="ledEstado"></span>
+        <span id="estadoTexto">Elige una canción</span>
+      </div>
+    </section>
+
+  </div>
+
+  <main class="controles">
+
+    <!-- Canciones -->
+    <div id="seccionCancion">
+
+      <div class="campo">
+        <label class="rotulo" for="seleccionCancion">Canción</label>
+        <div class="fila-cancion">
+          <div class="selector">
+            <select id="seleccionCancion"></select>
+            <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Letra</span>
+        <div class="segmento" id="grupoLetra" role="group" aria-label="Letra">
+          <button type="button" data-valor="con" class="activo">Con letra</button>
+          <button type="button" data-valor="sin">Sin letra</button>
+        </div>
+      </div>
+
+      <div class="campo switch-fila fila-ajuste-simple">
+        <label class="fila-ajuste-titulo" for="inputRepeticiones">Repeticiones</label>
+        <input type="number" id="inputRepeticiones" class="numero-compacto" min="1" value="1" inputmode="numeric" />
+      </div>
+
+      <div id="avisoCancion" class="aviso" style="display:none;"></div>
+
+    </div>
+
+    <!-- Más -->
+    <div id="seccionMas" style="display: none;">
+
+      <div class="campo">
+        <span class="rotulo">Mi TV</span>
+        <div class="grupo-botones">
+          <button type="button" id="botonConectar" class="boton-secundario">Buscar mi TV</button>
+          <button type="button" id="botonDesconectar" class="boton-secundario" disabled>Desconectar</button>
+        </div>
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Hora</span>
+        <div class="grupo-botones">
+          <button type="button" id="botonHora" class="boton-secundario" disabled>Poner la hora en la TV</button>
+        </div>
+      </div>
+
+      <!-- Herramientas del dueño: medir la velocidad del Bluetooth. -->
+      <details class="diagnostico">
+        <summary>Diagnóstico</summary>
+        <div class="grupo-botones">
+          <button type="button" id="botonEstado" class="boton-secundario" disabled>Pedir estado</button>
+          <button type="button" id="botonVelocidad" class="boton-secundario" disabled>Enviar 100 KB</button>
+          <button type="button" id="botonVelocidad5" class="boton-secundario" disabled>Repetir 5 veces</button>
+        </div>
+        <progress id="progresoDiagnostico" value="0" max="100"></progress>
+        <div id="registro"></div>
+      </details>
+
+    </div>
+
+  </main>
+
+  <!-- Barra de acción fija: Enviar -->
+  <div class="barra-accion">
+    <div class="barra-accion-interior">
+      <button id="enviar" type="button">Enviar a la TV</button>
+    </div>
+  </div>
+
+  <!-- Navegación inferior -->
+  <nav class="nav-inferior" aria-label="Secciones">
+    <div class="nav-pestanas" id="grupoTipo">
+      <button type="button" data-valor="cancion" class="activo">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span>Canciones</span>
+      </button>
+      <button type="button" data-valor="mas">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        <span>Más</span>
+      </button>
+    </div>
+  </nav>
+
 </div>
-
-<div class="tarjeta">
-  <div class="fila"><button id="enviarPrueba" disabled>Enviar 100 KB</button><button id="repetir" class="sec" disabled>Repetir 5 veces</button></div>
-  <div class="fila"><button id="barrido" class="sec" disabled>Barrido automático</button></div>
-  <progress id="progreso" value="0" max="100"></progress>
-  <div id="resultado"></div>
-</div>
-
-<div class="tarjeta"><div id="registro"></div></div>
 
 <script src="app.js"></script>
 </body>

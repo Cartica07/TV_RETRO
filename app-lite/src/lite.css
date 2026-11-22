@@ -1,0 +1,39 @@
+/* =========================================================
+   TV RETRO Lite: estilos propios (lo demás viene del CSS de la app Pro, copiado sin cambios).
+   ========================================================= */
+
+.grupo-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+}
+
+.diagnostico {
+  margin-top: var(--esp-4);
+  color: var(--texto-2);
+  font-size: var(--texto-sm);
+}
+
+.diagnostico summary {
+  cursor: pointer;
+  padding: var(--esp-2) 0;
+}
+
+.diagnostico .grupo-botones {
+  margin: var(--esp-2) 0;
+}
+
+.diagnostico progress {
+  width: 100%;
+}
+
+#registro {
+  height: 180px;
+  margin-top: var(--esp-2);
+  padding: var(--esp-2);
+  overflow: auto;
+  background: var(--superficie-hundida);
+  border-radius: var(--radio-sm);
+  font: var(--texto-xs) / 1.4 var(--fuente-data);
+  white-space: pre-wrap;
+}
