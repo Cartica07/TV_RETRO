@@ -13,6 +13,9 @@ const el = {
   tamano: $('tamano'), trozo: $('trozo'), ventana: $('ventana'),
   enviarPrueba: $('enviarPrueba'), repetir: $('repetir'),
   guardar: $('guardar'), pantalla: $('pantalla'), barrido: $('barrido'),
+  archivosM1: $('archivosM1'), repeticiones: $('repeticiones'), conLetra: $('conLetra'),
+  enviarCanciones: $('enviarCanciones'), listar: $('listar'), parar: $('parar'), borrarTodo: $('borrarTodo'),
+  listaCanciones: $('listaCanciones'),
   progreso: $('progreso'), resultado: $('resultado'), registro: $('registro'),
 };
 
@@ -97,7 +100,9 @@ async function escribirCtrl(arreglo) {
 function marcarConectado(si) {
   el.conectar.disabled = si;
   el.desconectar.disabled = !si;
-  for (const b of [el.enviarHora, el.pedirEstado, el.enviarPrueba, el.repetir, el.barrido]) b.disabled = !si || ocupado;
+  for (const b of [el.enviarHora, el.pedirEstado, el.enviarPrueba, el.repetir, el.barrido,
+    el.enviarCanciones, el.listar, el.parar, el.borrarTodo]) b.disabled = !si || ocupado;
+  for (const b of el.listaCanciones.querySelectorAll('button')) b.disabled = !si || ocupado;
   el.estado.textContent = si ? 'conectado' : 'sin conexión';
 }
 
@@ -154,16 +159,20 @@ async function pedirEstadoTV() {
 // ---------- Envío del archivo de prueba ----------
 // banderas: bit 0 = guardar en la memoria de la TV, bit 1 = dibujar la pantalla al recibir.
 // Devuelve { ok, ms, kbs, kbsTV, reenvios, msTotalTV }.
-async function enviarArchivo(tamano, trozo, ventana, banderas = 0) {
-  const datos = datosDePrueba(tamano);
+// extra: { datos, id } para mandar una canción real a la biblioteca (bandera 4 + id de 16 bits).
+async function enviarArchivo(tamano, trozo, ventana, banderas = 0, extra = null) {
+  const datos = extra ? extra.datos : datosDePrueba(tamano);
+  tamano = datos.length;
   const crc = crc32(datos);
   const total = Math.ceil(tamano / trozo);
   avisos.length = 0;
 
-  await escribirCtrl([0x02, ...u32(tamano), ...u32(crc), ventana, banderas]);
+  const cabecera = [0x02, ...u32(tamano), ...u32(crc), ventana, extra ? (banderas | 4) : banderas];
+  if (extra) cabecera.push(extra.id & 255, (extra.id >> 8) & 255);
+  await escribirCtrl(cabecera);
   const inicio = await esperarAvisoTipo(0x82, 5000);
   if (!inicio) throw new Error('La TV no confirmó el inicio.');
-  if (inicio.getUint8(1) !== 1) throw new Error('La TV no pudo preparar el archivo.');
+  if (inicio.getUint8(1) !== 1) throw new Error('La TV no pudo preparar el archivo (¿no hay espacio?).');
 
   let sig = 0;          // próximo trozo a enviar
   let confirmado = 0;   // trozos que la TV ya aceptó
@@ -289,6 +298,120 @@ async function barrido() {
     ocupado = false; marcarConectado(!!(dispositivo && dispositivo.gatt.connected));
   }
 }
+
+// ---------- Canciones (biblioteca de la TV) ----------
+// Archivos .m1 (formato de los musicales) elegidos en el celular. El id de 16 bits sale del nombre.
+const canciones = []; // { nombre, datos, id }
+let idsEnTV = new Set();
+
+function idDeNombre(nombre) {
+  const id = crc32(new TextEncoder().encode(nombre)) & 0xFFFF;
+  return id === 0 ? 1 : id;
+}
+
+function dibujarLista() {
+  el.listaCanciones.textContent = '';
+  const conectado = !!(dispositivo && dispositivo.gatt.connected);
+  for (const c of canciones) {
+    const fila = document.createElement('div');
+    fila.className = 'cancion';
+    const nombre = document.createElement('span');
+    nombre.className = 'nombre';
+    nombre.textContent = `${c.nombre} (${(c.datos.length / 1024).toFixed(1)} KB)`;
+    const estado = document.createElement('span');
+    const esta = idsEnTV.has(c.id);
+    estado.className = 'estado' + (esta ? ' si' : '');
+    estado.textContent = esta ? 'en la TV' : 'falta';
+    const tocarBoton = document.createElement('button');
+    tocarBoton.className = 'sec';
+    tocarBoton.textContent = 'Tocar';
+    tocarBoton.disabled = !conectado || ocupado;
+    tocarBoton.addEventListener('click', () => conOcupado(() => tocar(c)));
+    fila.append(nombre, estado, tocarBoton);
+    el.listaCanciones.append(fila);
+  }
+}
+
+async function conOcupado(accion) {
+  if (ocupado) return;
+  ocupado = true; marcarConectado(true);
+  try { await accion(); } catch (e) { registrar(`Falló: ${e.message}`); } finally {
+    ocupado = false;
+    marcarConectado(!!(dispositivo && dispositivo.gatt.connected));
+    dibujarLista();
+  }
+}
+
+async function listarTV() {
+  avisos.length = 0;
+  await escribirCtrl([0x10]);
+  const a = await esperarAvisoTipo(0x90, 3000);
+  if (!a) throw new Error('La TV no respondió a la lista.');
+  const n = a.getUint8(1);
+  idsEnTV = new Set();
+  for (let i = 0; i < n; i++) idsEnTV.add(a.getUint16(2 + 2 * i, true));
+  await escribirCtrl([0x15]);
+  const inf = await esperarAvisoTipo(0x95, 3000);
+  if (inf) registrar(`Biblioteca de la TV: ${inf.getUint8(1)} canciones, libre ${leer32(inf, 2)} de ${leer32(inf, 6)} bytes.`);
+  dibujarLista();
+}
+
+async function enviarCanciones() {
+  if (!canciones.length) { registrar('Primero elige archivos .m1.'); return; }
+  await listarTV();
+  const faltan = canciones.filter((c) => !idsEnTV.has(c.id));
+  registrar(`${faltan.length} de ${canciones.length} canciones faltan en la TV.`);
+  let k = 0;
+  for (const c of faltan) {
+    k++;
+    el.resultado.className = ''; el.resultado.textContent = `Enviando ${k} de ${faltan.length}: ${c.nombre}`;
+    // Trozo de 500 bytes y ventana de 16: lo más rápido que midió el barrido.
+    const r = await enviarArchivo(c.datos.length, 500, 16, 0, { datos: c.datos, id: c.id });
+    registrar(`${c.nombre}: ${r.ok ? 'OK' : 'ERROR'} · ${c.datos.length} bytes · ${Math.round(r.msTotalTV)} ms hasta quedar guardada · reenvíos ${r.reenvios}`);
+    if (!r.ok) break;
+  }
+  await listarTV();
+  el.resultado.className = 'ok'; el.resultado.textContent = 'Envío de canciones terminado';
+}
+
+async function tocar(c) {
+  avisos.length = 0;
+  await escribirCtrl([0x12, c.id & 255, (c.id >> 8) & 255, Number(el.repeticiones.value), el.conLetra.checked ? 1 : 0]);
+  const a = await esperarAvisoTipo(0x92, 4000);
+  if (!a) throw new Error('La TV no respondió al pedido de tocar.');
+  registrar(a.getUint8(1) === 1 ? `Tocando "${c.nombre}"` : `La TV no pudo tocar "${c.nombre}" (¿no está guardada?)`);
+}
+
+async function pararTV() {
+  avisos.length = 0;
+  await escribirCtrl([0x13]);
+  registrar((await esperarAvisoTipo(0x93, 3000)) ? 'Parado.' : 'La TV no respondió.');
+}
+
+async function borrarTodoTV() {
+  avisos.length = 0;
+  await escribirCtrl([0x14]);
+  registrar((await esperarAvisoTipo(0x94, 5000)) ? 'Biblioteca borrada.' : 'La TV no respondió.');
+  await listarTV();
+}
+
+el.archivosM1.addEventListener('change', async () => {
+  for (const f of el.archivosM1.files) {
+    const datos = new Uint8Array(await f.arrayBuffer());
+    const nombre = f.name.replace(/\.m1$/i, '');
+    const id = idDeNombre(nombre);
+    const i = canciones.findIndex((c) => c.id === id);
+    if (i >= 0) canciones.splice(i, 1);
+    canciones.push({ nombre, datos, id });
+  }
+  el.archivosM1.value = '';
+  registrar(`${canciones.length} canciones elegidas.`);
+  dibujarLista();
+});
+el.enviarCanciones.addEventListener('click', () => conOcupado(enviarCanciones));
+el.listar.addEventListener('click', () => conOcupado(listarTV));
+el.parar.addEventListener('click', () => conOcupado(pararTV));
+el.borrarTodo.addEventListener('click', () => conOcupado(borrarTodoTV));
 
 el.barrido.addEventListener('click', barrido);
 el.conectar.addEventListener('click', conectar);
