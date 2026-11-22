@@ -51,6 +51,8 @@ let despertar = null;
 export function alCambiarConexion(f) { alCambiar = f; }
 export function estaConectado() { return conectado; }
 export function hayTVGuardada() { try { return !!localStorage.getItem(CLAVE_TV); } catch (e) { return false; } }
+/** Id (dirección Bluetooth) de la última TV con la que se conectó la app, o null. La usa la app unificada. */
+export function idTVGuardada() { try { return localStorage.getItem(CLAVE_TV) || null; } catch (e) { return null; } }
 export function olvidarTV() { try { localStorage.removeItem(CLAVE_TV); } catch (e) { /* sin almacenamiento */ } }
 
 function marcarConectado(si) {

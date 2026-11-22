@@ -1,0 +1,7 @@
+node_modules/
+# Se genera con: node construir.mjs
+www/
+android/app/build/
+android/build/
+android/.gradle/
+hs_err_pid*.log

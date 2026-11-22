@@ -1,0 +1,35 @@
+/* =========================================================
+   TV RETRO (app unificada): lo propio de la unificada sobre el diseño de la Pro (el CSS de la Pro se copia sin cambios).
+   Lo que una TV Lite no tiene SE OCULTA, no se borra del HTML: un ID que falta rompe la app (regla de la Pro).
+   ========================================================= */
+
+/* Con una TV Lite en uso (el enrutador pone la clase "tv-lite" en <body>): sin juegos ni actualizar/restablecer la TV. */
+body.tv-lite [data-mas="juegos"],
+body.tv-lite #seccionJuegos,
+body.tv-lite [data-config="sistema"],
+body.tv-lite #configSistema {
+  display: none !important;
+}
+
+/* Pantalla "Conecta tu TV" (HTML en construir.mjs; la maneja js/anadir-lite.js). */
+.pasos-conexion {
+  margin: 0 0 var(--esp-4, 16px);
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3, 12px);
+  color: var(--texto);
+  font-size: var(--texto-md);
+  line-height: 1.45;
+}
+
+.pasos-conexion li::marker {
+  color: var(--acento);
+  font-weight: 700;
+}
+
+#pantallaConexion .boton-secundario,
+#botonTVLite {
+  width: 100%;
+  margin-top: var(--esp-2, 8px);
+}
