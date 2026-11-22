@@ -1,0 +1,4 @@
+node_modules/
+# Se genera con: npm run construir
+www/
+hs_err_pid*.log

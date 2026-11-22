@@ -1,0 +1,10 @@
+{
+  "appId": "com.tvretro.lite",
+  "appName": "TV RETRO Lite",
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK"
+    }
+  }
+}

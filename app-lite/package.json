@@ -1,0 +1,19 @@
+{
+  "name": "tv-retro-lite-app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "App Android (Capacitor) de la TV RETRO Lite: habla con la TV por Bluetooth LE, sin nube",
+  "scripts": {
+    "construir": "node construir.mjs"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^8.4.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
