@@ -94,9 +94,9 @@ export function exclusivo(accion) {
 }
 
 // ---------- Conexión ----------
-// Tiempo que se espera a que la persona escriba el PIN (la ventana de la TV dura 2 minutos). El plugin espera
+// Tiempo que se espera a que la persona escriba el PIN (la ventana de la TV dura 5 minutos). El plugin espera
 // solo 5 s si no se le dice otra cosa, y eso no alcanza para leer el PIN en la TV y escribirlo.
-const ESPERA_VINCULO_MS = 100000;
+const ESPERA_VINCULO_MS = 280000;
 
 // El celular aún no está vinculado con la TV y la conexión no es de un toque de la persona (reintento de fondo):
 // no se debe iniciar el emparejamiento por sorpresa.
