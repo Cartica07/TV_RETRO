@@ -107,6 +107,8 @@ async function conectarA(id) {
   await prepararCanal();
   try { localStorage.setItem(CLAVE_TV, id); } catch (e) { /* sin almacenamiento */ }
   marcarConectado(true);
+  // La hora de la TV la da el celular en cada conexión (la TV no tiene internet).
+  try { await ponerHora(); } catch (e) { /* se puede repetir desde Más */ }
 }
 
 async function iniciar() {

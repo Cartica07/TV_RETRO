@@ -5,6 +5,14 @@
   "plugins": {
     "SystemBars": {
       "style": "DARK"
+    },
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Buscando…",
+        "cancel": "Cancelar",
+        "availableDevices": "Elige tu TV",
+        "noDeviceFound": "No se encontró ninguna TV"
+      }
     }
   }
 }
