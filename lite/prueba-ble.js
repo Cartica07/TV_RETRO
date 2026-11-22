@@ -118,8 +118,12 @@ async function conectar() {
     caracCtrl.addEventListener('characteristicvaluechanged', alRecibirAviso);
     avisos.length = 0;
     marcarConectado(true);
-    registrar('Conectado.');
-    await pedirEstadoTV();
+    registrar('Conectado. Si el celular pide un PIN, escríbelo: está en la pantalla de la TV.');
+    try {
+      await pedirEstadoTV();
+    } catch (e) {
+      registrar(`La TV no dejó escribir (¿falta emparejar?): ${e.message}`);
+    }
   } catch (e) {
     registrar(`No se pudo conectar: ${e.message}`);
     marcarConectado(false);
@@ -142,7 +146,9 @@ async function pedirEstadoTV() {
   await escribirCtrl([0x04]);
   const a = await esperarAvisoTipo(0x84, 3000);
   if (!a) { registrar('La TV no respondió al estado.'); return; }
-  registrar(`Estado de la TV: MTU ${a.getUint16(2, true)}, memoria libre ${leer32(a, 4)} bytes.`);
+  const vinculos = a.byteLength >= 10 ? a.getUint8(8) : '?';
+  const ventana = a.byteLength >= 10 ? (a.getUint8(9) ? 'abierta' : 'cerrada') : '?';
+  registrar(`Estado de la TV: MTU ${a.getUint16(2, true)}, memoria libre ${leer32(a, 4)} bytes, celulares vinculados ${vinculos}, ventana de emparejamiento ${ventana}.`);
 }
 
 // ---------- Envío del archivo de prueba ----------
