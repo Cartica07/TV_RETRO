@@ -21,6 +21,12 @@
   #resultado.ok { color:var(--ok); } #resultado.mal { color:var(--mal); }
   #registro { height:220px; overflow:auto; background:#0A0E13; border-radius:8px; padding:8px; font:12px/1.4 ui-monospace, monospace; white-space:pre-wrap; }
   progress { width:100%; }
+  #listaCanciones { margin-top:8px; }
+  .cancion { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-top:1px solid #223041; }
+  .cancion .nombre { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cancion .estado { color:var(--suave); font-size:.8rem; min-width:64px; text-align:right; }
+  .cancion .estado.si { color:var(--ok); }
+  .cancion button { padding:6px 10px; }
 </style>
 </head>
 <body>
@@ -65,6 +71,24 @@
   <div class="fila"><button id="barrido" class="sec" disabled>Barrido automático</button></div>
   <progress id="progreso" value="0" max="100"></progress>
   <div id="resultado"></div>
+</div>
+
+<div class="tarjeta">
+  <div class="fila"><input type="file" id="archivosM1" accept=".m1" multiple></div>
+  <div class="fila">
+    <label for="repeticiones">Repeticiones</label>
+    <select id="repeticiones"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select>
+    <label><input type="checkbox" id="conLetra" checked> Con letra</label>
+  </div>
+  <div class="fila">
+    <button id="enviarCanciones" class="sec" disabled>Enviar canciones a la TV</button>
+    <button id="listar" class="sec" disabled>Ver la biblioteca</button>
+  </div>
+  <div class="fila">
+    <button id="parar" class="sec" disabled>Parar</button>
+    <button id="borrarTodo" class="sec" disabled>Borrar todo</button>
+  </div>
+  <div id="listaCanciones"></div>
 </div>
 
 <div class="tarjeta"><div id="registro"></div></div>
