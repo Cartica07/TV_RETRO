@@ -101,9 +101,13 @@ function marcarMostrada(version) {
   for (const f of escuchasMostrada) { try { f(version); } catch (e) { console.error(e); } }
 }
 
-/** Avisa a quien quiera mostrar el avance de un envío (0..1). */
+/** Muestra el avance de un envío largo (un GIF o una canción) en la línea de estado: "Enviando… 45 %". p va de 0 a 1. */
 function avanceEnvio(p) {
-  try { window.dispatchEvent(new CustomEvent('lite-avance', { detail: { avance: p } })); } catch (e) { /* sin ventana */ }
+  try {
+    const el = document.getElementById('estadoTexto');
+    // Solo mientras la pantalla diga "Enviando…" (si la persona hizo otra cosa o ya terminó, no se pisa).
+    if (el && /^Enviando/.test(el.textContent)) el.textContent = `Enviando… ${Math.round(p * 100)} %`;
+  } catch (e) { /* sin pantalla */ }
 }
 
 async function asegurarConexion() {

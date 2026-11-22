@@ -36,11 +36,18 @@ await pagina.waitForFunction(() => document.querySelectorAll('#seleccionCancion 
 const grande = await pagina.evaluate(async () => { const l = await (await fetch('canciones/indice.json')).json(); l.sort((a, b) => b.bytes - a.bytes); return l[0]; });
 await pagina.selectOption('#seleccionCancion', grande.clave);
 await pagina.waitForTimeout(700);
-await pagina.evaluate(() => { window.__tv.perderDatos = 4; });
+await pagina.evaluate(() => {
+  window.__tv.perderDatos = 4;
+  window.__textos = [];
+  new MutationObserver(() => window.__textos.push(document.getElementById('estadoTexto').textContent)).observe(document.getElementById('estadoTexto'), { childList: true, characterData: true, subtree: true });
+});
 await pagina.click('#enviar');
 await esperarEstado(/camino|En la TV|✅/, 60000);
 e = await tv();
 informe(`la canción más grande (${grande.bytes} bytes) llega completa aunque se pierdan paquetes`, e.biblioteca.includes(grande.id) && e.sonando && e.sonando.id === grande.id, JSON.stringify({ bib: e.biblioteca, sonando: e.sonando }));
+
+const textos = await pagina.evaluate(() => window.__textos);
+informe('mientras envía la canción grande muestra el avance ("Enviando… 40 %")', textos.some((x) => /Enviando… [0-9]+ %/.test(x)), textos.slice(0, 6).join(' | '));
 
 // 5. La TV se cuelga y no responde: la app no se queda esperando para siempre.
 await pagina.evaluate(() => { window.__tv.sinResponder = true; });
