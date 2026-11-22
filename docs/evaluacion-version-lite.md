@@ -81,7 +81,7 @@ Es la referencia de TODO lo que viaja por Bluetooth. La app (`app-lite/src/ble.j
 | `0x20` | ALARMAS | `tono u16` (id de canción, 0 = aviso simple) y 3 × (`activa`, `hora`, `minuto`, `días` máscara bit 0 = domingo) | `[0xA0][ok]` |
 | `0x22` | AJUSTES | `brillo u8` (1–3), `volumen u8` (0–3), `zona i16` | `[0xA2][ok]` |
 
-**Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o un envío en curso).
+**Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o contenido no válido). **Un INICIO nuevo reemplaza al envío que estuviera en curso** (por ejemplo, uno que quedó a medias porque la app falló): la TV lo abandona y empieza el nuevo. El aviso de HORA es `[0x81][ok]` (`ok = 0` si la hora no tiene sentido: antes de 2023).
 
 ### 8.2 Trozos y confirmaciones (DATOS)
 
