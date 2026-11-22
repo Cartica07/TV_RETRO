@@ -34,6 +34,7 @@
     sinResponder: false,           // no responder a CTRL (simula una TV colgada)
     rechazarBusqueda: false,       // el usuario cierra la lista de TV sin elegir ninguna
     noConectar: false,             // la conexión falla (TV apagada o lejos)
+    conexiones: 0,                 // cuántas veces se conectó (las pruebas de concurrencia lo miran)
     dispositivo: null,
   };
   let rx = null;                   // recepción en curso
@@ -160,7 +161,7 @@
   dispositivo.name = 'TV RETRO Lite';
   dispositivo.gatt = {
     connected: false,
-    connect: async () => { if (tv.noConectar) throw new Error('GATT Error Unknown.'); tv.conectado = true; dispositivo.gatt.connected = true; return dispositivo.gatt; },
+    connect: async () => { if (tv.noConectar) throw new Error('GATT Error Unknown.'); tv.conectado = true; tv.conexiones++; dispositivo.gatt.connected = true; return dispositivo.gatt; },
     disconnect: () => { tv.conectado = false; dispositivo.gatt.connected = false; dispositivo.dispatchEvent(Object.assign(new Event('gattserverdisconnected'), {})); },
     getPrimaryService: async () => servicio,
     getPrimaryServices: async () => [servicio],

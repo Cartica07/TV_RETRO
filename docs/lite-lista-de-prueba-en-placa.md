@@ -9,9 +9,12 @@
 - APK: `node construir.mjs`, `npx cap sync android` y Gradle (ver `docs/historial-cambios.md`) en `app-lite/`; `adb install -r`. Es una app **aparte** de la Pro (`com.tvretro.lite`).
 - Un solo cable USB: S3 y celular se turnan. Con el celular por adb, **no usar la tecla Atrás**.
 
-## 1. Emparejar (primera vez)
+## 1. Primer arranque y emparejar
 
-1. Encender la TV nueva: debe mostrar **"Emparejar" con un PIN de 6 dígitos** y la cuenta de 2 minutos (se abre sola sin celulares vinculados). Registro: `[ble] ventana de emparejamiento abierta`.
+> **Ojo con esta S3:** ya guarda el vínculo del Moto (de la prueba anterior) y datos de cuando fue TV Pro. El firmware nuevo usa nombres propios en su memoria (`lite_alarma`, `lite_ajustes`, `lite_reloj`, `/lite_ultimo.json`), así que **no lee** las alarmas ni los ajustes de la Pro, y al primer arranque **vacía la biblioteca del prototipo** (registro: `[biblio] formato nuevo: se vacia lo que dejo una version anterior`). No se borra la flash entera (ahí quedan las credenciales de la TV Pro).
+
+0. Primer arranque: comprobar en el registro por COM6 la línea del formato nuevo y `[biblio] 0 canciones`.
+1. **Olvidar la TV en el celular** (Ajustes > Bluetooth > TV RETRO Lite > Olvidar) y **mantener el botón 8 s** con nada sonando: la TV debe mostrar **"Emparejar" con un PIN de 6 dígitos** y la cuenta de 2 minutos. Registro: `[ble] ventana de emparejamiento abierta`. (Con una TV nueva de verdad la ventana se abre sola al encender.)
 2. En la app: **Enviar a la TV** → permiso de "dispositivos cercanos" → elegir la TV → el celular pide el PIN → escribirlo. **Aquí se prueba por primera vez `createBond()` del plugin dentro de la app** (en la prueba anterior se vinculó desde Ajustes). Esperado: la TV muestra "Listo! Celular emparejado" y el envío sigue solo.
 3. Cerrar la app y volver a abrirla: no debe pedir PIN; el indicador pasa a "En línea" solo (reconecta con la última TV).
 4. Con la ventana cerrada, un celular que no esté vinculado **no debe poder enviar nada** (ya se probó con la S3; repetir con la app).

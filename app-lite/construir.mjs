@@ -62,7 +62,7 @@ cambiar(/<script type="module" src="js\/main\.js"><\/script>/,
   '<script>if (!/[?&]sincuentas/.test(location.search)) history.replaceState(null, "", "?sincuentas=1");</script>\n<script src="app.js"></script>',
   'el script js/main.js');
 // Ayuda y Legal: las páginas de la Pro hablan de cuentas, Firebase y Wi-Fi. La Lite abre las suyas (lite/ del panel).
-cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos)\.html/g, 'https://cartica07.github.io/TV_RETRO/lite/$1.html', 'los enlaces de Ayuda y Legal');
+cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|licencias)\.html/g, 'https://cartica07.github.io/TV_RETRO/lite/$1.html', 'los enlaces de Ayuda y Legal');
 // Aviso de dónde se guardan las imágenes (la Lite no tiene nube): arriba de Legal. Texto PROPUESTO: lo aprueba el dueño.
 cambiar(/(<div id="configLegal" class="config-apartado" style="display: none;">)/,
   '$1\n      <div class="campo"><p class="dato-cuenta" id="avisoGuardadoEnCelular">Tus imágenes y GIF se guardan en este celular, no en internet. Si borras la app o cambias de celular, se pierden.</p></div>',

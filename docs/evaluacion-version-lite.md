@@ -103,4 +103,18 @@ Lo que la app Pro escribía en Firebase (`pantalla` y `archivo`) viaja en UN env
 - **Hora:** la da el celular al conectar (`0x01`). **Zona horaria:** manda la de `AJUSTES` una vez guardada; mientras no se haya guardado ninguna, la del celular. Sin hora válida desde el encendido la TV muestra "sin hora" y **no hace sonar alarmas** (nunca una hora inventada).
 - **Alarmas:** hasta 3, a su hora y días, suenan solas; se callan solas al minuto; un toque corto del botón las calla. Suenan aunque el volumen esté en Silencio (volumen Medio). La canción de la alarma está protegida: la caché nunca la borra.
 - **Botón (el único):** toque corto = calla lo que suene; si no suena nada, cambia contenido → reloj → pantalla apagada. Con algo sonando, ningún toque ni mantenido abre el emparejamiento (para no borrar el vínculo al querer callar una alarma). **Mantener 8 s con nada sonando** abre la ventana de emparejamiento (PIN en pantalla, 2 min) y borra el vínculo anterior.
+- **Memoria permanente propia:** la Lite usa nombres propios en la NVS (`lite_alarma`, `lite_ajustes`, `lite_reloj`) y en LittleFS (`/lite_ultimo.json`, `/c/` con la marca `.formato1`) para no mezclarse con los datos de una TV Pro que estuvo en la misma placa; si falta la marca del formato, la biblioteca se vacía.
 - **Espacio:** la caché de canciones borra las menos usadas (salvo la de la alarma); un envío (canción o contenido) que no cabe se rechaza con `0x82` `ok = 0` y la app avisa antes de empezar si ve que un GIF no cabe (`0x15`).
+
+## 9. Batería: lo que se encontró y lo que falta decidir (2026-11-22)
+
+El firmware de la Lite **no tiene ninguna gestión de energía**: el `loop()` nunca duerme, la pantalla solo se apaga con el botón (modo apagado) y el Bluetooth anuncia sin parar. Con la corriente de un USB no se nota; con batería sí, y el dueño pidió autonomía.
+
+**Lo comprobado** (`esp32c3-libs/3.3.10/sdkconfig` del núcleo de Arduino instalado): `CONFIG_PM_ENABLE` **no está activado**, `CONFIG_BT_CTRL_MODEM_SLEEP` **no está activado** y el reloj de reposo es el interno (`CONFIG_RTC_CLK_SRC_INT_RC`, sin el cristal de 32 kHz). Es decir, **el sueño ligero automático con Bluetooth no está disponible en el núcleo precompilado**: tenerlo exige compilar el núcleo aparte (ESP-IDF o `lib-builder`, igual que el cifrado de flash H-20) y, por lo medido en la investigación, un cristal de 32 kHz en la placa. Cuánto gasta hoy la TV **no está medido**.
+
+**Opciones** (decide el dueño; ninguna está hecha):
+1. **Sueño manual con el núcleo actual:** la TV duerme (`esp_light_sleep_start`) y despierta por el botón o por un temporizador a la hora de la próxima alarma; el Bluetooth solo se enciende al pulsar el botón o al despertar por la alarma, durante unos minutos. Cabe en el firmware actual, pero cambia la experiencia: para mandar algo hay que pulsar antes el botón de la TV.
+2. **Compilar el núcleo con gestión de energía** (más trabajo, y conviene un cristal de 32 kHz en la placa): el Bluetooth sigue disponible con poco gasto.
+3. **Aceptar poca autonomía** (la TV conectada a la corriente o con una batería grande) para la primera versión.
+
+Antes de elegir hay que **medir** el gasto real con la C3 (analizador de corriente, anunciando, conectada, con la pantalla encendida y apagada).

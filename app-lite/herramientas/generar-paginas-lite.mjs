@@ -1,4 +1,4 @@
-// Genera las páginas legales y de ayuda de la TV RETRO Lite (lite/terminos.html, lite/privacidad.html, lite/ayuda.html)
+// Genera las páginas legales y de ayuda de la TV RETRO Lite (lite/terminos.html, lite/privacidad.html, lite/ayuda.html, lite/licencias.html)
 // con el mismo estilo que las de la app Pro (copia el <head> de terminos.html) y los textos de la Lite: sin cuentas,
 // sin nube, todo en el celular. SON BORRADORES: el dueño los revisa y la parte legal la revisa un abogado antes de vender.
 // Uso: node app-lite/herramientas/generar-paginas-lite.mjs
@@ -109,7 +109,32 @@ const ayuda = pagina('Preguntas frecuentes', FECHA, `
   <h2>¿No encontraste tu respuesta?</h2>
   <p>Escríbenos a ${CONTACTO}.</p>`);
 
-for (const [nombre, html] of [['terminos', terminos], ['privacidad', privacidad], ['ayuda', ayuda]]) {
+const E = (nombre, licencia, url) => `      <li><strong>${nombre}</strong>: ${licencia} · <a href="${url}" target="_blank" rel="noopener">fuente</a></li>`;
+const licencias = pagina('Licencias', FECHA, `
+  <p>TV RETRO Lite usa componentes de software libre de terceros. Gracias a sus autores. Estas son sus licencias:</p>
+
+  <h2>App del celular</h2>
+    <ul>
+${E('Capacitor', 'MIT', 'https://github.com/ionic-team/capacitor')}
+${E('@capacitor/app y @capacitor/screen-orientation', 'MIT', 'https://github.com/ionic-team/capacitor-plugins')}
+${E('@capacitor-community/bluetooth-le', 'MIT', 'https://github.com/capacitor-community/bluetooth-le')}
+${E('Space Grotesk y JetBrains Mono (tipografías de la app)', 'SIL Open Font License 1.1', 'https://fonts.google.com')}
+${E('GNU FreeFont (FreeSans, FreeSerif) (letras de la vista previa y de la TV)', 'GPL v3 con excepción de fuentes', 'https://www.gnu.org/software/freefont/')}
+    </ul>
+
+  <h2>Firmware de la TV</h2>
+    <ul>
+${E('Arduino core para ESP32 (base del programa de la TV)', 'LGPL 2.1', 'https://github.com/espressif/arduino-esp32')}
+${E('ESP-IDF (incluye miniz, mbedTLS, LittleFS y Apache NimBLE para el Bluetooth)', 'Apache License 2.0 y licencias de cada componente (MIT, BSD)', 'https://github.com/espressif/esp-idf')}
+${E('Adafruit GFX Library (dibujo en la pantalla)', 'BSD', 'https://github.com/adafruit/Adafruit-GFX-Library')}
+${E('Adafruit SSD1306 (pantalla OLED)', 'BSD', 'https://github.com/adafruit/Adafruit_SSD1306')}
+${E('Adafruit BusIO (comunicación con la pantalla)', 'MIT', 'https://github.com/adafruit/Adafruit_BusIO')}
+${E('ArduinoJson (lectura de datos)', 'MIT', 'https://github.com/bblanchon/ArduinoJson')}
+    </ul>
+
+  <p>Si quieres el texto completo de alguna licencia o el código fuente que la licencia exige, escríbenos a ${CONTACTO}.</p>`);
+
+for (const [nombre, html] of [['terminos', terminos], ['privacidad', privacidad], ['ayuda', ayuda], ['licencias', licencias]]) {
   writeFileSync(join(raiz, 'lite', `${nombre}.html`), html.replace(/\n/g, '\r\n'));
   console.log(`lite/${nombre}.html`);
 }

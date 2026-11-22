@@ -120,7 +120,7 @@ async function conectarA(id) {
   try { localStorage.setItem(CLAVE_TV, id); } catch (e) { /* sin almacenamiento */ }
   marcarConectado(true);
   // La hora de la TV la da el celular en cada conexión (la TV no tiene internet).
-  try { await ponerHora(); } catch (e) { /* se puede repetir desde Más */ }
+  try { await exclusivo(() => ponerHora()); } catch (e) { /* se vuelve a mandar en la próxima conexión */ }
 }
 
 async function iniciar() {
@@ -129,33 +129,51 @@ async function iniciar() {
   iniciado = true;
 }
 
+// Una sola conexión a la vez: el reintento en segundo plano y un toque en "Enviar" no deben conectar dos veces
+// (el canal de avisos tiene un solo receptor).
+let enCurso = null;
+
+async function esperarEnCurso() {
+  try { await enCurso; } catch (e) { /* el que lo inició se ocupa del error */ }
+}
+
 // Reconecta con la última TV usada (sin buscar). Devuelve true si quedó conectada.
 export async function reconectar() {
   if (conectado) return true;
+  if (enCurso) { await esperarEnCurso(); return conectado; }
   let id = null;
   try { id = localStorage.getItem(CLAVE_TV); } catch (e) { /* sin almacenamiento */ }
   if (!id) return false;
+  enCurso = (async () => { await iniciar(); await conectarA(id); })();
   try {
-    await iniciar();
-    await conectarA(id);
+    await enCurso;
     return true;
   } catch (e) {
     marcarConectado(false);
     return false;
+  } finally {
+    enCurso = null;
   }
 }
 
 // Muestra la lista de TV cercanas del sistema y conecta con la elegida.
 export async function buscar() {
-  try {
+  if (conectado) return;
+  if (enCurso) { await esperarEnCurso(); if (conectado) return; }
+  enCurso = (async () => {
     await iniciar();
     const d = await BleClient.requestDevice({ services: [SERVICIO] });
     await conectarA(d.deviceId);
+  })();
+  try {
+    await enCurso;
   } catch (e) {
     marcarConectado(false);
     const texto = String((e && e.message) || e);
     if (/cancel/i.test(texto)) throw new ErrorTV('No elegiste ninguna TV.');
     throw new ErrorTV('No se pudo conectar con la TV. Acércate y vuelve a intentarlo.');
+  } finally {
+    enCurso = null;
   }
 }
 
