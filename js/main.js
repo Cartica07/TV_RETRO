@@ -754,6 +754,10 @@ function mostrarSeccionSegunTipo(tipo) {
 }
 
 function cambiarTipo(nuevoTipo) {
+  // Un mensaje de error de la pestaña que se deja (por ejemplo "El portapapeles no tiene una imagen…") no tiene sentido en la
+  // nueva: se limpia. Los "ok" y los neutros ("En la TV ✅", "Ya va camino a la TV") se conservan.
+  if (elementos.estadoLinea && elementos.estadoLinea.classList.contains('error')) marcarEstado('', null, elementos);
+
   // "Más" (tipo galeria) siempre abre en su menú de opciones.
   if (nuevoTipo === 'galeria') fijarMasVista('menu');
   estadoActual.tipo = nuevoTipo;
