@@ -76,6 +76,16 @@ export async function abrir(semilla = {}, { ancho = 390, alto = 844, antes = nul
   await pagina.route(/fonts\.(googleapis|gstatic)\.com/, (ruta) => ruta.fulfill({ contentType: 'text/css', body: '' }));
   await pagina.route(/favicon\.ico$/, (ruta) => ruta.fulfill({ status: 204, body: '' }));
 
+  // El tutorial guiado (js/tutorial.js) se abre la primera vez que una cuenta entra y taparía a casi todas las pruebas:
+  // por defecto el banco lo da por visto. Lo dice el arnés, no la app (la app no tiene ningún gancho de pruebas):
+  // tutorial.mjs lo activa poniendo globalThis.__conTutorial = true antes de cargar la página.
+  await pagina.addInitScript(() => {
+    const leer = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (k) {
+      if (!globalThis.__conTutorial && typeof k === 'string' && k.startsWith('tvretro.tutorial.')) return '1';
+      return leer.call(this, k);
+    };
+  });
   await pagina.addInitScript((s) => { globalThis.__semilla = s; }, semilla);
   if (retrasos) await pagina.addInitScript((r) => { globalThis.__retrasosIniciales = r; }, retrasos);
   if (antes) await antes(pagina);

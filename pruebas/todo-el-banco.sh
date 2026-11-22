@@ -29,7 +29,7 @@ resumen() { # nombre, salida, código de salida de la suite
   [ "$mal" -gt 0 ] && FALLOS=$((FALLOS+1))
 }
 echo "### PANEL (Playwright, Firebase falso)"
-for t in pruebas-panel bobos login tv compartir cuotas verificacion login-google atras baja-cuenta baja-ui sin-red-arranque apk-sin-internet etapa1-sin-firebase etapa1-topes etapa1-admin-canciones mas alarma config sistema auditoria-b carga-masiva-cuentas; do
+for t in pruebas-panel bobos login tv compartir cuotas verificacion login-google atras tutorial baja-cuenta baja-ui sin-red-arranque apk-sin-internet etapa1-sin-firebase etapa1-topes etapa1-admin-canciones mas alarma config sistema auditoria-b carga-masiva-cuentas; do
   [ -f "$t.mjs" ] || continue
   timeout "$TOPE" node "$t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?
 done
