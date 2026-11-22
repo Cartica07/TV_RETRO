@@ -1,0 +1,458 @@
+[
+ {
+  "id": 12,
+  "clave": "abelardo_hp",
+  "nombre": "abelardo_hp",
+  "archivo": "abelardo_hp.m1",
+  "bytes": 3193,
+  "duracion": 46
+ },
+ {
+  "id": 13,
+  "clave": "alabare_2",
+  "nombre": "alabare",
+  "archivo": "alabare_2.m1",
+  "bytes": 7058,
+  "duracion": 42
+ },
+ {
+  "id": 14,
+  "clave": "arregla_pa_que_te_vas",
+  "nombre": "arregla_pa_que_te_vas",
+  "archivo": "arregla_pa_que_te_vas.m1",
+  "bytes": 3775,
+  "duracion": 21
+ },
+ {
+  "id": 15,
+  "clave": "ay_gatito_miau",
+  "nombre": "ay_gatito_miau",
+  "archivo": "ay_gatito_miau.m1",
+  "bytes": 2741,
+  "duracion": 13
+ },
+ {
+  "id": 16,
+  "clave": "contigo_panchos",
+  "nombre": "contigo_panchos",
+  "archivo": "contigo_panchos.m1",
+  "bytes": 11145,
+  "duracion": 48
+ },
+ {
+  "id": 17,
+  "clave": "culpable_ono",
+  "nombre": "cupable_o_no_v2",
+  "archivo": "culpable_ono.m1",
+  "bytes": 5814,
+  "duracion": 58
+ },
+ {
+  "id": 1,
+  "clave": "de_musica_ligera",
+  "nombre": "De_musica_ligera",
+  "archivo": "de_musica_ligera.m1",
+  "bytes": 7548,
+  "duracion": 67
+ },
+ {
+  "id": 18,
+  "clave": "desde_octubreee",
+  "nombre": "desde_octubreee",
+  "archivo": "desde_octubreee.m1",
+  "bytes": 8230,
+  "duracion": 26
+ },
+ {
+  "id": 2,
+  "clave": "dios_esta_aqui",
+  "nombre": "Dios_esta_aqui",
+  "archivo": "dios_esta_aqui.m1",
+  "bytes": 2776,
+  "duracion": 31
+ },
+ {
+  "id": 19,
+  "clave": "doctor_house",
+  "nombre": "doctor_house",
+  "archivo": "doctor_house.m1",
+  "bytes": 1255,
+  "duracion": 10
+ },
+ {
+  "id": 20,
+  "clave": "doctor_slenderman",
+  "nombre": "doctor_house",
+  "archivo": "doctor_slenderman.m1",
+  "bytes": 2658,
+  "duracion": 11
+ },
+ {
+  "id": 3,
+  "clave": "doma",
+  "nombre": "Doma",
+  "archivo": "doma.m1",
+  "bytes": 6169,
+  "duracion": 30
+ },
+ {
+  "id": 21,
+  "clave": "dtmf",
+  "nombre": "dtmf",
+  "archivo": "dtmf.m1",
+  "bytes": 32975,
+  "duracion": 31
+ },
+ {
+  "id": 22,
+  "clave": "el_amar_y_querer",
+  "nombre": "el_amar_y_querer",
+  "archivo": "el_amar_y_querer.m1",
+  "bytes": 6727,
+  "duracion": 53
+ },
+ {
+  "id": 23,
+  "clave": "el_fin_del_mundo",
+  "nombre": "el_fin_del_mundo",
+  "archivo": "el_fin_del_mundo.m1",
+  "bytes": 5412,
+  "duracion": 33
+ },
+ {
+  "id": 24,
+  "clave": "el_me_mintio",
+  "nombre": "el_me_mintio",
+  "archivo": "el_me_mintio.m1",
+  "bytes": 7094,
+  "duracion": 46
+ },
+ {
+  "id": 25,
+  "clave": "en_el_bosque_de_la_china",
+  "nombre": "en_el_bosque_de_la_china",
+  "archivo": "en_el_bosque_de_la_china.m1",
+  "bytes": 6249,
+  "duracion": 41
+ },
+ {
+  "id": 26,
+  "clave": "en_otra_vida",
+  "nombre": "en_otra_vida",
+  "archivo": "en_otra_vida.m1",
+  "bytes": 4801,
+  "duracion": 44
+ },
+ {
+  "id": 27,
+  "clave": "esclava_remix",
+  "nombre": "esclava_remix",
+  "archivo": "esclava_remix.m1",
+  "bytes": 7731,
+  "duracion": 37
+ },
+ {
+  "id": 28,
+  "clave": "feliz_cumplea_os",
+  "nombre": "feliz_cumplea_os",
+  "archivo": "feliz_cumplea_os.m1",
+  "bytes": 2149,
+  "duracion": 39
+ },
+ {
+  "id": 29,
+  "clave": "halloween_song",
+  "nombre": "halloween_song",
+  "archivo": "halloween_song.m1",
+  "bytes": 5571,
+  "duracion": 103
+ },
+ {
+  "id": 30,
+  "clave": "hijo_de_la_luna",
+  "nombre": "hijo_de_la_luna",
+  "archivo": "hijo_de_la_luna.m1",
+  "bytes": 6833,
+  "duracion": 41
+ },
+ {
+  "id": 31,
+  "clave": "i_have_no_friends",
+  "nombre": "i_have_no_friends",
+  "archivo": "i_have_no_friends.m1",
+  "bytes": 71542,
+  "duracion": 43
+ },
+ {
+  "id": 32,
+  "clave": "intruso",
+  "nombre": "intruso",
+  "archivo": "intruso.m1",
+  "bytes": 5617,
+  "duracion": 47
+ },
+ {
+  "id": 4,
+  "clave": "is_not_she_lovely",
+  "nombre": "Is_not_she_lovely",
+  "archivo": "is_not_she_lovely.m1",
+  "bytes": 4055,
+  "duracion": 41
+ },
+ {
+  "id": 33,
+  "clave": "la_costa_del_silencio_ino",
+  "nombre": "la_costa_del_silencio",
+  "archivo": "la_costa_del_silencio_ino.m1",
+  "bytes": 53709,
+  "duracion": 60
+ },
+ {
+  "id": 34,
+  "clave": "la_cucaracha",
+  "nombre": "la_cucaracha",
+  "archivo": "la_cucaracha.m1",
+  "bytes": 8835,
+  "duracion": 53
+ },
+ {
+  "id": 35,
+  "clave": "la_noche_mas_linda_del_mund",
+  "nombre": "la_noche_mas_linda_del_mund",
+  "archivo": "la_noche_mas_linda_del_mund.m1",
+  "bytes": 7954,
+  "duracion": 55
+ },
+ {
+  "id": 36,
+  "clave": "la_noche_sin_ti",
+  "nombre": "la_noche_sin_ti",
+  "archivo": "la_noche_sin_ti.m1",
+  "bytes": 6721,
+  "duracion": 56
+ },
+ {
+  "id": 5,
+  "clave": "la_quemona",
+  "nombre": "La_quemona",
+  "archivo": "la_quemona.m1",
+  "bytes": 4926,
+  "duracion": 33
+ },
+ {
+  "id": 37,
+  "clave": "levan_polkka",
+  "nombre": "levan_polkka",
+  "archivo": "levan_polkka.m1",
+  "bytes": 91365,
+  "duracion": 38
+ },
+ {
+  "id": 38,
+  "clave": "lo_mejor_del_amor",
+  "nombre": "lo_mejor_del_amor",
+  "archivo": "lo_mejor_del_amor.m1",
+  "bytes": 3855,
+  "duracion": 36
+ },
+ {
+  "id": 7,
+  "clave": "mi_buen_amor_2",
+  "nombre": "Mi_buen_amor",
+  "archivo": "mi_buen_amor_2.m1",
+  "bytes": 9861,
+  "duracion": 101
+ },
+ {
+  "id": 39,
+  "clave": "mi_corazon_encnatado",
+  "nombre": "mi_corazon_encnatado",
+  "archivo": "mi_corazon_encnatado.m1",
+  "bytes": 963,
+  "duracion": 42
+ },
+ {
+  "id": 40,
+  "clave": "mi_viejo",
+  "nombre": "mi_viejo",
+  "archivo": "mi_viejo.m1",
+  "bytes": 5670,
+  "duracion": 54
+ },
+ {
+  "id": 6,
+  "clave": "mostaza",
+  "nombre": "MOSTAZA",
+  "archivo": "mostaza.m1",
+  "bytes": 33314,
+  "duracion": 39
+ },
+ {
+  "id": 41,
+  "clave": "noviembre_sin_ti",
+  "nombre": "noviembre_sin_ti",
+  "archivo": "noviembre_sin_ti.m1",
+  "bytes": 8437,
+  "duracion": 46
+ },
+ {
+  "id": 42,
+  "clave": "pa_donde_se_fue",
+  "nombre": "pa_donde_se_fue",
+  "archivo": "pa_donde_se_fue.m1",
+  "bytes": 5615,
+  "duracion": 64
+ },
+ {
+  "id": 43,
+  "clave": "porque_te_vas_v2",
+  "nombre": "porque_te_vas_v2",
+  "archivo": "porque_te_vas_v2.m1",
+  "bytes": 5863,
+  "duracion": 31
+ },
+ {
+  "id": 44,
+  "clave": "rata_de_dos_patas",
+  "nombre": "rata_de_dos_patas",
+  "archivo": "rata_de_dos_patas.m1",
+  "bytes": 32513,
+  "duracion": 67
+ },
+ {
+  "id": 45,
+  "clave": "rojo_vivo",
+  "nombre": "rojo_vivo",
+  "archivo": "rojo_vivo.m1",
+  "bytes": 6797,
+  "duracion": 38
+ },
+ {
+  "id": 46,
+  "clave": "rosa_pastel",
+  "nombre": "rosa_pastel",
+  "archivo": "rosa_pastel.m1",
+  "bytes": 10305,
+  "duracion": 40
+ },
+ {
+  "id": 8,
+  "clave": "runaway",
+  "nombre": "RUNAWAY",
+  "archivo": "runaway.m1",
+  "bytes": 5205,
+  "duracion": 36
+ },
+ {
+  "id": 47,
+  "clave": "see_you_again",
+  "nombre": "see_you_again",
+  "archivo": "see_you_again.m1",
+  "bytes": 11562,
+  "duracion": 58
+ },
+ {
+  "id": 49,
+  "clave": "soy_un_pajarito",
+  "nombre": "soy_un_pajarito",
+  "archivo": "soy_un_pajarito.m1",
+  "bytes": 8211,
+  "duracion": 44
+ },
+ {
+  "id": 9,
+  "clave": "sumergeme",
+  "nombre": "Sumergeme",
+  "archivo": "sumergeme.m1",
+  "bytes": 3237,
+  "duracion": 49
+ },
+ {
+  "id": 48,
+  "clave": "sin_medir_distancia",
+  "nombre": "te_estoy_cotorreando",
+  "archivo": "sin_medir_distancia.m1",
+  "bytes": 36996,
+  "duracion": 49
+ },
+ {
+  "id": 50,
+  "clave": "te_estoy_cotorreando_4",
+  "nombre": "te_estoy_cotorreando",
+  "archivo": "te_estoy_cotorreando_4.m1",
+  "bytes": 36995,
+  "duracion": 49
+ },
+ {
+  "id": 10,
+  "clave": "termonuclear",
+  "nombre": "Termonuclear",
+  "archivo": "termonuclear.m1",
+  "bytes": 5917,
+  "duracion": 39
+ },
+ {
+  "id": 51,
+  "clave": "traicionera",
+  "nombre": "traicionera",
+  "archivo": "traicionera.m1",
+  "bytes": 61421,
+  "duracion": 42
+ },
+ {
+  "id": 52,
+  "clave": "tu_carcel",
+  "nombre": "tu_carcel",
+  "archivo": "tu_carcel.m1",
+  "bytes": 8646,
+  "duracion": 55
+ },
+ {
+  "id": 53,
+  "clave": "tu_eres_ajena",
+  "nombre": "tu_eres_ajena",
+  "archivo": "tu_eres_ajena.m1",
+  "bytes": 48221,
+  "duracion": 42
+ },
+ {
+  "id": 11,
+  "clave": "tufaltadequerer",
+  "nombre": "TuFaltaDeQuerer",
+  "archivo": "tufaltadequerer.m1",
+  "bytes": 5067,
+  "duracion": 46
+ },
+ {
+  "id": 54,
+  "clave": "tukti_tuki",
+  "nombre": "tukti_tuki",
+  "archivo": "tukti_tuki.m1",
+  "bytes": 14416,
+  "duracion": 23
+ },
+ {
+  "id": 55,
+  "clave": "tv_lanavedelolvido_copy",
+  "nombre": "tv lanavedelolvido copy",
+  "archivo": "tv_lanavedelolvido_copy.m1",
+  "bytes": 4351,
+  "duracion": 31
+ },
+ {
+  "id": 56,
+  "clave": "un_mundo_ideal",
+  "nombre": "un_mundo_ideal",
+  "archivo": "un_mundo_ideal.m1",
+  "bytes": 15549,
+  "duracion": 69
+ },
+ {
+  "id": 57,
+  "clave": "vuelvepetro",
+  "nombre": "vuelve_te_pido_petro",
+  "archivo": "vuelvepetro.m1",
+  "bytes": 3777,
+  "duracion": 18
+ }
+]
