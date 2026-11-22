@@ -69,13 +69,14 @@
     if (tv.sinResponder) return;
     tv.escrituras.push(d[0]);
     switch (d[0]) {
-      case 0x01: tv.hora = leer32(d, 1); tv.zona = (d[5] | (d[6] << 8)) << 16 >> 16; avisar([0x81, 1]); break;
+      case 0x01: { const epoch = leer32(d, 1); const ok = epoch >= 1700000000; if (ok) { tv.hora = epoch; tv.zona = (d[5] | (d[6] << 8)) << 16 >> 16; } avisar([0x81, ok ? 1 : 0]); break; }
       case 0x02: {
         const tam = leer32(d, 1), crc = leer32(d, 5), ventana = d[9] || 1, banderas = d[10] || 0;
         const esCancion = !!(banderas & 4), contenido = !!(banderas & 8);
         const id = esCancion ? (d[11] | (d[12] << 8)) : 0;
-        let ok = true;
-        if (esCancion) { tv.sonando = null; ok = hacerEspacio(tam); }
+        let ok = true; // un INICIO nuevo reemplaza al que estuviera en curso
+        if (ok && esCancion) { tv.sonando = null; ok = hacerEspacio(tam); }
+        if (ok && contenido) ok = tam > 2 && tam <= 1536 * 1024 && hacerEspacio(tam);
         rx = ok ? { tam, crc, ventana, esCancion, contenido, id, seq: 0, partes: [], bytes: 0, aceptados: 0, avisoHueco: -1 } : null;
         avisar([0x82, ok ? 1 : 0]);
         break;
@@ -109,7 +110,7 @@
         break;
       }
       case 0x13: tv.sonando = null; avisar([0x93, 1]); break;
-      case 0x14: tv.sonando = null; tv.biblioteca.clear(); avisar([0x94, 1]); break;
+      case 0x14: { tv.sonando = null; const p = protegidos(); for (const id of [...tv.biblioteca.keys()]) if (!p.has(id)) tv.biblioteca.delete(id); avisar([0x94, 1]); break; }
       case 0x15: avisar([0x95, tv.biblioteca.size, ...u32(libre()), ...u32(tv.capacidad)]); break;
       case 0x20: {
         const alarmas = [];
