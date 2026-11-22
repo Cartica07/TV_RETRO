@@ -58,3 +58,49 @@ El dueño pidió que la app Lite tenga **la misma apariencia, las mismas pestañ
 - **Galería en el celular** (no en la nube): IndexedDB. Se avisa al cliente de que **se guarda en el celular**. Se pierde si se desinstala la app, se borran sus datos o se cambia de celular (y al cambiar de celular hay que volver a emparejar la TV con el botón). Si el respaldo automático de Android podría restaurarla tras reinstalar: **no verificado** (la app declara `allowBackup="false"`).
 - **Firmware:** copiar a `OLED_Lite/` el texto con sus 5 fuentes (`texto.cpp`, `fuentes.cpp`) y las animaciones z1 (`animacion.cpp`) cuesta **~137 KB**: medido en la C3, el programa pasa de 740 KB a **876 KB (66 % de 1,25 MB)**. Falta sumar recibir el `pantalla` de la Pro por Bluetooth (JSON), imagen, alarma y reloj, y medir otra vez.
 - **Pendiente de decidir con el dueño:** de dónde sale la biblioteca predeterminada (hoy en Firebase `biblioteca/`, y la clave de servicio ya se borró); los límites de GIF para Bluetooth (a 22 KB/s con el plugin, un GIF de 400 KB tarda ~18 s; los umbrales de la Pro eran para Wi-Fi); y los límites de imágenes en el celular.
+
+## 8. Protocolo Bluetooth de la Lite (versión 1) — la especificación que siguen la app, la TV simulada y el firmware
+
+Es la referencia de TODO lo que viaja por Bluetooth. La app (`app-lite/src/ble.js`), la TV simulada (`app-lite/pruebas/tv-simulada.js`) y el firmware (`OLED_Lite/`) deben cumplirla línea por línea; si se cambia algo, se cambia aquí primero. Todo en little-endian.
+
+**Servicio** `7a1c0001-5e7d-4f0e-9a3b-0c1d2e3f4a5b`. **CTRL** `…0002` (el celular escribe comandos; la TV responde con avisos). **DATOS** `…0003` (el celular escribe trozos sin respuesta). Escribir en cualquiera exige un vínculo con PIN (ver "Emparejamiento").
+
+### 8.1 Comandos (CTRL) y avisos de la TV
+
+| Cmd | Nombre | Datos | Aviso de la TV |
+|---|---|---|---|
+| `0x01` | HORA | `epoch u32`, `zona i16` (minutos del celular) | `[0x81][1]` |
+| `0x02` | INICIO de envío | `tamaño u32`, `crc32 u32`, `ventana u8`, `banderas u8`, (si bit 2) `id u16` | `[0x82][ok]` |
+| `0x03` | FIN de envío | — | `[0x83][ok][bytes u32][ms recepción u32][ms total u32]` (14 bytes) |
+| `0x04` | ESTADO | — | `[0x84][1][mtu u16][memoria libre u32][vínculos u8][ventana abierta u8]` (10 bytes) |
+| `0x10` | LISTAR canciones | — | `[0x90][n][id u16 × n]` (n ≤ 100) |
+| `0x12` | TOCAR | `id u16`, `repeticiones u8`, `con letra u8` | `[0x92][ok][id u16]` (ok = 0 si no la tiene o hay un envío en curso) |
+| `0x13` | PARAR | — | `[0x93][1]` |
+| `0x14` | BORRAR toda la biblioteca | — | `[0x94][1]` (las canciones de una alarma NO se borran) |
+| `0x15` | INFO de la biblioteca | — | `[0x95][n u8][libre u32][total u32]` |
+| `0x20` | ALARMAS | `tono u16` (id de canción, 0 = aviso simple) y 3 × (`activa`, `hora`, `minuto`, `días` máscara bit 0 = domingo) | `[0xA0][ok]` |
+| `0x22` | AJUSTES | `brillo u8` (1–3), `volumen u8` (0–3), `zona i16` | `[0xA2][ok]` |
+
+**Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o un envío en curso).
+
+### 8.2 Trozos y confirmaciones (DATOS)
+
+Cada escritura es `[seq u16][bytes…]` (el celular usa trozos de 500 bytes y ventana de 16; la TV limita la ventana a 16). Reglas, iguales en app, simulador y firmware:
+
+1. Si `seq == esperada` se acepta y `esperada++`. Cada `ventana` trozos aceptados (y el último) la TV avisa `[0x85][esperada u16]`.
+2. Un trozo ADELANTADO (`seq > esperada`) provoca **un solo** `[0x86][esperada u16]` por hueco (no uno por trozo). El celular reenvía desde `esperada`.
+3. Un trozo REPETIDO (`seq < esperada`) se ignora sin avisar.
+4. Si la TV no puede guardar más rápido (la memoria intermedia está llena), **retiene el `0x85`** hasta tener sitio para toda la ventana en vuelo (2 × ventana × 512 bytes); la memoria intermedia nunca se desborda. Si un celular desobedece la ventana y el trozo no cabe, se descarta en silencio.
+5. El celular espera 1,5 s un aviso; si no llega reenvía desde lo último confirmado (hasta 5 veces seguidas sin avance: conexión perdida).
+6. Al final el celular manda `0x03`; la TV responde cuando terminó de escribir y de comprobar el CRC32 y el tamaño.
+
+### 8.3 Contenido (bandera 8)
+
+Lo que la app Pro escribía en Firebase (`pantalla` y `archivo`) viaja en UN envío: `[u16 largo del JSON][JSON de pantalla (UTF-8)][archivo: bytes z1 de un GIF]`. El JSON es el mismo de `docs/formatos-datos.md` sección 2 (tipos `texto`, `imagen` y `animacion`; los valores que falten toman los mismos por defecto que en la Pro, p. ej. `fuente` = `clasica`). El archivo solo existe con `animacion` (formato `z1`, bytes crudos, no Base64). La TV procesa mientras llega: el JSON queda en RAM (máximo 4096 bytes) y el archivo se escribe directo a su archivo temporal, así un GIF nunca ocupa el doble en la memoria. Solo si el CRC32 y el tamaño coinciden se muestra y se recuerda como lo último; si no, la TV conserva lo que mostraba.
+
+### 8.4 Reglas de la TV
+
+- **Hora:** la da el celular al conectar (`0x01`). **Zona horaria:** manda la de `AJUSTES` una vez guardada; mientras no se haya guardado ninguna, la del celular. Sin hora válida desde el encendido la TV muestra "sin hora" y **no hace sonar alarmas** (nunca una hora inventada).
+- **Alarmas:** hasta 3, a su hora y días, suenan solas; se callan solas al minuto; un toque corto del botón las calla. Suenan aunque el volumen esté en Silencio (volumen Medio). La canción de la alarma está protegida: la caché nunca la borra.
+- **Botón (el único):** toque corto = calla lo que suene; si no suena nada, cambia contenido → reloj → pantalla apagada. Con algo sonando, ningún toque ni mantenido abre el emparejamiento (para no borrar el vínculo al querer callar una alarma). **Mantener 8 s con nada sonando** abre la ventana de emparejamiento (PIN en pantalla, 2 min) y borra el vínculo anterior.
+- **Espacio:** la caché de canciones borra las menos usadas (salvo la de la alarma); un envío (canción o contenido) que no cabe se rechaza con `0x82` `ok = 0` y la app avisa antes de empezar si ve que un GIF no cabe (`0x15`).
