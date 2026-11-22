@@ -9,7 +9,7 @@ Está hecho con HTML, CSS y JavaScript puro (módulos ES), sin frameworks. Se us
 | Pestaña | Funciones |
 |---|---|
 | **Texto** | Mensaje de hasta 200 caracteres. Letra: Sans (por defecto), Sans negrita, Serif, Serif cursiva o la Clásica 5×7. Tamaño de 1 a 5. Alineación automática (horizontal y vertical) o manual con sliders X/Y. Modo Ajustar, Scroll ↔ o Scroll ↕. |
-| **Imagen** | Subir una imagen o un GIF animado, o pegarla del portapapeles. Encuadre: escala, rotar, voltear y fondo. Difuminado Atkinson y umbral. Guardar en la galería. |
+| **Imagen** | Subir una imagen o un GIF animado, o pegarla del portapapeles. Encuadre: escala, rotar, voltear y fondo. "Pixelar" (difuminado Atkinson) y "Nivel de pixelado" (umbral). Guardar en la galería. |
 | **Dibujo** | Lienzo de 128×64 con grosor de 1 a 6, deshacer, rehacer y limpiar. Se puede expandir a pantalla completa en horizontal y hacer zoom con dos dedos, como en WhatsApp. Guardar en la galería. |
 | **Canciones** | Importar los `.ino` de canciones (con **+**), elegir, borrar, **Con letra** (sonido + letra, imágenes y GIF; reemplaza la pantalla) o **Sin letra** (solo sonido, de fondo) y cuántas veces se repite. |
 | **Galería** | Tres listas: Imágenes, Animaciones y GIF. Elegir, reajustar, añadir, guardar y borrar. |

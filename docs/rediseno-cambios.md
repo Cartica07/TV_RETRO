@@ -11,7 +11,7 @@ Todo el trabajo está en la rama `rediseno-app`. Este documento resume, por áre
   - el interruptor **Invertir**, siempre a la vista;
   - el resultado del último envío.
 - **Navegación inferior** con ícono y texto: Texto, Imagen, Dibujo, Música (desde el 2026-11-10, "Canciones") y Galería. Al cambiar de pestaña, la página vuelve arriba.
-- **Botón "Enviar a la OLED"** fijo abajo, en la zona del pulgar.
+- **Botón "Enviar a la TV"** (en este rediseño se llamaba "Enviar a la OLED") fijo abajo, en la zona del pulgar.
 - **Escritorio** (desde 900 px de ancho): dos columnas. La OLED queda fija a la izquierda, con Enviar abajo; las pestañas y el contenido van a la derecha.
 - **Celular en horizontal:** la cabecera deja de quedar fija para que se pueda llegar a todos los controles.
 - **Objetivo cumplido:** cada pestaña, salvo las grillas de la Galería, entra sin scroll en celulares de 390×844 y 360×740.
@@ -49,7 +49,7 @@ Las decisiones se tomaron a partir de estudios y guías publicadas (Nielsen Norm
   - rotar 90° por toque;
   - voltear horizontal o vertical;
   - fondo negro o blanco.
-- **Difuminado Atkinson**, el mismo de CancionesMiniTV. Con el anterior (Floyd-Steinberg) el umbral casi no cambiaba el resultado; con Atkinson sí aclara u oscurece la imagen.
+- **Difuminado Atkinson** (hoy "Pixelar" en la app), el mismo de CancionesMiniTV. Con el anterior (Floyd-Steinberg) el umbral casi no cambiaba el resultado; con Atkinson sí aclara u oscurece la imagen.
 - **Aviso de GIF pesado:** cada cuadro ocupa unos 1,4 KB. Hasta 28 KB (unos 20 cuadros) no hay aviso. Entre 28 y 56 KB aparece un aviso amarillo, y por encima de 56 KB uno rojo, "GIF muy pesado/largo". Son límites pensados para un ESP32 común sin PSRAM; solo avisan, no bloquean el envío.
 - **Actualización:** desde el commit `73c2868` los GIF se envían **comprimidos** (formato z1, sin pérdida) y el aviso usa el tamaño comprimido: seguro hasta 64 KB, rojo por encima de 110 KB. Los límites de 28/56 KB quedan solo para navegadores sin compresión. **Actualización 2026-11-10:** con el ESP32-S3, sin aviso hasta 256 KB y rojo por encima de 1 MB (commit `999a64c`). Ver [formatos-datos.md](formatos-datos.md).
 
@@ -72,7 +72,7 @@ Selector de canción y número de repeticiones, en el estilo de la app. Invertir
 
 - **Tres listas:** Imágenes, Animaciones y **GIF**. Los GIF se guardan en `animaciones/` con `meta.origen: "gif"`.
 - **Arriba:** el selector de lista, el tacho de borrar y una fila con **+** (añadir una imagen o un GIF), el nombre y Guardar.
-- **Ajustes de umbral y difuminado:** aparecen solo cuando hay una imagen que se puede reajustar.
+- **Ajustes de umbral y difuminado** (hoy "Nivel de pixelado" y "Pixelar"): aparecen solo cuando hay una imagen que se puede reajustar.
 
 ## 8. Firebase
 

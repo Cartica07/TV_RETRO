@@ -58,7 +58,7 @@ El proyecto nació así, con un ESP8266 que consultaba Firebase. Firebase da una
 ## 3. Flujo de un envío, de punta a punta
 
 1. **El usuario arma el contenido** en una pestaña del panel. La tarjeta de arriba muestra una **vista previa pixel-perfect** de la OLED, con la misma fuente, los mismos cortes de línea y los mismos tiempos de scroll que el firmware.
-2. **Pulsa "Enviar a la OLED".** `main.js` arma el estado y llama a `enviarEstado()` en `firebase.js`, que:
+2. **Pulsa "Enviar a la TV"** (antes "Enviar a la OLED"). `main.js` arma el estado y llama a `enviarEstado()` en `firebase.js`, que:
    - reserva un número de `version` nuevo con una transacción sobre `oled_remota/contadorVersion` (así dos envíos casi simultáneos no salen con el mismo número);
    - arma `pantalla` según el tipo;
    - si el contenido es pesado (GIF comprimido o musical), lo pone en `archivo = {version, datos}`; si no, borra `archivo` (`null`);
@@ -117,7 +117,7 @@ El detalle commit por commit está en [historial-cambios.md](historial-cambios.m
 
 ### Pestañas
 - **Texto:** mensaje (máx. 200), letra (Sans por defecto, Sans negrita, Serif, Serif cursiva, Clásica), tamaño 1–5, alineación Auto (H/V) o Manual (X/Y), modo Ajustar / Scroll ↔ / Scroll ↕.
-- **Imagen:** subir imagen o GIF, Pegar, encuadre, difuminado, umbral, guardar en la galería.
+- **Imagen:** subir imagen o GIF, Pegar, encuadre, "Pixelar" (el difuminado) y "Nivel de pixelado" (el umbral), guardar en la galería.
 - **Dibujo:** lienzo 128×64, grosor, deshacer/rehacer/limpiar, expandir a pantalla completa, zoom.
 - **Canciones** (`data-valor="cancion"`; antes "Música"):
   - elegir del catálogo de musicales;
