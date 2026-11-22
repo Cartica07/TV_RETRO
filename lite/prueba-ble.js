@@ -408,6 +408,26 @@ el.archivosM1.addEventListener('change', async () => {
   registrar(`${canciones.length} canciones elegidas.`);
   dibujarLista();
 });
+// Para pruebas: baja los .m1 de un servidor local del PC (npx serve <carpeta> -l 3001 --cors, más
+// "adb reverse tcp:3001 tcp:3001"). Sirve cuando el selector de archivos del celular no deja elegirlos.
+async function cargarDelServidor() {
+  const base = 'http://localhost:3001/';
+  const lista = await (await fetch(base + 'indice.json', { cache: 'no-store' })).json();
+  registrar(`Bajando ${lista.length} canciones del PC...`);
+  for (const archivo of lista) {
+    const r = await fetch(base + encodeURIComponent(archivo), { cache: 'no-store' });
+    const datos = new Uint8Array(await r.arrayBuffer());
+    const nombre = archivo.replace(/\.m1$/i, '');
+    const id = idDeNombre(nombre);
+    const i = canciones.findIndex((c) => c.id === id);
+    if (i >= 0) canciones.splice(i, 1);
+    canciones.push({ nombre, datos, id });
+  }
+  const total = canciones.reduce((s, c) => s + c.datos.length, 0);
+  registrar(`${canciones.length} canciones elegidas (${(total / 1024).toFixed(0)} KB en total).`);
+  dibujarLista();
+}
+$('cargarServidor').addEventListener('click', () => cargarDelServidor().catch((e) => registrar(`No se pudo bajar: ${e.message}`)));
 el.enviarCanciones.addEventListener('click', () => conOcupado(enviarCanciones));
 el.listar.addEventListener('click', () => conOcupado(listarTV));
 el.parar.addEventListener('click', () => conOcupado(pararTV));
