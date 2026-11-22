@@ -117,8 +117,8 @@ Motivos de desconexión que se distinguen (códigos del Wi-Fi): `15`, `204`, `20
 Resumen (el detalle está en `evaluacion-parte-3.md`): Bluetooth desde la app, SoftAP guiado, ESP-TOUCH, WPS y DPP. Bluetooth sigue **pospuesto** (solo cubre Android, necesita permisos, pide ~6–7 toques reales en un Android y no elimina el problema de fondo hasta que la app configure el Wi-Fi); DPP se descartó porque su QR no se puede escanear en una OLED de 128×64. El QR de Wi-Fi + páginas propias cubre Android, iPhone y web, no usa RAM extra y no pide permisos. La opción de **textos en español de WiFiManager** (`wm_strings_es.h`, bandera de compilación) dejó de hacer falta: las páginas visibles son las propias.
 
 ## 9. Pendientes
-- Probar la descarga grande (GIF de ruido) y, cuando haya un iPhone, el QR de fondo oscuro.
-- **Pantalla "sin Wi-Fi" persistente:** hoy, con redes guardadas pero sin señal, la TV muestra "Sin WiFi" 6 s y luego queda negra (así quedó en H-36). Un cliente nuevo no vería indicaciones. Propuesta: mostrar siempre "Sin WiFi · Mantén la rueda 5 s" mientras no haya Wi-Fi.
+- ~~Probar la descarga grande (GIF de ruido)~~ **Hecho el 2026-11-21:** 155 250 bytes en 5,6 s y 414 000 bytes en 14,2 s en la TV real, sin reinicio por watchdog. Falta, cuando haya un iPhone, el QR de fondo oscuro.
+- **Pantalla "sin Wi-Fi" persistente:** hecha en la **v8** (2026-11-21, compilada, **sin publicar ni probar en la TV**). Antes, con redes guardadas pero sin señal, la TV mostraba "Sin WiFi" 6 s y quedaba negra. Ahora la indicación se mantiene mientras no haya Wi-Fi ni contenido mostrado desde el encendido ("Sin WiFi / Sigo buscando tu red / Para configurarla: boton rueda 5 s"), se quita sola al volver la red y no tapa un contenido ya mostrado. Prueba pendiente: apagar el router y reiniciar la TV.
 - OLED de 1,3": revisar si el módulo es SH1106 (no SSD1306) antes de dar por buena la pantalla (el programa usa `Adafruit_SSD1306`).
 - Si la pantalla guía no basta para que el cliente toque el aviso, probar la opción 114 de DHCP como experimento aparte.
 - El tutorial guiado de la app deberá explicar este flujo (QR, aviso de Android, 2,4 GHz).
