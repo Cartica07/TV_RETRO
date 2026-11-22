@@ -24,6 +24,7 @@
 | 16 | Aviso de GIF pesado y muy pesado | Los mismos textos de la Pro; solo cambian los pesos: pesado desde 100 KB y muy pesado desde 250 KB (en la Pro, 256 KB y 1 MB) | `app-lite/src/gif-lite.js` |
 | 22 | Al emparejar desde la app, mientras se escribe el PIN (línea de estado) | Escribe el PIN que sale en la TV… | `backend-lite.js` |
 | 23 | El emparejamiento falla (PIN mal, tiempo agotado o la TV no tenía abierto el emparejamiento) | No se pudo emparejar. Mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo. | `ble.js` |
+| 24 | El celular figura como vinculado pero la TV no lo reconoce (la TV abrió el emparejamiento otra vez o se olvidó el vínculo de un solo lado) | La TV no reconoce este celular. Olvídala en Ajustes > Bluetooth del celular, mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo. | `ble.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
