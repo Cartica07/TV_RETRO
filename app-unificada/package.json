@@ -1,0 +1,22 @@
+{
+  "name": "tv-retro-app-unificada",
+  "version": "0.0.1",
+  "private": true,
+  "description": "TV RETRO en una sola app: TV Pro (Wi-Fi, nube) y TV Lite (Bluetooth). Se arma a partir de una copia de la app Pro sin tocarla.",
+  "scripts": {
+    "construir": "node construir.mjs",
+    "construir-apk": "node construir.mjs --apk"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^8.4.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/screen-orientation": "^8.0.2",
+    "firebase": "12.15.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

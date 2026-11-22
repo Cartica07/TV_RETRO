@@ -5,3 +5,5 @@ android/app/build/
 android/build/
 android/.gradle/
 hs_err_pid*.log
+.pruebas-pro/
+www-apk/

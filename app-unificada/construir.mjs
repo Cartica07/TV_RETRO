@@ -7,7 +7,7 @@
 //   - js/anadir-lite.js, css/unificada.css, el botón "Tengo una TV Lite" y la pantalla "Conecta tu TV" (index.html)
 // Con --apk además deja la copia lista para Capacitor (igual que app-android/copiar-web.mjs: SDK de Firebase dentro de la app,
 // sin la política de seguridad de la web y sin viewport-fit=cover).
-// Después: `npx cap sync android` lleva www/ a la APK.
+// Después: `npx cap sync android` lleva www-apk/ a la APK.
 import { createRequire } from 'node:module';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -18,8 +18,9 @@ const aqui = dirname(fileURLToPath(import.meta.url));
 const panel = join(aqui, '..'); // raíz del repo (la app Pro: SOLO se lee)
 const lite = join(aqui, '..', 'app-lite');
 const { build } = require(join(lite, 'node_modules', 'esbuild'));
-const www = join(aqui, 'www');
 const paraApk = process.argv.includes('--apk');
+// La web (pruebas) y la APK van en carpetas distintas: así armar una no pisa a la otra mientras se prueba.
+const www = join(aqui, paraApk ? 'www-apk' : 'www');
 
 rmSync(www, { recursive: true, force: true });
 mkdirSync(join(www, 'js'), { recursive: true });
@@ -62,6 +63,37 @@ await build({
   outfile: join(www, 'js', 'lite-tv.js'),
   logLevel: 'info',
 });
+
+// Para la APK: el SDK de Firebase no se baja de gstatic, va DENTRO de la app (igual que app-android/copiar-web.mjs: solo lo que
+// usa js/firebase.js, en un único archivo, y las tres direcciones de gstatic de firebase-pro.js apuntan a él).
+if (paraApk) {
+  const ENTRADA_SDK = `
+export { initializeApp } from 'firebase/app';
+export { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'firebase/database';
+export { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+  sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential,
+  EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from 'firebase/auth';
+`;
+  mkdirSync(join(www, 'js', 'vendor'), { recursive: true });
+  await build({
+    stdin: { contents: ENTRADA_SDK, resolveDir: aqui, sourcefile: 'entrada-sdk.js' },
+    outfile: join(www, 'js', 'vendor', 'firebase.js'),
+    bundle: true, format: 'esm', platform: 'browser', target: 'es2020', minify: true, legalComments: 'none', logLevel: 'warning',
+  });
+  const rutaPro = join(www, 'js', 'firebase-pro.js');
+  const fuentePro = readFileSync(rutaPro, 'utf8');
+  const sinCdn = fuentePro.replace(/https:\/\/www\.gstatic\.com\/firebasejs\/[\d.]+\/firebase-(?:app|database|auth)\.js/g, './vendor/firebase.js');
+  if (sinCdn === fuentePro || /gstatic\.com\/firebasejs/.test(sinCdn)) throw new Error('js/firebase.js de la Pro ya no importa el SDK desde gstatic: revisa app-unificada/construir.mjs');
+  writeFileSync(rutaPro, sinCdn);
+  // Todo lo que importa firebase-pro.js del SDK tiene que estar en el paquete.
+  const importado = new Set();
+  for (const m of sinCdn.matchAll(/import\s*\{([^}]*)\}\s*from\s*'\.\/vendor\/firebase\.js'/g)) m[1].split(',').map((x) => x.trim()).filter(Boolean).forEach((x) => importado.add(x));
+  const paquete = readFileSync(join(www, 'js', 'vendor', 'firebase.js'), 'utf8');
+  const exportado = new Set();
+  for (const m of paquete.matchAll(/export\s*\{([^}]*)\}/g)) m[1].split(',').forEach((x) => exportado.add(x.split(/\s+as\s+/).pop().trim()));
+  const faltanSdk = [...importado].filter((x) => !exportado.has(x));
+  if (importado.size === 0 || faltanSdk.length) throw new Error('El paquete del SDK no exporta: ' + (faltanSdk.join(', ') || '(no se encontraron importaciones)'));
+}
 
 // ---- index.html de la Pro, con los cambios mínimos ----
 let html = readFileSync(join(panel, 'index.html'), 'utf8');
@@ -111,4 +143,4 @@ for (const css of ['tokens.css', 'style.css', 'fuentes.css']) copyFileSync(join(
 cpSync(join(panel, 'fonts'), join(www, 'fonts'), { recursive: true });
 copyFileSync(join(aqui, 'src', 'unificada.css'), join(www, 'css', 'unificada.css'));
 
-console.log(`app-unificada/www listo${paraApk ? ' (para la APK)' : ''}`);
+console.log(`app-unificada/${paraApk ? 'www-apk' : 'www'} listo`);
