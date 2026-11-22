@@ -101,10 +101,22 @@ const ESPERA_VINCULO_MS = 100000;
 // El celular aún no está vinculado con la TV y la conexión no es de un toque de la persona (reintento de fondo):
 // no se debe iniciar el emparejamiento por sorpresa.
 class ErrorSinVinculo extends Error {}
+// El celular figura como vinculado pero la TV no lo reconoce (se muestra tal cual al cliente).
+class ErrorVinculoRoto extends ErrorTV {}
 
 // Avisa a la pantalla en qué paso va la conexión (lo conecta backend-lite.js).
 let alEstado = () => {};
 export function alCambiarEstado(f) { alEstado = f; }
+
+// Espera (sin pasarse de ESPERA_VINCULO_MS) a que el celular quede vinculado con la TV. Devuelve true si lo logró.
+async function esperarVinculo() {
+  const limite = performance.now() + ESPERA_VINCULO_MS;
+  while (performance.now() < limite) {
+    try { if (await BleClient.isBonded(deviceId)) return true; } catch (e) { return false; }
+    await pausa(1000);
+  }
+  return false;
+}
 
 // Con `vincular` falso (reconexión de fondo) un celular sin vínculo no empareja: avisa con ErrorSinVinculo.
 async function prepararCanal(vincular) {
@@ -120,9 +132,14 @@ async function prepararCanal(vincular) {
     try {
       await BleClient.createBond(deviceId, { timeout: ESPERA_VINCULO_MS });
     } catch (e) {
-      // En la web (pruebas) el plugin no lo ofrece; en Android un fallo real sí corta la conexión.
-      if (!/not (implemented|available|supported)|unimplemented|unavailable/i.test(String((e && e.message) || e))) {
-        throw new ErrorTV('No se pudo emparejar. Mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo.');
+      const texto = String((e && e.message) || e);
+      // En la web (pruebas) el plugin no lo ofrece: no hay nada que vincular.
+      if (!/not (implemented|available|supported)|unimplemented|unavailable/i.test(texto)) {
+        // Android rechaza createBond si el emparejamiento ya empezó (lo inicia la propia TV al conectarse): en ese
+        // caso se espera a que la persona lo termine en vez de darlo por fallido.
+        if (!(/Creating bond failed/i.test(texto) && await esperarVinculo())) {
+          throw new ErrorTV('No se pudo emparejar. Mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo.');
+        }
       }
     }
   }
@@ -145,7 +162,16 @@ async function conectarA(id, vincular) {
   try { localStorage.setItem(CLAVE_TV, id); } catch (e) { /* sin almacenamiento */ }
   marcarConectado(true);
   // La hora de la TV la da el celular en cada conexión (la TV no tiene internet).
-  try { await exclusivo(() => ponerHora()); } catch (e) { /* se vuelve a mandar en la próxima conexión */ }
+  try {
+    await exclusivo(() => ponerHora());
+  } catch (e) {
+    if (e instanceof ErrorTV) return; // la TV no contestó a tiempo: se vuelve a mandar en la próxima conexión
+    // La escritura misma falló: el celular cree que está vinculado pero la TV ya no lo reconoce (la TV abrió el
+    // emparejamiento otra vez o se olvidó el vínculo de un solo lado). Con esa conexión no se puede hacer nada.
+    try { await BleClient.disconnect(id); } catch (e2) { /* ya estaba desconectada */ }
+    marcarConectado(false);
+    throw new ErrorVinculoRoto('La TV no reconoce este celular. Olvídala en Ajustes > Bluetooth del celular, mantén pulsado el botón de la TV 8 segundos y vuelve a intentarlo.');
+  }
 }
 
 async function iniciar() {
@@ -178,13 +204,21 @@ export async function reconectar() {
   let id = null;
   try { id = localStorage.getItem(CLAVE_TV); } catch (e) { /* sin almacenamiento */ }
   if (!id) return false;
-  enCurso = (async () => { await iniciar(); await conectarA(id, false); })();
+  enCurso = (async () => {
+    await iniciar();
+    // Sin vínculo no se conecta ni se intenta emparejar: conectarse a una TV que ofrece emparejar hace que el
+    // celular muestre un aviso por su cuenta, y la conexión ocupa a la TV (deja de anunciarse).
+    let vinculados = null;
+    try { vinculados = await BleClient.getBondedDevices(); } catch (e) { /* no disponible (web): se intenta conectar */ }
+    if (vinculados && !vinculados.some((d) => d.deviceId === id)) throw new ErrorSinVinculo('sin vínculo');
+    await conectarA(id, false);
+  })();
   try {
     await enCurso;
     return true;
   } catch (e) {
     marcarConectado(false);
-    if (e instanceof ErrorSinVinculo) reconexionPausada = true;
+    if (e instanceof ErrorSinVinculo || e instanceof ErrorVinculoRoto) reconexionPausada = true;
     return false;
   } finally {
     enCurso = null;
