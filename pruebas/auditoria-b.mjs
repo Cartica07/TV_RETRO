@@ -391,7 +391,7 @@ const escenarios = {
     const items = await pagina.$$eval('#gridGifs .item-galeria', (els) => els.map((e) => e.dataset.clave));
     await pagina.click('#gridGifs .item-galeria'); await pagina.waitForTimeout(1000);
     const cuadros = (await lecturas()).some((r) => /\/animaciones\/(gato|baile)\/cuadros$/.test(r));
-    const cargada = await pagina.evaluate(() => /cargado desde la galería/.test(document.getElementById('estadoTexto').textContent));
+    const cargada = await pagina.evaluate(() => /(Animación|GIF) cargad[oa]/.test(document.getElementById('estadoTexto').textContent));
     await navegador.close();
     return informe('H-12: sin lecturas del catálogo completo; escucha las listas; al elegir pide la copia editable y los cuadros', pesadas.length === 0 && escuchaIndice && copia && cuadros && cargada && items.length === 2, JSON.stringify({ pesadas, escuchaIndice, copia, cuadros, cargada, items }));
   },

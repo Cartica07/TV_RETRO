@@ -246,7 +246,7 @@ const ESCENARIOS = {
     const galeria = await pagina.evaluate(() => document.getElementById('cargadorImagenGaleria').files.length);
     const estado = await pagina.textContent('#estadoTexto');
     await navegador.close();
-    return informe('después de subir una imagen el campo queda libre (elegir el mismo archivo otra vez funciona)', imagen === 0 && galeria === 0 && /procesada/i.test(estado), `archivos que quedan: Imagen=${imagen} Galería=${galeria} · estado="${estado.trim()}"`);
+    return informe('después de subir una imagen el campo queda libre (elegir el mismo archivo otra vez funciona)', imagen === 0 && galeria === 0 && /Imagen lista|procesada/i.test(estado), `archivos que quedan: Imagen=${imagen} Galería=${galeria} · estado="${estado.trim()}"`);
   },
 
   // 4e) Guardar sin permiso: el mensaje no menciona cosas técnicas.
@@ -366,7 +366,7 @@ const ESCENARIOS = {
     const t0 = Date.now();
     await pagina.setInputFiles('#cargadorImagen', { name: 'enorme.gif', mimeType: 'image/gif', buffer: archivo });
     let listo = false;
-    try { await pagina.waitForFunction(() => /GIF:|No se pudo|demasiad/i.test(document.getElementById('estadoTexto').textContent), null, { timeout: 40000 }); listo = true; } catch (e) { /* se colgó */ }
+    try { await pagina.waitForFunction(() => /GIF listo|GIF:|No se pudo|demasiad/i.test(document.getElementById('estadoTexto').textContent), null, { timeout: 40000 }); listo = true; } catch (e) { /* se colgó */ }
     const ms = Date.now() - t0;
     const msg = await pagina.textContent('#estadoTexto').catch(() => '(página colgada)');
     await navegador.close();
