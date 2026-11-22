@@ -43,7 +43,6 @@ let conectado = false;
 let alCambiar = () => {};
 const avisos = [];
 let despertar = null;
-let ocupado = false;
 
 export function alCambiarConexion(f) { alCambiar = f; }
 export function estaConectado() { return conectado; }
@@ -81,11 +80,13 @@ async function esperarAvisoTipo(tipo, ms) {
 
 const escribirCtrl = (bytes) => BleClient.write(deviceId, SERVICIO, CTRL, aDataView(bytes));
 
-// Una sola acción a la vez (a prueba de dobles toques).
-export async function exclusivo(accion) {
-  if (ocupado) throw new ErrorTV('Espera un momento.');
-  ocupado = true;
-  try { return await accion(); } finally { ocupado = false; }
+// Una sola acción a la vez, EN ORDEN (a prueba de dobles toques): las que llegan mientras otra está en
+// curso esperan su turno en vez de fallar o pisarse en el canal.
+let cola = Promise.resolve();
+export function exclusivo(accion) {
+  const turno = cola.then(() => accion());
+  cola = turno.then(() => {}, () => {});
+  return turno;
 }
 
 // ---------- Conexión ----------
@@ -95,7 +96,14 @@ async function prepararCanal() {
   // Si todavía no hay vínculo, se crea (el celular pide el PIN que muestra la TV).
   let vinculado = false;
   try { vinculado = await BleClient.isBonded(deviceId); } catch (e) { /* no disponible */ }
-  if (!vinculado) await BleClient.createBond(deviceId);
+  if (!vinculado) {
+    try {
+      await BleClient.createBond(deviceId);
+    } catch (e) {
+      // En la web (pruebas) el plugin no lo ofrece; en Android un fallo real sí corta la conexión.
+      if (!/not (implemented|available|supported)|unimplemented|unavailable/i.test(String((e && e.message) || e))) throw e;
+    }
+  }
 
   avisos.length = 0;
   await BleClient.startNotifications(deviceId, SERVICIO, CTRL, alRecibirAviso);
@@ -249,6 +257,51 @@ export async function enviarArchivo(datos, { id = null, banderas = 0, alProgreso
     kbs: (tamano / 1024) / (ms / 1000),
     msTotalTV: fin.byteLength >= 14 ? leer32(fin, 10) : leer32(fin, 6),
   };
+}
+
+// ---------- Contenido (texto, imagen, GIF…) ----------
+// Lo que la app Pro escribía en Firebase (pantalla + archivo) viaja aquí en UN solo envío:
+//   [u16 largo del JSON][JSON de "pantalla", UTF-8][archivo: bytes de un GIF comprimido z1, si lo hay]
+// y se marca con la bandera 8 en el INICIO. La TV lo guarda, lo comprueba (CRC32) y lo muestra.
+export function empaquetarContenido(pantalla, archivo = null) {
+  const json = new TextEncoder().encode(JSON.stringify(pantalla));
+  if (json.length > 0xFFFF) throw new ErrorTV('Eso es demasiado grande para la TV.');
+  const extra = archivo || new Uint8Array(0);
+  const todo = new Uint8Array(2 + json.length + extra.length);
+  todo[0] = json.length & 255; todo[1] = json.length >> 8;
+  todo.set(json, 2);
+  todo.set(extra, 2 + json.length);
+  return todo;
+}
+
+export async function enviarContenido(pantalla, archivo, alProgreso = () => {}) {
+  const r = await enviarArchivo(empaquetarContenido(pantalla, archivo), { banderas: 8, alProgreso });
+  if (!r.ok) throw new ErrorTV('Lo que enviaste no llegó bien. Vuelve a intentarlo.');
+  return r;
+}
+
+// ---------- Alarmas y ajustes (la TV los guarda y funcionan sin el celular) ----------
+// ALARMAS: [0x20][tono u16 (0 = aviso simple)] y 3 × [activa][hora][minuto][días]  ->  aviso [0xA0][1]
+export async function guardarAlarmasEnTV({ tonoId, alarmas }) {
+  const bytes = [0x20, (tonoId || 0) & 255, ((tonoId || 0) >> 8) & 255];
+  for (let i = 0; i < 3; i++) {
+    const a = alarmas[i] || {};
+    bytes.push(a.activa ? 1 : 0, a.hora | 0, a.minuto | 0, a.dias | 0);
+  }
+  avisos.length = 0;
+  await escribirCtrl(bytes);
+  const r = await esperarAvisoTipo(0xA0, 4000);
+  if (!r) throw new ErrorTV('La TV no respondió.');
+  if (r.getUint8(1) !== 1) throw new ErrorTV('La TV no pudo guardar la alarma.');
+}
+
+// AJUSTES: [0x22][brillo][volumen][zona i16, minutos]  ->  aviso [0xA2][1]
+export async function guardarAjustesEnTV({ brillo, volumen, zona }) {
+  avisos.length = 0;
+  await escribirCtrl([0x22, brillo & 255, volumen & 255, zona & 255, (zona >> 8) & 255]);
+  const r = await esperarAvisoTipo(0xA2, 4000);
+  if (!r) throw new ErrorTV('La TV no respondió.');
+  if (r.getUint8(1) !== 1) throw new ErrorTV('La TV no pudo guardar los ajustes.');
 }
 
 // Archivo pseudoaleatorio para medir la velocidad (Diagnóstico).
