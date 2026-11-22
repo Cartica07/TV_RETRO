@@ -2775,3 +2775,123 @@ body.dibujo-expandido .herramientas-dibujo .boton-icono {
   position: absolute;
   inset: -10px -6px;
 }
+
+/* ===========================================================================
+   Tutorial guiado (docs/plan-tutorial.md). Capa fija sobre toda la app: resalta una
+   parte (el "foco": su sombra gigante oscurece el resto) y muestra una tarjeta con una frase.
+   Tapa lo de abajo, así que nadie puede tocar Enviar a mitad del tutorial.
+   =========================================================================== */
+.tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+/* Sin esta regla, el display de arriba o de un hijo podría anular el atributo hidden y la capa taparía la app. */
+.tutorial[hidden] {
+  display: none;
+}
+
+.tutorial-foco {
+  position: fixed;
+  border-radius: var(--radio-md);
+  box-shadow: 0 0 0 100vmax rgba(5, 8, 12, .8);
+  outline: 2px solid var(--acento);
+  pointer-events: none;
+  transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease;
+}
+
+/* Último paso: sin nada resaltado, todo oscurecido. */
+.tutorial.sin-foco {
+  background: rgba(5, 8, 12, .8);
+}
+
+.tutorial.sin-foco .tutorial-foco {
+  display: none;
+}
+
+.tutorial-tarjeta {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  padding: var(--esp-4);
+  background: var(--superficie-alta);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-tarjeta);
+  outline: none;
+}
+
+.tutorial-texto {
+  margin: 0;
+  font-size: var(--texto-md);
+  line-height: 1.4;
+  color: var(--texto);
+}
+
+.tutorial-pie {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.tutorial-puntos {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tutorial-puntos span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--borde-fuerte);
+}
+
+.tutorial-puntos span.activo {
+  background: var(--acento);
+}
+
+.tutorial-saltar,
+.tutorial-siguiente {
+  min-height: var(--toque-min);
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-saltar {
+  padding: 0 var(--esp-3);
+  background: transparent;
+  border: none;
+  color: var(--texto-2);
+}
+
+.tutorial-siguiente {
+  padding: 0 var(--esp-5);
+  background: var(--acento-relleno);
+  border: none;
+  color: var(--sobre-acento);
+}
+
+.tutorial-siguiente:active {
+  filter: brightness(.95);
+}
+
+/* Mientras el tutorial está abierto la página no se desplaza por debajo. */
+body.tutorial-abierto {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-foco {
+    transition: none;
+  }
+}
