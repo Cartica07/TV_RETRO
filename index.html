@@ -533,6 +533,11 @@
     <!-- Config > Ayuda y contacto -->
     <div id="configAyuda" class="config-apartado" style="display: none;">
       <nav class="menu-mas" aria-label="Ayuda y contacto">
+        <button type="button" class="fila-mas" id="botonVerTutorial">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <span class="nombre-mas">Ver tutorial</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
         <a class="fila-mas" href="https://cartica07.github.io/TV_RETRO/ayuda.html" target="_blank" rel="noopener">
           <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="nombre-mas">Preguntas frecuentes</span>
@@ -835,6 +840,20 @@
     <div class="login-enlaces login-enlaces-pie">
       <button type="button" id="botonEliminarCuenta" class="boton-enlace peligro" hidden>Eliminar mi cuenta</button>
       <a class="boton-enlace" href="https://cartica07.github.io/TV_RETRO/privacidad.html" target="_blank" rel="noopener">Política de privacidad</a>
+    </div>
+  </div>
+</div>
+
+<!-- Tutorial guiado (docs/plan-tutorial.md). Va como hijo directo de <body> a propósito: dentro de main.controles,
+     .barra-accion o .nav-inferior heredaría su `inert` y los botones no responderían. Nace oculto. -->
+<div class="tutorial" id="tutorial" hidden>
+  <div class="tutorial-foco" id="tutorialFoco" aria-hidden="true"></div>
+  <div class="tutorial-tarjeta" id="tutorialTarjeta" role="dialog" aria-modal="true" aria-labelledby="tutorialTexto" tabindex="-1">
+    <p class="tutorial-texto" id="tutorialTexto"></p>
+    <div class="tutorial-pie">
+      <span class="tutorial-puntos" id="tutorialPuntos" aria-hidden="true"></span>
+      <button type="button" class="tutorial-saltar" id="tutorialSaltar">Saltar</button>
+      <button type="button" class="tutorial-siguiente" id="tutorialSiguiente">Siguiente</button>
     </div>
   </div>
 </div>
