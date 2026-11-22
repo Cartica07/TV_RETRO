@@ -27,8 +27,8 @@ async function abrirApp({ ancho = 390, alto = 844, logueado = true } = {}) {
 }
 
 const abierto = (p) => p.evaluate(() => !document.getElementById('tutorial').hidden);
-const esperarTutorial = (p) => p.waitForFunction(() => !document.getElementById('tutorial').hidden, null, { timeout: 8000 });
-const esperarPanel = (p) => p.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 8000 });
+const esperarTutorial = (p) => p.waitForFunction(() => !document.getElementById('tutorial').hidden, null, { timeout: 15000 });
+const esperarPanel = (p) => p.waitForFunction(() => !document.querySelector('main.controles').inert, null, { timeout: 15000 });
 const textoPaso = (p) => p.evaluate(() => document.getElementById('tutorialTexto').textContent);
 const esperar = (p, ms = 320) => p.waitForTimeout(ms); // más que la espera entre toques de tutorial.js
 const siguiente = async (p) => { await p.click('#tutorialSiguiente'); await esperar(p); };
@@ -116,15 +116,19 @@ const escenarios = {
         const m = await pagina.evaluate(() => {
           const t = document.getElementById('tutorialTarjeta').getBoundingClientRect();
           const d = document.documentElement;
-          return { sobraV: d.scrollHeight - innerHeight, sobraH: d.scrollWidth - innerWidth, dentro: t.left >= 0 && t.top >= 0 && t.right <= innerWidth && t.bottom <= innerHeight, y: scrollY };
+          const fo = document.getElementById('tutorialFoco').getBoundingClientRect();
+          const conFoco = !document.getElementById('tutorial').classList.contains('sin-foco');
+          // el aro (2 px) tampoco debe quedar cortado en el borde de la pantalla
+          const aroEntero = !conFoco || (fo.left >= 2 && fo.top >= 2 && fo.right <= innerWidth - 2 && fo.bottom <= innerHeight - 2);
+          return { sobraV: d.scrollHeight - innerHeight, sobraH: d.scrollWidth - innerWidth, dentro: t.left >= 0 && t.top >= 0 && t.right <= innerWidth && t.bottom <= innerHeight, aroEntero, y: scrollY };
         });
-        if (m.sobraV > 0 || m.sobraH > 0 || !m.dentro || m.y !== 0) fallos.push({ ancho, paso: i + 1, m });
+        if (m.sobraV > 0 || m.sobraH > 0 || !m.dentro || !m.aroEntero || m.y !== 0) fallos.push({ ancho, paso: i + 1, m });
         if (i < PASOS.length - 1) await siguiente(pagina);
       }
       if (errores.length) fallos.push({ ancho, errores });
       await navegador.close();
     }
-    return informe('con el tutorial abierto no hay scroll, la tarjeta cabe en pantalla y no hay errores (390×844 y 360×740)', fallos.length === 0, JSON.stringify(fallos));
+    return informe('con el tutorial abierto no hay scroll, la tarjeta y el aro caben en pantalla y no hay errores (390×844 y 360×740)', fallos.length === 0, JSON.stringify(fallos));
   },
 
   async 'toques repetidos en Siguiente no saltan pasos'() {

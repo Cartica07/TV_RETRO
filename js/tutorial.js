@@ -31,6 +31,7 @@ const TEXTO_BOTON_SIGUIENTE = 'Siguiente';
 
 const ESPERA_ENTRE_TOQUES_MS = 250; // dos "Siguiente" más seguidos que esto cuentan como uno
 const HOLGURA_FOCO_PX = 6;          // aire entre lo resaltado y su borde
+const MARGEN_FOCO_PX = 3;           // el aro nunca se acerca más que esto al borde de la pantalla (si no, se vería cortado)
 const SEPARACION_TARJETA_PX = 12;   // aire entre lo resaltado y la tarjeta
 const MARGEN_PANTALLA_PX = 8;
 
@@ -108,10 +109,16 @@ export function crearTutorial({ leerElementos, cambiarTipo, puedeAbrir = () => t
     el.tutorial.classList.remove('sin-foco');
     const r = objetivoActual.getBoundingClientRect();
     const foco = el.tutorialFoco;
-    foco.style.top = Math.round(r.top - HOLGURA_FOCO_PX) + 'px';
-    foco.style.left = Math.round(r.left - HOLGURA_FOCO_PX) + 'px';
-    foco.style.width = Math.round(r.width + HOLGURA_FOCO_PX * 2) + 'px';
-    foco.style.height = Math.round(r.height + HOLGURA_FOCO_PX * 2) + 'px';
+    // Un botón pegado al borde (Texto a la izquierda, Más a la derecha, la barra de abajo) dejaría el aro cortado: se recorta
+    // para que se vea entero.
+    const izq = Math.max(MARGEN_FOCO_PX, r.left - HOLGURA_FOCO_PX);
+    const arr = Math.max(MARGEN_FOCO_PX, r.top - HOLGURA_FOCO_PX);
+    const der = Math.min(window.innerWidth - MARGEN_FOCO_PX, r.right + HOLGURA_FOCO_PX);
+    const aba = Math.min(alto - MARGEN_FOCO_PX, r.bottom + HOLGURA_FOCO_PX);
+    foco.style.top = Math.round(arr) + 'px';
+    foco.style.left = Math.round(izq) + 'px';
+    foco.style.width = Math.round(der - izq) + 'px';
+    foco.style.height = Math.round(aba - arr) + 'px';
 
     const th = tarjeta.offsetHeight;
     const debajo = r.bottom + HOLGURA_FOCO_PX + SEPARACION_TARJETA_PX;
@@ -143,7 +150,9 @@ export function crearTutorial({ leerElementos, cambiarTipo, puedeAbrir = () => t
     pintarPuntos();
     vigilarObjetivo();
     colocar();
-    try { el.tutorialSiguiente.focus({ preventScroll: true }); } catch (e) { /* nada */ }
+    // El foco va a la tarjeta (tabindex -1, sin aro): un lector de pantalla lee la frase y, con teclado, Tab llega a los botones.
+    // Enfocar el botón dejaba un aro doble alrededor de "Siguiente".
+    try { el.tutorialTarjeta.focus({ preventScroll: true }); } catch (e) { /* nada */ }
   }
 
   function alTeclear(e) {
