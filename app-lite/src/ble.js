@@ -12,6 +12,10 @@ const CLAVE_TV = 'tvretro.lite.tv';
 // Lo que mejor midió el barrido de la prueba: trozos de 500 bytes y ventana de 16.
 const TROZO = 500;
 const VENTANA = 16;
+// Si la TV no confirma en este tiempo se reenvía desde lo último confirmado; tras MAX_SILENCIOS intentos seguidos sin
+// ningún avance se da por perdida la conexión.
+const ESPERA_AVISO_MS = 1500;
+const MAX_SILENCIOS = 5;
 
 const u32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
 const leer32 = (dv, o) => dv.getUint32(o, true);
@@ -222,6 +226,7 @@ export async function enviarArchivo(datos, { id = null, banderas = 0, alProgreso
   let sig = 0;
   let confirmado = 0;
   let reenvios = 0;
+  let silencios = 0;
   const t0 = performance.now();
 
   while (confirmado < total) {
@@ -235,15 +240,26 @@ export async function enviarArchivo(datos, { id = null, banderas = 0, alProgreso
       sig++;
     }
     alProgreso(confirmado / total);
-    const a = await siguienteAviso(4000);
-    if (!a) throw new ErrorTV('Se perdió la conexión con la TV.');
+    const a = await siguienteAviso(ESPERA_AVISO_MS);
+    if (!a) {
+      // La TV no dijo nada (se perdieron los últimos trozos, o su confirmación): se reenvía desde lo último
+      // confirmado. Si pasa varias veces seguidas, la conexión se perdió de verdad.
+      if (++silencios > MAX_SILENCIOS) throw new ErrorTV('Se perdió la conexión con la TV.');
+      reenvios++;
+      sig = confirmado;
+      continue;
+    }
     const tipo = a.getUint8(0);
     if (tipo === 0x85) {
-      confirmado = Math.max(confirmado, a.getUint16(1, true));
+      const c = a.getUint16(1, true);
+      if (c > confirmado) { confirmado = c; silencios = 0; }
     } else if (tipo === 0x86) {
+      // La TV avisa UNA vez por hueco: le faltó el trozo "falta". Todo lo anterior le llegó bien.
       const falta = a.getUint16(1, true);
-      reenvios++;
-      sig = falta; confirmado = falta;
+      if (falta >= confirmado && falta <= sig) {
+        reenvios++;
+        sig = falta; confirmado = falta;
+      }
     }
   }
   const ms = performance.now() - t0;

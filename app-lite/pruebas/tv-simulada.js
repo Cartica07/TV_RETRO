@@ -76,7 +76,7 @@
         const id = esCancion ? (d[11] | (d[12] << 8)) : 0;
         let ok = true;
         if (esCancion) { tv.sonando = null; ok = hacerEspacio(tam); }
-        rx = ok ? { tam, crc, ventana, esCancion, contenido, id, seq: 0, partes: [], bytes: 0, aceptados: 0 } : null;
+        rx = ok ? { tam, crc, ventana, esCancion, contenido, id, seq: 0, partes: [], bytes: 0, aceptados: 0, avisoHueco: -1 } : null;
         avisar([0x82, ok ? 1 : 0]);
         break;
       }
@@ -127,7 +127,13 @@
     if (!rx) return;
     if (tv.perderDatos > 0) { tv.perderDatos--; return; }
     const seq = d[0] | (d[1] << 8);
-    if (seq !== rx.seq) { avisar([0x86, rx.seq & 255, rx.seq >> 8]); return; }
+    if (seq !== rx.seq) {
+      // Un trozo adelantado: la TV avisa UNA vez por hueco (si no, cada trozo en vuelo provocaría otro aviso y el
+      // celular reenviaría sin parar). Un trozo repetido (seq < esperada) se ignora sin avisar.
+      if (seq > rx.seq && rx.avisoHueco !== rx.seq) { rx.avisoHueco = rx.seq; avisar([0x86, rx.seq & 255, rx.seq >> 8]); }
+      return;
+    }
+    rx.avisoHueco = -1;
     const carga = d.subarray(2);
     rx.partes.push(new Uint8Array(carga));
     rx.bytes += carga.length;

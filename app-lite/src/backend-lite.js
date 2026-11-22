@@ -17,7 +17,8 @@ import { comprimirCuadros, descomprimirCuadros, puedeComprimir, FORMATO_COMPRIMI
 // ===================================================
 export function describirError(error) {
   const texto = String((error && error.message) || error || '');
-  if (error instanceof ble.ErrorTV) return texto;
+  // Los textos de ErrorTV son frases completas; la Pro les agrega su propio punto final ("No se pudo enviar: … ."): se quita el nuestro.
+  if (error instanceof ble.ErrorTV) return texto.replace(/[.\s]+$/, '');
   if (/PERMISSION_DENIED|permission/i.test(texto)) return 'sin permiso';
   if (/offline|network|conexi/i.test(texto)) return 'sin conexión con la TV';
   return texto || 'error desconocido';
