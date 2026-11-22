@@ -12,6 +12,7 @@ const el = {
   enviarHora: $('enviarHora'), pedirEstado: $('pedirEstado'),
   tamano: $('tamano'), trozo: $('trozo'), ventana: $('ventana'),
   enviarPrueba: $('enviarPrueba'), repetir: $('repetir'),
+  guardar: $('guardar'), pantalla: $('pantalla'), barrido: $('barrido'),
   progreso: $('progreso'), resultado: $('resultado'), registro: $('registro'),
 };
 
@@ -96,7 +97,7 @@ async function escribirCtrl(arreglo) {
 function marcarConectado(si) {
   el.conectar.disabled = si;
   el.desconectar.disabled = !si;
-  for (const b of [el.enviarHora, el.pedirEstado, el.enviarPrueba, el.repetir]) b.disabled = !si || ocupado;
+  for (const b of [el.enviarHora, el.pedirEstado, el.enviarPrueba, el.repetir, el.barrido]) b.disabled = !si || ocupado;
   el.estado.textContent = si ? 'conectado' : 'sin conexión';
 }
 
@@ -145,15 +146,18 @@ async function pedirEstadoTV() {
 }
 
 // ---------- Envío del archivo de prueba ----------
-// Devuelve { ok, ms, kbs, kbsTV, reenvios }.
-async function enviarArchivo(tamano, trozo, ventana) {
+// banderas: bit 0 = guardar en la memoria de la TV, bit 1 = dibujar la pantalla al recibir.
+// Devuelve { ok, ms, kbs, kbsTV, reenvios, msTotalTV }.
+async function enviarArchivo(tamano, trozo, ventana, banderas = 0) {
   const datos = datosDePrueba(tamano);
   const crc = crc32(datos);
   const total = Math.ceil(tamano / trozo);
   avisos.length = 0;
 
-  await escribirCtrl([0x02, ...u32(tamano), ...u32(crc), ventana]);
-  if (!(await esperarAvisoTipo(0x82, 3000))) throw new Error('La TV no confirmó el inicio.');
+  await escribirCtrl([0x02, ...u32(tamano), ...u32(crc), ventana, banderas]);
+  const inicio = await esperarAvisoTipo(0x82, 5000);
+  if (!inicio) throw new Error('La TV no confirmó el inicio.');
+  if (inicio.getUint8(1) !== 1) throw new Error('La TV no pudo preparar el archivo.');
 
   let sig = 0;          // próximo trozo a enviar
   let confirmado = 0;   // trozos que la TV ya aceptó
@@ -188,16 +192,21 @@ async function enviarArchivo(tamano, trozo, ventana) {
   el.progreso.value = 100;
 
   await escribirCtrl([0x03]);
-  const fin = await esperarAvisoTipo(0x83, 3000);
+  const fin = await esperarAvisoTipo(0x83, 10000);
   if (!fin) throw new Error('La TV no dio el resultado final.');
   const ok = fin.getUint8(1) === 1;
   const msTV = leer32(fin, 6);
+  const msTotalTV = fin.byteLength >= 14 ? leer32(fin, 10) : msTV;
   return {
-    ok, ms, reenvios,
+    ok, ms, reenvios, msTotalTV,
     kbs: (tamano / 1024) / (ms / 1000),
     kbsTV: msTV ? (leer32(fin, 2) / 1024) / (msTV / 1000) : 0,
     bytesTV: leer32(fin, 2),
   };
+}
+
+function banderasElegidas() {
+  return (el.guardar.checked ? 1 : 0) | (el.pantalla.checked ? 2 : 0);
 }
 
 async function correrPrueba(veces) {
@@ -208,8 +217,8 @@ async function correrPrueba(veces) {
   const velocidades = [];
   try {
     for (let i = 1; i <= veces; i++) {
-      const r = await enviarArchivo(tamano, trozo, ventana);
-      registrar(`#${i}: ${r.ok ? 'OK' : 'ERROR'} · ${tamano} bytes en ${Math.round(r.ms)} ms · ${r.kbs.toFixed(1)} KB/s (celular) · ${r.kbsTV.toFixed(1)} KB/s (TV) · reenvíos ${r.reenvios} · la TV recibió ${r.bytesTV} bytes`);
+      const r = await enviarArchivo(tamano, trozo, ventana, banderasElegidas());
+      registrar(`#${i}: ${r.ok ? 'OK' : 'ERROR'} · ${tamano} bytes en ${Math.round(r.ms)} ms · ${r.kbs.toFixed(1)} KB/s (celular) · ${r.kbsTV.toFixed(1)} KB/s (TV) · todo guardado a los ${r.msTotalTV} ms · reenvíos ${r.reenvios} · la TV recibió ${r.bytesTV} bytes`);
       if (!r.ok) { el.resultado.className = 'mal'; el.resultado.textContent = `ERROR en el envío #${i}`; break; }
       velocidades.push(r.kbs);
       el.resultado.className = 'ok';
@@ -229,6 +238,53 @@ async function correrPrueba(veces) {
   }
 }
 
+// Barrido: prueba varias combinaciones con 100 KB, 3 envíos cada una, y deja una tabla en el registro.
+async function barrido() {
+  if (ocupado) return;
+  ocupado = true; marcarConectado(true);
+  el.resultado.className = ''; el.resultado.textContent = 'Barrido en curso...';
+  const tamano = 102400;
+  const trozos = [244, 500];
+  const ventanas = [4, 8, 16, 32];
+  const modos = [
+    { nombre: 'solo recibir', banderas: 0 },
+    { nombre: 'guardar + dibujar', banderas: 3 },
+  ];
+  const filas = [];
+  try {
+    for (const modo of modos) {
+      for (const trozo of trozos) {
+        for (const ventana of ventanas) {
+          const kbs = [];
+          let fallos = 0, reenvios = 0, msTotal = 0;
+          for (let i = 0; i < 3; i++) {
+            try {
+              const r = await enviarArchivo(tamano, trozo, ventana, modo.banderas);
+              if (r.ok) { kbs.push(r.kbs); msTotal += r.msTotalTV; } else fallos++;
+              reenvios += r.reenvios;
+            } catch (e) { fallos++; registrar(`  fallo: ${e.message}`); await pausa(500); }
+            await pausa(250);
+          }
+          const media = kbs.length ? kbs.reduce((a, b) => a + b, 0) / kbs.length : 0;
+          const minima = kbs.length ? Math.min(...kbs) : 0;
+          const linea = `${modo.nombre} · trozo ${trozo} · ventana ${ventana}: ${media.toFixed(1)} KB/s (mín ${minima.toFixed(1)}), fallos ${fallos}, reenvíos ${reenvios}` +
+            (modo.banderas & 1 && kbs.length ? `, guardado completo en ${Math.round(msTotal / kbs.length)} ms` : '');
+          registrar(linea);
+          filas.push(linea);
+        }
+      }
+    }
+    el.resultado.className = 'ok'; el.resultado.textContent = 'Barrido terminado';
+    registrar('=== BARRIDO TERMINADO ===');
+  } catch (e) {
+    el.resultado.className = 'mal'; el.resultado.textContent = e.message;
+    registrar(`Barrido interrumpido: ${e.message}`);
+  } finally {
+    ocupado = false; marcarConectado(!!(dispositivo && dispositivo.gatt.connected));
+  }
+}
+
+el.barrido.addEventListener('click', barrido);
 el.conectar.addEventListener('click', conectar);
 el.desconectar.addEventListener('click', desconectar);
 el.enviarHora.addEventListener('click', () => enviarHora().catch((e) => registrar(e.message)));
