@@ -30,7 +30,7 @@
 
 | # | Cuándo sale | Texto propuesto |
 |---|---|---|
-| 17 | Emparejar (con el PIN en grande) | Emparejar: escribe el / PIN en tu celular · Vence en 1:59 |
+| 17 | Emparejar (con el PIN en grande) | Emparejar: escribe el / PIN en tu celular · Vence en 4:59 |
 | 18 | Al mantener el botón 3 s sin que suene nada | Sigue / 5 s mas: emparejar |
 | 19 | Emparejado | Listo! / Celular emparejado |
 | 20 | Reloj sin hora | --:-- y debajo "Sin hora" |
