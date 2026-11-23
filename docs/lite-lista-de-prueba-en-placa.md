@@ -78,6 +78,18 @@
 - **Apretar "Enviar" varias veces seguidas** y **cambiar de pestaña** durante un envío: no debe trabarse nada.
 - **Alcance:** repetir un envío a 3, 6 y 10 metros.
 
+## 5b. Ahorro de energía (firmware del 2026-11-23, sin probar en placa)
+
+La CPU va a 80 MHz, el anuncio Bluetooth es lento sin celular (400-500 ms) y rápido con la ventana de emparejamiento (50-100 ms), y la conexión se vuelve tranquila (50-100 ms, latencia 2) tras 8 s sin escrituras del celular. Cada medida se apaga con su `#define` (`AHORRO_CPU` en `OLED_Lite.ino`; `AHORRO_ANUNCIO` y `AHORRO_CONEXION` en `ble_lite.cpp`). Con el monitor serie abierto:
+1. Al arrancar el registro dice `CPU 80 MHz`.
+2. **Emparejar:** con la ventana abierta (`[ble] anuncio rapido`), "Pepito Lite" aparece enseguida en Ajustes > Bluetooth del celular. Al emparejar, `[ble] anuncio lento`.
+3. **Conexión tranquila:** con la app abierta y sin tocar nada, a los ~8 s sale `[ble] pido conexion tranquila` y luego `[ble] conexion: cada 50-100 ms, latencia 2` (si el celular no la acepta, se queda en 15 ms: no es un error, solo no ahorra).
+4. **Vuelve a ser rápida al enviar:** mandar un GIF grande: sale `[ble] pido conexion rapida` y `conexion: cada 15 ms`; el GIF tarda lo mismo que antes (anotar el tiempo) y el registro NO muestra reenvíos ni "sin datos".
+5. **Reconexión:** cerrar y abrir la app: vuelve a "En línea" en pocos segundos (con el anuncio lento puede tardar ~1 s más que antes).
+6. Texto, canción con letra, alarma y reloj funcionan igual que antes; el buzzer suena con el mismo tono.
+7. Si algo falla, apagar la medida sospechosa (su `#define` a 0), volver a grabar y repetir.
+8. **Medir el consumo** (si hay un medidor USB): con la pantalla apagada y sin celular, antes (con los tres `#define` en 0) y después.
+
 ## 6. Qué medir mientras tanto
 
 Velocidad de un envío de 100 KB (en la prueba anterior, **22 KB/s** con el plugin y 36–63 KB/s con el navegador), memoria libre (`[lite] listo. Memoria libre…` en el registro; con la S3 sin memoria extra), y que ningún comando deje la TV colgada.
