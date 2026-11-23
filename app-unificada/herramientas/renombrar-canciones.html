@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Renombrar canciones</title>
+<!-- Herramienta del dueño (2026-11-23), NO es parte de la app: cambia SOLO el nombre visible de las canciones del catálogo
+     (musicales/indice/<clave>/nombre). La grabación, la clave y lo que recibe la TV no cambian. Hace falta entrar con una cuenta
+     de administrador (lo exigen las reglas). Respaldo de los nombres anteriores: TV_RETRO-respaldos/musicales-indice-2026-11-23.json.
+     Uso: desde la raíz del repo, `npx serve .` y abrir /app-unificada/herramientas/renombrar-canciones.html en el navegador. -->
+<style>
+  body { margin: 0; padding: 16px; background: #0B0F14; color: #E6EDF3; font-family: system-ui, sans-serif; }
+  h1 { font-size: 20px; }
+  button { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #33415A; background: #1A2230; color: #E6EDF3; font-size: 16px; cursor: pointer; margin: 4px 4px 4px 0; }
+  button.primario { background: #50C5EC; color: #04121A; border: none; font-weight: 700; }
+  input { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid #253041; background: #0E141C; color: #E6EDF3; font-size: 16px; margin: 4px 0; width: 100%; max-width: 360px; box-sizing: border-box; display: block; }
+  table { border-collapse: collapse; margin: 12px 0; width: 100%; max-width: 720px; }
+  td, th { border-bottom: 1px solid #253041; padding: 6px 8px; text-align: left; font-size: 14px; }
+  th { color: #8B98A8; }
+  .nuevo { color: #4DD2FF; }
+  .estado { margin: 12px 0; font-size: 16px; }
+  .error { color: #FF9A9A; }
+  .ok { color: #3DDC84; }
+</style>
+</head>
+<body>
+<h1>Renombrar canciones</h1>
+<div id="entrar">
+  <p>Entra con tu cuenta de administrador.</p>
+  <button type="button" id="google">Entrar con Google</button>
+  <input type="email" id="correo" placeholder="Correo" autocomplete="username" />
+  <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password" />
+  <button type="button" id="conCorreo">Entrar con correo</button>
+</div>
+<div id="estado" class="estado"></div>
+<button type="button" id="salir" hidden>Salir y entrar con otra cuenta</button>
+<div id="cambios" hidden>
+  <table><thead><tr><th>Archivo</th><th>Hoy</th><th>Nuevo</th></tr></thead><tbody id="tabla"></tbody></table>
+  <button type="button" id="aplicar" class="primario"></button>
+</div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
+import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyACebxW1oTWpBWfinBUJwmynxHxQmtRMDo',
+  authDomain: 'lorenita-6ad1e.firebaseapp.com',
+  databaseURL: 'https://lorenita-6ad1e-default-rtdb.firebaseio.com',
+  projectId: 'lorenita-6ad1e',
+  appId: '1:426829616333:web:f1f5ce42ebf0e0aea04584',
+});
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+// Nombres aprobados por el dueño el 2026-11-23 (clave del catálogo -> nombre visible).
+const NOMBRES = {
+  'abelardo_hp': 'Abelardo HP',
+  'alabare__2_': 'Alabaré',
+  'arregla_pa_que_te_vas': 'Arregla pa que te vas Remix',
+  'ay_gatito_miau': 'Ay mi gatito',
+  'contigo_panchos': 'Contigo - Panchos',
+  'culpable_ono': 'Culpable o no',
+  'De_musica_ligera': 'De Música ligera',
+  'desde_octubreee': 'Desde octubre',
+  'Dios_esta_aqui': 'Dios está aquí',
+  'doctor_house': 'Soy Doctor House',
+  'doctor_slenderman': 'Soy Slenderman',
+  'Doma': 'Doma',
+  'dtmf': 'DtMF',
+  'el_amar_y_querer': 'El amar y querer',
+  'el_fin_del_mundo': 'El fin del mundo',
+  'el_me_mintiO': 'Él me mintió',
+  'en_el_bosque_de_la_china': 'En el bosque de la China',
+  'en_otra_vida': 'En otra vida',
+  'esclava_remix': 'Esclava remix',
+  'feliz_cumplea_os': 'Feliz cumpleaños',
+  'halloween_song': 'Halloween song',
+  'hijo_de_la_luna': 'Hijo de la luna',
+  'i_have_no_friends': 'I have no friends',
+  'intruso': 'Intruso',
+  'Is_not_she_lovely': "Isn't She Lovely",
+  'la_costa_del_silencio': 'La costa del silencio',
+  'la_cucaracha': 'La cucaracha',
+  'la_noche_mas_linda_del_mund': 'La noche más linda del mundo',
+  'la_noche_sin_ti': 'La noche sin ti',
+  'La_quemona': 'La quemona',
+  'levan_polkka': 'Levan polkka',
+  'lo_mejor_del_amor': 'Lo mejor del amor',
+  'Mi_buen_amor__2_': 'Mi buen amor',
+  'mi_corazon_encnatado': 'Mi corazón encantado',
+  'mi_viejo': 'Mi viejo',
+  'MOSTAZA': 'Mostaza',
+  'noviembre_sin_ti': 'Noviembre sin ti',
+  'pa_donde_se_fue': 'Pa dónde se fue',
+  'porque_te_vas_v2': 'Porque te vas',
+  'rata_de_dos_patas': 'Rata de dos patas',
+  'rojo_vivo': 'Rojo vivo',
+  'rosa_pastel': 'Rosa pastel',
+  'RUNAWAY': 'Runaway',
+  'see_you_again': 'See you again',
+  'soy_un_pajarito': 'Soy un pajarito',
+  'Sumergeme': 'Sumérgeme',
+  'sin_medir_distancia': 'Sin medir distancia',
+  'te_estoy_cotorreando (4)': 'Te estoy cotorreando',
+  'Termonuclear': 'Termonuclear',
+  'traicionera': 'Traicionera',
+  'tu_carcel': 'Tu cárcel',
+  'tu_eres_ajena': 'Tú eres ajena',
+  'TuFaltaDeQuerer': 'Tu falta de querer',
+  'tukti_tuki': 'Tukti tuki',
+  'tv_lanavedelolvido_copy': 'La nave del olvido',
+  'un_mundo_ideal': 'Un mundo ideal',
+  'vuelvepetro': 'Vuelve te pido Petro',
+};
+
+const $ = (id) => document.getElementById(id);
+const estado = (texto, clase = '') => { $('estado').textContent = texto; $('estado').className = 'estado ' + clase; };
+let pendientes = {};
+
+// Google siempre pregunta qué cuenta usar (si no, entra sola con la última).
+const proveedor = new GoogleAuthProvider();
+proveedor.setCustomParameters({ prompt: 'select_account' });
+$('salir').addEventListener('click', async () => { await signOut(auth); location.reload(); });
+$('google').addEventListener('click', () => signInWithPopup(auth, proveedor).catch((e) => estado('No se pudo entrar: ' + e.message, 'error')));
+$('conCorreo').addEventListener('click', () => signInWithEmailAndPassword(auth, $('correo').value.trim(), $('clave').value).catch((e) => estado('No se pudo entrar: ' + e.message, 'error')));
+
+onAuthStateChanged(auth, async (u) => {
+  if (!u) return;
+  $('entrar').hidden = true;
+  $('salir').hidden = false;
+  estado(`Entraste como ${u.email || 'cuenta sin correo'}. Leyendo las canciones…`);
+  const admin = (await get(ref(db, 'administradores/' + u.uid))).val() === true;
+  if (!admin) { estado(`La cuenta ${u.email || ''} no es de administrador: toca "Salir y entrar con otra cuenta".`, 'error'); return; }
+  const indice = (await get(ref(db, 'musicales/indice'))).val() || {};
+  pendientes = {};
+  const filas = [];
+  const faltan = Object.keys(NOMBRES).filter((k) => !indice[k]);
+  const sinNombreNuevo = Object.keys(indice).filter((k) => !(k in NOMBRES));
+  for (const [k, nuevo] of Object.entries(NOMBRES)) {
+    if (!indice[k] || indice[k].nombre === nuevo) continue;
+    pendientes[`musicales/indice/${k}/nombre`] = nuevo;
+    filas.push(`<tr><td>${k}</td><td>${indice[k].nombre || ''}</td><td class="nuevo">${nuevo}</td></tr>`);
+  }
+  $('tabla').innerHTML = filas.join('');
+  const n = Object.keys(pendientes).length;
+  let aviso = n ? `Se cambiarán ${n} nombres.` : 'Todos los nombres ya están como deben.';
+  if (faltan.length) aviso += ` No están en la nube: ${faltan.join(', ')}.`;
+  if (sinNombreNuevo.length) aviso += ` Sin nombre nuevo (quedan igual): ${sinNombreNuevo.join(', ')}.`;
+  estado(aviso, n ? '' : 'ok');
+  $('cambios').hidden = n === 0;
+  $('aplicar').textContent = `Cambiar ${n} nombres`;
+});
+
+$('aplicar').addEventListener('click', async () => {
+  $('aplicar').disabled = true;
+  estado('Guardando…');
+  try {
+    await update(ref(db), pendientes);
+    estado(`Listo ✅ Se cambiaron ${Object.keys(pendientes).length} nombres. Ya se ven en la app.`, 'ok');
+    $('cambios').hidden = true;
+  } catch (e) {
+    estado('No se pudo guardar: ' + e.message, 'error');
+    $('aplicar').disabled = false;
+  }
+});
+</script>
+</body>
+</html>
