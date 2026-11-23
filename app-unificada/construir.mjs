@@ -59,6 +59,7 @@ writeFileSync(join(www, 'js', 'firebase.js'), routerFinal);
 copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
+copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
 
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
@@ -154,7 +155,7 @@ const pantallaInicioTipo = `<div class="pantalla-login" id="pantallaInicioTipo" 
 </div>
 `;
 cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n$1`, 'el comentario del tutorial');
-cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/, '$1\n<script type="module" src="js/anadir-lite.js"></script>', 'el script js/main.js');
+cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/, '$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>', 'el script js/main.js');
 
 if (paraApk) {
   cambiar(/[ \t]*<!-- H-21: política de seguridad[\s\S]*?-->\r?\n/, '', 'el comentario de la política de seguridad');
