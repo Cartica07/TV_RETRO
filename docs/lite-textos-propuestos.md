@@ -30,6 +30,10 @@
 | 27 | Pantalla de inicio, paso 2 | Toca "Abrir Bluetooth", elige "TV RETRO Lite" y escribe el PIN. | `construir.mjs` |
 | 28 | Pantalla de inicio, paso 3 | Vuelve a esta app. Se conecta sola. | `construir.mjs` |
 | 29 | Pantalla de inicio, botones | Abrir Bluetooth / Ahora no | `construir.mjs` |
+| 30 | App unificada, "Añade tu TV" y "Mis TV": botón para una TV Lite | Tengo una TV Lite | `app-unificada/construir.mjs` |
+| 31 | App unificada, pantalla "Conecta tu TV" abierta desde "Añade tu TV": botón para volver | Volver | `app-unificada/construir.mjs` |
+| 32 | App unificada: compartir una TV Lite | Una TV Lite no se comparte. | `src/backend-unificado.js` |
+| 33 | App unificada: una función que una TV Lite no tiene | Esto no está disponible en una TV Lite. | `src/lite-tv.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 

@@ -5,10 +5,12 @@
 // Flujo: botón "Tengo una TV Lite" -> pantalla "Conecta tu TV" (pasos) -> "Abrir Bluetooth" -> la persona empareja -> al volver
 // la app encuentra la TV emparejada, la añade a la cuenta y vincula con el mismo formulario de siempre (marca "LITE").
 // Este archivo solo maneja los botones nuevos: el formulario, el código y todo lo de la Pro siguen siendo de la Pro.
+// La parte Bluetooth (js/lite-tv.js) se carga solo cuando la persona toca el botón: con una TV Pro no corre.
 import { usuarioActual, unificadaAnadirTVLite } from './firebase.js';
-import * as lite from './lite-tv.js';
+import { listarTVLite } from './registro-lite.js';
 
 const q = (id) => document.getElementById(id);
+const lite = () => import('./lite-tv.js');
 
 function iniciar() {
   const botonLite = q('botonTVLite');
@@ -24,7 +26,7 @@ function iniciar() {
     revisando = true;
     try {
       let tv = null;
-      try { tv = await lite.tvVinculada(); } catch (e) { /* se sigue esperando */ }
+      try { tv = await (await lite()).tvVinculada(); } catch (e) { /* se sigue esperando */ }
       if (!tv) return;
       const usuario = usuarioActual();
       if (!usuario) return;
@@ -42,8 +44,8 @@ function iniciar() {
     pantalla.hidden = false;
     revisar(); // si el celular ya tiene la TV emparejada, no hay nada más que hacer
   });
-  q('botonAbrirBluetooth').addEventListener('click', () => {
-    lite.abrirAjustesBluetooth().catch((e) => console.warn('[TV RETRO] No se pudieron abrir los ajustes de Bluetooth', e));
+  q('botonAbrirBluetooth').addEventListener('click', async () => {
+    try { await (await lite()).abrirAjustesBluetooth(); } catch (e) { console.warn('[TV RETRO] No se pudieron abrir los ajustes de Bluetooth', e); }
   });
   q('botonConexionVolver').addEventListener('click', cerrar);
 
@@ -52,7 +54,7 @@ function iniciar() {
   if (lista) {
     new MutationObserver(() => {
       const usuario = usuarioActual();
-      const n = usuario ? lite.listarTVLite(usuario.uid).length : 0;
+      const n = usuario ? listarTVLite(usuario.uid).length : 0;
       if (!n) return;
       for (const fila of [...lista.querySelectorAll('.fila-tv')].slice(-n)) {
         for (const b of fila.querySelectorAll('button')) if (b.textContent.trim() === 'Compartir') b.hidden = true;

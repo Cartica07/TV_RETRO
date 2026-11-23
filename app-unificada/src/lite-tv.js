@@ -9,6 +9,7 @@
 
 import * as ble from '../../app-lite/src/ble.js';
 import * as almacen from '../../app-lite/src/almacen.js';
+import { bleDe } from './registro-lite.js';
 import { comprimirCuadros, descomprimirCuadros, puedeComprimir, FORMATO_COMPRIMIDO, FORMATO_MUSICAL } from '../../js/compresion.js';
 
 export const ErrorTV = ble.ErrorTV;
@@ -18,41 +19,6 @@ export { ble };
 export const LIMITE_GIF_TV_BYTES = 600 * 1024;
 
 const NO_DISPONIBLE = { exito: false, error: 'Esto no está disponible en una TV Lite.' };
-
-// ===================================================
-// TV Lite que la persona añadió (en el celular, por cuenta)
-// ===================================================
-export const PREFIJO = 'lite:';
-export const esIdLite = (id) => typeof id === 'string' && id.startsWith(PREFIJO);
-const bleDe = (id) => String(id).slice(PREFIJO.length);
-const claveRegistro = (uid) => 'tvretro.tvlite.' + uid;
-
-function leerRegistro(uid) {
-  try {
-    const lista = JSON.parse(localStorage.getItem(claveRegistro(uid)) || '[]');
-    return Array.isArray(lista) ? lista.filter((x) => typeof x === 'string' && x.length > 0) : [];
-  } catch (e) { return []; }
-}
-
-function escribirRegistro(uid, lista) {
-  try { localStorage.setItem(claveRegistro(uid), JSON.stringify(lista)); } catch (e) { /* sin almacenamiento */ }
-}
-
-/** Ids ("lite:…") de las TV Lite de esta cuenta. */
-export function listarTVLite(uid) { return leerRegistro(uid).map((b) => PREFIJO + b); }
-
-/** Añade una TV Lite (dirección Bluetooth) a la cuenta y devuelve su id. */
-export function anadirTVLite(uid, bleId) {
-  const lista = leerRegistro(uid);
-  if (!lista.includes(bleId)) lista.push(bleId);
-  escribirRegistro(uid, lista);
-  return PREFIJO + bleId;
-}
-
-/** Quita una TV Lite de la cuenta (la del celular; el vínculo de Bluetooth se quita en los ajustes del celular). */
-export function quitarTVLite(uid, id) {
-  escribirRegistro(uid, leerRegistro(uid).filter((b) => PREFIJO + b !== id));
-}
 
 // ===================================================
 // Utilidades

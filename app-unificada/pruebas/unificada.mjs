@@ -21,7 +21,9 @@ const semilla = (extra = {}) => Object.assign({
   const esc = await escrituras(pagina);
   informe('TV Pro: enviar escribe en dispositivos/tv1/oled_remota como siempre', esc.some((r) => /dispositivos\/tv1\/oled_remota/.test(r)), esc.join(', ').slice(0, 160));
   const e = await estadoTV(pagina);
-  informe('TV Pro: no se abre ninguna conexión Bluetooth', e.contenidos === 0 && !e.conectado, JSON.stringify({ contenidos: e.contenidos, conectado: e.conectado }));
+  const cargados = await pagina.evaluate(() => performance.getEntriesByType('resource').map((r) => r.name.split('/').pop()));
+  informe('TV Pro: ni siquiera se carga la parte Bluetooth (con una TV Pro no corre nada nuevo)', !cargados.includes('lite-tv.js') && !(await pagina.evaluate(() => !!(window.Capacitor))), cargados.filter((n) => /lite|capacitor/i.test(n)).join(', '));
+  informe('TV Pro: no se abre ninguna conexión Bluetooth',e.contenidos === 0 && !e.conectado, JSON.stringify({ contenidos: e.contenidos, conectado: e.conectado }));
   informe('TV Pro: sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | '));
   await navegador.close();
 }

@@ -52,6 +52,7 @@ if (faltan.length || sobran.length) {
 writeFileSync(join(www, 'js', 'firebase.js'), fuenteRouter);
 copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
+copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
