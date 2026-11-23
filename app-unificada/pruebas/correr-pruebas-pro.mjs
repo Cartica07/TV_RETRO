@@ -21,7 +21,10 @@ const lista = pedidas.length ? pedidas : SUITES;
 if (!fs.existsSync(path.join(www, 'index.html'))) throw new Error('Falta app-unificada/www: corre antes node construir.mjs');
 fs.rmSync(tmp, { recursive: true, force: true });
 fs.mkdirSync(path.join(tmp, 'pruebas'), { recursive: true });
-fs.cpSync(path.join(raiz, 'js'), path.join(tmp, 'js'), { recursive: true });
+// La raíz de la copia es la app UNIFICADA (js, css, fonts, index.html), no la Pro: así las pruebas que leen archivos del repo leen lo que se arma.
+for (const x of ['js', 'css', 'fonts', 'index.html']) fs.cpSync(path.join(www, x), path.join(tmp, x), { recursive: true });
+// Las otras páginas de la Pro (carga-masiva, ayuda, términos…) no van en la unificada, pero algunas pruebas las leen: se copian tal cual.
+for (const f of fs.readdirSync(raiz)) if (f.endsWith('.html') && f !== 'index.html') fs.copyFileSync(path.join(raiz, f), path.join(tmp, f));
 for (const f of fs.readdirSync(path.join(raiz, 'pruebas'))) {
   const origen = path.join(raiz, 'pruebas', f);
   if (f === 'node_modules') continue;
@@ -43,11 +46,11 @@ for (const s of lista) {
   const r = spawnSync(process.execPath, [`${s}.mjs`], { cwd: path.join(tmp, 'pruebas'), encoding: 'utf8', timeout: 600000 });
   const salida = `${r.stdout || ''}${r.stderr || ''}`;
   const ok = (salida.match(/^OK/gm) || []).length;
-  const mal = (salida.match(/^(FALLA|PROBLEMA)/gm) || []).length;
+  const mal = (salida.match(/^(FALLA|FALLÓ|PROBLEMA)/gm) || []).length;
   console.log(`== ${s}: ${ok} OK, ${mal} FALLA${r.status ? ` (salió con código ${r.status})` : ''}`);
   if (mal || ok === 0 || r.status) {
     fallas++;
-    for (const l of salida.split('\n').filter((x) => /^(FALLA|PROBLEMA)/.test(x)).slice(0, 4)) console.log('   ' + l.slice(0, 220));
+    for (const l of salida.split('\n').filter((x) => /^(FALLA|FALLÓ|PROBLEMA)/.test(x)).slice(0, 4)) console.log('   ' + l.slice(0, 220));
     if (ok === 0) console.log('   (sin resultados) ' + salida.split('\n').slice(-3).join(' | ').slice(0, 250));
   }
 }
