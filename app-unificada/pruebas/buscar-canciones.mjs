@@ -54,6 +54,19 @@ informe('al volver a abrir, la canción elegida está marcada', actual === 'Un m
 await pagina.keyboard.press('Escape');
 informe('Escape (o la X) cierra sin cambiar nada', !(await visible(pagina, '#buscadorCanciones')) && (await pagina.evaluate(() => document.getElementById('seleccionCancion').value)) === 'mundo');
 
+// Tocar la lista misma: en vez de la lista gris de Android se abre esta, con la canción elegida marcada y SIN teclado.
+await pagina.click('#seleccionCancion', { force: true }); // el toque cae en su caja (el <select> no recibe toques)
+await pagina.waitForTimeout(200);
+const tocandoLista = await pagina.evaluate(() => ({
+  abierta: !document.getElementById('buscadorCanciones').hidden,
+  foco: document.activeElement && document.activeElement.id,
+  marcada: (document.querySelector('#buscadorLista button[aria-current="true"]') || {}).textContent,
+}));
+informe('tocar la lista abre la lista con el estilo de la app, sin teclado y con la elegida marcada',
+  tocandoLista.abierta && tocandoLista.foco !== 'buscadorTexto' && tocandoLista.marcada === 'Un mundo ideal', JSON.stringify(tocandoLista));
+await pagina.click('#buscadorLista button >> text=La cucaracha').catch(async () => { await pagina.click('#buscadorLista button >> nth=1'); });
+informe('y al tocar otra canción queda elegida', (await pagina.evaluate(() => document.getElementById('seleccionCancion').value)) !== 'mundo');
+
 // ---------- Tono de la alarma ----------
 await pagina.click('#grupoTipo button[data-valor="galeria"]');
 await pagina.click('#grupoMas button[data-mas="alarma"]');

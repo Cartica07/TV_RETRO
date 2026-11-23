@@ -86,7 +86,9 @@ function iniciar() {
     vacio.hidden = encontradas.length > 0;
   }
 
-  function abrir(select, boton) {
+  // Con la lupa se abre lista para escribir (con el teclado). Tocando la lista misma, solo se ve la lista (sin teclado; para buscar
+  // se toca el campo) con la canción elegida a la vista.
+  function abrir(select, boton, { teclado = true } = {}) {
     if (!select || select.disabled) return;
     destino = select;
     botonOrigen = boton || null;
@@ -94,7 +96,13 @@ function iniciar() {
     pintar();
     ventana.hidden = false;
     lista.scrollTop = 0;
-    campo.focus();
+    if (teclado) {
+      campo.focus();
+    } else {
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      const actual = lista.querySelector('button[aria-current="true"]');
+      if (actual) actual.scrollIntoView({ block: 'center' });
+    }
   }
 
   function cerrar() {
@@ -115,8 +123,23 @@ function iniciar() {
   }
 
   document.addEventListener('click', (e) => {
-    const lupa = e.target.closest && e.target.closest('.boton-buscar-cancion');
-    if (lupa) abrir(q(lupa.dataset.buscarEn), lupa);
+    if (!e.target.closest) return;
+    const lupa = e.target.closest('.boton-buscar-cancion');
+    if (lupa) { abrir(q(lupa.dataset.buscarEn), lupa); return; }
+    // La lista misma (unificada.css le quita los toques al <select>, así que llegan a su caja): en vez de la lista gris de
+    // Android, esta, con el estilo de la app.
+    const caja = e.target.closest('.selector');
+    const select = caja && caja.querySelector(':scope > #seleccionCancion, :scope > #alarmaTono');
+    if (select) abrir(select, select, { teclado: false });
+  });
+  // Con teclado físico (Enter, espacio o flecha abajo sobre la lista), lo mismo.
+  document.addEventListener('keydown', (e) => {
+    const select = e.target;
+    if (!select || (select.id !== 'seleccionCancion' && select.id !== 'alarmaTono')) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      abrir(select, select, { teclado: false });
+    }
   });
   campo.addEventListener('input', pintar);
   lista.addEventListener('click', (e) => {
