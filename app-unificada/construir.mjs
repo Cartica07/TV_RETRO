@@ -129,6 +129,19 @@ const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidd
 </div>
 `;
 cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n$1`, 'el comentario del tutorial');
+// "¿Qué TV tienes?" (solo la primera vez, cuando la cuenta aún no tiene ninguna TV): dentro de la tarjeta "Añade tu TV", con TV Pro
+// marcada por defecto (el código de siempre) y TV Lite (abre "Conecta tu TV"). Textos PROPUESTOS: los aprueba el dueño.
+cambiar(/(<form class="login-form" id="formTV")/,
+  `<div class="campo" id="elegirTipoTV">
+      <span class="rotulo">¿Qué TV tienes?</span>
+      <div class="segmento" role="group" aria-label="Tipo de TV">
+        <button type="button" data-tipo-tv="pro" class="activo">TV Pro</button>
+        <button type="button" data-tipo-tv="lite">TV Lite</button>
+      </div>
+    </div>
+
+    $1`,
+  'el formulario de Mi TV');
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/, '$1\n<script type="module" src="js/anadir-lite.js"></script>', 'el script js/main.js');
 
 if (paraApk) {

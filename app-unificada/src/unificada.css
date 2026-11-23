@@ -28,6 +28,21 @@ body.tv-lite #configSistema {
   font-weight: 700;
 }
 
+/* "¿Qué TV tienes?": solo mientras la cuenta no tiene ninguna TV (el enrutador pone la clase "sin-tv" en <body>). Con esa pregunta
+   a la vista, el botón "Tengo una TV Lite" del formulario sobra. */
+#elegirTipoTV {
+  display: none;
+  margin-bottom: var(--esp-4, 16px);
+}
+
+body.sin-tv #elegirTipoTV {
+  display: block;
+}
+
+body.sin-tv #botonTVLite {
+  display: none;
+}
+
 #pantallaConexion .boton-secundario,
 #botonTVLite {
   width: 100%;
