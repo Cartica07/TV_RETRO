@@ -110,6 +110,11 @@ class ErrorVinculoRoto extends ErrorTV {}
 let alEstado = () => {};
 export function alCambiarEstado(f) { alEstado = f; }
 
+// Avisa (con el texto para la persona) cuando la reconexión de fondo descubre que la TV ya no reconoce a este celular:
+// sin esto la app solo mostraría "Desconectado". Lo usa la app unificada; la app Lite no lo conecta.
+let alVinculoRotoAviso = () => {};
+export function alVinculoRoto(f) { alVinculoRotoAviso = f; }
+
 // Espera (sin pasarse de ESPERA_VINCULO_MS) a que el celular quede vinculado con la TV. Devuelve true si lo logró.
 async function esperarVinculo() {
   const limite = performance.now() + ESPERA_VINCULO_MS;
@@ -221,6 +226,7 @@ export async function reconectar() {
   } catch (e) {
     marcarConectado(false);
     if (e instanceof ErrorSinVinculo || e instanceof ErrorVinculoRoto) reconexionPausada = true;
+    if (e instanceof ErrorVinculoRoto) alVinculoRotoAviso(e.message);
     return false;
   } finally {
     enCurso = null;

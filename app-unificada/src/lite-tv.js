@@ -125,6 +125,16 @@ ble.alCambiarEstado((paso) => {
   } catch (e) { /* sin pantalla */ }
 });
 
+// Si la TV ya no reconoce a este celular (el vínculo quedó roto de un solo lado), la reconexión de fondo se detiene en silencio y
+// la app solo diría "Desconectado": se avisa con un cuadro, como máximo una vez por minuto, qué hacer.
+// Texto PROPUESTO (docs/lite-textos-propuestos.md, fila 24): lo aprueba el dueño.
+let ultimoAvisoVinculo = 0;
+ble.alVinculoRoto((mensaje) => {
+  if (Date.now() - ultimoAvisoVinculo < 60000) return;
+  ultimoAvisoVinculo = Date.now();
+  try { window.alert(mensaje); } catch (e) { console.warn('[TV RETRO] ' + mensaje); }
+});
+
 async function asegurarConexion() {
   if (ble.estaConectado()) return;
   if (await ble.reconectar()) return;

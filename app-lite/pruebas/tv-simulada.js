@@ -34,6 +34,7 @@
     sinResponder: false,           // no responder a CTRL (simula una TV colgada)
     rechazarBusqueda: false,       // el usuario cierra la lista de TV sin elegir ninguna
     noConectar: false,             // la conexión falla (TV apagada o lejos)
+    rechazarEscrituras: false,     // la TV ya no reconoce a este celular (vínculo roto de un solo lado): toda escritura falla
     conexiones: 0,                 // cuántas veces se conectó (las pruebas de concurrencia lo miran)
     dispositivo: null,
   };
@@ -147,8 +148,8 @@
     const c = new EventTarget();
     c.uuid = uuid;
     c.startNotifications = async () => c;
-    c.writeValueWithResponse = async (buf) => { if (!tv.conectado) throw new Error('GATT Server is disconnected.'); const d = new Uint8Array(buf.buffer || buf); if (uuid === CTRL) cmdCtrl(d); };
-    c.writeValueWithoutResponse = async (buf) => { if (!tv.conectado) throw new Error('GATT Server is disconnected.'); const d = new Uint8Array(buf.buffer || buf); if (uuid === DATOS) datos(d); };
+    c.writeValueWithResponse = async (buf) => { if (!tv.conectado) throw new Error('GATT Server is disconnected.'); if (tv.rechazarEscrituras) throw new Error('Writing characteristic failed with status code 201.'); const d = new Uint8Array(buf.buffer || buf); if (uuid === CTRL) cmdCtrl(d); };
+    c.writeValueWithoutResponse = async (buf) => { if (!tv.conectado) throw new Error('GATT Server is disconnected.'); if (tv.rechazarEscrituras) throw new Error('Writing characteristic failed with status code 201.'); const d = new Uint8Array(buf.buffer || buf); if (uuid === DATOS) datos(d); };
     c.writeValue = c.writeValueWithResponse;
     return c;
   };
