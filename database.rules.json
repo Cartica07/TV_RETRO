@@ -236,6 +236,9 @@
           "zona": {
             ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= -720 && newData.val() <= 840"
           },
+          "apagado": {
+            ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
+          },
           "$otro": {
             ".validate": false
           }
