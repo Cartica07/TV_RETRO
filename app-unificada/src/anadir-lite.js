@@ -25,6 +25,9 @@ const guardarTipo = (t) => { try { if (t) localStorage.setItem(CLAVE_TIPO, t); e
 function iniciarPrimeraPantalla() {
   const pantalla = q('pantallaInicioTipo');
   if (!pantalla) return;
+  // En el modo viejo sin cuentas (?sincuentas, solo para pruebas locales de la Pro) no hay sesión: la Pro ni siquiera la escucha,
+  // y esta pantalla tampoco debe hacerlo.
+  if (new URLSearchParams(location.search).has('sincuentas')) return;
   const botonPro = q('botonInicioPro');
   const botonLite = q('botonInicioLite');
   const aviso = q('inicioTipoError');
