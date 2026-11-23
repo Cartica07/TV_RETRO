@@ -12,7 +12,7 @@ body.tv-lite #configSistema {
 }
 
 /* Sin cuenta (eligió "TV Lite" en la primera pantalla; js/anadir-lite.js pone la clase "sin-cuenta" en <body>): no hay inicio de
-   sesión, ni "Mi cuenta", ni cerrar sesión, ni código de TV Pro, ni el tutorial de la Pro (habla de la TV por Wi-Fi).
+   sesión, ni "Mi cuenta", ni cerrar sesión, ni código de TV Pro. El tutorial guiado SÍ se ve (decisión del dueño, 2026-11-23).
    "Cerrar sesión" de Mis TV queda como "Tengo una TV Pro" (lleva de vuelta a la primera pantalla). */
 body.sin-cuenta #pantallaLogin,
 body.sin-cuenta [data-config="cuenta"],
@@ -20,15 +20,8 @@ body.sin-cuenta #configCuenta,
 body.sin-cuenta #botonCerrarSesion,
 body.sin-cuenta #botonEliminarCuenta,
 body.sin-cuenta #formTV > .campo,
-body.sin-cuenta #botonVincularTV,
-body.sin-cuenta #botonVerTutorial,
-body.sin-cuenta #tutorial {
+body.sin-cuenta #botonVincularTV {
   display: none !important;
-}
-
-/* Red de seguridad: si el tutorial de la Pro llegara a abrirse sin cuenta (oculto arriba), no debe dejar la página sin scroll. */
-body.sin-cuenta.tutorial-abierto {
-  overflow: visible !important;
 }
 
 /* Pantalla "Conecta tu TV" (HTML en construir.mjs; la maneja js/anadir-lite.js). */
