@@ -11,6 +11,21 @@ body.tv-lite #configSistema {
   display: none !important;
 }
 
+/* Sin cuenta (eligió "TV Lite" en la primera pantalla; js/anadir-lite.js pone la clase "sin-cuenta" en <body>): no hay inicio de
+   sesión, ni "Mi cuenta", ni cerrar sesión, ni código de TV Pro, ni el tutorial de la Pro (habla de la TV por Wi-Fi).
+   "Cerrar sesión" de Mis TV queda como "Tengo una TV Pro" (lleva de vuelta a la primera pantalla). */
+body.sin-cuenta #pantallaLogin,
+body.sin-cuenta [data-config="cuenta"],
+body.sin-cuenta #configCuenta,
+body.sin-cuenta #botonCerrarSesion,
+body.sin-cuenta #botonEliminarCuenta,
+body.sin-cuenta #formTV > .campo,
+body.sin-cuenta #botonVincularTV,
+body.sin-cuenta #botonVerTutorial,
+body.sin-cuenta #tutorial {
+  display: none !important;
+}
+
 /* Pantalla "Conecta tu TV" (HTML en construir.mjs; la maneja js/anadir-lite.js). */
 .pasos-conexion {
   margin: 0 0 var(--esp-4, 16px);
@@ -28,23 +43,17 @@ body.tv-lite #configSistema {
   font-weight: 700;
 }
 
-/* "¿Qué TV tienes?": solo mientras la cuenta no tiene ninguna TV (el enrutador pone la clase "sin-tv" en <body>). Con esa pregunta
-   a la vista, el botón "Tengo una TV Lite" del formulario sobra. */
-#elegirTipoTV {
-  display: none;
-  margin-bottom: var(--esp-4, 16px);
-}
-
-body.sin-tv #elegirTipoTV {
-  display: block;
-}
-
-body.sin-tv #botonTVLite {
-  display: none;
-}
-
 #pantallaConexion .boton-secundario,
 #botonTVLite {
   width: 100%;
   margin-top: var(--esp-2, 8px);
+}
+
+/* Primera pantalla "¿Qué TV tienes?": dos botones iguales y el aviso si no se pudo entrar. */
+#pantallaInicioTipo .boton-primario + .boton-primario {
+  margin-top: var(--esp-3, 12px);
+}
+
+#inicioTipoError {
+  margin-top: var(--esp-3, 12px);
 }

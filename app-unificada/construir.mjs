@@ -49,7 +49,13 @@ const sobran = [...delRouter].filter((n) => !delPro.has(n) && !n.startsWith('uni
 if (faltan.length || sobran.length) {
   throw new Error(`El enrutador (src/backend-unificado.js) no coincide con js/firebase.js de la Pro. Faltan: ${faltan.join(', ') || '-'}. Sobran: ${sobran.join(', ') || '-'}.`);
 }
-writeFileSync(join(www, 'js', 'firebase.js'), fuenteRouter);
+// La dirección del SDK de autenticación que usa firebase-pro.js (en la web, gstatic; en la APK, la copia de vendor/): el enrutador la
+// necesita para entrar sin cuenta (sesión anónima) con la MISMA copia del SDK.
+const urlAuth = (readFileSync(join(proJs, 'firebase.js'), 'utf8').match(/https:\/\/www\.gstatic\.com\/firebasejs\/[\d.]+\/firebase-auth\.js/) || [])[0];
+if (!urlAuth) throw new Error('js/firebase.js de la Pro ya no importa el SDK de autenticación desde gstatic: revisa app-unificada/construir.mjs');
+const routerFinal = fuenteRouter.replace("'__SDK_AUTH__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlAuth));
+if (routerFinal === fuenteRouter || routerFinal.includes('__SDK_AUTH__')) throw new Error('No se pudo poner la dirección del SDK en el enrutador (falta __SDK_AUTH__)');
+writeFileSync(join(www, 'js', 'firebase.js'), routerFinal);
 copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
@@ -73,7 +79,7 @@ export { initializeApp } from 'firebase/app';
 export { getDatabase, ref, get, set, update, remove, onValue, runTransaction } from 'firebase/database';
 export { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
   sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signInWithCredential,
-  EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from 'firebase/auth';
+  EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser, signInAnonymously } from 'firebase/auth';
 `;
   mkdirSync(join(www, 'js', 'vendor'), { recursive: true });
   await build({
@@ -94,6 +100,8 @@ export { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWith
   for (const m of paquete.matchAll(/export\s*\{([^}]*)\}/g)) m[1].split(',').forEach((x) => exportado.add(x.split(/\s+as\s+/).pop().trim()));
   const faltanSdk = [...importado].filter((x) => !exportado.has(x));
   if (importado.size === 0 || faltanSdk.length) throw new Error('El paquete del SDK no exporta: ' + (faltanSdk.join(', ') || '(no se encontraron importaciones)'));
+  // Y lo que usa el enrutador para entrar sin cuenta.
+  for (const n of ['getAuth', 'signInAnonymously']) if (!exportado.has(n)) throw new Error('El paquete del SDK no exporta ' + n);
 }
 
 // ---- index.html de la Pro, con los cambios mínimos ----
@@ -128,20 +136,24 @@ const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidd
   </div>
 </div>
 `;
-cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n$1`, 'el comentario del tutorial');
-// "¿Qué TV tienes?" (solo la primera vez, cuando la cuenta aún no tiene ninguna TV): dentro de la tarjeta "Añade tu TV", con TV Pro
-// marcada por defecto (el código de siempre) y TV Lite (abre "Conecta tu TV"). Textos PROPUESTOS: los aprueba el dueño.
-cambiar(/(<form class="login-form" id="formTV")/,
-  `<div class="campo" id="elegirTipoTV">
-      <span class="rotulo">¿Qué TV tienes?</span>
-      <div class="segmento" role="group" aria-label="Tipo de TV">
-        <button type="button" data-tipo-tv="pro" class="activo">TV Pro</button>
-        <button type="button" data-tipo-tv="lite">TV Lite</button>
-      </div>
+// Primera pantalla "¿Qué TV tienes?" (la maneja js/anadir-lite.js): encima del inicio de sesión de la Pro. Nace oculta; la muestra el
+// script solo si el celular todavía no tiene la respuesta. Textos PROPUESTOS: los aprueba el dueño.
+const pantallaInicioTipo = `<div class="pantalla-login" id="pantallaInicioTipo" hidden>
+  <div class="login-tarjeta">
+    <div class="login-marca">
+      <span class="login-logo" aria-hidden="true">
+        <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      </span>
+      <h1 class="login-titulo">TV RETRO</h1>
+      <p class="login-subtitulo">¿Qué TV tienes?</p>
     </div>
-
-    $1`,
-  'el formulario de Mi TV');
+    <button type="button" id="botonInicioPro" class="boton-primario">TV Pro</button>
+    <button type="button" id="botonInicioLite" class="boton-primario">TV Lite</button>
+    <div id="inicioTipoError" class="aviso error" role="alert" hidden></div>
+  </div>
+</div>
+`;
+cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n$1`, 'el comentario del tutorial');
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/, '$1\n<script type="module" src="js/anadir-lite.js"></script>', 'el script js/main.js');
 
 if (paraApk) {
