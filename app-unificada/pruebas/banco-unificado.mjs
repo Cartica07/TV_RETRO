@@ -39,6 +39,20 @@ export function cerrar() {
   setTimeout(() => process.exit(process.exitCode || 0), 15000).unref();
 }
 
+// signInAnonymously para el Auth falso (pruebas/falso/firebase-auth.js de la Pro, que NO se modifica): usa sus mismas piezas
+// (f, operacion, avisar). Respeta f.fallar, así una prueba puede simular "el acceso sin cuenta no está activado".
+const ANONIMO_FALSO = `
+// La sesión sobrevive a una recarga (como la anónima real): si la recordada es la anónima, su usuario tiene que existir.
+if (f.actual === '(anonimo)' && !f.usuarios['(anonimo)']) f.usuarios['(anonimo)'] = { uid: 'uid-anonimo', verificado: false };
+export async function signInAnonymously(auth) {
+  await operacion('signInAnonymously', []);
+  const clave = '(anonimo)';
+  if (!f.usuarios[clave]) f.usuarios[clave] = { uid: 'uid-anonimo', verificado: false };
+  f.actual = clave; avisar();
+  return { user: usuarioActual() };
+}
+`;
+
 export const USUARIOS = { 'ana@correo.com': { password: 'secreta1', uid: 'uid-ana', verificado: true } };
 
 /**
@@ -59,7 +73,10 @@ export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html
 
   await pagina.route('https://www.gstatic.com/firebasejs/**', (r) => {
     const nombre = r.request().url().split('/').pop();
-    r.fulfill({ contentType: 'text/javascript', body: fs.readFileSync(path.join(FALSO, nombre), 'utf8') });
+    let cuerpo = fs.readFileSync(path.join(FALSO, nombre), 'utf8');
+    // El Auth falso de la Pro no tiene la entrada sin cuenta (sesión anónima): se le agrega SOLO en esta copia servida.
+    if (nombre === 'firebase-auth.js') cuerpo += ANONIMO_FALSO;
+    r.fulfill({ contentType: 'text/javascript', body: cuerpo });
   });
   await pagina.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ contentType: 'text/css', body: '' }));
   await pagina.route(/favicon\.ico$/, (r) => r.fulfill({ status: 204, body: '' }));

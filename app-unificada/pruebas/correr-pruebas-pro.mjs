@@ -39,6 +39,12 @@ const linea = "export const REPO = path.resolve(fileURLToPath(new URL('..', impo
 let texto = fs.readFileSync(banco, 'utf8');
 if (!texto.includes(linea)) throw new Error('pruebas/banco.mjs de la Pro cambió: revisa correr-pruebas-pro.mjs');
 texto = texto.replace(linea, `export const REPO = ${JSON.stringify(www)};`);
+// Las pruebas de la Pro son de alguien que eligió "TV Pro" en la primera pantalla "¿Qué TV tienes?" de la unificada: se deja esa
+// respuesta en CADA carga (también tras cerrar sesión, borrar la cuenta o recargar, que la olvidan). Así se comprueba lo que importa:
+// quien elige "TV Pro" recibe exactamente la Pro.
+const semillaLinea = 'await pagina.addInitScript((s) => { globalThis.__semilla = s; }, semilla);';
+if (!texto.includes(semillaLinea)) throw new Error('pruebas/banco.mjs de la Pro cambió (la semilla): revisa correr-pruebas-pro.mjs');
+texto = texto.replace(semillaLinea, `${semillaLinea}\n  await pagina.addInitScript(() => { try { localStorage.setItem('tvretro.tipoApp', 'pro'); } catch (e) { /* sin almacenamiento */ } });`);
 fs.writeFileSync(banco, texto);
 
 let fallas = 0;

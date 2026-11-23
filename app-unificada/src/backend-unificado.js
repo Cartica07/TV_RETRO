@@ -20,14 +20,123 @@ import { esIdLite, listarTVLite, anadirTVLite, quitarTVLite } from './registro-l
 // ---------- NUBE: igual que la Pro ----------
 export {
   db, describirErrorAuth, escucharSesion, usuarioActual, iniciarSesion, crearCuenta, iniciarSesionConGoogle,
-  iniciarSesionConGoogleNativo, proveedorDeLaCuenta, eliminarMiCuenta, cerrarSesion, recuperarContrasena, esAdministrador,
-  leerPreprocesada, leerCuadrosAnimacion, VERSION_DESVINCULADA, normalizarCodigo, reclamarDispositivo, MAXIMO_MIEMBROS,
-  MAXIMO_APODO, borrarInvitacion, suscribirImagenes, suscribirAnimaciones, listarCanciones, guardarCancionCatalogo,
-  listarImagenes, guardarImagenCatalogo, borrarImagenCatalogo, borrarCancionCatalogo, listarAnimaciones,
-  guardarAnimacionCatalogo, borrarAnimacionCatalogo, listarMusicales, leerMusical, claveMusicalValida,
+  iniciarSesionConGoogleNativo, proveedorDeLaCuenta, eliminarMiCuenta, recuperarContrasena, esAdministrador,
+  VERSION_DESVINCULADA, normalizarCodigo, reclamarDispositivo, MAXIMO_MIEMBROS,
+  MAXIMO_APODO, borrarInvitacion, listarCanciones, guardarCancionCatalogo, borrarCancionCatalogo,
+  listarMusicales, leerMusical, claveMusicalValida,
   guardarMusicalCatalogo, borrarMusicalCatalogo, CANTIDAD_ALARMAS, DIAS_ALARMA_DEFECTO, normalizarAlarma,
   AJUSTES_DEFECTO, normalizarAjustes
 } from './firebase-pro.js';
+
+// ---------- Con una TV Lite y SIN cuenta ----------
+// La primera pantalla pregunta "¿Qué TV tienes?" (js/anadir-lite.js) y guarda la respuesta en el celular. Con "TV Lite" no se pide
+// cuenta: la app entra con una sesión anónima e invisible (Firebase Authentication > Anónimo, lo activa el dueño), que basta para
+// leer lo predeterminado de la nube (biblioteca/ y musicales/: las reglas piden solo "con sesión"). Lo que la persona guarda va a la
+// galería del CELULAR (las reglas solo dejan guardar en la nube a cuentas con correo verificado).
+const CLAVE_TIPO = 'tvretro.tipoApp'; // 'pro' | 'lite'
+export function unificadaSinCuenta() {
+  try { return localStorage.getItem(CLAVE_TIPO) === 'lite'; } catch (e) { return false; }
+}
+// Las TV Lite se recuerdan por cuenta; sin cuenta, en una lista del celular (la sesión anónima cambia si se vuelve a entrar).
+const claveCuenta = (uid) => (unificadaSinCuenta() ? 'local' : uid);
+
+// El SDK de autenticación (la misma copia que usa firebase-pro.js): construir.mjs pone aquí su dirección.
+const SDK_AUTH = '__SDK_AUTH__';
+
+/** Entra sin cuenta (sesión anónima). Devuelve { exito } o { exito: false, error } con un texto para la persona. */
+export async function unificadaEntrarSinCuenta() {
+  try {
+    const m = await import(SDK_AUTH);
+    await m.signInAnonymously(m.getAuth());
+    return { exito: true };
+  } catch (error) {
+    console.error('[TV RETRO] No se pudo entrar sin cuenta:', error);
+    const codigo = String((error && error.code) || '');
+    // Textos PROPUESTOS (docs/lite-textos-propuestos.md): los aprueba el dueño.
+    if (/operation-not-allowed|admin-restricted-operation/.test(codigo)) return { exito: false, error: 'Por ahora no se puede usar la TV Lite. Inténtalo más tarde.' };
+    if (/network-request-failed/.test(codigo) || navigator.onLine === false) return { exito: false, error: 'Sin conexión a internet. Conéctate y vuelve a intentarlo.' };
+    return { exito: false, error: 'Algo salió mal. Vuelve a intentarlo.' };
+  }
+}
+
+/** Cierra la sesión y olvida la respuesta de "¿Qué TV tienes?" (así se vuelve a preguntar). */
+export async function cerrarSesion(...a) {
+  try { localStorage.removeItem(CLAVE_TIPO); } catch (e) { /* sin almacenamiento */ }
+  return pro.cerrarSesion(...a);
+}
+
+// ---------- Galería: de la nube y, sin cuenta, también la del celular ----------
+// Une la lista de la nube (lo predeterminado y, con cuenta, lo propio) con la del celular (sin cuenta). Lo del celular gana.
+function mezclar(tipo, suscribirNube, callback, alError) {
+  let nube = {};
+  let local = {};
+  let cancelada = false;
+  let bajaLocal = null;
+  const emitir = () => callback(Object.assign({}, nube, local));
+  const bajaNube = suscribirNube((v) => { nube = v || {}; emitir(); }, alError);
+  cargarLite().then((m) => { if (!cancelada) bajaLocal = m.galeria.suscribir(tipo, (v) => { local = v || {}; emitir(); }); });
+  return () => { cancelada = true; if (bajaNube) bajaNube(); if (bajaLocal) bajaLocal(); };
+}
+
+export function suscribirImagenes(callback, alError) {
+  return unificadaSinCuenta() ? mezclar('imagenes', pro.suscribirImagenes, callback, alError) : pro.suscribirImagenes(callback, alError);
+}
+export function suscribirAnimaciones(callback, alError) {
+  return unificadaSinCuenta() ? mezclar('animaciones', pro.suscribirAnimaciones, callback, alError) : pro.suscribirAnimaciones(callback, alError);
+}
+
+export async function listarImagenes(...a) {
+  const nube = await pro.listarImagenes(...a);
+  if (!unificadaSinCuenta()) return nube;
+  return Object.assign({}, nube || {}, await (await cargarLite()).galeria.listarTodo('imagenes'));
+}
+export async function listarAnimaciones(opciones = {}) {
+  const nube = await pro.listarAnimaciones(opciones);
+  if (!unificadaSinCuenta() || (opciones && opciones.predeterminada)) return nube;
+  return Object.assign({}, nube || {}, await (await cargarLite()).galeria.listarTodo('animaciones'));
+}
+
+export async function guardarImagenCatalogo(nombre, datos, ancho, alto, preprocesada = null, meta = {}, opciones = {}) {
+  if (!unificadaSinCuenta() || (opciones && opciones.predeterminada)) return pro.guardarImagenCatalogo(nombre, datos, ancho, alto, preprocesada, meta, opciones);
+  const payload = { datos, ancho, alto, meta };
+  if (preprocesada) payload.preprocesada = preprocesada;
+  return (await cargarLite()).galeria.guardar('imagenes', nombre, payload);
+}
+export async function guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, meta = {}, opciones = {}) {
+  if (!unificadaSinCuenta() || (opciones && opciones.predeterminada)) return pro.guardarAnimacionCatalogo(nombre, ancho, alto, cuadros, meta, opciones);
+  return (await cargarLite()).galeria.guardar('animaciones', nombre, { ancho, alto, cuadros, meta });
+}
+
+// Sin cuenta, lo que está en el celular se borra del celular; lo demás (predeterminado) sigue el camino de la Pro.
+export async function borrarImagenCatalogo(nombre, opciones = {}) {
+  if (unificadaSinCuenta() && !(opciones && opciones.predeterminada)) {
+    const g = (await cargarLite()).galeria;
+    if (await g.tiene('imagenes', nombre)) return g.borrar('imagenes', nombre);
+  }
+  return pro.borrarImagenCatalogo(nombre, opciones);
+}
+export async function borrarAnimacionCatalogo(nombre, opciones = {}) {
+  if (unificadaSinCuenta() && !(opciones && opciones.predeterminada)) {
+    const g = (await cargarLite()).galeria;
+    if (await g.tiene('animaciones', nombre)) return g.borrar('animaciones', nombre);
+  }
+  return pro.borrarAnimacionCatalogo(nombre, opciones);
+}
+
+export async function leerPreprocesada(clave, opciones = {}) {
+  if (unificadaSinCuenta() && !(opciones && opciones.predeterminada)) {
+    const v = await (await cargarLite()).galeria.leer('imagenes', clave);
+    if (v) return v.preprocesada ? String(v.preprocesada) : null;
+  }
+  return pro.leerPreprocesada(clave, opciones);
+}
+export async function leerCuadrosAnimacion(clave, opciones = {}) {
+  if (unificadaSinCuenta() && !(opciones && opciones.predeterminada)) {
+    const v = await (await cargarLite()).galeria.leer('animaciones', clave);
+    if (v) return v.cuadros || null;
+  }
+  return pro.leerCuadrosAnimacion(clave, opciones);
+}
 
 // ---------- La parte Bluetooth, bajo demanda ----------
 let cargaLite = null;
@@ -95,7 +204,7 @@ const NO_SE_COMPARTE = { exito: false, error: 'Una TV Lite no se comparte.' };
 
 /** Ids de las TV de la cuenta: las de la nube (Pro) y las TV Lite que añadió en este celular. */
 export async function listarMisDispositivos(uid) {
-  const propias = listarTVLite(uid);
+  const propias = listarTVLite(claveCuenta(uid));
   const r = await pro.listarMisDispositivos(uid);
   let resultado = r;
   if (r.exito) resultado = { exito: true, dispositivos: [...r.dispositivos, ...propias] };
@@ -112,13 +221,13 @@ export async function rolEnTV(uid, id) {
 
 export async function quitarTVDeMiLista(uid, id) {
   if (!esIdLite(id)) return pro.quitarTVDeMiLista(uid, id);
-  quitarTVLite(uid, id);
+  quitarTVLite(claveCuenta(uid), id);
   return { exito: true };
 }
 
 export async function desvincularDispositivo(uid, id) {
   if (!esIdLite(id)) return pro.desvincularDispositivo(uid, id);
-  quitarTVLite(uid, id);
+  quitarTVLite(claveCuenta(uid), id);
   if (cargaLite) { // solo si ya se había cargado la parte Bluetooth (había una conexión que cerrar)
     try { const m = await cargaLite; await m.ble.desconectar(); m.ble.olvidarTV(); } catch (e) { /* ya estaba desconectada */ }
   }
@@ -161,6 +270,9 @@ export async function usarCodigoTV(uid, codigoTexto) {
 // ---------- Extras de la app unificada (los usa js/anadir-lite.js) ----------
 /** Registra una TV Lite recién emparejada en esta cuenta; el próximo usarCodigoTV("LITE") la vincula. */
 export function unificadaAnadirTVLite(uid, bleId) {
-  tvLitePendiente = anadirTVLite(uid, bleId);
+  tvLitePendiente = anadirTVLite(claveCuenta(uid), bleId);
   return tvLitePendiente;
 }
+
+/** Ids de las TV Lite de esta cuenta (o del celular, sin cuenta). */
+export function unificadaListarTVLite(uid) { return listarTVLite(claveCuenta(uid)); }

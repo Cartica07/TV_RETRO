@@ -14,6 +14,8 @@ import { comprimirCuadros, descomprimirCuadros, puedeComprimir, FORMATO_COMPRIMI
 
 export const ErrorTV = ble.ErrorTV;
 export { ble };
+// La galería en el celular (para quien usa la app con una TV Lite y sin cuenta).
+export * as galeria from './galeria-local.js';
 
 // Un GIF de más de esto no se envía (la TV guarda ~1,4 MB y por Bluetooth tardaría minutos). Lo usa también gif-unificado.js.
 export const LIMITE_GIF_TV_BYTES = 600 * 1024;

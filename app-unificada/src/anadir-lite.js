@@ -1,29 +1,102 @@
-// "Añade tu TV" para una TV Lite (la app unificada). El código de la TV es para las TV Pro (por Wi-Fi); una TV Lite no tiene
-// código en la nube: se empareja por Bluetooth desde los ajustes del celular (donde Android pide el PIN directo) y, al volver
-// a la app, se busca sola la TV emparejada por su nombre.
+// Entrada de la app unificada y "Añade tu TV" para una TV Lite. Solo maneja lo nuevo; el inicio de sesión, el formulario del código
+// y todo lo demás siguen siendo de la Pro.
 //
-// Flujo: botón "Tengo una TV Lite" -> pantalla "Conecta tu TV" (pasos) -> "Abrir Bluetooth" -> la persona empareja -> al volver
-// la app encuentra la TV emparejada, la añade a la cuenta y vincula con el mismo formulario de siempre (marca "LITE").
-// Este archivo solo maneja los botones nuevos: el formulario, el código y todo lo de la Pro siguen siendo de la Pro.
-// La parte Bluetooth (js/lite-tv.js) se carga solo cuando la persona toca el botón: con una TV Pro no corre.
-import { usuarioActual, unificadaAnadirTVLite } from './firebase.js';
-import { listarTVLite } from './registro-lite.js';
+// 1. Primera pantalla "¿Qué TV tienes?" (#pantallaInicioTipo), una sola vez (la respuesta queda en el celular):
+//    - TV Pro  -> el inicio de sesión de siempre (la Pro, sin cambios).
+//    - TV Lite -> sin cuenta: entra con una sesión anónima e invisible; la clase "sin-cuenta" en <body> oculta lo de la cuenta.
+//    Quien ya tenía sesión (por ejemplo, al actualizar la app) no ve la pregunta.
+// 2. Una TV Lite se empareja en los ajustes de Bluetooth del celular (donde Android pide el PIN directo) y, al volver a la app, se
+//    busca sola por su nombre, se añade y se vincula con el formulario de siempre (marca "LITE"; ver src/backend-unificado.js).
+//    Sin cuenta y sin ninguna TV todavía, "Conecta tu TV" se abre sola.
+// La parte Bluetooth (js/lite-tv.js) se carga solo cuando hace falta: con una TV Pro no corre.
+import {
+  usuarioActual, escucharSesion, cerrarSesion, unificadaAnadirTVLite, unificadaListarTVLite, unificadaSinCuenta, unificadaEntrarSinCuenta
+} from './firebase.js';
 
 const q = (id) => document.getElementById(id);
 const lite = () => import('./lite-tv.js');
+const CLAVE_TIPO = 'tvretro.tipoApp';
+const leerTipo = () => { try { return localStorage.getItem(CLAVE_TIPO) || ''; } catch (e) { return ''; } };
+const guardarTipo = (t) => { try { if (t) localStorage.setItem(CLAVE_TIPO, t); else localStorage.removeItem(CLAVE_TIPO); } catch (e) { /* sin almacenamiento */ } };
 
-function iniciar() {
+// ---------------------------------------------------------------
+// Primera pantalla: "¿Qué TV tienes?"
+// ---------------------------------------------------------------
+function iniciarPrimeraPantalla() {
+  const pantalla = q('pantallaInicioTipo');
+  if (!pantalla) return;
+  const botonPro = q('botonInicioPro');
+  const botonLite = q('botonInicioLite');
+  const aviso = q('inicioTipoError');
+  const salir = q('botonTVSalir');
+  const textoSalir = salir ? salir.textContent : '';
+
+  // Sin cuenta: se oculta lo de la cuenta (CSS) y "Cerrar sesión" de Mis TV pasa a ser la forma de cambiar a una TV Pro.
+  const marcar = () => {
+    const sinCuenta = unificadaSinCuenta();
+    document.body.classList.toggle('sin-cuenta', sinCuenta);
+    if (salir) salir.textContent = sinCuenta ? 'Tengo una TV Pro' : textoSalir; // texto PROPUESTO
+  };
+  const mostrarAviso = (texto) => { aviso.textContent = texto; aviso.hidden = !texto; };
+
+  let entrando = false;
+  async function entrarSinCuenta() {
+    if (entrando) return;
+    entrando = true;
+    mostrarAviso('');
+    botonPro.disabled = true;
+    botonLite.disabled = true;
+    guardarTipo('lite');
+    marcar();
+    const r = await unificadaEntrarSinCuenta();
+    botonPro.disabled = false;
+    botonLite.disabled = false;
+    entrando = false;
+    if (r.exito) {
+      pantalla.hidden = true;
+      return;
+    }
+    // No se pudo (sin internet, o el acceso sin cuenta no está activado en Firebase): se vuelve a la pregunta, con el motivo.
+    guardarTipo('');
+    marcar();
+    pantalla.hidden = false;
+    mostrarAviso(r.error);
+  }
+
+  botonPro.addEventListener('click', () => {
+    mostrarAviso('');
+    guardarTipo('pro');
+    marcar();
+    pantalla.hidden = true; // debajo queda el inicio de sesión de la Pro
+  });
+  botonLite.addEventListener('click', entrarSinCuenta);
+
+  marcar();
+  if (!leerTipo()) pantalla.hidden = false;
+  escucharSesion((usuario) => {
+    if (usuario) {
+      // Ya hay sesión (con cuenta, o la anónima de la TV Lite): no se pregunta. Quien tenía sesión antes de esta pantalla es Pro.
+      if (!leerTipo()) guardarTipo(usuario.email ? 'pro' : 'lite');
+      marcar();
+      pantalla.hidden = true;
+      return;
+    }
+    if (leerTipo() === 'lite') entrarSinCuenta(); // se eligió TV Lite pero no hay sesión (por ejemplo, se borró): entra sola
+    else if (!leerTipo()) pantalla.hidden = false;
+  });
+}
+
+// ---------------------------------------------------------------
+// "Añade tu TV" y "Mis TV" para una TV Lite
+// ---------------------------------------------------------------
+function iniciarAnadirLite() {
   const botonLite = q('botonTVLite');
   const pantalla = q('pantallaConexion');
   if (!botonLite || !pantalla) return;
   let revisando = false;
 
-  // "¿Qué TV tienes?" (solo la primera vez): TV Pro queda marcada y es el formulario del código de siempre; TV Lite abre "Conecta tu TV".
-  const opciones = [...document.querySelectorAll('#elegirTipoTV [data-tipo-tv]')];
-  const marcarTipo = (tipo) => opciones.forEach((b) => b.classList.toggle('activo', b.dataset.tipoTv === tipo));
-
   const abierta = () => !pantalla.hidden;
-  const cerrar = () => { pantalla.hidden = true; marcarTipo('pro'); };
+  const primeraVezSinCuenta = () => unificadaSinCuenta() && document.body.classList.contains('sin-tv');
 
   async function revisar() {
     if (revisando || !abierta()) return;
@@ -35,7 +108,7 @@ function iniciar() {
       const usuario = usuarioActual();
       if (!usuario) return;
       unificadaAnadirTVLite(usuario.uid, tv.deviceId);
-      cerrar();
+      pantalla.hidden = true;
       // Vincula con el mismo camino de siempre: el enrutador reconoce la marca "LITE" (src/backend-unificado.js).
       q('codigoTV').value = 'LITE';
       q('formTV').requestSubmit();
@@ -49,23 +122,29 @@ function iniciar() {
     revisar(); // si el celular ya tiene la TV emparejada, no hay nada más que hacer
   };
   botonLite.addEventListener('click', abrirConexion);
-  for (const b of opciones) {
-    b.addEventListener('click', () => {
-      marcarTipo(b.dataset.tipoTv);
-      if (b.dataset.tipoTv === 'lite') abrirConexion();
-    });
-  }
   q('botonAbrirBluetooth').addEventListener('click', async () => {
     try { await (await lite()).abrirAjustesBluetooth(); } catch (e) { console.warn('[TV RETRO] No se pudieron abrir los ajustes de Bluetooth', e); }
   });
-  q('botonConexionVolver').addEventListener('click', cerrar);
+  q('botonConexionVolver').addEventListener('click', () => {
+    pantalla.hidden = true;
+    // Sin cuenta y sin ninguna TV, detrás no hay nada que hacer: "Volver" lleva a la pregunta "¿Qué TV tienes?".
+    if (primeraVezSinCuenta()) cerrarSesion().catch(() => {});
+  });
+
+  // Sin cuenta y la primera vez, "Conecta tu TV" se abre sola en cuanto aparece "Añade tu TV".
+  const pantallaTV = q('pantallaTV');
+  if (pantallaTV) {
+    new MutationObserver(() => {
+      if (!pantallaTV.hidden && primeraVezSinCuenta() && !abierta()) abrirConexion();
+    }).observe(pantallaTV, { attributes: true, attributeFilter: ['hidden'] });
+  }
 
   // Una TV Lite no se comparte: en la lista de Mis TV sus filas (las últimas, después de las TV Pro) no llevan "Compartir".
   const lista = q('listaTV');
   if (lista) {
     new MutationObserver(() => {
       const usuario = usuarioActual();
-      const n = usuario ? listarTVLite(usuario.uid).length : 0;
+      const n = usuario ? unificadaListarTVLite(usuario.uid).length : 0;
       if (!n) return;
       for (const fila of [...lista.querySelectorAll('.fila-tv')].slice(-n)) {
         for (const b of fila.querySelectorAll('button')) if (b.textContent.trim() === 'Compartir') b.hidden = true;
@@ -78,4 +157,5 @@ function iniciar() {
   });
 }
 
-iniciar();
+iniciarPrimeraPantalla();
+iniciarAnadirLite();
