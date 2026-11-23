@@ -15,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "426829616333-6u9baq32kj680oj7vtob2qdqft4va2n9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pepito.app",
+            "certificate_hash": "a2350adfca6bccf2ca5605b64d8a582a3753d8e3"
+          }
+        },
+        {
+          "client_id": "426829616333-imosu5hos701m2o15drpp8rc0n0ov8v0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pepito.app",
+            "certificate_hash": "629a94a7b96ecc84cfadad79f12e0c636d292bf1"
+          }
+        },
+        {
           "client_id": "426829616333-91qo82endj0pjm8kadn82ktm752a41fh.apps.googleusercontent.com",
           "client_type": 3
         }
