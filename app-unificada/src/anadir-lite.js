@@ -18,8 +18,12 @@ function iniciar() {
   if (!botonLite || !pantalla) return;
   let revisando = false;
 
+  // "¿Qué TV tienes?" (solo la primera vez): TV Pro queda marcada y es el formulario del código de siempre; TV Lite abre "Conecta tu TV".
+  const opciones = [...document.querySelectorAll('#elegirTipoTV [data-tipo-tv]')];
+  const marcarTipo = (tipo) => opciones.forEach((b) => b.classList.toggle('activo', b.dataset.tipoTv === tipo));
+
   const abierta = () => !pantalla.hidden;
-  const cerrar = () => { pantalla.hidden = true; };
+  const cerrar = () => { pantalla.hidden = true; marcarTipo('pro'); };
 
   async function revisar() {
     if (revisando || !abierta()) return;
@@ -40,10 +44,17 @@ function iniciar() {
     }
   }
 
-  botonLite.addEventListener('click', () => {
+  const abrirConexion = () => {
     pantalla.hidden = false;
     revisar(); // si el celular ya tiene la TV emparejada, no hay nada más que hacer
-  });
+  };
+  botonLite.addEventListener('click', abrirConexion);
+  for (const b of opciones) {
+    b.addEventListener('click', () => {
+      marcarTipo(b.dataset.tipoTv);
+      if (b.dataset.tipoTv === 'lite') abrirConexion();
+    });
+  }
   q('botonAbrirBluetooth').addEventListener('click', async () => {
     try { await (await lite()).abrirAjustesBluetooth(); } catch (e) { console.warn('[TV RETRO] No se pudieron abrir los ajustes de Bluetooth', e); }
   });

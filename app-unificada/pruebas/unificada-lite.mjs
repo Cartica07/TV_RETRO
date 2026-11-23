@@ -98,6 +98,7 @@ await pagina.evaluate(() => document.getElementById('botonMiTV').click());
 await pagina.waitForSelector('#pantallaTV:not([hidden])');
 const filas = await pagina.$$eval('#listaTV .fila-tv', (f) => f.map((x) => ({ texto: x.innerText.replace(/\s+/g, ' '), compartir: [...x.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Compartir' && !b.hidden) })));
 informe('Mis TV muestra la TV Pro y la TV Lite', filas.length === 2, JSON.stringify(filas));
+informe('con TV ya añadidas no sale "¿Qué TV tienes?" y sí el botón "Tengo una TV Lite"', !(await visible(pagina, '#elegirTipoTV')) && (await visible(pagina, '#botonTVLite')));
 informe('la TV Pro se puede compartir y la TV Lite no', filas.length === 2 && filas[0].compartir === true && filas[1].compartir === false, JSON.stringify(filas.map((f) => f.compartir)));
 informe('la TV Lite aparece "En uso"', filas.length === 2 && /En uso/.test(filas[1].texto), filas[1] && filas[1].texto);
 

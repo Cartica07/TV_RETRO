@@ -50,7 +50,10 @@ let tvLitePendiente = null; // TV Lite recién emparejada que "Añade tu TV" est
 export function usarCuenta(uid, dispositivo) {
   tvLite = esIdLite(dispositivo);
   idActivo = dispositivo;
-  try { document.body.classList.toggle('tv-lite', tvLite); } catch (e) { /* sin pantalla */ }
+  try {
+    document.body.classList.toggle('tv-lite', tvLite);
+    document.body.classList.remove('sin-tv'); // ya hay una TV elegida: la pregunta "¿Qué TV tienes?" no vuelve a salir
+  } catch (e) { /* sin pantalla */ }
   pro.usarCuenta(uid, dispositivo); // el catálogo de la cuenta (usuarios/{uid}/…) lo necesita en los dos casos
   if (tvLite) cargarLite().then((m) => m.usarTV(dispositivo)).catch((e) => console.error('[TV RETRO] No se pudo preparar la TV Lite:', e));
 }
@@ -94,10 +97,13 @@ const NO_SE_COMPARTE = { exito: false, error: 'Una TV Lite no se comparte.' };
 export async function listarMisDispositivos(uid) {
   const propias = listarTVLite(uid);
   const r = await pro.listarMisDispositivos(uid);
-  if (r.exito) return { exito: true, dispositivos: [...r.dispositivos, ...propias] };
+  let resultado = r;
+  if (r.exito) resultado = { exito: true, dispositivos: [...r.dispositivos, ...propias] };
   // Sin conexión a la nube, una TV Lite ya añadida se puede seguir usando.
-  if (propias.length) return { exito: true, dispositivos: propias };
-  return r;
+  else if (propias.length) resultado = { exito: true, dispositivos: propias };
+  // Una cuenta sin ninguna TV (la primera vez): "Añade tu TV" pregunta "¿Qué TV tienes?" (clase sin-tv; ver unificada.css).
+  try { document.body.classList.toggle('sin-tv', !!resultado.exito && resultado.dispositivos.length === 0); } catch (e) { /* sin pantalla */ }
+  return resultado;
 }
 
 export async function rolEnTV(uid, id) {

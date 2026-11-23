@@ -32,11 +32,16 @@ const semilla = (extra = {}) => Object.assign({
 {
   const { navegador, pagina, errores } = await abrir({ usuarios: { 'uid-ana': {} } }, { esperar: false });
   await pagina.waitForSelector('#pantallaTV:not([hidden])', { timeout: 15000 });
-  informe('sin TV: sale "Añade tu TV" con el código de siempre y el botón "Tengo una TV Lite"', (await visible(pagina, '#codigoTV')) && (await visible(pagina, '#botonTVLite')));
+  informe('sin TV: sale "Añade tu TV" con el código de siempre y la pregunta "¿Qué TV tienes?"', (await visible(pagina, '#codigoTV')) && (await visible(pagina, '#elegirTipoTV')));
+  informe('la pregunta trae "TV Pro" marcada (el código de siempre) y "TV Lite"', await pagina.evaluate(() => {
+    const b = [...document.querySelectorAll('#elegirTipoTV [data-tipo-tv]')];
+    return b.length === 2 && b[0].classList.contains('activo') && !b[1].classList.contains('activo');
+  }));
+  informe('con la pregunta a la vista sobra el botón "Tengo una TV Lite"', !(await visible(pagina, '#botonTVLite')));
 
-  await pagina.click('#botonTVLite');
+  await pagina.click('#elegirTipoTV [data-tipo-tv="lite"]');
   await pagina.waitForSelector('#pantallaConexion:not([hidden])', { timeout: 5000 });
-  informe('"Tengo una TV Lite" abre la pantalla "Conecta tu TV" (la misma de la Lite)', /Conecta tu TV/.test(await pagina.innerText('#pantallaConexion')));
+  informe('elegir "TV Lite" abre la pantalla "Conecta tu TV" (la misma de la Lite)', /Conecta tu TV/.test(await pagina.innerText('#pantallaConexion')));
 
   // La persona empareja en los ajustes del celular y vuelve a la app.
   await pagina.evaluate(() => { window.__vinculados = [{ deviceId: 'tv-simulada', name: 'TV RETRO Lite' }]; });
