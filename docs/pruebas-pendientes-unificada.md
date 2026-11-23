@@ -1,6 +1,6 @@
 # Pruebas pendientes con el celular y la TV real (app unificada + TV Lite)
 
-> **Resultado del 2026-11-23:** todo pasó salvo dos errores de la unificada con la misma causa (el tutorial de la Pro abierto oculto en modo sin cuenta: Galería sin scroll y teclado tapando), ya arreglados y comprobados en el celular. Falta solo que el dueño confirme el teclado al escribir el nombre.
+> **Resultado del 2026-11-23:** todo pasó salvo dos errores de la unificada con la misma causa (el tutorial de la Pro abierto oculto en modo sin cuenta: Galería sin scroll y teclado tapando), ya arreglados y comprobados en el celular. El teclado que tapaba "Nombre" en la pestaña Imagen también quedó arreglado (`4df215a`): el campo sube solo sobre la barra de Enviar; comprobado en el celular.
 
 > Al 2026-11-22. Todo esto ya pasó las pruebas simuladas (57 comprobaciones de la unificada y las 20 suites originales de la Pro iguales que contra la Pro). Falta verlo en el celular y en la TV de verdad. Se hace en orden; si algo falla, se anota el paso y qué se vio.
 
