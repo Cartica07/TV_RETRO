@@ -90,6 +90,17 @@ La CPU va a 80 MHz, el anuncio Bluetooth es lento sin celular (400-500 ms) y rá
 7. Si algo falla, apagar la medida sospechosa (su `#define` a 0), volver a grabar y repetir.
 8. **Medir el consumo** (si hay un medidor USB): con la pantalla apagada y sin celular, antes (con los tres `#define` en 0) y después.
 
+## 5c. Apagado automático de la pantalla (firmware del 2026-11-23, sin probar en placa)
+
+En la app, Más > Config > Ajustes de Pepito > "Apagar pantalla": elegir **5 min** y Guardar (el registro dice `apagar pantalla a los 5 min`).
+1. Dejar la TV quieta 5 min: la pantalla se apaga (`[lite] pantalla apagada sola`).
+2. Un toque: se prende en la misma pantalla y NO cambia de pantalla.
+3. Con la pantalla apagada en el reloj, enviar un texto: pita, se prende 10 s en el reloj con el sobre y se vuelve a apagar. En el contenido: se prende 10 s mostrando el texto nuevo.
+4. Con una canción con letra en pantalla, no se apaga mientras suena.
+5. La alarma prende la pantalla; al callarla vuelve la pantalla que había.
+6. El botón ya no lleva a la pantalla apagada: contenido <-> reloj.
+7. Elegir **Nunca**: la app muestra el aviso y la pantalla ya no se apaga.
+
 ## 6. Qué medir mientras tanto
 
 Velocidad de un envío de 100 KB (en la prueba anterior, **22 KB/s** con el plugin y 36–63 KB/s con el navegador), memoria libre (`[lite] listo. Memoria libre…` en el registro; con la S3 sin memoria extra), y que ningún comando deje la TV colgada.
