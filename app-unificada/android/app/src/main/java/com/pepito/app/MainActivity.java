@@ -1,4 +1,4 @@
-package com.tvretro.unificada;
+package com.pepito.app;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

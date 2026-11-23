@@ -1,4 +1,4 @@
-package com.tvretro.unificada;
+package com.pepito.app;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;

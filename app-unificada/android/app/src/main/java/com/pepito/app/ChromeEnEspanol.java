@@ -1,4 +1,4 @@
-package com.tvretro.unificada;
+package com.pepito.app;
 
 import android.app.AlertDialog;
 import android.webkit.JsResult;

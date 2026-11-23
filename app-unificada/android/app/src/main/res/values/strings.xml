@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TV RETRO (unificada)</string>
-    <string name="title_activity_main">TV RETRO (unificada)</string>
-    <string name="package_name">com.tvretro.unificada</string>
-    <string name="custom_url_scheme">com.tvretro.unificada</string>
+    <string name="app_name">Pepito</string>
+    <string name="title_activity_main">Pepito</string>
+    <string name="package_name">com.pepito.app</string>
+    <string name="custom_url_scheme">com.pepito.app</string>
 </resources>

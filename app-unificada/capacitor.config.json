@@ -1,6 +1,6 @@
 {
-  "appId": "com.tvretro.unificada",
-  "appName": "TV RETRO (unificada)",
+  "appId": "com.pepito.app",
+  "appName": "Pepito",
   "webDir": "www-apk",
   "plugins": {
     "SystemBars": {
@@ -10,8 +10,8 @@
       "displayStrings": {
         "scanning": "Buscando…",
         "cancel": "Cancelar",
-        "availableDevices": "Elige tu TV",
-        "noDeviceFound": "No se encontró ninguna TV"
+        "availableDevices": "Elige a Pepito",
+        "noDeviceFound": "No se encontró ningún Pepito"
       }
     }
   }
