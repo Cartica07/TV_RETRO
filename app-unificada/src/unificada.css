@@ -26,6 +26,11 @@ body.sin-cuenta #tutorial {
   display: none !important;
 }
 
+/* Red de seguridad: si el tutorial de la Pro llegara a abrirse sin cuenta (oculto arriba), no debe dejar la página sin scroll. */
+body.sin-cuenta.tutorial-abierto {
+  overflow: visible !important;
+}
+
 /* Pantalla "Conecta tu TV" (HTML en construir.mjs; la maneja js/anadir-lite.js). */
 .pasos-conexion {
   margin: 0 0 var(--esp-4, 16px);
