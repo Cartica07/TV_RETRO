@@ -70,3 +70,7 @@ Arreglos que se hicieron solo en la unificada y que la Pro probablemente tambié
 | **Teclado que tapa el campo en el que se escribe** (por ejemplo "Nombre" en la pestaña Imagen): la barra fija "Enviar a la TV" y la navegación quedan encima del teclado y el sistema no sube el campo | `app-unificada/src/teclado.js` (`4df215a`), con la prueba `app-unificada/pruebas/teclado.mjs`; comprobado en el celular | Llevar `teclado.js` a `js/` de la Pro y cargarlo desde `index.html` (es un archivo nuevo: no cambia ninguna función ni ID). Comprobar antes en la APK Pro que el problema existe (mismo diseño, así que muy probablemente sí), correr su banco y rehacer su APK |
 
 (El arreglo del tutorial `e90cdd8` NO es de la Pro: solo pasaba en la unificada, en el modo sin cuenta.)
+
+## Buscar canción (2026-11-23)
+
+Lupa junto a `#seleccionCancion` y `#alarmaTono` (HTML en `construir.mjs`) que abre `#buscadorCanciones`: `src/buscar-canciones.js` filtra por el comienzo del nombre o de cualquier palabra (sin mayúsculas, tildes ni apóstrofos) y elige en la lista de la Pro con un evento `change`. `src/atras.js` se carga ANTES que `main.js` y envuelve `Capacitor.Plugins.App.addListener`: si una ventana de la unificada está abierta, Atrás la cierra; si no, hace lo de la Pro. Pruebas: `pruebas/buscar-canciones.mjs` y `pruebas/atras.mjs`. Textos propuestos 43 a 45.
