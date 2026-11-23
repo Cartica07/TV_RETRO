@@ -61,6 +61,18 @@ copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.j
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
 
+// Sin internet, cuentas.js de la Pro corta el arranque con "Sin conexión…" ANTES de pedir la lista de TV. En la unificada esa
+// decisión la toma el enrutador (listarMisDispositivos, con el mismo texto): con una TV Lite ya añadida se sigue, porque va por
+// Bluetooth. Se cambia solo la COPIA (la Pro no se toca) y, si esa línea de la Pro cambia, la compilación falla.
+{
+  const ruta = join(www, 'js', 'cuentas.js');
+  const fuente = readFileSync(ruta, 'utf8');
+  const patron = /const r = navigator\.onLine === false\r?\n\s*\? \{ exito: false, error: 'Sin conexión a internet\. Conéctate y pulsa Reintentar\.' \}\r?\n\s*: await listarMisDispositivos\(sesion\.uid\);/g;
+  const veces = (fuente.match(patron) || []).length;
+  if (veces !== 1) throw new Error('js/cuentas.js de la Pro ya no tiene el aviso "sin internet" de resolverDispositivo: revisa app-unificada/construir.mjs');
+  writeFileSync(ruta, fuente.replace(patron, 'const r = await listarMisDispositivos(sesion.uid); // unificada: el aviso "sin internet" lo da el enrutador'));
+}
+
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
   entryPoints: [join(aqui, 'src', 'lite-tv.js')],

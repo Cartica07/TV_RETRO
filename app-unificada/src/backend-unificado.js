@@ -20,10 +20,10 @@ import { esIdLite, listarTVLite, anadirTVLite, quitarTVLite } from './registro-l
 // ---------- NUBE: igual que la Pro ----------
 export {
   db, describirErrorAuth, escucharSesion, usuarioActual, iniciarSesion, crearCuenta, iniciarSesionConGoogle,
-  iniciarSesionConGoogleNativo, proveedorDeLaCuenta, eliminarMiCuenta, recuperarContrasena, esAdministrador,
+  iniciarSesionConGoogleNativo, proveedorDeLaCuenta, eliminarMiCuenta, recuperarContrasena,
   VERSION_DESVINCULADA, normalizarCodigo, reclamarDispositivo, MAXIMO_MIEMBROS,
   MAXIMO_APODO, borrarInvitacion, listarCanciones, guardarCancionCatalogo, borrarCancionCatalogo,
-  listarMusicales, leerMusical, claveMusicalValida,
+  leerMusical, claveMusicalValida,
   guardarMusicalCatalogo, borrarMusicalCatalogo, CANTIDAD_ALARMAS, DIAS_ALARMA_DEFECTO, normalizarAlarma,
   AJUSTES_DEFECTO, normalizarAjustes
 } from './firebase-pro.js';
@@ -39,6 +39,23 @@ export function unificadaSinCuenta() {
 }
 // Las TV Lite se recuerdan por cuenta; sin cuenta, en una lista del celular (la sesión anónima cambia si se vuelve a entrar).
 const claveCuenta = (uid) => (unificadaSinCuenta() ? 'local' : uid);
+
+// ---------- SIN INTERNET ----------
+// Una TV Lite va por Bluetooth: sin internet se sigue usando (solo falta lo que viene de la nube: la galería predeterminada y las
+// canciones). Por eso, con una TV Lite, lo que espera a la nube al arrancar no se espera (una lectura de Firebase sin red puede
+// quedarse colgada y el panel tardaría en abrirse o diría que "la conexión está lenta"). Con una TV Pro todo sigue igual que en la Pro.
+const sinInternet = () => { try { return navigator.onLine === false; } catch (e) { return false; } };
+const conTVLite = () => { try { return document.body.classList.contains('tv-lite'); } catch (e) { return false; } };
+
+/** Igual que la Pro; sin cuenta (sesión anónima) no hay administrador, y con una TV Lite sin internet no se espera a la nube. */
+export async function esAdministrador() {
+  return unificadaSinCuenta() || (conTVLite() && sinInternet()) ? false : pro.esAdministrador();
+}
+
+/** Igual que la Pro; con una TV Lite y sin internet devuelve enseguida "no se pudo leer" (null), como la Pro cuando falla. */
+export async function listarMusicales() {
+  return conTVLite() && sinInternet() ? null : pro.listarMusicales();
+}
 
 // El SDK de autenticación (la misma copia que usa firebase-pro.js): construir.mjs pone aquí su dirección.
 const SDK_AUTH = '__SDK_AUTH__';
@@ -203,13 +220,24 @@ export const suscribirFirmwareTV = suscripcion('suscribirFirmwareTV');
 const NO_SE_COMPARTE = { exito: false, error: 'Una TV Lite no se comparte.' };
 
 /** Ids de las TV de la cuenta: las de la nube (Pro) y las TV Lite que añadió en este celular. */
+// En la Pro, cuentas.js avisa "sin internet" ANTES de pedir la lista; en la unificada lo decide esta función (construir.mjs quita
+// esa línea de la COPIA de cuentas.js) para que una TV Lite ya añadida se pueda usar sin internet. Mismo texto que la Pro.
+const AVISO_SIN_INTERNET = 'Sin conexión a internet. Conéctate y pulsa Reintentar.';
 export async function listarMisDispositivos(uid) {
   const propias = listarTVLite(claveCuenta(uid));
-  const r = await pro.listarMisDispositivos(uid);
-  let resultado = r;
-  if (r.exito) resultado = { exito: true, dispositivos: [...r.dispositivos, ...propias] };
-  // Sin conexión a la nube, una TV Lite ya añadida se puede seguir usando.
-  else if (propias.length) resultado = { exito: true, dispositivos: propias };
+  let resultado;
+  if (unificadaSinCuenta()) {
+    // Sin cuenta (sesión anónima) no puede haber una TV Pro: no se pregunta a la nube.
+    resultado = { exito: true, dispositivos: propias };
+  } else if (sinInternet()) {
+    resultado = propias.length ? { exito: true, dispositivos: propias } : { exito: false, error: AVISO_SIN_INTERNET };
+  } else {
+    const r = await pro.listarMisDispositivos(uid);
+    resultado = r;
+    if (r.exito) resultado = { exito: true, dispositivos: [...r.dispositivos, ...propias] };
+    // Sin conexión a la nube, una TV Lite ya añadida se puede seguir usando.
+    else if (propias.length) resultado = { exito: true, dispositivos: propias };
+  }
   // Una cuenta sin ninguna TV (la primera vez): "Añade tu TV" pregunta "¿Qué TV tienes?" (clase sin-tv; ver unificada.css).
   try { document.body.classList.toggle('sin-tv', !!resultado.exito && resultado.dispositivos.length === 0); } catch (e) { /* sin pantalla */ }
   return resultado;
