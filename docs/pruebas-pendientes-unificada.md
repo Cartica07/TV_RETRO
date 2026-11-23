@@ -7,7 +7,7 @@
 ## 0. Preparación
 1. **Firebase:** Authentication > Método de acceso > Agregar proveedor nuevo > **Anónimo** > Habilitar > Guardar. Sin esto, "TV Lite" dice "Por ahora no se puede usar la TV Lite".
 2. **Firmware nuevo en la TV (S3):** cable en la TV; se graba con permiso del dueño (trae "Abre la app" en el reloj sin hora).
-3. **App:** cable en el celular, desbloqueado. Se instala la APK unificada (ícono **"TV RETRO (unificada)"**, NO la Pro ni la Lite) y se borran sus datos para empezar como un cliente nuevo.
+3. **App:** cable en el celular, desbloqueado. Se instala la APK unificada (ícono **"Pepito"** (desde el 2026-11-23; antes "TV RETRO (unificada)"), NO la Pro ni la Lite) y se borran sus datos para empezar como un cliente nuevo.
 
 ## 1. Primera pantalla y TV Pro
 1. Abrir la app: debe salir **"¿Qué TV tienes?"** con TV Pro y TV Lite.
@@ -16,7 +16,7 @@
 
 ## 2. TV Lite sin cuenta
 1. Tocar **TV Lite**: NO pide cuenta y se abre sola **"Conecta tu TV"**.
-2. En la TV, mantener el botón **8 s** hasta ver el PIN. En la app, **Abrir Bluetooth**, elegir "TV RETRO Lite", escribir el PIN y volver a la app con recientes (no con Atrás).
+2. En la TV, mantener el botón **8 s** hasta ver el PIN. En la app, **Abrir Bluetooth**, elegir "Pepito Lite" ("TV RETRO Lite" con el firmware anterior), escribir el PIN y volver a la app con recientes (no con Atrás).
 3. Debe quedar el panel "En línea", sin juegos ni "Actualizar la TV" en Más.
 4. Si sale **"La TV no reconoce este celular…"**, hacer lo que dice (olvidar la TV en Ajustes > Bluetooth, 8 s en la TV, emparejar de nuevo).
 

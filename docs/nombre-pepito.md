@@ -1,5 +1,7 @@
 # Nombre "Pepito": propuesta para la app unificada (por aprobar)
 
+> **APROBADO Y HECHO el 2026-11-23.** Respuestas del dueño: 1) "TV RETRO" también pasa a "Pepito"; 2) paquete `com.pepito.app`; 3) nombre Bluetooth "Pepito Lite" (firmware y app); 4) las páginas de ayuda, términos, privacidad y licencias se cambian después, con el abogado (propuesta aceptada por omisión). Cómo quedó: `app-unificada/src/textos-pepito.mjs` (tabla), `construir.mjs` (la aplica y revisa que no quede "TV" a la vista), `pruebas/pepito.mjs`.
+
 > 2026-11-23. El dueño decidió que la TV se llama **Pepito** ("Pepito el televisorcito") y pidió cambiar TODO lo visible que dice "TV": "Pepito Lite", "Pepito Pro", "Ya va camino a Pepito", etc. Aquí está la lista completa de lo que cambiaría y cómo, para aprobarla ANTES de tocar nada (regla: paso grande = plan y aprobación).
 
 ## 1. Alcance
