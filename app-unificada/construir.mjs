@@ -195,6 +195,9 @@ const buscadorCanciones = `<div class="buscador-canciones" id="buscadorCanciones
 </div>
 `;
 cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n${buscadorCanciones}\n$1`, 'el comentario del tutorial');
+// Ayuda y Legal: las páginas de Pepito (pepito/ del repo: cubren Pepito Pro y Pepito Lite), no las de la app vieja.
+// (Con --sin-pepito quedan los de la Pro, como el resto de sus textos.)
+if (!sinPepito) cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|licencias)\.html/g, 'https://cartica07.github.io/TV_RETRO/pepito/$1.html', 'los enlaces de Ayuda y Legal');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
   '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>',
