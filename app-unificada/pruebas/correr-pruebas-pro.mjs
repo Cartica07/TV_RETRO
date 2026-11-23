@@ -10,15 +10,19 @@ import { fileURLToPath } from 'node:url';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
 const raiz = path.resolve(aqui, '..', '..');           // repo (la Pro: SOLO se lee)
-const www = path.resolve(aqui, '..', 'www');
+// La unificada armada con los textos de la Pro tal cual (sin el nombre "Pepito", docs/nombre-pepito.md): las pruebas de la Pro
+// buscan sus propios textos. Lo único que cambia "Pepito" son textos (con su propia revisión en construir.mjs); la lógica es la misma.
+const www = path.resolve(aqui, '..', 'www-sin-pepito');
 const tmp = path.resolve(aqui, '..', '.pruebas-pro');
+const armado = spawnSync(process.execPath, [path.resolve(aqui, '..', 'construir.mjs'), '--sin-pepito'], { encoding: 'utf8' });
+if (armado.status !== 0) throw new Error('No se pudo armar app-unificada/www-sin-pepito:\n' + armado.stdout + armado.stderr);
 
 const SUITES = ['pruebas-panel', 'tv', 'login', 'login-google', 'compartir', 'cuotas', 'verificacion', 'mas', 'alarma', 'config', 'atras',
   'sistema', 'baja-cuenta', 'baja-ui', 'tutorial', 'bobos', 'auditoria-b', 'etapa1-sin-firebase', 'etapa1-topes', 'etapa1-admin-canciones'];
 const pedidas = process.argv.slice(2);
 const lista = pedidas.length ? pedidas : SUITES;
 
-if (!fs.existsSync(path.join(www, 'index.html'))) throw new Error('Falta app-unificada/www: corre antes node construir.mjs');
+if (!fs.existsSync(path.join(www, 'index.html'))) throw new Error('Falta app-unificada/www-sin-pepito');
 fs.rmSync(tmp, { recursive: true, force: true });
 fs.mkdirSync(path.join(tmp, 'pruebas'), { recursive: true });
 // La raíz de la copia es la app UNIFICADA (js, css, fonts, index.html), no la Pro: así las pruebas que leen archivos del repo leen lo que se arma.

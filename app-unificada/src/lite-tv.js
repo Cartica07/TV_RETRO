@@ -20,7 +20,7 @@ export * as galeria from './galeria-local.js';
 // Un GIF de más de esto no se envía (la TV guarda ~1,4 MB y por Bluetooth tardaría minutos). Lo usa también gif-unificado.js.
 export const LIMITE_GIF_TV_BYTES = 600 * 1024;
 
-const NO_DISPONIBLE = { exito: false, error: 'Esto no está disponible en una TV Lite.' };
+const NO_DISPONIBLE = { exito: false, error: 'Esto no está disponible en un Pepito Lite.' };
 
 // ===================================================
 // Utilidades
@@ -123,7 +123,7 @@ ble.alCambiarEstado((paso) => {
   if (paso !== 'vincular') return;
   try {
     const el = document.getElementById('estadoTexto');
-    if (el && /^Enviando/.test(el.textContent)) el.textContent = 'Escribe el PIN que sale en la TV…';
+    if (el && /^Enviando/.test(el.textContent)) el.textContent = 'Escribe el PIN que sale en Pepito…';
   } catch (e) { /* sin pantalla */ }
 });
 
@@ -281,7 +281,7 @@ async function armarPantalla(estado) {
     if (!puedeComprimir()) throw new ble.ErrorTV('Este celular no puede enviar GIF.');
     pantalla.tipo = 'animacion';
     const z = await comprimirCuadros(estado.animacionCuadros || []);
-    if (z.bytes > LIMITE_GIF_TV_BYTES) throw new ble.ErrorTV('Ese GIF es demasiado pesado para la TV. Prueba con uno más corto.');
+    if (z.bytes > LIMITE_GIF_TV_BYTES) throw new ble.ErrorTV('Ese GIF es demasiado pesado para Pepito. Prueba con uno más corto.');
     pantalla.animacion = {
       nombre: estado.animacion || '', ancho: estado.animacionAncho, alto: estado.animacionAlto,
       formato: FORMATO_COMPRIMIDO, cantidad: z.cantidad,

@@ -37,7 +37,7 @@ const semilla = (extra = {}) => Object.assign({
 
   await pagina.click('#botonTVLite');
   await pagina.waitForSelector('#pantallaConexion:not([hidden])', { timeout: 5000 });
-  informe('"Tengo una TV Lite" abre la pantalla "Conecta tu TV" (la misma de la Lite)', /Conecta tu TV/.test(await pagina.innerText('#pantallaConexion')));
+  informe('"Tengo un Pepito Lite" abre la pantalla "Conecta a Pepito"', /Conecta a Pepito/.test(await pagina.innerText('#pantallaConexion')));
 
   // La persona empareja en los ajustes del celular y vuelve a la app.
   await pagina.evaluate(() => { window.__vinculados = [{ deviceId: 'tv-simulada', name: 'TV RETRO Lite' }]; });

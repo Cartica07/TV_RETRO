@@ -234,7 +234,8 @@ export async function reconectar() {
 }
 
 // ---------- TV ya emparejada desde los ajustes de Bluetooth del celular ----------
-const NOMBRE_TV = 'TV RETRO Lite';
+// Nombre Bluetooth de la TV: "Pepito Lite" desde el 2026-11-23 (decisión del dueño); "TV RETRO Lite" en el firmware anterior.
+const NOMBRES_TV = ['Pepito Lite', 'TV RETRO Lite'];
 
 // Dispositivos vinculados con el celular (solo Android). Devuelve null si no se pudo saber (web de pruebas, sin permiso).
 async function vinculados() {
@@ -251,7 +252,7 @@ async function vinculados() {
 export async function tvVinculada() {
   const lista = await vinculados();
   if (!lista) return null;
-  return lista.find((d) => String(d.name || '').startsWith(NOMBRE_TV)) || null;
+  return lista.find((d) => NOMBRES_TV.some((n) => String(d.name || '').startsWith(n))) || null;
 }
 
 /** Abre los ajustes de Bluetooth del celular (donde se empareja con el PIN que muestra la TV). */

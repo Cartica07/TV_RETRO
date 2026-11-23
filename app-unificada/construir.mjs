@@ -11,7 +11,7 @@
 import { createRequire } from 'node:module';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const aqui = dirname(fileURLToPath(import.meta.url));
@@ -19,8 +19,11 @@ const panel = join(aqui, '..'); // raíz del repo (la app Pro: SOLO se lee)
 const lite = join(aqui, '..', 'app-lite');
 const { build } = require(join(lite, 'node_modules', 'esbuild'));
 const paraApk = process.argv.includes('--apk');
+// --sin-pepito: la copia con los textos de la Pro tal cual (sin el nombre "Pepito"). Solo para correr-pruebas-pro.mjs: las pruebas
+// ORIGINALES de la Pro buscan sus propios textos, y así siguen probando que la lógica es la misma.
+const sinPepito = !paraApk && process.argv.includes('--sin-pepito');
 // La web (pruebas) y la APK van en carpetas distintas: así armar una no pisa a la otra mientras se prueba.
-const www = join(aqui, paraApk ? 'www-apk' : 'www');
+const www = join(aqui, paraApk ? 'www-apk' : sinPepito ? 'www-sin-pepito' : 'www');
 
 rmSync(www, { recursive: true, force: true });
 mkdirSync(join(www, 'js'), { recursive: true });
@@ -81,6 +84,7 @@ await build({
   platform: 'browser',
   target: 'es2020',
   outfile: join(www, 'js', 'lite-tv.js'),
+  charset: 'utf8', // los textos quedan legibles (con tildes, no \xE9): así se les puede aplicar el nombre "Pepito"
   logLevel: 'info',
 });
 
@@ -128,7 +132,7 @@ const cambiar = (patron, por, que) => {
 cambiar(/(<link rel="stylesheet" href="css\/style\.css" \/>)/, '$1\n  <link rel="stylesheet" href="css/unificada.css" />', 'el enlace a style.css');
 // Botón para una TV Lite en "Añade tu TV" / "Mis TV" (dentro del formulario, debajo de "Vincular"). Texto PROPUESTO: lo aprueba el dueño.
 cambiar(/(<button type="submit" id="botonVincularTV" class="boton-primario">Vincular<\/button>)/,
-  '$1\n      <button type="button" id="botonTVLite" class="boton-secundario">Tengo una TV Lite</button>',
+  '$1\n      <button type="button" id="botonTVLite" class="boton-secundario">Tengo un Pepito Lite</button>',
   'el botón Vincular');
 // Pantalla "Conecta tu TV": hijo directo de <body>, después de Mi TV (para quedar encima) y como el tutorial, sin heredar el `inert` del panel.
 const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidden>
@@ -137,12 +141,12 @@ const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidd
       <span class="login-logo" aria-hidden="true">
         <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
       </span>
-      <h1 class="login-titulo">Conecta tu TV</h1>
+      <h1 class="login-titulo">Conecta a Pepito</h1>
     </div>
     <ol class="pasos-conexion">
-      <li>Enciende la TV. Verás un PIN en su pantalla.</li>
-      <li>Toca "Abrir Bluetooth", elige "TV RETRO Lite" y escribe el PIN.</li>
-      <li>Vuelve a esta app. Se conecta sola.</li>
+      <li>Enciende a Pepito. Verás un PIN en su pantalla.</li>
+      <li>Toca "Abrir Bluetooth", elige "Pepito Lite" y escribe el PIN.</li>
+      <li>Regresa a la app y ya Pepito estará listo para ser usado.</li>
     </ol>
     <button type="button" id="botonAbrirBluetooth" class="boton-primario">Abrir Bluetooth</button>
     <button type="button" id="botonConexionVolver" class="boton-secundario">Volver</button>
@@ -157,11 +161,11 @@ const pantallaInicioTipo = `<div class="pantalla-login" id="pantallaInicioTipo" 
       <span class="login-logo" aria-hidden="true">
         <svg class="icono" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
       </span>
-      <h1 class="login-titulo">TV RETRO</h1>
-      <p class="login-subtitulo">¿Qué TV tienes?</p>
+      <h1 class="login-titulo">Pepito</h1>
+      <p class="login-subtitulo">¿Qué Pepito tienes?</p>
     </div>
-    <button type="button" id="botonInicioPro" class="boton-primario">TV Pro</button>
-    <button type="button" id="botonInicioLite" class="boton-primario">TV Lite</button>
+    <button type="button" id="botonInicioPro" class="boton-primario">Pepito Pro</button>
+    <button type="button" id="botonInicioLite" class="boton-primario">Pepito Lite</button>
     <div id="inicioTipoError" class="aviso error" role="alert" hidden></div>
   </div>
 </div>
@@ -182,4 +186,40 @@ for (const css of ['tokens.css', 'style.css', 'fuentes.css']) copyFileSync(join(
 cpSync(join(panel, 'fonts'), join(www, 'fonts'), { recursive: true });
 copyFileSync(join(aqui, 'src', 'unificada.css'), join(www, 'css', 'unificada.css'));
 
-console.log(`app-unificada/${paraApk ? 'www-apk' : 'www'} listo`);
+// ---- Nombre "Pepito" (docs/nombre-pepito.md): textos de la COPIA, con revisión de que no quede "TV" a la vista ----
+if (!sinPepito) {
+  const { TEXTOS_PEPITO, TV_PERMITIDO } = await import(pathToFileURL(join(aqui, 'src', 'textos-pepito.mjs')).href);
+  const contar = (texto, buscado) => texto.split(buscado).length - 1;
+  const porArchivo = new Map();
+  for (const [archivo, viejo, nuevo, veces] of TEXTOS_PEPITO) {
+    const ruta = join(www, archivo);
+    let texto = porArchivo.has(ruta) ? porArchivo.get(ruta) : readFileSync(ruta, 'utf8');
+    const hay = contar(texto, viejo);
+    if (veces === null ? hay < 1 : hay !== veces) {
+      throw new Error(`Pepito: en ${archivo} "${viejo}" aparece ${hay} veces (se esperaban ${veces === null ? 'una o más' : veces}). La Pro cambió ese texto: revisa app-unificada/src/textos-pepito.mjs`);
+    }
+    texto = texto.split(viejo).join(nuevo);
+    porArchivo.set(ruta, texto);
+  }
+  for (const [ruta, texto] of porArchivo) writeFileSync(ruta, texto);
+
+  // Revisión: ningún "TV" a la vista. En el HTML, fuera de los comentarios (los IDs como codigoTV no cuentan: no es una palabra
+  // suelta). En el JS, dentro de textos entre comillas, sin contar comentarios ni mensajes de consola.
+  const quedan = [];
+  const permitido = (s) => TV_PERMITIDO.some((p) => s.includes(p));
+  const htmlFinal = readFileSync(join(www, 'index.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  for (const linea of htmlFinal.split(/\r?\n/)) if (/\bTV\b/.test(linea) && !permitido(linea)) quedan.push('index.html: ' + linea.trim());
+  for (const f of readdirSync(join(www, 'js'))) {
+    if (!f.endsWith('.js')) continue;
+    for (const lineaCompleta of readFileSync(join(www, 'js', f), 'utf8').split(/\r?\n/)) {
+      if (/^\s*(\/\/|\*|\/\*)/.test(lineaCompleta) || /console\.(log|info|warn|error)/.test(lineaCompleta)) continue;
+      const linea = lineaCompleta.replace(/\s\/\/\s.*$/, ''); // comentario al final de la línea
+      for (const m of linea.matchAll(/(['"`])((?:(?!\1).)*)\1/g)) {
+        if (/\bTV\b/.test(m[2]) && !permitido(m[2])) quedan.push(`js/${f}: ${m[0].slice(0, 120)}`);
+      }
+    }
+  }
+  if (quedan.length) throw new Error('Pepito: todavía se ve "TV" en:\n  ' + quedan.join('\n  ') + '\nAgrégalo a app-unificada/src/textos-pepito.mjs (o a TV_PERMITIDO si no se ve).');
+}
+
+console.log(`app-unificada/${paraApk ? 'www-apk' : sinPepito ? 'www-sin-pepito' : 'www'} listo`);

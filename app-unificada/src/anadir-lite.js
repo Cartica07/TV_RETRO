@@ -71,7 +71,7 @@ function iniciarPrimeraPantalla() {
   const marcar = () => {
     const sinCuenta = unificadaSinCuenta();
     document.body.classList.toggle('sin-cuenta', sinCuenta);
-    if (salir) salir.textContent = sinCuenta ? 'Tengo una TV Pro' : textoSalir; // texto PROPUESTO
+    if (salir) salir.textContent = sinCuenta ? 'Tengo un Pepito Pro' : textoSalir; // texto 40, aprobado (con Pepito)
   };
   const mostrarAviso = (texto) => { aviso.textContent = texto; aviso.hidden = !texto; };
 

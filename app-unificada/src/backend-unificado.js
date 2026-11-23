@@ -70,7 +70,7 @@ export async function unificadaEntrarSinCuenta() {
     console.error('[TV RETRO] No se pudo entrar sin cuenta:', error);
     const codigo = String((error && error.code) || '');
     // Textos PROPUESTOS (docs/lite-textos-propuestos.md): los aprueba el dueño.
-    if (/operation-not-allowed|admin-restricted-operation/.test(codigo)) return { exito: false, error: 'Por ahora no se puede usar la TV Lite. Inténtalo más tarde.' };
+    if (/operation-not-allowed|admin-restricted-operation/.test(codigo)) return { exito: false, error: 'Por ahora no se puede usar Pepito Lite. Inténtalo más tarde.' };
     if (/network-request-failed/.test(codigo) || navigator.onLine === false) return { exito: false, error: 'Sin conexión a internet. Conéctate y vuelve a intentarlo.' };
     return { exito: false, error: 'Algo salió mal. Vuelve a intentarlo.' };
   }
@@ -217,7 +217,7 @@ export const suscribirMostrada = suscripcion('suscribirMostrada');
 export const suscribirFirmwareTV = suscripcion('suscribirFirmwareTV');
 
 // ---------- POR ID: las TV Lite se resuelven en el celular ----------
-const NO_SE_COMPARTE = { exito: false, error: 'Una TV Lite no se comparte.' };
+const NO_SE_COMPARTE = { exito: false, error: 'Un Pepito Lite no se comparte.' };
 
 /** Ids de las TV de la cuenta: las de la nube (Pro) y las TV Lite que añadió en este celular. */
 // En la Pro, cuentas.js avisa "sin internet" ANTES de pedir la lista; en la unificada lo decide esta función (construir.mjs quita

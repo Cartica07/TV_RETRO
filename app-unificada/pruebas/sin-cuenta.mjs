@@ -16,8 +16,8 @@ const nuevaVez = { logueado: false, esperar: false };
 {
   const { navegador, pagina, errores } = await abrir(semilla(), nuevaVez);
   await pagina.waitForSelector('#pantallaInicioTipo:not([hidden])', { timeout: 15000 });
-  informe('celular nuevo: la primera pantalla es "¿Qué TV tienes?" con TV Pro y TV Lite',
-    /¿Qué TV tienes\?/.test(await pagina.innerText('#pantallaInicioTipo')) && (await visible(pagina, '#botonInicioPro')) && (await visible(pagina, '#botonInicioLite')));
+  informe('celular nuevo: la primera pantalla es "¿Qué Pepito tienes?" con Pepito Pro y Pepito Lite',
+    /¿Qué Pepito tienes\?/.test(await pagina.innerText('#pantallaInicioTipo')) && (await visible(pagina, '#botonInicioPro')) && (await visible(pagina, '#botonInicioLite')));
   await pagina.click('#botonInicioPro');
   await pagina.waitForTimeout(400);
   informe('"TV Pro" lleva al inicio de sesión de la Pro (sin cambios)', (await oculto(pagina, '#pantallaInicioTipo')) && (await visible(pagina, '#pantallaLogin')));
@@ -34,7 +34,7 @@ const nuevaVez = { logueado: false, esperar: false };
   await pagina.click('#botonInicioLite');
   await pagina.waitForSelector('#inicioTipoError:not([hidden])', { timeout: 5000 });
   const aviso = await pagina.innerText('#inicioTipoError');
-  informe('sin el acceso sin cuenta activado: aviso claro, sin términos técnicos', /no se puede usar la TV Lite/i.test(aviso) && !/auth\/|operation/i.test(aviso), aviso);
+  informe('sin el acceso sin cuenta activado: aviso claro, sin términos técnicos', /no se puede usar Pepito Lite/i.test(aviso) && !/auth\/|operation/i.test(aviso), aviso);
   informe('y la pregunta sigue ahí con los dos botones usables (no queda una pantalla en blanco)',
     (await visible(pagina, '#pantallaInicioTipo')) && !(await pagina.evaluate(() => document.getElementById('botonInicioLite').disabled)));
   informe('no queda guardada la elección "TV Lite"', !(await pagina.evaluate(() => localStorage.getItem('tvretro.tipoApp'))));
@@ -57,7 +57,7 @@ const nuevaVez = { logueado: false, esperar: false };
   informe('la TV Lite queda recordada en el celular (no en una cuenta)', /tv-simulada/.test(String(await pagina.evaluate(() => localStorage.getItem('tvretro.tvlite.local')))));
   informe('no se ve nada de la cuenta (Mi cuenta, cerrar sesión, tutorial)',
     (await oculto(pagina, '[data-config="cuenta"]')) && (await oculto(pagina, '#botonCerrarSesion')) && (await oculto(pagina, '#tutorial')));
-  informe('en Mis TV, "Cerrar sesión" pasa a ser "Tengo una TV Pro"', (await pagina.evaluate(() => document.getElementById('botonTVSalir').textContent.trim())) === 'Tengo una TV Pro');
+  informe('en Mis Pepitos, "Cerrar sesión" pasa a ser "Tengo un Pepito Pro"', (await pagina.evaluate(() => document.getElementById('botonTVSalir').textContent.trim())) === 'Tengo un Pepito Pro');
 
   // ---------- 4. Galería: lo predeterminado viene de la nube y lo propio se guarda en el celular ----------
   const g = await pagina.evaluate(async () => {
