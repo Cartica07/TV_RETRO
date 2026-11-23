@@ -29,6 +29,8 @@ Decisiones (2026-11-22, el dueño delegó la 2 en Claude con consulta al asesor)
 - **Añadir una TV Lite** (en "Añade tu TV" y en Mis TV): botón "Tengo una TV Lite" → pantalla "Conecta tu TV" (pasos) → "Abrir Bluetooth" (ajustes del celular, donde Android pide el PIN directo) → al volver la app busca sola la TV emparejada por su nombre, la añade a la cuenta y vincula con el mismo formulario de siempre (marca `LITE`). Si algo falla, el emparejamiento al tocar Enviar (respaldo de la Lite) sigue funcionando.
 - **Canciones a una TV Lite:** salen del catálogo de la nube (`leerMusical`, el mismo m1 de la Pro). El id de 16 bits sale del **contenido** (CRC); solo se da por buena una canción que la TV lista **y** que el celular recuerda haberle mandado con ese mismo CRC completo: si no, se manda otra vez. (Tocar la canción equivocada es peor que reenviar.)
 
+- **"¿Qué TV tienes?"** (pedido del dueño): la primera vez que una cuenta entra sin ninguna TV, "Añade tu TV" pregunta el tipo con dos opciones dentro de la misma tarjeta (no una pantalla aparte, para no tapar el formulario del código que usan las pruebas de la Pro): **TV Pro** marcada por defecto (el código de siempre) y **TV Lite** (abre "Conecta tu TV"). La muestra la clase `sin-tv` que el enrutador pone en `<body>` cuando la lista de TV llega vacía; en Mis TV (con TV ya añadidas) no sale y queda el botón "Tengo una TV Lite".
+- **Aviso del vínculo roto:** si al reconectar sola la app descubre que la TV Lite ya no reconoce al celular, muestra un cuadro con qué hacer (máximo una vez por minuto). Antes solo decía "Desconectado" (lo encontró la prueba real del 2026-11-22).
 ## Cómo se arma y se prueba
 
 ```

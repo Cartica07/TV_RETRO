@@ -34,6 +34,9 @@
 | 31 | App unificada, pantalla "Conecta tu TV" abierta desde "Añade tu TV": botón para volver | Volver | `app-unificada/construir.mjs` |
 | 32 | App unificada: compartir una TV Lite | Una TV Lite no se comparte. | `src/backend-unificado.js` |
 | 33 | App unificada: una función que una TV Lite no tiene | Esto no está disponible en una TV Lite. | `src/lite-tv.js` |
+| 34 | App unificada, "Añade tu TV" la primera vez (cuenta sin ninguna TV): la pregunta | ¿Qué TV tienes? | `app-unificada/construir.mjs` |
+| 35 | App unificada, las dos opciones de esa pregunta (TV Pro marcada por defecto) | TV Pro / TV Lite | `app-unificada/construir.mjs` |
+| 36 | App unificada: cuadro de aviso cuando la TV Lite ya no reconoce al celular al reconectar sola | (el mismo texto de la fila 24) | `app-unificada/src/lite-tv.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
