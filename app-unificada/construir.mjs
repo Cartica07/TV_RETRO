@@ -179,14 +179,19 @@ cambiar(/(<select id="seleccionCancion"><\/select>\s*<svg[^>]*selector-flecha[^>
   `$1\n          ${botonLupa('botonBuscarCancion', 'seleccionCancion')}`, 'la lista de canciones');
 cambiar(/<div class="selector">(\s*<select id="alarmaTono"><\/select>\s*<svg[^>]*selector-flecha[^>]*>[\s\S]*?<\/svg>\s*)<\/div>/,
   `<div class="fila-cancion"><div class="selector">$1</div>\n          ${botonLupa('botonBuscarTono', 'alarmaTono')}</div>`, 'el tono de la alarma');
+// Una sola ventana: con buscador ocupa toda la pantalla (canciones); sin buscador (listas cortas) es una tarjeta centrada del tamaño
+// de sus opciones, sobre el fondo oscurecido (unificada.css, clase sin-busqueda).
 const buscadorCanciones = `<div class="buscador-canciones" id="buscadorCanciones" role="dialog" aria-modal="true" aria-label="Buscar canción" hidden>
-  <div class="buscador-cabecera">
-    <span class="buscador-lupa">${ICONO_LUPA}</span>
-    <input type="text" id="buscadorTexto" placeholder="Buscar canción" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar canción" />
-    <button type="button" id="buscadorCerrar" class="boton-icono" aria-label="Cerrar" title="Cerrar"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+  <div class="buscador-tarjeta">
+    <div class="buscador-cabecera">
+      <span class="buscador-titulo" id="buscadorTitulo" hidden></span>
+      <span class="buscador-lupa">${ICONO_LUPA}</span>
+      <input type="text" id="buscadorTexto" placeholder="Buscar canción" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar canción" />
+      <button type="button" id="buscadorCerrar" class="boton-icono" aria-label="Cerrar" title="Cerrar"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    </div>
+    <ul class="buscador-lista" id="buscadorLista"></ul>
+    <p class="buscador-vacio" id="buscadorVacio" hidden>No hay canciones con ese nombre.</p>
   </div>
-  <ul class="buscador-lista" id="buscadorLista"></ul>
-  <p class="buscador-vacio" id="buscadorVacio" hidden>No hay canciones con ese nombre.</p>
 </div>
 `;
 cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n${buscadorCanciones}\n$1`, 'el comentario del tutorial');

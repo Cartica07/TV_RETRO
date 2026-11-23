@@ -163,14 +163,79 @@ body.sin-cuenta #botonVincularTV {
   font-size: var(--texto-md);
 }
 
-/* Tocar la lista de canciones o del tono abre la lista con el estilo de la app (js/buscar-canciones.js) en vez de la lista gris de
+/* Tocar una lista (canciones, tono, letra, encuadre o zona horaria) abre la lista con el estilo de la app (js/buscar-canciones.js) en vez de la lista gris de
    Android, que no se puede pintar: el toque pasa de largo el <select> y lo recibe su caja (.selector). */
 #seleccionCancion,
-#alarmaTono {
+#alarmaTono,
+#fuenteTexto,
+#escalaImagen,
+#ajusteZona {
   pointer-events: none;
 }
 
 .selector:has(> #seleccionCancion),
-.selector:has(> #alarmaTono) {
+.selector:has(> #alarmaTono),
+.selector:has(> #fuenteTexto),
+.selector:has(> #escalaImagen),
+.selector:has(> #ajusteZona) {
   cursor: pointer;
+}
+
+/* Las listas cortas (Letra, Encuadre, Zona horaria) se abren en la misma ventana, sin buscador: arriba va su nombre. */
+.buscador-canciones.sin-busqueda .buscador-lupa,
+.buscador-canciones.sin-busqueda #buscadorTexto {
+  display: none;
+}
+
+.buscador-titulo {
+  flex: 1;
+  min-width: 0;
+  padding-left: var(--esp-1);
+  color: var(--texto);
+  font-family: var(--fuente-ui);
+  font-size: var(--texto-lg);
+  font-weight: 700;
+}
+
+.buscador-titulo[hidden] {
+  display: none;
+}
+
+/* La ventana por dentro: con buscador (canciones) la tarjeta ocupa toda la pantalla; sin buscador (Letra, Encuadre, Zona horaria)
+   es una tarjeta centrada, del tamaño de sus pocas opciones, sobre el fondo oscurecido (como la lista de Android, pero con el
+   estilo de la app). Tocar el fondo la cierra (js/buscar-canciones.js). */
+.buscador-tarjeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.buscador-canciones.sin-busqueda {
+  background: rgba(4, 8, 12, 0.72);
+  justify-content: center;
+  align-items: center;
+  padding: var(--esp-4);
+}
+
+.buscador-canciones.sin-busqueda .buscador-tarjeta {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 340px;
+  max-height: 75vh;
+  padding: var(--esp-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  box-sizing: border-box;
+}
+
+.buscador-canciones.sin-busqueda .buscador-lista {
+  flex: 0 1 auto;
+  padding-bottom: 0;
+}
+
+.buscador-canciones.sin-busqueda .buscador-lista button {
+  background: var(--superficie-hundida);
 }
