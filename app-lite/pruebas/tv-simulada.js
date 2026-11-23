@@ -121,7 +121,10 @@
         avisar([0xA0, 1]);
         break;
       }
-      case 0x22: tv.ajustes = { brillo: d[1], volumen: d[2], zona: (d[3] | (d[4] << 8)) << 16 >> 16 }; avisar([0xA2, 1]); break;
+      case 0x22: // [brillo][volumen][zona i16][apagado u8, opcional desde el 2026-11-23; si falta, 5]
+        tv.ajustes = { brillo: d[1], volumen: d[2], zona: (d[3] | (d[4] << 8)) << 16 >> 16, apagado: d.length >= 6 ? d[5] : 5 };
+        avisar([0xA2, 1]);
+        break;
       default: break;
     }
   }

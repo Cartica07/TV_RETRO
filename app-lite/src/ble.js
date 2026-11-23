@@ -443,10 +443,14 @@ export async function guardarAlarmasEnTV({ tonoId, alarmas }) {
   if (r.getUint8(1) !== 1) throw new ErrorTV('La TV no pudo guardar la alarma.');
 }
 
-// AJUSTES: [0x22][brillo][volumen][zona i16, minutos]  ->  aviso [0xA2][1]
-export async function guardarAjustesEnTV({ brillo, volumen, zona }) {
+// AJUSTES: [0x22][brillo][volumen][zona i16, minutos][apagado u8, opcional]  ->  aviso [0xA2][1]
+// "apagado" (minutos sin usar el botón para que la pantalla se apague: 0 = nunca, 5, 10, 20) lo manda solo quien lo conoce
+// (la app Pepito, desde el 2026-11-23); sin él la TV usa 5. Un firmware anterior ignora el byte de más.
+export async function guardarAjustesEnTV({ brillo, volumen, zona, apagado }) {
   avisos.length = 0;
-  await escribirCtrl([0x22, brillo & 255, volumen & 255, zona & 255, (zona >> 8) & 255]);
+  const bytes = [0x22, brillo & 255, volumen & 255, zona & 255, (zona >> 8) & 255];
+  if (typeof apagado === 'number') bytes.push(apagado & 255);
+  await escribirCtrl(bytes);
   const r = await esperarAvisoTipo(0xA2, 4000);
   if (!r) throw new ErrorTV('La TV no respondió.');
   if (r.getUint8(1) !== 1) throw new ErrorTV('La TV no pudo guardar los ajustes.');

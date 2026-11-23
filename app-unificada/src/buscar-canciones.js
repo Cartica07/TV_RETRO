@@ -56,7 +56,7 @@ function iniciar() {
 
   // Las listas que se abren en esta ventana. Las de canciones llevan buscador; las cortas (Letra, Encuadre, Zona horaria, pedido
   // del dueño 2026-11-23: que no se vea la lista gris de Android), no: arriba va el nombre que la lista ya tiene en pantalla.
-  const LISTAS = { seleccionCancion: true, alarmaTono: true, fuenteTexto: false, escalaImagen: false, ajusteZona: false };
+  const LISTAS = { seleccionCancion: true, alarmaTono: true, fuenteTexto: false, escalaImagen: false, ajusteZona: false, ajusteApagado: false };
   const conBuscador = (select) => LISTAS[select.id] === true;
   const SELECTOR_LISTAS = Object.keys(LISTAS).map((id) => ':scope > #' + id).join(', ');
   const nombreDeLaLista = (select) => {
@@ -90,6 +90,13 @@ function iniciar() {
         boton.append(nombre.slice(0, c.desde), marca, nombre.slice(c.hasta));
       } else {
         boton.textContent = nombre;
+      }
+      // Una nota bajo la opción (por ejemplo, el aviso de "Nunca" en "Apagar pantalla"): se lee antes de elegirla.
+      if (o.dataset && o.dataset.nota) {
+        const nota = document.createElement('span');
+        nota.className = 'buscador-nota';
+        nota.textContent = o.dataset.nota;
+        boton.appendChild(nota);
       }
       li.appendChild(boton);
       lista.appendChild(li);

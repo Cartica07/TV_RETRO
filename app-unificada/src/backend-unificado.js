@@ -25,7 +25,7 @@ export {
   MAXIMO_APODO, borrarInvitacion, listarCanciones, guardarCancionCatalogo, borrarCancionCatalogo,
   leerMusical, claveMusicalValida,
   guardarMusicalCatalogo, borrarMusicalCatalogo, CANTIDAD_ALARMAS, DIAS_ALARMA_DEFECTO, normalizarAlarma,
-  AJUSTES_DEFECTO, normalizarAjustes
+  AJUSTES_DEFECTO
 } from './firebase-pro.js';
 
 // ---------- Con una TV Lite y SIN cuenta ----------
@@ -199,8 +199,51 @@ export const cargarEstado = porTV('cargarEstado');
 export const leerMostrada = porTV('leerMostrada');
 export const cargarAlarma = porTV('cargarAlarma');
 export const guardarAlarma = porTV('guardarAlarma');
-export const cargarAjustes = porTV('cargarAjustes');
-export const guardarAjustes = porTV('guardarAjustes');
+// ---------- Apagado automático de la pantalla (2026-11-23, Pepito Pro y Pepito Lite) ----------
+// Más > Config > Ajustes: lista "Apagar pantalla" (#ajusteApagado, HTML en construir.mjs). mas.js de la Pro no la conoce: aquí se
+// muestra al leer los ajustes y se agrega al guardarlos. Valores: minutos sin usar el botón (0 = nunca); si falta, 5.
+const APAGADOS = [0, 5, 10, 20];
+const APAGADO_DEFECTO = 5;
+const normalizarApagado = (v) => (APAGADOS.includes(Number(v)) ? Number(v) : APAGADO_DEFECTO);
+const listaApagado = () => { try { return document.getElementById('ajusteApagado'); } catch (e) { return null; } };
+// Al ELEGIR "Nunca" la línea de estado de arriba muestra su aviso (el mismo texto que la ventanita muestra debajo de "Nunca").
+function avisarSiNunca() {
+  const lista = listaApagado();
+  if (!lista || lista.value !== '0') return;
+  const opcion = lista.options[lista.selectedIndex];
+  const estado = (() => { try { return document.getElementById('estadoTexto'); } catch (e) { return null; } })();
+  if (estado && opcion && opcion.dataset.nota) estado.textContent = opcion.dataset.nota;
+}
+try { document.addEventListener('change', (e) => { if (e.target && e.target.id === 'ajusteApagado') avisarSiNunca(); }); } catch (e) { /* sin pantalla */ }
+
+export function normalizarAjustes(datos) {
+  const n = pro.normalizarAjustes(datos);
+  if (datos && typeof datos === 'object' && datos.apagado !== undefined) n.apagado = normalizarApagado(datos.apagado);
+  return n;
+}
+
+export async function cargarAjustes(...a) {
+  const r = await (tvLite ? cargarLite().then((m) => m.cargarAjustes(...a)) : pro.cargarAjustes(...a));
+  const lista = listaApagado();
+  if (lista && r && r.exito) lista.value = String(normalizarApagado(r.ajustes && r.ajustes.apagado));
+  return r;
+}
+
+export async function guardarAjustes(datos, ...resto) {
+  const lista = listaApagado();
+  const conApagado = lista ? Object.assign({}, datos, { apagado: normalizarApagado(lista.value) }) : datos;
+  if (tvLite) return (await cargarLite()).guardarAjustes(conApagado, ...resto);
+  const r = await pro.guardarAjustes(conApagado, ...resto);
+  // Mientras las reglas publicadas de Firebase no incluyan "apagado", rechazan todo el nodo: se guarda lo demás sin él (la TV
+  // usa 5 minutos) y lo de la pantalla se guardará cuando el dueño publique las reglas nuevas.
+  if (!r.exito && conApagado !== datos && /permiso|permission/i.test(String(r.error || ''))) {
+    console.warn('[Pepito] Las reglas de Firebase aún no aceptan "apagado": los ajustes se guardan sin él.');
+    const sinApagado = Object.assign({}, conApagado);
+    delete sinApagado.apagado;
+    return pro.guardarAjustes(sinApagado, ...resto);
+  }
+  return r;
+}
 export const cargarSistema = porTV('cargarSistema');
 export const enviarEstado = porTV('enviarEstado');
 
