@@ -63,6 +63,7 @@ copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
+for (const f of ['atras.js', 'buscar-canciones.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 
 // Sin internet, cuentas.js de la Pro corta el arranque con "Sin conexión…" ANTES de pedir la lista de TV. En la unificada esa
 // decisión la toma el enrutador (listarMisDispositivos, con el mismo texto): con una TV Lite ya añadida se sigue, porque va por
@@ -170,8 +171,29 @@ const pantallaInicioTipo = `<div class="pantalla-login" id="pantallaInicioTipo" 
   </div>
 </div>
 `;
-cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n$1`, 'el comentario del tutorial');
-cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/, '$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>', 'el script js/main.js');
+// Buscar canción (pedido del dueño, 2026-11-23; la maneja js/buscar-canciones.js): una lupa junto a la lista de canciones y junto al
+// tono de la alarma, y una ventana con un campo de búsqueda y la lista filtrada. Textos PROPUESTOS (lite-textos-propuestos.md 43 a 45).
+const ICONO_LUPA = '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>';
+const botonLupa = (id, para) => `<button type="button" id="${id}" class="boton-icono boton-buscar-cancion" data-buscar-en="${para}" aria-label="Buscar canción" title="Buscar canción">${ICONO_LUPA}</button>`;
+cambiar(/(<select id="seleccionCancion"><\/select>\s*<svg[^>]*selector-flecha[^>]*>[\s\S]*?<\/svg>\s*<\/div>)/,
+  `$1\n          ${botonLupa('botonBuscarCancion', 'seleccionCancion')}`, 'la lista de canciones');
+cambiar(/<div class="selector">(\s*<select id="alarmaTono"><\/select>\s*<svg[^>]*selector-flecha[^>]*>[\s\S]*?<\/svg>\s*)<\/div>/,
+  `<div class="fila-cancion"><div class="selector">$1</div>\n          ${botonLupa('botonBuscarTono', 'alarmaTono')}</div>`, 'el tono de la alarma');
+const buscadorCanciones = `<div class="buscador-canciones" id="buscadorCanciones" role="dialog" aria-modal="true" aria-label="Buscar canción" hidden>
+  <div class="buscador-cabecera">
+    <span class="buscador-lupa">${ICONO_LUPA}</span>
+    <input type="text" id="buscadorTexto" placeholder="Buscar canción" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar canción" />
+    <button type="button" id="buscadorCerrar" class="boton-icono" aria-label="Cerrar" title="Cerrar"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+  </div>
+  <ul class="buscador-lista" id="buscadorLista"></ul>
+  <p class="buscador-vacio" id="buscadorVacio" hidden>No hay canciones con ese nombre.</p>
+</div>
+`;
+cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n${buscadorCanciones}\n$1`, 'el comentario del tutorial');
+// atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
+cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
+  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>',
+  'el script js/main.js');
 
 if (paraApk) {
   cambiar(/[ \t]*<!-- H-21: política de seguridad[\s\S]*?-->\r?\n/, '', 'el comentario de la política de seguridad');
