@@ -79,6 +79,53 @@ informe('en la alarma también sale el sonido simple (es una elección)', r.leng
 r = await escribir(pagina, 'noche');
 await pagina.click('#buscadorLista button');
 informe('elegir un tono desde la búsqueda lo deja en la lista del tono', (await pagina.evaluate(() => document.getElementById('alarmaTono').value)) === 'noche');
+// ---------- Listas cortas (Letra, Zona horaria): misma ventana, sin buscador, con su nombre arriba ----------
+const verVentana = () => pagina.evaluate(() => ({
+  abierta: !document.getElementById('buscadorCanciones').hidden,
+  titulo: document.getElementById('buscadorTitulo').hidden ? '' : document.getElementById('buscadorTitulo').textContent,
+  campoVisible: getComputedStyle(document.getElementById('buscadorTexto')).display !== 'none',
+  opciones: Array.from(document.querySelectorAll('#buscadorLista button')).map((b) => b.textContent),
+}));
+await pagina.click('#grupoTipo button[data-valor="texto"]');
+await pagina.waitForTimeout(300);
+await pagina.click('#fuenteTexto', { force: true });
+await pagina.waitForTimeout(200);
+let v = await verVentana();
+informe('Letra: abre la lista con el estilo de la app, sin buscador y con "Letra" arriba',
+  v.abierta && v.titulo === 'Letra' && !v.campoVisible && v.opciones.length === 5 && v.opciones.includes('Serif'), JSON.stringify(v));
+const tarjeta = await pagina.evaluate(() => {
+  const t = document.querySelector('.buscador-tarjeta').getBoundingClientRect();
+  return { alto: Math.round(t.height), altoPantalla: innerHeight, arriba: Math.round(t.top) };
+});
+informe('es una ventanita centrada del tamaño de sus opciones (no ocupa toda la pantalla)', tarjeta.alto < tarjeta.altoPantalla * 0.75 && tarjeta.arriba > 40, JSON.stringify(tarjeta));
+await pagina.mouse.click(10, 10); // el fondo oscurecido
+await pagina.waitForTimeout(150);
+informe('tocar el fondo oscurecido la cierra sin cambiar nada', !(await verVentana()).abierta && (await pagina.evaluate(() => document.getElementById('fuenteTexto').value)) !== 'serifi');
+await pagina.click('#fuenteTexto', { force: true });
+await pagina.waitForTimeout(150);
+await pagina.click('#buscadorLista button >> text=Serif cursiva');
+informe('elegir "Serif cursiva" cambia la letra', (await pagina.evaluate(() => document.getElementById('fuenteTexto').value)) === 'serifi');
+
+await pagina.click('#grupoTipo button[data-valor="galeria"]');
+await pagina.click('#grupoMas button[data-mas="config"]');
+await pagina.click('#grupoConfig button[data-config="tv"]');
+await pagina.waitForSelector('#configTV', { state: 'visible' });
+await pagina.waitForTimeout(500);
+await pagina.click('#ajusteZona', { force: true });
+await pagina.waitForTimeout(200);
+v = await verVentana();
+informe('Zona horaria: igual, con "Zona horaria" arriba', v.abierta && v.titulo === 'Zona horaria' && !v.campoVisible && v.opciones.length >= 4, JSON.stringify(v).slice(0, 200));
+await pagina.click('#buscadorLista button >> text=México y Centroamérica');
+informe('elegir una zona la deja elegida', (await pagina.evaluate(() => document.getElementById('ajusteZona').value)) === '-360');
+
+// Después de una lista corta, la de canciones vuelve a tener buscador.
+await pagina.click('#grupoTipo button[data-valor="cancion"]');
+await pagina.waitForTimeout(300);
+await pagina.click('#botonBuscarCancion');
+v = await verVentana();
+informe('después, la lupa de canciones vuelve a mostrar el buscador (sin título)', v.abierta && v.campoVisible && v.titulo === '', JSON.stringify(v).slice(0, 160));
+await pagina.keyboard.press('Escape');
+
 informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));
 await navegador.close();
 

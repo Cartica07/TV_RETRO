@@ -1,4 +1,4 @@
-// Buscar canción (pedido del dueño, 2026-11-23): con muchas canciones, buscarlas con scroll es lento. Una lupa junto a la lista de
+// Buscar canción y listas con el estilo de la app (pedidos del dueño, 2026-11-23): con muchas canciones, buscarlas con scroll es lento. Una lupa junto a la lista de
 // canciones (#seleccionCancion) y junto al tono de la alarma (#alarmaTono) abre una ventana con un campo de texto: al escribir quedan
 // las canciones cuyo nombre, o alguna de sus palabras, empieza por lo escrito ("N" -> las que empiezan por N; "mundo" -> "Un mundo
 // ideal" y "El fin del mundo"), sin importar mayúsculas ni tildes. Al tocar una, queda elegida en la lista de la Pro (como si se
@@ -50,12 +50,23 @@ function iniciar() {
   const vacio = q('buscadorVacio');
   const cerrarBoton = q('buscadorCerrar');
   if (!ventana || !campo || !lista || !vacio) return;
+  const titulo = q('buscadorTitulo');
   let destino = null; // el <select> de la Pro en el que se elige
   let botonOrigen = null;
 
-  // Las canciones del <select>: su primera opción vacía es "-- Selecciona --" (en Canciones) o el sonido simple (en la alarma,
-  // donde sí es una elección).
-  const opciones = () => Array.from(destino.options).filter((o) => !o.disabled && (o.value !== '' || destino.id === 'alarmaTono'));
+  // Las listas que se abren en esta ventana. Las de canciones llevan buscador; las cortas (Letra, Encuadre, Zona horaria, pedido
+  // del dueño 2026-11-23: que no se vea la lista gris de Android), no: arriba va el nombre que la lista ya tiene en pantalla.
+  const LISTAS = { seleccionCancion: true, alarmaTono: true, fuenteTexto: false, escalaImagen: false, ajusteZona: false };
+  const conBuscador = (select) => LISTAS[select.id] === true;
+  const SELECTOR_LISTAS = Object.keys(LISTAS).map((id) => ':scope > #' + id).join(', ');
+  const nombreDeLaLista = (select) => {
+    const rotulo = document.querySelector('label[for="' + select.id + '"]') || (select.closest('.campo') && select.closest('.campo').querySelector('.rotulo'));
+    return ((rotulo && rotulo.textContent) || select.getAttribute('aria-label') || '').trim();
+  };
+
+  // Las opciones del <select>: en Canciones, la vacía es "-- Selecciona --" y no se muestra; en las demás (por ejemplo, el sonido
+  // simple de la alarma) sí es una elección.
+  const opciones = () => Array.from(destino.options).filter((o) => !o.disabled && (o.value !== '' || destino.id !== 'seleccionCancion'));
 
   function pintar() {
     const texto = campo.value;
@@ -92,6 +103,11 @@ function iniciar() {
     if (!select || select.disabled) return;
     destino = select;
     botonOrigen = boton || null;
+    const buscar = conBuscador(select);
+    if (!buscar) teclado = false;
+    ventana.classList.toggle('sin-busqueda', !buscar);
+    if (titulo) { titulo.hidden = buscar; titulo.textContent = buscar ? '' : nombreDeLaLista(select); }
+    ventana.setAttribute('aria-label', buscar ? campo.getAttribute('aria-label') : nombreDeLaLista(select));
     campo.value = '';
     pintar();
     ventana.hidden = false;
@@ -129,13 +145,13 @@ function iniciar() {
     // La lista misma (unificada.css le quita los toques al <select>, así que llegan a su caja): en vez de la lista gris de
     // Android, esta, con el estilo de la app.
     const caja = e.target.closest('.selector');
-    const select = caja && caja.querySelector(':scope > #seleccionCancion, :scope > #alarmaTono');
+    const select = caja && caja.querySelector(SELECTOR_LISTAS);
     if (select) abrir(select, select, { teclado: false });
   });
   // Con teclado físico (Enter, espacio o flecha abajo sobre la lista), lo mismo.
   document.addEventListener('keydown', (e) => {
     const select = e.target;
-    if (!select || (select.id !== 'seleccionCancion' && select.id !== 'alarmaTono')) return;
+    if (!select || !(select.id in LISTAS) || select.tagName !== 'SELECT') return;
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
       e.preventDefault();
       abrir(select, select, { teclado: false });
@@ -157,6 +173,8 @@ function iniciar() {
     }
   });
   if (cerrarBoton) cerrarBoton.addEventListener('click', cerrar);
+  // En las listas cortas (tarjeta centrada) tocar el fondo oscurecido la cierra, como en la lista de Android.
+  ventana.addEventListener('click', (e) => { if (e.target === ventana && ventana.classList.contains('sin-busqueda')) cerrar(); });
   alAtras(cerrar); // botón Atrás de Android: cierra la búsqueda en vez de salir de la app
 }
 
