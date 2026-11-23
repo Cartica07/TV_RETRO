@@ -2,6 +2,8 @@
 
 > Regla del proyecto: los textos que ve el cliente los dicta el dueño; aquí van como **propuesta mía** (lenguaje simple, con "tú", sin datos técnicos). Lo que no esté en esta lista es de la app Pro y no cambió. Cuando el dueño apruebe, corrija o dicte otro, se cambia en el archivo indicado.
 
+> **Revisión del dueño (2026-11-23), filas 22 a 42:** aprobadas 22, 23, 24/36, 25, 26, 27, 29, 30, 31, 32, 33, 37, 38, 39, 41 y 42. La **28** la dictó el dueño: "Regresa a la app y ya Pepito estará listo para ser usado." La **40** queda por explicarle (qué es "Tengo una TV Pro"). Para la 32 y la 33 el dueño prefiere que lo que no está disponible en la Lite ni siquiera aparezca: ya es así (Compartir, Juegos y Sistema están ocultos con una TV Lite; esos avisos son solo de respaldo). **Todas se adaptan al nombre "Pepito"** (decisión del dueño): la versión con Pepito de cada una está en [nombre-pepito.md](nombre-pepito.md), por aprobar.
+
 ## En la app (celular)
 
 | # | Cuándo sale | Texto propuesto | Dónde está |
