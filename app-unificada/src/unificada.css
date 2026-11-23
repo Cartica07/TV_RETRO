@@ -162,3 +162,15 @@ body.sin-cuenta #botonVincularTV {
   color: var(--texto-2);
   font-size: var(--texto-md);
 }
+
+/* Tocar la lista de canciones o del tono abre la lista con el estilo de la app (js/buscar-canciones.js) en vez de la lista gris de
+   Android, que no se puede pintar: el toque pasa de largo el <select> y lo recibe su caja (.selector). */
+#seleccionCancion,
+#alarmaTono {
+  pointer-events: none;
+}
+
+.selector:has(> #seleccionCancion),
+.selector:has(> #alarmaTono) {
+  cursor: pointer;
+}
