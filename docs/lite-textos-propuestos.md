@@ -45,7 +45,7 @@
 | 40 | Mis TV sin cuenta (TV Lite): el botón que antes decía "Cerrar sesión" (vuelve a la primera pantalla) | Tengo una TV Pro | `src/anadir-lite.js` |
 | 41 | Reloj de la TV Lite sin hora (se quedó sin corriente), en lugar de "Sin hora" (fila 20) | Abre la app | `OLED_Lite/reloj_lite.cpp` (firmware) |
 | 42 | Tutorial guiado con una TV Lite, el paso que señala "Más" (la Pro dice "Aquí están tu galería, los juegos, la alarma y los ajustes."; la TV Lite no tiene juegos) | Aquí están tu galería, la alarma y los ajustes. | `app-unificada/src/anadir-lite.js` |
-| 43 | Buscar canción: la lupa junto a la lista de canciones y al tono de la alarma, y el campo de la ventana (texto de ayuda) | Buscar canción | `app-unificada/construir.mjs` |
+| 43 | (APROBADA 2026-11-23, también 44 y 45) Buscar canción: la lupa junto a la lista de canciones y al tono de la alarma, y el campo de la ventana (texto de ayuda) | Buscar canción | `app-unificada/construir.mjs` |
 | 44 | Buscar canción: lo escrito no coincide con ninguna canción | No hay canciones con ese nombre. | `app-unificada/construir.mjs` |
 | 45 | Buscar canción: botón para cerrar la ventana (texto de ayuda de la X) | Cerrar | `app-unificada/construir.mjs` |
 
