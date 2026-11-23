@@ -50,7 +50,7 @@
 |---|---|
 | Alarma a 2 minutos de la hora actual, con una canción | Suena **sola** (desconecta el celular antes), con la pantalla ALARMA parpadeando; un toque la calla; sola se calla al minuto |
 | Alarma con volumen en Silencio | Suena igual (volumen Medio) |
-| Quitar la corriente a la TV y encender sin abrir la app | Reloj con "Sin hora" y **la alarma no suena**; al abrir la app vuelve la hora |
+| Quitar la corriente a la TV y encender sin abrir la app | Reloj con "Abre la app" (antes "Sin hora") y **la alarma no suena**; al abrir la app vuelve la hora |
 | Ajustes: brillo Bajo, volumen Bajo, otra zona | Se nota el brillo y el volumen; la hora cambia de zona |
 
 ## 4b. Lo que llega mientras no se ve el contenido (igual que la Pro)

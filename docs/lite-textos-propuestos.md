@@ -34,9 +34,14 @@
 | 31 | App unificada, pantalla "Conecta tu TV" abierta desde "Añade tu TV": botón para volver | Volver | `app-unificada/construir.mjs` |
 | 32 | App unificada: compartir una TV Lite | Una TV Lite no se comparte. | `src/backend-unificado.js` |
 | 33 | App unificada: una función que una TV Lite no tiene | Esto no está disponible en una TV Lite. | `src/lite-tv.js` |
-| 34 | App unificada, "Añade tu TV" la primera vez (cuenta sin ninguna TV): la pregunta | ¿Qué TV tienes? | `app-unificada/construir.mjs` |
-| 35 | App unificada, las dos opciones de esa pregunta (TV Pro marcada por defecto) | TV Pro / TV Lite | `app-unificada/construir.mjs` |
+| 34 | (REEMPLAZADA por la fila 37: la pregunta pasó a ser la primera pantalla) App unificada, "Añade tu TV" la primera vez: la pregunta | ¿Qué TV tienes? | `app-unificada/construir.mjs` |
+| 35 | (REEMPLAZADA por la fila 37) App unificada, las dos opciones de esa pregunta | TV Pro / TV Lite | `app-unificada/construir.mjs` |
 | 36 | App unificada: cuadro de aviso cuando la TV Lite ya no reconoce al celular al reconectar sola | (el mismo texto de la fila 24) | `app-unificada/src/lite-tv.js` |
+| 37 | App unificada, PRIMERA pantalla (una sola vez): título, pregunta y botones | TV RETRO · ¿Qué TV tienes? · TV Pro / TV Lite | `app-unificada/construir.mjs` |
+| 38 | Primera pantalla, "TV Lite" con el acceso sin cuenta apagado en Firebase | Por ahora no se puede usar la TV Lite. Inténtalo más tarde. | `src/backend-unificado.js` |
+| 39 | Primera pantalla, "TV Lite" sin internet | Sin conexión a internet. Conéctate y vuelve a intentarlo. | `src/backend-unificado.js` |
+| 40 | Mis TV sin cuenta (TV Lite): el botón que antes decía "Cerrar sesión" (vuelve a la primera pantalla) | Tengo una TV Pro | `src/anadir-lite.js` |
+| 41 | Reloj de la TV Lite sin hora (se quedó sin corriente), en lugar de "Sin hora" (fila 20) | Abre la app | `OLED_Lite/reloj_lite.cpp` (firmware) |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
