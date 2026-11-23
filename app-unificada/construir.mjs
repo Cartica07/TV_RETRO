@@ -77,6 +77,18 @@ for (const f of ['atras.js', 'buscar-canciones.js']) copyFileSync(join(aqui, 'sr
   writeFileSync(ruta, fuente.replace(patron, 'const r = await listarMisDispositivos(sesion.uid); // unificada: el aviso "sin internet" lo da el enrutador'));
 }
 
+// Apagado automático de la pantalla (2026-11-23): normalizarAjustes de la Pro deja SOLO brillo, volumen y zona, así que al
+// guardar (y al leer) los ajustes de un Pepito Pro se perdería "apagado". En la COPIA se le agrega ese campo cuando viene (la
+// Pro no se toca; si esa función de la Pro cambia, la compilación falla). Con --sin-pepito queda como la Pro.
+if (!sinPepito) {
+  const ruta = join(www, 'js', 'firebase-pro.js');
+  const fuente = readFileSync(ruta, 'utf8');
+  const patron = /(    zona: entero\(d\.zona, -720, 840, AJUSTES_DEFECTO\.zona\))(\r?\n  \};)/g;
+  const veces = (fuente.match(patron) || []).length;
+  if (veces !== 1) throw new Error('js/firebase.js de la Pro ya no tiene normalizarAjustes como se esperaba: revisa app-unificada/construir.mjs');
+  writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {})$2'));
+}
+
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
   entryPoints: [join(aqui, 'src', 'lite-tv.js')],
@@ -195,6 +207,25 @@ const buscadorCanciones = `<div class="buscador-canciones" id="buscadorCanciones
 </div>
 `;
 cambiar(/(<!-- Tutorial guiado \(docs\/plan-tutorial\.md\))/, `${pantallaConexion}\n${pantallaInicioTipo}\n${buscadorCanciones}\n$1`, 'el comentario del tutorial');
+// Más > Config > Ajustes: "Apagar pantalla" debajo de la zona horaria (textos dictados por el dueño, 2026-11-23). La lee y la
+// guarda el enrutador (src/backend-unificado.js); se abre en la ventanita de listas cortas (js/buscar-canciones.js).
+if (!sinPepito) {
+  cambiar(/(<select id="ajusteZona">[\s\S]*?<\/select>\s*<svg[^>]*selector-flecha[^>]*>[\s\S]*?<\/svg>\s*<\/div>\s*<\/div>)/, `$1
+      <div class="campo">
+        <label class="rotulo" for="ajusteApagado">Apagar pantalla</label>
+        <div class="selector">
+          <select id="ajusteApagado">
+            <option value="5">A los 5 min</option>
+            <option value="10">A los 10 min</option>
+            <option value="20">A los 20 min</option>
+            <option value="0" data-nota="La pantalla quedará siempre encendida: gasta mucha más batería.">Nunca</option>
+          </select>
+          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>`, 'la zona horaria de los ajustes');
+// (El aviso de "Nunca" no va como renglón aparte: la pantalla de Ajustes dejaría de entrar sin scroll en 360x740. Se ve debajo
+// de "Nunca" en la ventanita de opciones (data-nota) y, al elegirla, en la línea de estado de arriba.)
+}
 // Ayuda y Legal: las páginas de Pepito (pepito/ del repo: cubren Pepito Pro y Pepito Lite), no las de la app vieja.
 // (Con --sin-pepito quedan los de la Pro, como el resto de sus textos.)
 if (!sinPepito) cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|licencias)\.html/g, 'https://cartica07.github.io/TV_RETRO/pepito/$1.html', 'los enlaces de Ayuda y Legal');
