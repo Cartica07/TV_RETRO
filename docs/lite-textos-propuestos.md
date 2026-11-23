@@ -42,6 +42,7 @@
 | 39 | Primera pantalla, "TV Lite" sin internet | Sin conexión a internet. Conéctate y vuelve a intentarlo. | `src/backend-unificado.js` |
 | 40 | Mis TV sin cuenta (TV Lite): el botón que antes decía "Cerrar sesión" (vuelve a la primera pantalla) | Tengo una TV Pro | `src/anadir-lite.js` |
 | 41 | Reloj de la TV Lite sin hora (se quedó sin corriente), en lugar de "Sin hora" (fila 20) | Abre la app | `OLED_Lite/reloj_lite.cpp` (firmware) |
+| 42 | Tutorial guiado con una TV Lite, el paso que señala "Más" (la Pro dice "Aquí están tu galería, los juegos, la alarma y los ajustes."; la TV Lite no tiene juegos) | Aquí están tu galería, la alarma y los ajustes. | `app-unificada/src/anadir-lite.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
