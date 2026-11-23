@@ -96,7 +96,7 @@ const ayuda = pagina('Preguntas frecuentes', FECHA, `
 
   <h2>¿Para qué sirve el botón de la TV?</h2>
   <ul>
-    <li><strong>Un toque:</strong> calla lo que suene (alarma o canción). Si no suena nada, cambia de pantalla: lo que enviaste, el reloj y la pantalla apagada.</li>
+    <li><strong>Un toque:</strong> si suena la alarma, la calla. Si suena una canción y la TV está en otra pantalla, te lleva a la pantalla de la canción (sigue sonando); si ya estás en la pantalla de la canción, cambia de pantalla y la calla. Si no suena nada, cambia de pantalla: lo que enviaste, el reloj y la pantalla apagada.</li>
     <li><strong>Mantener 8 segundos</strong> (con nada sonando): empareja otro celular.</li>
   </ul>
 

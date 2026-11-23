@@ -61,6 +61,10 @@
 | Tocar el botón hasta llegar al contenido | Se ve el texto enviado y el sobre desaparece (aunque se vuelva al reloj) |
 | **Pantalla apagada** y enviar algo | Pita y la pantalla **sigue apagada**; al encenderla con toques se ve lo enviado |
 | Estar en el reloj y mandar una **canción** | Suena, **sin pitido de aviso**, la TV sigue en el reloj y aparece el sobre |
+| Con esa canción **con letra** sonando y la TV en el reloj, **un toque** | Va **directo a la pantalla de la canción** (se ve la letra) y la canción **sigue sonando** |
+| Ya en la pantalla de la canción, **otro toque** | Cambia de pantalla (reloj) **y la canción se calla** |
+| Canción sonando con la pantalla **apagada**, un toque | Va a la pantalla de la canción y sigue sonando |
+| **Alarma** sonando (aunque suene con canción), un toque | La alarma se calla; **no** cambia de pantalla ni abre el emparejamiento |
 | Estar viendo el contenido y enviar otro | Pita y se dibuja al momento (sin sobre) |
 | Enviar un texto **invertido** estando en el reloj | El reloj **no** se invierte ni se pisa; al volver al contenido sí se ve invertido |
 | Alarma **sin canción** | Suena con los mismos dos tonos de aviso de la Pro cada 1,4 s (¿se oyen bien con este buzzer?) |
