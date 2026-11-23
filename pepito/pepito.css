@@ -1,0 +1,32 @@
+/* Páginas de Pepito (ayuda y legales): el mismo estilo que las de la app (colores y letras de css/tokens.css). */
+@import url('../css/tokens.css');
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente-ui);
+  line-height: 1.6;
+  padding: var(--esp-5) 16px 48px;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 720px; margin: 0 auto; }
+h1 { font-size: var(--texto-xl); margin: 0 0 var(--esp-1); }
+h2 { font-size: var(--texto-lg); margin: var(--esp-6) 0 var(--esp-2); color: var(--acento); }
+h3 { font-size: var(--texto-md); margin: var(--esp-5) 0 var(--esp-2); color: var(--texto); }
+p, li { font-size: var(--texto-md); color: var(--texto); }
+p { margin: 0 0 var(--esp-3); }
+ul, ol { margin: 0 0 var(--esp-3); padding-left: 22px; }
+li { margin-bottom: var(--esp-2); }
+a { color: var(--acento); }
+.fecha { color: var(--texto-2); font-size: var(--texto-sm); margin-bottom: var(--esp-5); }
+.caja {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  padding: var(--esp-4);
+  margin: 0 0 var(--esp-3);
+}
+.caja p:last-child, .caja ul:last-child { margin-bottom: 0; }
