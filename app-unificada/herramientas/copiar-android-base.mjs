@@ -46,4 +46,9 @@ reemplazar(strings, 'TV RETRO Lite', 'Pepito');
 const manifiesto = path.join(destino, 'app', 'src', 'main', 'AndroidManifest.xml');
 reemplazar(manifiesto, '<!-- Permisos: solo Bluetooth. La app Lite no usa internet ni nube. -->',
   '<!-- Permisos: internet (cuenta y catálogo en la nube) y Bluetooth (TV Lite). -->\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />');
+// Entrar con Google (Android nativo): la configuración de Firebase para com.pepito.app vive en app-unificada/google-services.json
+// (se baja de la consola de Firebase; no es secreta) y se copia aquí cada vez que se rehace android/.
+const servicios = path.resolve(aqui, '..', 'google-services.json');
+if (fs.existsSync(servicios)) fs.copyFileSync(servicios, path.join(destino, 'app', 'google-services.json'));
+else console.warn('Falta app-unificada/google-services.json: sin él no funciona "Entrar con Google" en Android');
 console.log(`app-unificada/android listo (paquete ${PAQUETE})`);

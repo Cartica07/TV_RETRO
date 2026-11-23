@@ -13,6 +13,12 @@
         "availableDevices": "Elige a Pepito",
         "noDeviceFound": "No se encontró ningún Pepito"
       }
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
     }
   }
 }

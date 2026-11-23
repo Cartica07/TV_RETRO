@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "426829616333",
+    "firebase_url": "https://lorenita-6ad1e-default-rtdb.firebaseio.com",
+    "project_id": "lorenita-6ad1e",
+    "storage_bucket": "lorenita-6ad1e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426829616333:android:7918ed3944f49995a04584",
+        "android_client_info": {
+          "package_name": "com.pepito.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "426829616333-91qo82endj0pjm8kadn82ktm752a41fh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAs3_r9u-YUOq5zKkZvtQbeGZR12P2K1uw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "426829616333-91qo82endj0pjm8kadn82ktm752a41fh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426829616333:android:409bd6ef4136d646a04584",
+        "android_client_info": {
+          "package_name": "com.tvretro.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "426829616333-1cuas7qgeor9e1p2q7m9kd4qro7d0b7o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tvretro.app",
+            "certificate_hash": "a2350adfca6bccf2ca5605b64d8a582a3753d8e3"
+          }
+        },
+        {
+          "client_id": "426829616333-hl9jfkei1jacqb0u4l9elhmrag3ki2ma.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tvretro.app",
+            "certificate_hash": "629a94a7b96ecc84cfadad79f12e0c636d292bf1"
+          }
+        },
+        {
+          "client_id": "426829616333-91qo82endj0pjm8kadn82ktm752a41fh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAs3_r9u-YUOq5zKkZvtQbeGZR12P2K1uw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "426829616333-91qo82endj0pjm8kadn82ktm752a41fh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
