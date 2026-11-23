@@ -90,4 +90,23 @@ const nuevaVez = { logueado: false, esperar: false };
   await navegador.close();
 }
 
+// ---------- 7. Celular nuevo de verdad (sin dar el tutorial por visto): sin cuenta el tutorial de la Pro NO se abre ----------
+// Prueba real del 2026-11-23: el tutorial se abría oculto y dejaba la página sin scroll (y el teclado tapaba lo que se escribe).
+{
+  const { navegador, pagina, errores } = await abrir(semilla(), { ...nuevaVez, conTutorial: true, vinculados: [{ deviceId: 'tv-simulada', name: 'TV RETRO Lite' }] });
+  await pagina.waitForSelector('#pantallaInicioTipo:not([hidden])', { timeout: 15000 });
+  await pagina.click('#botonInicioLite');
+  await esperarPanel(pagina);
+  await pagina.waitForTimeout(3000); // el tutorial de la Pro se abre un rato después de entrar
+  const t = await pagina.evaluate(() => ({
+    abierto: document.body.classList.contains('tutorial-abierto'),
+    overflow: getComputedStyle(document.body).overflowY,
+    visto: localStorage.getItem('tvretro.tutorial.uid-anonimo'),
+  }));
+  informe('sin cuenta, el tutorial de la Pro no se abre (queda dado por visto)', !t.abierto && t.visto === '1', JSON.stringify(t));
+  informe('y la página sigue pudiendo bajar (no queda bloqueada)', t.overflow !== 'hidden', t.overflow);
+  informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));
+  await navegador.close();
+}
+
 cerrar();

@@ -82,6 +82,11 @@ function iniciarPrimeraPantalla() {
       if (!leerTipo()) guardarTipo(usuario.email ? 'pro' : 'lite');
       marcar();
       pantalla.hidden = true;
+      // Sin cuenta, el tutorial guiado de la Pro (habla de la TV por Wi-Fi) no se muestra: se da por visto para que NI SE ABRA.
+      // Abierto aunque oculto, deja la página sin scroll (clase tutorial-abierto) y el teclado tapa lo que se escribe.
+      if (unificadaSinCuenta()) {
+        try { localStorage.setItem('tvretro.tutorial.' + usuario.uid, '1'); } catch (e) { /* sin almacenamiento */ }
+      }
       return;
     }
     if (leerTipo() === 'lite') entrarSinCuenta(); // se eligió TV Lite pero no hay sesión (por ejemplo, se borró): entra sola

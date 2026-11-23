@@ -60,7 +60,7 @@ export const USUARIOS = { 'ana@correo.com': { password: 'secreta1', uid: 'uid-an
  * opciones: logueado, ruta, antes(pagina), esperar (false = no espera la carga), vinculados (lo que "el celular tiene emparejado").
  * Devuelve { navegador, pagina, errores }.
  */
-export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html', antes = null, esperar = true, vinculados = [] } = {}) {
+export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html', antes = null, esperar = true, vinculados = [], conTutorial = false } = {}) {
   const base = await iniciarServidor();
   const navegador = await chromium.launch(process.env.CI ? {} : { channel: 'msedge' });
   abiertos.add(navegador);
@@ -82,14 +82,17 @@ export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html
   await pagina.route(/favicon\.ico$/, (r) => r.fulfill({ status: 204, body: '' }));
 
   await pagina.addInitScript({ path: SIMULADA });
-  // El tutorial guiado taparía las pruebas: se da por visto (lo dice el arnés, no la app).
-  await pagina.addInitScript(() => {
-    const leer = Storage.prototype.getItem;
-    Storage.prototype.getItem = function (k) {
-      if (typeof k === 'string' && k.startsWith('tvretro.tutorial.')) return '1';
-      return leer.call(this, k);
-    };
-  });
+  // El tutorial guiado taparía las pruebas: se da por visto (lo dice el arnés, no la app). Con conTutorial se deja como en un
+  // celular nuevo (así se prueba que, sin cuenta, la app misma lo da por visto y no bloquea el scroll).
+  if (!conTutorial) {
+    await pagina.addInitScript(() => {
+      const leer = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (k) {
+        if (typeof k === 'string' && k.startsWith('tvretro.tutorial.')) return '1';
+        return leer.call(this, k);
+      };
+    });
+  }
   await pagina.addInitScript((s) => { globalThis.__semilla = s; }, semilla);
   await pagina.addInitScript((s) => { globalThis.__semillaAuth = s; globalThis.__persistirDb = true; }, { usuarios: USUARIOS, actual: logueado ? 'ana@correo.com' : null });
   // "Lo que el celular tiene emparejado": el plugin de Bluetooth no lo ofrece en el navegador (ver app-lite/src/ble.js).
