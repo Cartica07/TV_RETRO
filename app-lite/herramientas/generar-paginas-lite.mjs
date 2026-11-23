@@ -91,7 +91,7 @@ const ayuda = pagina('Preguntas frecuentes', FECHA, `
   <h2>¿Dónde se guardan mis imágenes?</h2>
   <p>En tu celular, no en internet. Si desinstalas la app, borras sus datos o cambias de celular, se pierden.</p>
 
-  <h2>La TV dice "Sin hora".</h2>
+  <h2>La TV dice "Abre la app".</h2>
   <p>La TV recibe la hora del celular cada vez que la app se conecta. Abre la app y toca <strong>Enviar a la TV</strong> (o conéctala desde Más). Mientras no tenga hora, las alarmas no suenan.</p>
 
   <h2>¿Para qué sirve el botón de la TV?</h2>
