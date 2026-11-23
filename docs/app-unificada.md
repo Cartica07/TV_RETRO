@@ -50,7 +50,7 @@ npx cap sync android && (Gradle assembleDebug, ver docs/historial-cambios.md)   
 
 ## Pendiente (y decisiones del dueño)
 
-- **Probar en el celular y con la TV Lite real** (la APK compilada y el firmware con el sobre y el aviso, grabado en la S3): añadir la TV desde "Añade tu TV", usarla, enviar texto, imagen, GIF y canción desde la nube, alarma y ajustes.
+- ~~Probar en el celular y con la TV Lite real~~ **hecho el 2026-11-23** (resultado en [pruebas-pendientes-unificada.md](pruebas-pendientes-unificada.md)); falta probar el firmware en una **C3 real** (se probó en la S3).
 - **Google nativo:** la APK de depuración no lleva el plugin de Google (el botón no se muestra; el inicio con correo funciona). Para activarlo hay que registrar el paquete nuevo y su huella SHA-1 en Firebase (lo hace el dueño) y añadir `@capacitor-firebase/authentication` (como la APK de la Pro).
 - **Sin internet al arrancar:** el arranque de la Pro (`cuentas.js`, sin tocar) avisa "Sin conexión" cuando `navigator.onLine` es falso; una TV Lite ya añadida se podría usar sin internet, pero eso exigiría cambiar `cuentas.js`. Se deja como está.
 - **Textos nuevos por aprobar:** filas 25 a 33 de [lite-textos-propuestos.md](lite-textos-propuestos.md).
@@ -58,3 +58,13 @@ npx cap sync android && (Gradle assembleDebug, ver docs/historial-cambios.md)   
 - **Nombre y paquete definitivos** de la app, y qué pasa con la app Pro y la Lite ya instaladas (la unificada las reemplazaría en la tienda).
 - **Tutorial guiado** (`js/tutorial.js` de la Pro): no distingue la TV Lite; sus frases hablan de la TV por Wi-Fi.
 - **Firmware:** sin cambios para la unificada. Más adelante, que la TV Lite anuncie si tiene el emparejamiento abierto permitiría detectarla sola.
+
+## Cambios pendientes en la Pro (NO aplicados: el dueño decidió el 2026-11-23 no tocar la Pro por ahora)
+
+Arreglos que se hicieron solo en la unificada y que la Pro probablemente también necesita. Se aplican a la Pro únicamente cuando el dueño lo pida (es un cambio de la Pro: plan, aprobación, sus pruebas y su APK).
+
+| Qué | En la unificada | En la Pro haría falta |
+|---|---|---|
+| **Teclado que tapa el campo en el que se escribe** (por ejemplo "Nombre" en la pestaña Imagen): la barra fija "Enviar a la TV" y la navegación quedan encima del teclado y el sistema no sube el campo | `app-unificada/src/teclado.js` (`4df215a`), con la prueba `app-unificada/pruebas/teclado.mjs`; comprobado en el celular | Llevar `teclado.js` a `js/` de la Pro y cargarlo desde `index.html` (es un archivo nuevo: no cambia ninguna función ni ID). Comprobar antes en la APK Pro que el problema existe (mismo diseño, así que muy probablemente sí), correr su banco y rehacer su APK |
+
+(El arreglo del tutorial `e90cdd8` NO es de la Pro: solo pasaba en la unificada, en el modo sin cuenta.)
