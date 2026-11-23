@@ -12,12 +12,45 @@
 import {
   usuarioActual, escucharSesion, cerrarSesion, unificadaAnadirTVLite, unificadaListarTVLite, unificadaSinCuenta, unificadaEntrarSinCuenta
 } from './firebase.js';
+import { PASOS } from './tutorial.js';
 
 const q = (id) => document.getElementById(id);
 const lite = () => import('./lite-tv.js');
 const CLAVE_TIPO = 'tvretro.tipoApp';
 const leerTipo = () => { try { return localStorage.getItem(CLAVE_TIPO) || ''; } catch (e) { return ''; } };
 const guardarTipo = (t) => { try { if (t) localStorage.setItem(CLAVE_TIPO, t); else localStorage.removeItem(CLAVE_TIPO); } catch (e) { /* sin almacenamiento */ } };
+
+// ---------------------------------------------------------------
+// Tutorial guiado (js/tutorial.js de la Pro, sin tocar)
+// ---------------------------------------------------------------
+// La Pro recuerda lo "ya visto" por cuenta (tvretro.tutorial.<uid>); aquí basta con que se haya visto una vez en este celular.
+const PREFIJO_TUTORIAL = 'tvretro.tutorial.';
+function tutorialVistoEnEsteCelular() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(PREFIJO_TUTORIAL) && localStorage.getItem(k) === '1') return true;
+    }
+  } catch (e) { /* sin almacenamiento */ }
+  return false;
+}
+
+// Con una TV Lite el paso de "Más" no puede nombrar los juegos (la TV Lite no tiene). El texto se elige al mostrarse el paso.
+// Texto PROPUESTO (docs/lite-textos-propuestos.md, fila 42): lo aprueba el dueño.
+const TEXTO_MAS_LITE = 'Aquí están tu galería, la alarma y los ajustes.';
+{
+  const paso = PASOS.find((p) => p.objetivo === '#grupoTipo button[data-valor="galeria"]');
+  if (paso) {
+    const textoPro = paso.texto;
+    Object.defineProperty(paso, 'texto', {
+      enumerable: true,
+      configurable: true,
+      get: () => (document.body.classList.contains('tv-lite') ? TEXTO_MAS_LITE : textoPro),
+    });
+  } else {
+    console.warn('[TV RETRO] El tutorial de la Pro ya no tiene el paso de "Más": revisa js/anadir-lite.js de la unificada');
+  }
+}
 
 // ---------------------------------------------------------------
 // Primera pantalla: "¿Qué TV tienes?"
@@ -82,10 +115,10 @@ function iniciarPrimeraPantalla() {
       if (!leerTipo()) guardarTipo(usuario.email ? 'pro' : 'lite');
       marcar();
       pantalla.hidden = true;
-      // Sin cuenta, el tutorial guiado de la Pro (habla de la TV por Wi-Fi) no se muestra: se da por visto para que NI SE ABRA.
-      // Abierto aunque oculto, deja la página sin scroll (clase tutorial-abierto) y el teclado tapa lo que se escribe.
-      if (unificadaSinCuenta()) {
-        try { localStorage.setItem('tvretro.tutorial.' + usuario.uid, '1'); } catch (e) { /* sin almacenamiento */ }
+      // El tutorial sale UNA vez por celular (decisión del dueño, 2026-11-23): si ya se vio con otra cuenta o con el otro tipo de
+      // TV (Pro o Lite), se da por visto también para esta. Sigue disponible en Más > Config > Ayuda y contacto > Ver tutorial.
+      if (tutorialVistoEnEsteCelular()) {
+        try { localStorage.setItem(PREFIJO_TUTORIAL + usuario.uid, '1'); } catch (e) { /* sin almacenamiento */ }
       }
       return;
     }

@@ -90,21 +90,65 @@ const nuevaVez = { logueado: false, esperar: false };
   await navegador.close();
 }
 
-// ---------- 7. Celular nuevo de verdad (sin dar el tutorial por visto): sin cuenta el tutorial de la Pro NO se abre ----------
-// Prueba real del 2026-11-23: el tutorial se abría oculto y dejaba la página sin scroll (y el teclado tapaba lo que se escribe).
+// ---------- 7. Celular nuevo de verdad (sin dar el tutorial por visto): con la TV Lite sale el tutorial, a la vista ----------
+// Decisión del dueño (2026-11-23): la TV Lite también tiene tutorial, con el paso de "Más" sin los juegos. (Antes, el 2026-11-23, se
+// abría OCULTO y dejaba la página sin scroll: aquí se comprueba que se ve y que al cerrarlo la página vuelve a bajar.)
 {
   const { navegador, pagina, errores } = await abrir(semilla(), { ...nuevaVez, conTutorial: true, vinculados: [{ deviceId: 'tv-simulada', name: 'TV RETRO Lite' }] });
   await pagina.waitForSelector('#pantallaInicioTipo:not([hidden])', { timeout: 15000 });
   await pagina.click('#botonInicioLite');
   await esperarPanel(pagina);
-  await pagina.waitForTimeout(3000); // el tutorial de la Pro se abre un rato después de entrar
+  await pagina.waitForSelector('#tutorial:not([hidden])', { timeout: 10000 }).catch(() => {});
+  informe('celular nuevo con TV Lite: el tutorial se abre y se VE (no oculto)', (await visible(pagina, '#tutorial')) && (await visible(pagina, '#tutorialTarjeta')));
+  informe('no se abre encima de "Conecta tu TV"', await oculto(pagina, '#pantallaConexion'));
+  // Se avanza hasta el paso de "Más".
+  let textoMas = '';
+  for (let i = 0; i < 10 && !textoMas; i++) {
+    const t = await pagina.innerText('#tutorialTexto');
+    if (/galería/i.test(t)) textoMas = t;
+    else await pagina.click('#tutorialSiguiente');
+    await pagina.waitForTimeout(250);
+  }
+  informe('con TV Lite, el paso de "Más" no nombra los juegos', /galería/i.test(textoMas) && !/juegos/i.test(textoMas), textoMas);
+  await pagina.click('#tutorialSaltar');
+  await pagina.waitForTimeout(400);
   const t = await pagina.evaluate(() => ({
     abierto: document.body.classList.contains('tutorial-abierto'),
     overflow: getComputedStyle(document.body).overflowY,
     visto: localStorage.getItem('tvretro.tutorial.uid-anonimo'),
   }));
-  informe('sin cuenta, el tutorial de la Pro no se abre (queda dado por visto)', !t.abierto && t.visto === '1', JSON.stringify(t));
-  informe('y la página sigue pudiendo bajar (no queda bloqueada)', t.overflow !== 'hidden', t.overflow);
+  informe('al cerrarlo queda visto y la página vuelve a poder bajar', !t.abierto && t.visto === '1' && t.overflow !== 'hidden', JSON.stringify(t));
+  informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));
+  await navegador.close();
+}
+
+// ---------- 8. Una sola vez por celular: si ya se vio con la TV Pro (otra cuenta), con la TV Lite no vuelve a salir ----------
+{
+  const { navegador, pagina, errores } = await abrir(semilla(), {
+    ...nuevaVez, conTutorial: true, vinculados: [{ deviceId: 'tv-simulada', name: 'TV RETRO Lite' }],
+    antes: (p) => p.addInitScript(() => { if (!sessionStorage.getItem('__ya')) { sessionStorage.setItem('__ya', '1'); localStorage.setItem('tvretro.tutorial.uid-ana', '1'); } }),
+  });
+  await pagina.waitForSelector('#pantallaInicioTipo:not([hidden])', { timeout: 15000 });
+  await pagina.click('#botonInicioLite');
+  await esperarPanel(pagina);
+  await pagina.waitForTimeout(3000);
+  const t = await pagina.evaluate(() => ({ abierto: document.body.classList.contains('tutorial-abierto'), visto: localStorage.getItem('tvretro.tutorial.uid-anonimo') }));
+  informe('visto antes con la TV Pro: con la TV Lite no vuelve a salir', !t.abierto && t.visto === '1', JSON.stringify(t));
+  informe('y "Ver tutorial" sigue en Ayuda y contacto', await pagina.evaluate(() => { const b = document.getElementById('botonVerTutorial'); return !!b && getComputedStyle(b).display !== 'none'; }));
+  informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));
+  await navegador.close();
+}
+
+// ---------- 9. Y al revés: visto con la TV Lite, al entrar con una cuenta (TV Pro) tampoco sale ----------
+{
+  const { navegador, pagina, errores } = await abrir({ dispositivos: { tv1: { dueno: 'uid-ana', oled_remota: { version: 3, pantalla: { tipo: 'texto', texto: 'Hola' } } } }, usuarios: { 'uid-ana': { dispositivos: { tv1: true } } } }, {
+    conTutorial: true,
+    antes: (p) => p.addInitScript(() => { localStorage.setItem('tvretro.tipoApp', 'pro'); localStorage.setItem('tvretro.tutorial.uid-anonimo', '1'); }),
+  });
+  await esperarPanel(pagina);
+  await pagina.waitForTimeout(3000);
+  const abierto = await pagina.evaluate(() => document.body.classList.contains('tutorial-abierto'));
+  informe('visto antes con la TV Lite: con la cuenta y la TV Pro no vuelve a salir', !abierto);
   informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));
   await navegador.close();
 }
