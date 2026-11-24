@@ -133,6 +133,19 @@ Copia de la Pro v11 que encendía el Bluetooth (librería del núcleo) y emitía
 - **ESP-NOW y el canal:** dos Pro en la misma casa usan el mismo router (mismo canal). Con la Pro de otra casa, la TV que detecta suelta su Wi-Fi unos segundos para buscar a la otra por los canales.
 - Siguiente: medir la memoria de ESP-NOW en la Pro (encendido por orden serie, nunca por temporizador).
 
+#### Medición de ESP-NOW en la Pro (2026-11-24): PASA (falta la parte con descargas)
+
+Copia de la Pro v11 con ESP-NOW encendido por orden serie (`TVRETRO_ESPNOW_ON`, no entra al repositorio), sobre el Wi-Fi ya conectado (canal 5 del router):
+
+| | Interna libre | Mayor bloque | Mínimo histórico |
+|---|---|---|---|
+| ESP-NOW apagado | 100 344 | 47 092 | 35 524 |
+| ESP-NOW encendido, enviando un saludo cada 2 s | 100 120 | **47 092** | 35 524 |
+
+- **ESP-NOW cuesta ~220 bytes de memoria interna** (el Bluetooth, ~72 KB) y **~8 KB de programa**. 34 saludos enviados sin errores; el streaming siguió bien.
+- (Esta vez la TV no tenía la cara Clima: por eso hay más memoria libre que en la medición del Bluetooth.)
+- Falta: con ESP-NOW encendido, un GIF grande, una canción con letra, la cara Clima y una actualización por Wi-Fi.
+
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
