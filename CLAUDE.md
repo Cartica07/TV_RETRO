@@ -21,6 +21,7 @@ Primer modelo de TV: ESP8266 (firmware V1.x). Ese modelo sigue funcionando apart
 
 ### Forma de trabajar
 - **Responder siempre en español.**
+- **Pepito Pro y Pepito Lite van parejos (regla del dueño, 2026-11-23, repetida el 2026-11-24):** toda mejora o cambio en algo que tienen los dos (en la app Pepito Y en el firmware de cada TV: canciones, reloj, botón, alarma, apagado, galería, dibujo, Más…) se hace SIEMPRE en los dos, sin preguntar. Solo lo exclusivo va en uno (juegos: solo la Pro). Las diferencias que quedan, y por qué, están en `docs/evaluacion-version-lite.md` (8.4). (La app vieja TV RETRO sigue sin tocarse.)
 - **Antes de cada paso grande: explicar el plan y esperar aprobación.** Ante dudas de diseño o de datos, preguntar.
 - **Pasos pequeños, un commit por paso**, mensaje claro en español, terminado con el trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (o el modelo que corresponda).
 - **Separar cambios visuales de cambios de lógica**: nunca en el mismo paso ni en el mismo commit. Visual = HTML/CSS; lógica = JS. Documentación en commits propios.
