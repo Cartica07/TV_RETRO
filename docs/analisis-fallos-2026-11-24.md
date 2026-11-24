@@ -34,7 +34,7 @@ segunda (análisis propuestos por el asesor) está aquí para que el dueño apru
   en Agujas "Miércoles" y "Sábado" en tamaño 2 no cabían y tapaban el reloj. Comprobado con los peores datos (12:58, 10:08,
   miércoles, sábado, -10° y 100°). Una TV que ya tenga una de esas dos caras conserva la copia vieja: hay que volver a enviarla.
 
-## 4. Segunda ronda: POR APROBAR
+## 4. Segunda ronda: aprobada por el dueño el 2026-11-24 (A, B y C HECHOS: `856283f`, `aa3fab6`; E: texto por proponer)
 
 | # | Gravedad | Fallo | Arreglo propuesto |
 |---|---|---|---|
@@ -55,3 +55,12 @@ min si la primera consulta falla; "Pepito ya tiene esta cara ✅" con la Pro apa
 - **Lite 4**: grabarla en la S3 y en la C3, probar las caras, y publicarla en `firmware/lite/<modelo>` (mayor que la 3).
 - **APK de la app vieja** y GitHub Pages: no tienen los arreglos del punto 5 hasta rehacer la APK y subir a `main` (cuando el dueño
   lo pida). El dueño puede decidir retirar la app vieja (Pepito la reemplaza).
+
+## 6. Encontrado al grabar la Pro v11 en la placa (2026-11-24, HECHO)
+
+Con la cara **Clima** elegida, la TV no podía avisar a Firebase que la versión arrancó bien: `[ota] estado "ok": HTTP -1` cada
+15 s, aunque el streaming y el latido funcionaban. Causa: el clima dejaba **abierta todo el tiempo** su conexión segura con
+Open-Meteo (`setReuse(true)`), que ocupa memoria interna; con el streaming y las descargas no quedaba para otra conexión. Arreglo
+(firmware `5274229`): el clima cierra la conexión después de cada consulta (una cada 15 minutos). Comprobado en la placa: el
+aviso llegó a la primera (`HTTP 200`). Sin este arreglo habría pasado en toda TV con la cara Clima, y también podía hacer fallar
+las descargas de GIF y canciones.
