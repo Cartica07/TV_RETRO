@@ -103,6 +103,16 @@ En la app, Más > Config > Ajustes de Pepito > "Apagar pantalla": elegir **5 min
 
 **Resultados (2026-11-23, placa S3 con el dueño):** 1 a 6 bien. La canción con letra se quedaba en su último cuadro y no dejaba apagar: arreglado (`22c9de8` Lite, `60b74c1` Pro), regrabado y probado bien. 10 min y **Nunca** (punto 7): bien (confirmado por el dueño el 2026-11-23).
 
+## 5d. Actualización por Bluetooth (firmware `FIRMWARE_BUILD 1`, 2026-11-24) — PROBADA
+
+Placa S3 con la Lite versión 1 grabada por cable; versiones de prueba publicadas en `firmware/lite/s3` (la C3 de los clientes no las ve); app Pepito nueva. Desde **Más > Config > Sistema > Actualizar**:
+1. **Normal (1 → 2):** 942 KB en 30 s (30 KB/s); la TV comprueba la firma, se reinicia en `app1` "pendiente de verificar", el celular se reconecta a los 7 s y la TV la da por buena. ~40 s en total. Barra en la app y "Actualizando" con barra en la TV: bien. Al volver a Sistema: "Pepito está al día ✅".
+2. **Corte a mitad (2 → 3):** a los 18 s se apagó el Bluetooth: `envío abortado (desconectado)` y `actualización abandonada (lo instalado no cambia)`; la TV siguió en la 2. El reintento terminó bien (39 s) y la 3 quedó confirmada.
+3. **Versión que se cae (3 → 4, compilada con `-DPEPITO_LITE_PRUEBA_ROLLBACK`):** se instaló, arrancó pendiente, se cayó a propósito a los 20 s y **volvió sola a la 3**. La app dijo "Pepito se reinició sin terminar la actualización. Vuelve a intentarlo." (antes de esta prueba se corrigió la app para que solo dé el éxito cuando la TV confirma la versión).
+4. Al terminar se volvió a publicar la 3 como vigente de `s3` (`--forzar`), para que la placa no ofrezca la 4.
+
+Falta: repetirlo en la **C3 real** cuando llegue (publicando en `firmware/lite/c3`), y la versión vieja/firma mala solo se probaron con la TV simulada (la herramienta de publicación no deja firmar con otra clave).
+
 ## 6. Qué medir mientras tanto
 
 Velocidad de un envío de 100 KB (en la prueba anterior, **22 KB/s** con el plugin y 36–63 KB/s con el navegador), memoria libre (`[lite] listo. Memoria libre…` en el registro; con la S3 sin memoria extra), y que ningún comando deje la TV colgada.
