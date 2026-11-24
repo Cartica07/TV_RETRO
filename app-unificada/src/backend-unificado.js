@@ -383,7 +383,17 @@ export async function quitarTVDeMiLista(uid, id) {
 }
 
 export async function desvincularDispositivo(uid, id) {
-  if (!esIdLite(id)) return pro.desvincularDispositivo(uid, id);
+  if (!esIdLite(id)) {
+    // H-34 con las caras de reloj (2026-11-24): la cara elegida también se borra, como la alarma y los ajustes. Va ANTES (después
+    // ya no se es dueño); si no se puede (reglas viejas, sin señal), se desvincula igual.
+    try {
+      const m = await import(SDK_DB);
+      await Promise.race([m.remove(m.ref(pro.db, `dispositivos/${id}/reloj`)), new Promise((r) => setTimeout(r, 5000))]);
+    } catch (e) {
+      console.warn('[Pepito] No se pudo borrar la cara de reloj al desvincular:', e && e.message);
+    }
+    return pro.desvincularDispositivo(uid, id);
+  }
   quitarTVLite(claveCuenta(uid), id);
   if (cargaLite) { // solo si ya se había cargado la parte Bluetooth (había una conexión que cerrar)
     try { const m = await cargaLite; await m.ble.desconectar(); m.ble.olvidarTV(); } catch (e) { /* ya estaba desconectada */ }
