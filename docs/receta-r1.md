@@ -1,4 +1,4 @@
-# Receta de una cara de reloj, formato R1 (PROPUESTA, falta que el dueño la apruebe)
+# Receta de una cara de reloj, formato R1 (APROBADA por el dueño el 2026-11-24)
 
 > Escrito el 2026-11-24. Plan general: [plan-caras-de-reloj.md](plan-caras-de-reloj.md) (aprobado). Esto define los bytes
 > exactos de una cara, iguales para la app (vista previa), Pepito Pro y Pepito Lite. Al aprobarse pasa a
@@ -53,7 +53,7 @@ Y después, lo propio de cada tipo:
 |---|---|---|---|
 | 1 | Hora | `formato u8`: bit 0 = 24 h (si no, 12 h), bit 1 = cero delante (`09:05`) | sin segundos |
 | 2 | AM/PM | — | nada en 24 h |
-| 3 | Fecha | `formato u8`: 0 `24/11/2026`, 1 `24/11`, 2 `24 Nov`, 3 `Lun 24` | meses y días en español, sin tildes en la fuente clásica |
+| 3 | Fecha | `formato u8`: 0 `24/11/2026`, 1 `24/11`, 2 `24 Nov`, 3 `Lun 24` | meses y días en español, con tildes (como el Texto) |
 | 4 | Día de la semana | `formato u8`: 0 `Lunes`, 1 `Lun` | |
 | 5 | Reloj de agujas | `radio u8` (4 a 31), `marcas u8` (0 ninguna, 1 cada 3 h, 2 cada hora) | sin letra (no lleva los bytes 3-5); x, y = centro; sin segundero |
 | 6 | Íconos de estado | `estilo Wi-Fi u8`, `estilo mensaje u8`, `estilo conexión u8`, `sentido u8` (0 = de x hacia la derecha, 1 = hacia la izquierda) | sin letra. Cada TV pone los suyos: Pro = Wi-Fi, conexión y mensaje; Lite = mensaje |
@@ -68,6 +68,35 @@ Y después, lo propio de cada tipo:
 
 Los **estilos** de los íconos (Wi-Fi, mensaje, conexión, campana, batería, clima) son dibujos de píxeles fijos, iguales en
 la app y en las TV (una tabla compartida). El 0 es siempre el de hoy. Los dibujos se eligen con el dueño.
+
+## 3b. Geometría exacta (aclaraciones del 2026-11-24; no cambian el contrato)
+
+Lo que hace que la app y las dos TV dibujen punto por punto lo mismo:
+
+- **Texto en la fuente clásica:** y = borde de arriba (como `setCursor` de Adafruit). El **ancho para alinear** es
+  `6 × tamaño × letras` (la caja de Adafruit, con el espacio de la última letra), no el ancho de tinta del Texto: así la
+  Cara 1 queda igual que el reloj de hoy ("9:05" en x = 28, la fecha en x = 34). Las letras van cada `6 × tamaño` puntos.
+- **Texto en Sans/Serif:** y = borde de arriba de la línea; la línea base va en `y + asc` (asc = la subida máxima de la
+  fuente, como `prepararFuente` de `texto.cpp`). El ancho para alinear es el **ancho de tinta**, y la tinta empieza
+  justo en x0 (como `dibujarLinea`).
+- **Alineación:** 0 = x0 = x; 1 = centrado: `x0 = piso((2x − ancho) / 2)`; 2 = termina en x: `x0 = x − ancho`.
+- **Tildes, ñ y ¡:** todo texto (días, meses, "¡Hoy!", el texto fijo) pasa por el mismo camino que el Texto: UTF-8 →
+  Latin-1 → `LATIN1_A_CP437` en la clásica; lo que no exista se dibuja como '?'.
+- **Íconos de estado (tipo 6):** con sentido 1, x es el borde derecho (sin incluir) y los íconos van de derecha a
+  izquierda en este orden: Wi-Fi, conexión, mensaje, con **4 puntos** de separación; con sentido 0, x es el borde izquierdo
+  y van de izquierda a derecha en el orden inverso. Cada ícono es un dibujo de **10 filas de alto** con su posición vertical
+  incluida (el de hoy: barras en las filas 1-8, la X de "sin Wi-Fi" en 1-9, el círculo en 2-8, el sobre en 1-8), puesto en
+  la fila y. Con x = 125, y = 0 y los estilos 0 sale exacto el reloj de hoy: Pro = barras 110-124, círculo 99-105, sobre
+  84-94; Lite = sobre 114-124.
+- **Campana, batería y clima:** el mismo marco de 10 filas, con x = borde izquierdo.
+- **Reloj de agujas:** las 60 posiciones salen de una tabla fija de enteros (igual en la app y en las TV) y las líneas se
+  trazan como `drawLine` de Adafruit.
+- **Una sola fuente para las tablas:** los dibujos de los íconos, la tabla de las agujas y los textos en español los genera
+  `app-unificada/herramientas/iconos-reloj/generar.mjs` para la app (JS) y para las TV (`iconos_cara.h`, copia exacta en
+  las dos); nada se copia a mano.
+- **Prueba en la placa:** un comando por el monitor serie dibuja unas recetas de prueba con datos fijos y escribe el CRC32
+  de la pantalla (por filas, 16 bytes por fila, el bit alto a la izquierda); la app calcula los mismos CRC32 y deben
+  coincidir. También compara la Cara 1 en receta con el reloj de hoy dibujado por el código de siempre.
 
 ## 4. Qué pasa en cada TV
 
