@@ -216,8 +216,12 @@ const porTV = (nombre) => (...a) => (tvLite ? cargarLite().then((m) => m[nombre]
 // enviarEstado de la Pro arma esa orden a partir del estado (texto, configuración…).
 let ultimoEstado = null;
 const ORDENES = ['alarma', 'ajustes', 'actualizar', 'restablecer', 'juego'];
+const TIPOS_PANEL = ['texto', 'imagen', 'cancion', 'animacion', 'musical'];
 export async function cargarEstado(...a) {
   const r = await (tvLite ? cargarLite().then((m) => m.cargarEstado(...a)) : pro.cargarEstado(...a));
+  // Lo último guardado puede ser una orden ("actualizar" y "restablecer" de Config > Sistema; la Pro ya cambiaba "juego",
+  // "alarma" y "ajustes"): no es una pestaña, y el panel abría sin ninguna a la vista. Se abre en Texto (2026-11-24).
+  if (r && r.exito !== false && !r.vacio && !TIPOS_PANEL.includes(r.tipo)) r.tipo = 'texto';
   if (r && r.exito !== false) ultimoEstado = r;
   return r;
 }
