@@ -239,6 +239,21 @@
           "apagado": {
             ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
           },
+          "ciudad": {
+            ".validate": "newData.hasChildren(['nombre', 'lat', 'lon'])",
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+            },
+            "lat": {
+              ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+            },
+            "lon": {
+              ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          },
           "$otro": {
             ".validate": false
           }
