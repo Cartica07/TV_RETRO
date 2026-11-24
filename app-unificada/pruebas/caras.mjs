@@ -75,13 +75,25 @@ const enviarYEsperar = async (p) => {
   await pagina.click('#grupoMas button[data-mas="caras"]'); await pagina.waitForTimeout(1500);
   informe('Pro: al volver a la pantalla, la lista marca la cara que tiene la TV', (await pagina.$eval('#caraLista', (s) => s.value)) === 'cara3');
   // ---- Ciudad para el clima (opción A): solo con una cara que muestra el clima ----
-  await pagina.route('https://geocoding-api.open-meteo.com/**', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [
+  const GEO = 'https://geocoding-api.open-meteo.com/**';
+  const geoBien = (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [
     { name: 'Armenia', admin1: 'Quindío', country: 'Colombia', latitude: 4.53389, longitude: -75.68111 },
     { name: 'Armenia', admin1: 'Armenia', country: 'Armenia', latitude: 40.0, longitude: 45.0 },
-  ] }) }));
+  ] }) });
+  await pagina.route(GEO, geoBien);
   informe('Ciudad: con una cara sin clima no se ve la fila', !(await visible(pagina, '#campoCiudad')));
   await pagina.selectOption('#caraLista', 'cara4'); await pagina.waitForTimeout(600);
   informe('Ciudad: con la cara "Con clima" se ve la fila y dice "Sin clima"', (await visible(pagina, '#campoCiudad')) && (await pagina.$eval('#ciudadSelect', (s) => s.options[0].textContent)) === 'Sin clima');
+  // Sin internet el buscador lo dice (antes decía "No encontramos esa ciudad.").
+  await pagina.unroute(GEO);
+  await pagina.route(GEO, (r) => r.abort());
+  await pagina.click('.selector:has(#ciudadSelect)');
+  await pagina.fill('#ciudadTexto', 'Bogotá');
+  await pagina.waitForFunction(() => !document.getElementById('ciudadVacio').hidden, null, { timeout: 10000 });
+  informe('Ciudad: sin internet el buscador dice "Sin conexión a internet. Conéctate y vuelve a buscar."', (await txt(pagina, '#ciudadVacio')) === 'Sin conexión a internet. Conéctate y vuelve a buscar.', await txt(pagina, '#ciudadVacio'));
+  await pagina.click('#ciudadCerrar');
+  await pagina.unroute(GEO);
+  await pagina.route(GEO, geoBien);
   await pagina.click('.selector:has(#ciudadSelect)');
   await pagina.fill('#ciudadTexto', 'Armenia');
   await pagina.waitForFunction(() => document.querySelectorAll('#ciudadLista button').length === 3, null, { timeout: 10000 });

@@ -17,6 +17,8 @@ const TEXTO_ERROR = 'No se pudo enviar. Vuelve a intentarlo.';
 const TEXTO_ENVIANDO = 'Enviando…';
 // Ciudad para el clima (opción A del dueño, 2026-11-24; textos 54 a 57 aprobados).
 const TEXTO_SIN_CLIMA = 'Sin clima';
+const TEXTO_NO_ENCONTRADA = 'No encontramos esa ciudad.';
+const TEXTO_SIN_INTERNET = 'Sin conexión a internet. Conéctate y vuelve a buscar.'; // aprobado por el dueño el 2026-11-24
 
 const $ = (id) => document.getElementById(id);
 const recetas = new Map([['', RECETA_CARA_1]]);
@@ -112,7 +114,7 @@ let turnoBusqueda = 0;
 let resultados = [];
 let esperaBusqueda = null;
 
-function pintarResultados(lista, vacio) {
+function pintarResultados(lista, aviso) { // aviso: texto debajo de la lista ('' = ninguno)
   const ul = $('ciudadLista');
   ul.textContent = '';
   const opciones = [{ nombre: TEXTO_SIN_CLIMA, sin: true }, ...lista];
@@ -126,7 +128,8 @@ function pintarResultados(lista, vacio) {
     li.append(b);
     ul.append(li);
   });
-  $('ciudadVacio').hidden = !vacio;
+  $('ciudadVacio').textContent = aviso || '';
+  $('ciudadVacio').hidden = !aviso;
 }
 
 function abrirCiudad() {
@@ -134,7 +137,7 @@ function abrirCiudad() {
   if (!v) return;
   resultados = [];
   $('ciudadTexto').value = '';
-  pintarResultados([], false);
+  pintarResultados([], '');
   v.hidden = false;
   try { $('ciudadTexto').focus(); } catch (e) { /* nada */ }
 }
@@ -150,11 +153,12 @@ function cerrarCiudad() {
 async function buscar() {
   const t = ++turnoBusqueda;
   const texto = $('ciudadTexto').value.trim();
-  if (texto.length < 2) { resultados = []; pintarResultados([], false); return; }
+  if (texto.length < 2) { resultados = []; pintarResultados([], ''); return; }
   const r = await unificadaBuscarCiudad(texto);
   if (t !== turnoBusqueda) return; // ya escribió otra cosa
   resultados = r || [];
-  pintarResultados(resultados, resultados.length === 0);
+  // null = no hubo respuesta (sin internet); [] = el buscador no encontró nada.
+  pintarResultados(resultados, r === null ? TEXTO_SIN_INTERNET : (resultados.length === 0 ? TEXTO_NO_ENCONTRADA : ''));
 }
 
 async function elegirCiudad(i) {
