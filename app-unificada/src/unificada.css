@@ -195,7 +195,8 @@ body.sin-cuenta #botonVincularTV {
 #escalaImagen,
 #ajusteZona,
 #ajusteApagado,
-#caraLista {
+#caraLista,
+#ciudadSelect {
   pointer-events: none;
 }
 
@@ -205,7 +206,8 @@ body.sin-cuenta #botonVincularTV {
 .selector:has(> #escalaImagen),
 .selector:has(> #ajusteZona),
 .selector:has(> #ajusteApagado),
-.selector:has(> #caraLista) {
+.selector:has(> #caraLista),
+.selector:has(> #ciudadSelect) {
   cursor: pointer;
 }
 

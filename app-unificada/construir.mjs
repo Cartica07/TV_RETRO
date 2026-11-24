@@ -286,6 +286,24 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
           <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
+      <div class="campo" id="campoCiudad" hidden>
+        <label class="rotulo" for="ciudadSelect">Ciudad para el clima</label>
+        <div class="selector">
+          <select id="ciudadSelect"><option value="">Sin clima</option></select>
+          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="buscador-canciones" id="buscadorCiudad" role="dialog" aria-modal="true" aria-label="Ciudad para el clima" hidden>
+        <div class="buscador-tarjeta">
+          <div class="buscador-cabecera">
+            <span class="buscador-lupa">${ICONO_LUPA}</span>
+            <input type="text" id="ciudadTexto" placeholder="Escribe tu ciudad" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Escribe tu ciudad" />
+            <button type="button" id="ciudadCerrar" class="boton-icono" aria-label="Cerrar" title="Cerrar"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+          </div>
+          <ul class="buscador-lista" id="ciudadLista"></ul>
+          <p class="buscador-vacio" id="ciudadVacio" hidden>No encontramos esa ciudad.</p>
+        </div>
+      </div>
       <p class="dato-cuenta" id="caraAviso" role="status" aria-live="polite" hidden></p>
       <button type="button" id="botonEnviarCara" class="boton-primario">Enviar a Pepito</button>
     </div>
