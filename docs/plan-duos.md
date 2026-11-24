@@ -63,20 +63,26 @@ animación en conjunto: empieza en la TV de la **derecha** (por ejemplo, un gati
   ni el sobre (son justamente los caminos que más fallos dieron). Al terminar o al separarse, vuelve a dibujarse lo que había.
 - **Peso:** unas pocas decenas de KB por dúo (1 bit por punto, comprimido). 10 dúos ≈ 0,5 MB como máximo.
 
-### Estados y prioridades (propuesta; el dueño confirma las marcadas)
+### Estados y prioridades (decidido por el dueño el 2026-11-24: "la prioridad siempre es el dúo", salvo la alarma y una actualización)
 
 | Situación | Propuesta |
 |---|---|
-| Alarma sonando, o empieza a sonar a mitad del dúo | El dúo no empieza / se cancela en las dos TV |
-| Actualización en curso (Pro o Lite) | No empieza |
+| Alarma sonando, o empieza a sonar a mitad del dúo | **Gana la alarma:** el dúo no empieza / se cancela en las dos TV |
+| Actualización en curso (Pro o Lite) | No empieza (interrumpirla dañaría la TV) |
 | Código para vincular a la vista (Pro) o ventana de emparejar abierta (Lite) | No empieza |
-| **Partida de un juego en curso (Pro)** | **El dueño decide:** no empieza, o pausa la partida como con la canción con letra |
-| **Suena una canción** | **El dueño decide:** la corta, o el dúo espera a que termine |
+| Partida de un juego en curso (Pro) | **Gana el dúo:** la partida se pausa y sigue al terminar (como con la canción con letra) |
+| Suena una canción | **Gana el dúo:** la canción se corta |
 | Pantalla dormida | Se prende para el dúo y después sigue la lógica de apagado de siempre |
 | Se separan a mitad de la animación | Las dos paran y vuelve lo que mostraba cada una |
 | Contacto falso (un iPhone con MagSafe, una nevera) | Si no aparece otra TV en ~2 s, no pasa nada |
 
 ## 5. Fases, con criterios para pasar a la siguiente
+
+### Hardware disponible (2026-11-24)
+
+- Sensor: módulo "MH-Sensor-Series" con chip 3144 + comparador LM393 (salidas D0 y A0). **Alimentarlo a 3,3 V** (a 5 V su D0 saca 5 V y daña la placa; si a 3,3 V no detecta, 5 V con un divisor en D0). Solo reacciona a un polo del imán; gasta ~10 mA (solo para la prueba).
+- Imanes de neodimio de 8×2 mm (con el 3144 detectan a pocos mm; medir a través de la carcasa).
+- Placas: la S3 del dueño (su Pro de todos los días) y un **ESP32 normal** (Bluetooth 4.2: sirve para la prueba de enlace aunque no tenga pantalla). La segunda S3 llega en ~1 semana.
 
 ### Fase 0: prueba aislada (sin tocar `OLED_Remota`, `OLED_Lite` ni la app)
 - Un sketch aparte en el repo del firmware (`Duos_Prueba/`), que compila para S3 y C3, con su propia carpeta de compilación
@@ -131,7 +137,7 @@ más Pepitos; juegos que cruzan de una pantalla a la otra.
 |---|---|
 | **Comprar:** sensores Hall omnipolares de bajo consumo (tipo DRV5032; para la prueba sirve un módulo común), imanes de neodimio pequeños (~6×2 mm) y **una segunda placa S3** (para no sacar de servicio la Pro de todos los días en cada prueba) | Antes de la fase 0 |
 | Dónde va físicamente el sensor y el imán (lejos del buzzer, que es magnético) y los pines (C3: GPIO 3 o 10, a confirmar con la placa) | Fase 0 |
-| Partidas y canciones en la tabla de estados (sección 4) | Fase 1 |
+| ~~Partidas y canciones en la tabla de estados~~ (decidido: gana el dúo; la alarma gana al dúo) | Hecho |
 | Nodos nuevos en Firebase: catálogo `duos/` y dónde se guarda la favorita de una Pro (reglas + copia de vuelta atrás; las publica el dueño) | Fase 2 |
 | Bit nuevo del protocolo de la Lite (64) y sus comandos: primero se escribe en `docs/evaluacion-version-lite.md` sección 8, luego app, TV simulada y firmware | Fase 3 |
 | Especificación nueva del protocolo entre TV (servicio "Dúos") | Fase 0, al cerrar la prueba |
