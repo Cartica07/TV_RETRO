@@ -47,8 +47,9 @@ const AB = {
 };
 function abanico(nivel) {
   const capas = [AB.punto, AB.a1, AB.a2, AB.a3];
-  if (nivel === 0) { const m = punteado(unir(...capas)); linea(m, 0, 7, 8, 0); return m; }
-  return unir(...capas.map((c, i) => (i < nivel ? c : punteado(c))));
+  // La onda que falta no se dibuja (el dueño: los puntitos parecían restos). Sin Wi-Fi: el dibujo completo cruzado por una raya.
+  if (nivel === 0) { const m = unir(...capas); linea(m, 1, 7, 9, -1, 0); linea(m, 0, 7, 8, -1); return m; } // raya con un borde negro al lado
+  return unir(...capas.map((c, i) => (i < nivel ? c : nuevo(c[0].length, c.length))));
 }
 // Ondas ")))": una antena con ondas a la derecha.
 const ON = {
@@ -59,8 +60,8 @@ const ON = {
 };
 function ondas(nivel) {
   const capas = [ON.antena, ON.o1, ON.o2, ON.o3];
-  if (nivel === 0) { const m = punteado(unir(...capas)); linea(m, 0, 8, 9, 0); return m; }
-  return unir(...capas.map((c, i) => (i < nivel ? c : punteado(c))));
+  if (nivel === 0) { const m = unir(...capas); linea(m, 1, 8, 10, -1, 0); linea(m, 0, 8, 9, -1); return m; }
+  return unir(...capas.map((c, i) => (i < nivel ? c : nuevo(c[0].length, c.length))));
 }
 const variantesWifi = (f) => ({ n4: f(4), n3: f(3), n2: f(2), n1: f(1), sin: f(0) });
 
