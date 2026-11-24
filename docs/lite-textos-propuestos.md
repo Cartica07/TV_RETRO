@@ -1,5 +1,7 @@
 # Textos nuevos de la versión Lite: PROPUESTAS para que el dueño las apruebe
 
+> **Pendiente para el final (dueño, 2026-11-24):** cuando todo lo demás esté pulido, el dueño hará una revisión sistemática de TODOS los textos (confirmaciones, títulos, estados…).
+
 > Regla del proyecto: los textos que ve el cliente los dicta el dueño; aquí van como **propuesta mía** (lenguaje simple, con "tú", sin datos técnicos). Lo que no esté en esta lista es de la app Pro y no cambió. Cuando el dueño apruebe, corrija o dicte otro, se cambia en el archivo indicado.
 
 > **Revisión del dueño (2026-11-23), filas 22 a 42:** aprobadas 22, 23, 24/36, 25, 26, 27, 29, 30, 31, 32, 33, 37, 38, 39, 41 y 42. La **28** la dictó el dueño: "Regresa a la app y ya Pepito estará listo para ser usado." La **40** queda por explicarle (qué es "Tengo una TV Pro"). Para la 32 y la 33 el dueño prefiere que lo que no está disponible en la Lite ni siquiera aparezca: ya es así (Compartir, Juegos y Sistema están ocultos con una TV Lite; esos avisos son solo de respaldo). **Todas se adaptan al nombre "Pepito"** (decisión del dueño): la versión con Pepito de cada una está en [nombre-pepito.md](nombre-pepito.md), por aprobar.
@@ -52,13 +54,13 @@
 | 47 | (APROBADA 2026-11-23) Actualizar un Pepito Lite: no volvió tras reiniciarse (la Pro dice "…encendido y con internet.") | Pepito no respondió. Tiene que estar encendido y cerca del celular. | `app-unificada/src/textos-pepito.mjs` |
 | 49 | (APROBADA 2026-11-24) Config > Sistema con un Pepito Lite que no está conectado (la Pro dice "No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.") | No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla. | `app-unificada/src/textos-pepito.mjs` |
 | 50 | (APROBADA 2026-11-24) Actualizar un Pepito Lite con la alarma sonando (hoy sale el de la Pro: "Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.", y la Lite no tiene juegos) | Pepito está ocupado (una alarma). Inténtalo en un momento. | `app-unificada/src/textos-pepito.mjs` |
-| 51 | Caras de reloj: la cara llegó a Pepito (Pro y Lite) | Pepito ya tiene esta cara ✅ | `app-unificada/src/caras.js` |
-| 52 | Caras de reloj: no se pudo enviar | No se pudo enviar. Vuelve a intentarlo. | `src/caras.js` |
-| 53 | Caras de reloj con un Pepito Lite: la cara llegó dañada / la TV no pudo volver a la Cara 1 | La cara no llegó bien. Vuelve a intentarlo. / No se pudo cambiar la cara del reloj. | `src/lite-tv.js`, `app-lite/src/ble.js` |
-| 54 | Ajustes de Pepito: campo para el clima (rótulo) | Ciudad para el clima | (sin hacer) |
-| 55 | Ese campo, vacío (texto de ayuda) | Escribe tu ciudad | (sin hacer) |
-| 56 | La búsqueda no encuentra la ciudad | No encontramos esa ciudad. | (sin hacer) |
-| 57 | Opción para quitar la ciudad | Sin clima | (sin hacer) |
+| 51 | (APROBADA 2026-11-24) Caras de reloj: la cara llegó a Pepito (Pro y Lite) | Pepito ya tiene esta cara ✅ | `app-unificada/src/caras.js` |
+| 52 | (APROBADA 2026-11-24) Caras de reloj: no se pudo enviar | No se pudo enviar. Vuelve a intentarlo. | `src/caras.js` |
+| 53 | (APROBADA 2026-11-24) Caras de reloj con un Pepito Lite: la cara llegó dañada / la TV no pudo volver a la Cara 1 | La cara no llegó bien. Vuelve a intentarlo. / No se pudo cambiar la cara del reloj. | `src/lite-tv.js`, `app-lite/src/ble.js` |
+| 54 | (APROBADA 2026-11-24) Ajustes de Pepito: campo para el clima (rótulo) | Ciudad para el clima | (sin hacer) |
+| 55 | (APROBADA 2026-11-24) Ese campo, vacío (texto de ayuda) | Escribe tu ciudad | (sin hacer) |
+| 56 | (APROBADA 2026-11-24) La búsqueda no encuentra la ciudad | No encontramos esa ciudad. | (sin hacer) |
+| 57 | (APROBADA 2026-11-24) Opción para quitar la ciudad | Sin clima | (sin hacer) |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
