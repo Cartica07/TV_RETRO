@@ -174,13 +174,16 @@ const deBase64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
  * El paquete del dúo (BORRADOR del formato del catálogo: nada de esto llega a Firebase hasta que el dueño lo apruebe).
  * codificarMusical es la de js/compresion.js (se recibe para que este módulo no dependa de dónde vive).
  */
-export async function empaquetarDuo(duo, { nombre, clave, codificarMusical }) {
+export async function empaquetarDuo(duo, { nombre, clave, codificarMusical, portadaMs }) {
   const mitad = async (tv) => {
     const r = await codificarMusical({ notas: duo[tv].notas, cuadros: duo[tv].cuadros, duracion: duo.duracion, repetir: false });
     return { datos: r.datos, bytes: r.bytes, imagenes: r.imagenes };
   };
   const izq = await mitad('izq');
   const der = await mitad('der');
+  // Portada (2026-11-24): lo que se ve en cada mitad en un momento elegido (por defecto, la mitad del dúo). Para la lista de
+  // dúos de la app (1024 bytes por mitad, en Base64).
+  const t = Math.min(duo.duracion, Math.max(0, Math.round(portadaMs === undefined || portadaMs === null ? duo.duracion / 2 : portadaMs)));
   return {
     formato: 'duo1',
     version: 1,
@@ -188,9 +191,37 @@ export async function empaquetarDuo(duo, { nombre, clave, codificarMusical }) {
     nombre: String(nombre || ''),
     duracion: duo.duracion,
     sonido: duo.izq.notas.length ? 'izq' : duo.der.notas.length ? 'der' : null,
+    portada: { t, izq: aBase64(cuadroEn(duo.izq.cuadros, t).bitmap), der: aBase64(cuadroEn(duo.der.cuadros, t).bitmap) },
     izq,
     der,
   };
+}
+
+/** El cuadro que se ve en el momento t de una mitad ([{t, bitmap}] ordenada). */
+export function cuadroEn(cuadros, t) {
+  let c = cuadros[0];
+  for (const x of cuadros) { if (x.t <= t) c = x; else break; }
+  return c;
+}
+
+/**
+ * Un tramo de una canción para el sonido del dúo (pedido del dueño, 2026-11-24): de las notas [{t, f}] de la canción (su m1),
+ * las que suenan entre "desde" y "desde + duracion" ms, contadas desde 0 y como [[Hz, ms], ...] (lo que usa armarDuo).
+ */
+export function tramoDeCancion(notas, duracionCancion, desde, duracion) {
+  const ini = Math.max(0, Math.round(desde));
+  const fin = Math.min(Math.round(duracionCancion), ini + Math.max(1, Math.round(duracion)));
+  if (fin <= ini) return [];
+  const pares = [];
+  for (let i = 0; i < notas.length; i++) {
+    const a = Math.max(ini, notas[i].t);
+    const b = Math.min(fin, i + 1 < notas.length ? notas[i + 1].t : duracionCancion);
+    if (b > a) pares.push([notas[i].f, b - a]);
+  }
+  // Antes de la primera nota del tramo hay silencio.
+  const primera = notas.findIndex((n, i) => (i + 1 < notas.length ? notas[i + 1].t : duracionCancion) > ini);
+  if (primera > -1 && notas[primera].t > ini) pares.unshift([0, notas[primera].t - ini]);
+  return pares;
 }
 
 /** Clave para archivos y el catálogo: minúsculas, sin tildes, guiones bajos (como las de las caras: [A-Za-z0-9_-]{1,40}). */

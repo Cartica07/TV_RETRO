@@ -113,6 +113,24 @@ const comprobarMitades = (duo, nombre) => {
   informe('armado: la derecha toca la primera parte y la izquierda sigue justo al terminar', duo.duracion === 400 && duo.izq.cuadros[1].t === 250 && duo.der.cuadros.length === 3);
 }
 
+// ---- Portada y tramo de una canción ----
+{
+  const a = lleno(0x01), b = lleno(0x02);
+  const duo = D.armarDuo({ pistas: [{ tv: 'der', inicio: 0, cuadros: [{ dur: 300, bitmap: a }, { dur: 300, bitmap: b }] }] });
+  const p = await D.empaquetarDuo(duo, { nombre: 'x', clave: 'x', codificarMusical });
+  informe('portada: por defecto la mitad del dúo (300 ms), con una imagen de 1024 bytes por mitad', p.portada.t === 300 && D.deBase64(p.portada.der).length === 1024 && D.deBase64(p.portada.der)[0] === 0x02 && D.deBase64(p.portada.izq)[0] === 0);
+  const p2 = await D.empaquetarDuo(duo, { nombre: 'x', clave: 'x', codificarMusical, portadaMs: 100 });
+  informe('portada: en el momento elegido (100 ms)', p2.portada.t === 100 && D.deBase64(p2.portada.der)[0] === 0x01);
+  // Canción: 440 Hz de 0 a 1000, silencio de 1000 a 1500, 880 Hz de 1500 a 3000 (dura 3000).
+  const notas = [{ t: 0, f: 440 }, { t: 1000, f: 0 }, { t: 1500, f: 880 }];
+  const tramo = D.tramoDeCancion(notas, 3000, 800, 1000); // de 800 a 1800
+  informe('tramo de canción: de 800 a 1800 ms = 200 ms de 440, 500 de silencio y 300 de 880', JSON.stringify(tramo) === JSON.stringify([[440, 200], [0, 500], [880, 300]]), JSON.stringify(tramo));
+  const tramo2 = D.tramoDeCancion(notas, 3000, 2500, 5000); // pasa del final: se corta en 3000
+  informe('tramo de canción: no pasa del final de la canción', JSON.stringify(tramo2) === JSON.stringify([[880, 500]]), JSON.stringify(tramo2));
+  const tramo3 = D.tramoDeCancion([{ t: 400, f: 660 }], 1000, 0, 1000); // la canción empieza en silencio
+  informe('tramo de canción: el silencio antes de la primera nota se respeta', JSON.stringify(tramo3) === JSON.stringify([[0, 400], [660, 600]]), JSON.stringify(tramo3));
+}
+
 // ---- Claves ----
 informe('clave: sin tildes ni espacios', D.claveDe('¡Gatitos Bailando!') === 'gatitos_bailando' && D.claveDe('') === 'duo');
 

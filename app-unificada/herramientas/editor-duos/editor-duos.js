@@ -6,6 +6,7 @@ import { decodificarGif, comprobarTamanoArchivo, esGif } from './gif.js';
 import { acomodarEnDestino, grisesDeCanvas, grisABitmapAtkinson, grisABitmapUmbral } from './imageProcessor.js';
 import { codificarMusical, decodificarMusical } from './compresion.js';
 import * as D from './duo.js';
+import { escucharSesion, iniciarSesion, listarMusicales, leerMusical } from './firebase.js';
 
 const $ = (id) => document.getElementById(id);
 const valor = (id) => $(id).value;
@@ -319,12 +320,29 @@ async function armar() {
   }
   const claveSonido = valor('sonido');
   const tvSonido = valor('sonidoTv');
-  const sonido = claveSonido
-    ? { tv: tvSonido, inicio: valor('sonidoInicio') === 'ms' ? numero('sonidoMs', 0, 0, 15000) : base.inicioDe(tvSonido), notas: D.SONIDOS[claveSonido].notas }
-    : null;
+  const inicioSonido = valor('sonidoInicio') === 'ms' ? numero('sonidoMs', 0, 0, 15000) : base.inicioDe(tvSonido);
+  let notasSonido = null;
+  if (claveSonido.startsWith('cancion:')) {
+    // Un tramo de una canción del catálogo (pedido del dueño, 2026-11-24): desde el segundo elegido y lo que dure la animación
+    // (desde que empieza el sonido) o los segundos elegidos.
+    const c = await cancion(claveSonido.slice('cancion:'.length));
+    if (t !== turno) return;
+    if (c) {
+      const finAnimacion = Math.max(0, ...base.pistas.map((p) => p.inicio + D.duracionDe(p.cuadros)));
+      const dura = valor('cancionCuanto') === 'segundos' ? numero('cancionSegundos', 3, 0.2, 15) * 1000 : Math.max(200, finAnimacion - inicioSonido);
+      notasSonido = D.tramoDeCancion(c.notas, c.duracion, numero('cancionDesde', 0, 0, 600) * 1000, dura);
+      $('cancionLargo').textContent = `(la canción dura ${(c.duracion / 1000).toFixed(1)} s)`;
+    } else {
+      $('cancionLargo').textContent = '(no se pudo leer la canción)';
+    }
+  } else if (claveSonido) {
+    notasSonido = D.SONIDOS[claveSonido].notas;
+  }
+  const sonido = notasSonido && notasSonido.length ? { tv: tvSonido, inicio: inicioSonido, notas: notasSonido } : null;
   const duo = D.armarDuo({ pistas: base.pistas, espera: { izq: valor('espera'), der: valor('espera') }, alTerminar: valor('alTerminar'), sonido });
   const nombre = valor('nombre').trim() || 'Dúo';
-  const paquete = await D.empaquetarDuo(duo, { nombre, clave: D.claveDe(nombre), codificarMusical });
+  const portadaMs = $('portadaMs').value === '' ? undefined : numero('portadaMs', 0, 0, 15000);
+  const paquete = await D.empaquetarDuo(duo, { nombre, clave: D.claveDe(nombre), codificarMusical, portadaMs });
   const mitades = { izq: await decodificarMusical(paquete.izq.datos), der: await decodificarMusical(paquete.der.datos) };
   if (t !== turno) return; // cambió algo mientras se armaba
   ultimo = { duo, paquete, mitades };
@@ -339,7 +357,7 @@ async function armar() {
   }
   const paraFirmware = paquete.izq.bytes <= D.LIMITES.pruebaMitad && paquete.der.bytes <= D.LIMITES.pruebaMitad;
   mostrarDatos([
-    `Duración: ${(duo.duracion / 1000).toFixed(2)} s`,
+    `Duración: ${(duo.duracion / 1000).toFixed(2)} s · portada a los ${paquete.portada.t} ms`,
     `Izquierda: ${kb(paquete.izq.bytes)}, ${paquete.izq.imagenes} imágenes, ${duo.izq.cuadros.length} cambios${duo.izq.notas.length ? ', con sonido' : ''}`,
     `Derecha:   ${kb(paquete.der.bytes)}, ${paquete.der.imagenes} imágenes, ${duo.der.cuadros.length} cambios${duo.der.notas.length ? ', con sonido' : ''}`,
     paraFirmware ? 'Cabe como dúo de prueba del firmware.' : `Para el dúo de prueba del firmware conviene menos de ${kb(D.LIMITES.pruebaMitad)} por mitad.`,
@@ -480,9 +498,63 @@ function fallo(e) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Tu cuenta y tus canciones (pedido 2026-11-24): el catálogo de canciones (musicales/) se lee con la sesión iniciada.
+// ---------------------------------------------------------------------------------------------------------------------
+const canciones = new Map(); // clave -> { notas, duracion } (decodificada una vez)
+async function cancion(clave) {
+  if (canciones.has(clave)) return canciones.get(clave);
+  try {
+    const datos = await leerMusical(clave);
+    if (!datos) return null;
+    const m = await decodificarMusical(datos);
+    const c = { notas: m.notas, duracion: m.duracion };
+    canciones.set(clave, c);
+    return c;
+  } catch (e) {
+    console.warn('[duos] no se pudo leer la canción:', e);
+    return null;
+  }
+}
+
+async function cargarCanciones() {
+  const lista = await listarMusicales();
+  const sel = $('sonido');
+  const elegido = sel.value;
+  const viejo = sel.querySelector('optgroup');
+  if (viejo) viejo.remove();
+  if (!lista || !Object.keys(lista).length) return;
+  const grupo = document.createElement('optgroup');
+  grupo.label = 'Tus canciones';
+  Object.entries(lista)
+    .map(([clave, m]) => ({ clave, nombre: (m && m.nombre) || clave }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .forEach((c) => grupo.append(new Option(c.nombre, 'cancion:' + c.clave)));
+  sel.append(grupo);
+  if ([...sel.options].some((o) => o.value === elegido)) sel.value = elegido;
+  actualizarPaneles();
+}
+
+function iniciarCuenta() {
+  $('formEntrar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('estadoCuenta').textContent = 'Entrando…';
+    const r = await iniciarSesion($('correo').value.trim(), $('clave').value);
+    $('clave').value = '';
+    if (!r || !r.exito) $('estadoCuenta').textContent = (r && r.error) || 'No se pudo entrar.';
+  });
+  escucharSesion((usuario) => {
+    $('formEntrar').hidden = !!usuario;
+    if (usuario) {
+      $('estadoCuenta').textContent = `Sesión iniciada: ${usuario.email}. Tus canciones están en la lista de sonidos.`;
+      cargarCanciones().catch((e) => console.warn('[duos] no se pudo leer el catálogo de canciones:', e));
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Proyectos (pedido 2026-11-24): guardar los GIF y todos los ajustes para seguir otro día; abrir un dúo ya hecho para verlo.
 // ---------------------------------------------------------------------------------------------------------------------
-const SIN_GUARDAR = ['barraTiempo', 'conSonido', 'archivoAbrir'];
+const SIN_GUARDAR = ['barraTiempo', 'conSonido', 'archivoAbrir', 'correo', 'clave']; // el correo y la contraseña NUNCA se guardan
 const camposDelProyecto = () => [...document.querySelectorAll('input, select')].filter((el) => el.id && el.type !== 'file' && !SIN_GUARDAR.includes(el.id));
 
 function guardarProyecto() {
@@ -551,6 +623,8 @@ function actualizarPaneles() {
   $('tv2texto').textContent = valor('tv1') === 'der' ? '(en el Pepito de la izquierda)' : '(en el Pepito de la derecha)';
   $('campoInicioMs').hidden = valor('inicio2') !== 'ms';
   $('campoSonidoMs').hidden = valor('sonidoInicio') !== 'ms';
+  $('panelCancion').hidden = !valor('sonido').startsWith('cancion:');
+  $('campoCancionSegundos').hidden = valor('cancionCuanto') !== 'segundos';
 }
 
 async function tomarArchivo(input, id) {
@@ -602,6 +676,8 @@ function iniciar() {
     ponerAjustesEnPantalla(ajustes[editando] || ajustes.general);
   });
   $('botonGuardarProyecto').addEventListener('click', guardarProyecto);
+  $('botonPortadaAqui').addEventListener('click', () => { $('portadaMs').value = $('barraTiempo').value; programar(); });
+  iniciarCuenta();
   $('archivoAbrir').addEventListener('change', (e) => { abrirArchivo(e.target).catch(fallo); });
 
   const soloVista = (el) => el && (el.id === 'barraTiempo' || el.id === 'conSonido'); // no cambian el dúo

@@ -3,7 +3,14 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { abrir, cerrar, informe, erroresPagina } from './banco-unificado.mjs';
+
+const { codificarMusical } = await import(pathToFileURL(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'js', 'compresion.js')).href);
+// Una canción de prueba en el catálogo: 440 Hz de 0 a 1 s, silencio hasta 1,5 s y 880 Hz hasta 3 s.
+const negro1024 = new Uint8Array(1024);
+const cancionM1 = await codificarMusical({ notas: [{ t: 0, f: 440 }, { t: 1000, f: 0 }, { t: 1500, f: 880 }], cuadros: [{ t: 0, bitmap: negro1024 }], duracion: 3000, repetir: false });
+const semilla = { usuarios: { 'uid-ana': { dispositivos: {} } }, musicales: { indice: { cumple: { nombre: 'Cumpleaños feliz', duracion: 3000 } }, datos: { cumple: cancionM1.datos } } };
 
 // GIF de 2 colores, ancho×alto, con un cuadrado blanco que avanza (LZW sin compresión real: CLEAR cada 2 puntos, así el
 // ancho del código queda en 3 bits).
@@ -48,7 +55,7 @@ const gifChico = path.join(carpeta, 'corazon.gif');
 fs.writeFileSync(gifAncho, gifDePrueba(64, 16, 3));
 fs.writeFileSync(gifChico, gifDePrueba(32, 16, 3));
 
-const { navegador, pagina, errores } = await abrir({}, { ruta: '/editor-duos.html', esperar: false });
+const { navegador, pagina, errores } = await abrir(semilla, { ruta: '/editor-duos.html', esperar: false });
 await pagina.waitForSelector('#modo');
 await pagina.selectOption('#sonido', ''); // sin sonido: así la duración es la de la animación
 const datos = () => pagina.textContent('#datos');
@@ -176,7 +183,7 @@ const [bajadaP] = await Promise.all([pagina.waitForEvent('download'), pagina.cli
 const rutaProyecto = path.join(carpeta, 'proyecto.json');
 fs.copyFileSync(await bajadaP.path(), rutaProyecto);
 const proyecto = JSON.parse(fs.readFileSync(rutaProyecto, 'utf8'));
-informe('proyecto: guarda los GIF, los controles y los ajustes de cada GIF', proyecto.formato === 'duo-proyecto' && proyecto.gifs.g1 && proyecto.gifs.g2 && proyecto.ajustes.g2.invertir === true && proyecto.controles.modo === 'dos');
+informe('proyecto: guarda los GIF, los controles y los ajustes de cada GIF', proyecto.formato === 'duo-proyecto' && proyecto.gifs.g1 && proyecto.gifs.g2 && proyecto.ajustes.g2.invertir === true && proyecto.controles.modo === 'dos' && !('correo' in proyecto.controles) && !('clave' in proyecto.controles));
 const rutaDuo = path.join(carpeta, 'duo.json');
 const [bajadaD] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonPaquete')]);
 fs.copyFileSync(await bajadaD.path(), rutaDuo);
@@ -188,6 +195,24 @@ informe('proyecto: al abrirlo vuelve el mismo dúo (modo, GIF y ajustes)', (awai
 await pagina.setInputFiles('#archivoAbrir', rutaDuo);
 await pagina.waitForFunction(() => /Dúo abierto \(solo para ver\)/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
 informe('abrir un dúo ya hecho (.duo.json): se puede ver y volver a bajar', !(await pagina.$eval('#botonReproducir', (b) => b.disabled)));
+
+// ---- Tus canciones: un tramo de una canción del catálogo como sonido ----
+await pagina.waitForFunction(() => [...document.querySelectorAll('#sonido option')].some((o) => o.value === 'cancion:cumple'), null, { timeout: 15000 });
+informe('con la sesión iniciada, tus canciones aparecen en la lista de sonidos', /Sesión iniciada/.test(await pagina.textContent('#estadoCuenta')));
+await pagina.selectOption('#modo', 'tiempo');
+await pagina.setInputFiles('#gifTiempo', gifChico);
+await pagina.waitForTimeout(800);
+await pagina.selectOption('#sonido', 'cancion:cumple');
+await pagina.fill('#cancionDesde', '0.8');
+await pagina.waitForFunction(() => /la canción dura 3.0 s/.test(document.getElementById('cancionLargo').textContent), null, { timeout: 15000 });
+await pagina.waitForTimeout(800);
+const [bajadaC] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonPaquete')]);
+const paqC = JSON.parse(fs.readFileSync(await bajadaC.path(), 'utf8'));
+informe('canción: el tramo suena en el Pepito izquierdo y el dúo dura lo de la animación', paqC.sonido === 'izq' && paqC.duracion === 300 && paqC.portada && paqC.portada.izq, `${paqC.sonido} ${paqC.duracion} ms`);
+await pagina.selectOption('#cancionCuanto', 'segundos');
+await pagina.fill('#cancionSegundos', '1.5');
+await pagina.waitForFunction(() => /Duración: 1.60 s/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
+informe('canción: 1,5 s de canción desde que empieza el izquierdo (a los 100 ms) alargan el dúo a 1,60 s', true);
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();
