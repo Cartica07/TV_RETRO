@@ -159,6 +159,15 @@ input[type="number"] { width: 84px; }
 
       <section class="tarjeta" aria-labelledby="tituloImagen">
         <h2 id="tituloImagen">2. Ajustes de imagen</h2>
+        <div class="fila" id="filaSeparados" hidden>
+          <label class="fila"><input type="checkbox" id="ajustesSeparados" /> Ajustes separados para cada GIF</label>
+          <label class="fila" id="campoDeQue" hidden>Editando
+            <select id="ajustesDeQue">
+              <option value="g1">el primer GIF</option>
+              <option value="g2">el segundo GIF</option>
+            </select>
+          </label>
+        </div>
         <div class="fila">
           <label class="fila"><input type="checkbox" id="pixelar" checked /> Pixelar</label>
           <label class="fila">Nivel de pixelado <input type="range" id="umbral" min="1" max="254" value="127" /></label>
@@ -242,8 +251,12 @@ input[type="number"] { width: 84px; }
           <button type="button" id="botonPaquete" disabled>Descargar el dúo (.json)</button>
           <button type="button" id="botonCabecera" disabled>Descargar para el firmware (.h)</button>
         </div>
+        <div class="fila">
+          <button type="button" id="botonGuardarProyecto">Guardar el proyecto</button>
+          <label class="fila">Abrir un proyecto o un dúo <input type="file" id="archivoAbrir" accept=".json,application/json" /></label>
+        </div>
         <p id="aviso" role="status" aria-live="polite"></p>
-        <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo.</p>
+        <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo. El proyecto guarda los GIF y todos los ajustes, para seguir otro día. Un dúo abierto (.duo.json) se puede ver, pero no editar.</p>
       </section>
     </div>
   </div>
