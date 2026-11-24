@@ -9,6 +9,11 @@
 //
 // Regla (docs/nombre-pepito.md): "la TV" -> "Pepito", sin artículo; en masculino ("Olvídalo", "encendido", "tuyo"); "Mis
 // Pepitos", "Pepito 1"; "un Pepito Lite" / "un Pepito Pro".
+// Con un Pepito Lite en uso, otro texto (el de la Pro queda como está para un Pepito Pro). "pro" va ya con sus comillas.
+function conLite(lite, pro) {
+  return `(document.body.classList.contains('tv-lite') ? '${lite}' : ${pro})`;
+}
+
 export const TEXTOS_PEPITO = [
   // ---- index.html ----
   ['index.html', '<title>TV RETRO · Panel de control</title>', '<title>Pepito · Panel de control</title>', 1],
@@ -107,6 +112,14 @@ export const TEXTOS_PEPITO = [
   ['js/lite-tv.js', '"Eso es demasiado grande para la TV."', '"Eso es demasiado grande para Pepito."', 1],
   ['js/lite-tv.js', '"La TV no pudo guardar la alarma."', '"Pepito no pudo guardar la alarma."', 1],
   ['js/lite-tv.js', '"La TV no pudo guardar los ajustes."', '"Pepito no pudo guardar los ajustes."', 1],
+  ['js/lite-tv.js', '"La TV no pudo empezar la actualización."', '"Pepito no pudo empezar la actualización."', 1],
+
+  // ---- Actualizar un Pepito Lite (2026-11-23, docs/plan-ota-lite.md): la pantalla Sistema es la de la Pro; estos textos no
+  // tienen sentido con una TV por Bluetooth y cambian SOLO con un Pepito Lite (clase "tv-lite" en <body>). Van después de las
+  // filas de arriba porque parten del texto ya con Pepito. Textos 46 y 47 aprobados por el dueño el 2026-11-23; el 49 es PROPUESTA.
+  ['js/mas.js', "'Actualizando… no desconectes a Pepito.'", conLite('Actualizando… No cierres la app y deja el celular cerca de tu Pepito.', "'Actualizando… no desconectes a Pepito.'"), 2],
+  ['js/mas.js', "'Pepito no respondió. Tiene que estar encendido y con internet.'", conLite('Pepito no respondió. Tiene que estar encendido y cerca del celular.', "'Pepito no respondió. Tiene que estar encendido y con internet.'"), 1],
+  ['js/mas.js', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla.', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'"), 1],
 ];
 
 // Lo que puede seguir diciendo "TV" porque NO se ve: el nombre Bluetooth del firmware anterior (ble.js lo sigue reconociendo).

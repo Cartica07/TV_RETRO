@@ -155,12 +155,29 @@ export async function leerCuadrosAnimacion(clave, opciones = {}) {
   return pro.leerCuadrosAnimacion(clave, opciones);
 }
 
+// ---------- Lectura de la nube para la actualización de una TV Lite (firmware/lite/<modelo>/…, docs/plan-ota-lite.md) ----------
+// La misma copia del SDK de base de datos que usa firebase-pro.js (construir.mjs pone aquí su dirección) y la misma base (pro.db).
+const SDK_DB = '__SDK_DB__';
+const ESPERA_NUBE_MS = 30000;
+async function leerNube(ruta) {
+  const m = await import(SDK_DB);
+  let reloj = null;
+  const tope = new Promise((_, rechazar) => { reloj = setTimeout(() => rechazar(new Error('La conexión está lenta')), ESPERA_NUBE_MS); });
+  try {
+    const foto = await Promise.race([m.get(m.ref(pro.db, ruta)), tope]);
+    return foto.exists() ? foto.val() : null;
+  } finally {
+    clearTimeout(reloj);
+  }
+}
+
 // ---------- La parte Bluetooth, bajo demanda ----------
 let cargaLite = null;
 function cargarLite() {
   if (!cargaLite) {
     cargaLite = import('./lite-tv.js').then((m) => {
-      m.configurar({ leerMusical: pro.leerMusical }); // las canciones que se mandan a una TV Lite salen del catálogo de la nube
+      // Las canciones que se mandan a una TV Lite salen del catálogo de la nube; su actualización, de firmware/lite/… (leerNube).
+      m.configurar({ leerMusical: pro.leerMusical, leerNube });
       return m;
     });
   }

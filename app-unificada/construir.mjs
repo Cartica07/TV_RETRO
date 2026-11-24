@@ -56,14 +56,18 @@ if (faltan.length || sobran.length) {
 // necesita para entrar sin cuenta (sesión anónima) con la MISMA copia del SDK.
 const urlAuth = (readFileSync(join(proJs, 'firebase.js'), 'utf8').match(/https:\/\/www\.gstatic\.com\/firebasejs\/[\d.]+\/firebase-auth\.js/) || [])[0];
 if (!urlAuth) throw new Error('js/firebase.js de la Pro ya no importa el SDK de autenticación desde gstatic: revisa app-unificada/construir.mjs');
-const routerFinal = fuenteRouter.replace("'__SDK_AUTH__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlAuth));
-if (routerFinal === fuenteRouter || routerFinal.includes('__SDK_AUTH__')) throw new Error('No se pudo poner la dirección del SDK en el enrutador (falta __SDK_AUTH__)');
+// Lo mismo con el SDK de base de datos (para leer la actualización de una TV Lite, firmware/lite/…).
+const urlDb = (readFileSync(join(proJs, 'firebase.js'), 'utf8').match(/https:\/\/www\.gstatic\.com\/firebasejs\/[\d.]+\/firebase-database\.js/) || [])[0];
+if (!urlDb) throw new Error('js/firebase.js de la Pro ya no importa el SDK de base de datos desde gstatic: revisa app-unificada/construir.mjs');
+const conAuth = fuenteRouter.replace("'__SDK_AUTH__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlAuth));
+const routerFinal = conAuth.replace("'__SDK_DB__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlDb));
+if (conAuth === fuenteRouter || routerFinal === conAuth || /__SDK_(AUTH|DB)__/.test(routerFinal)) throw new Error('No se pudo poner la dirección del SDK en el enrutador (falta __SDK_AUTH__ o __SDK_DB__)');
 writeFileSync(join(www, 'js', 'firebase.js'), routerFinal);
 copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 
 // Sin internet, cuentas.js de la Pro corta el arranque con "Sin conexión…" ANTES de pedir la lista de TV. En la unificada esa
 // decisión la toma el enrutador (listarMisDispositivos, con el mismo texto): con una TV Lite ya añadida se sigue, porque va por
@@ -236,7 +240,7 @@ cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
   'el estado de la actualización (Sistema)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
-  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>',
+  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>',
   'el script js/main.js');
 
 if (paraApk) {

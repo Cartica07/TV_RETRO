@@ -46,7 +46,8 @@ export function describirErrorTV(error) {
 
 // Lo que el enrutador le da a este módulo (las funciones de la nube que necesita).
 let leerMusicalNube = null;
-export function configurar({ leerMusical }) { leerMusicalNube = leerMusical; }
+let leerNube = null; // leerNube(ruta) -> valor de Firebase o null (para la actualización de la TV: firmware/lite/…)
+export function configurar({ leerMusical, leerNube: leer = null }) { leerMusicalNube = leerMusical; leerNube = leer; }
 
 // ===================================================
 // La TV activa (la que eligió la persona en Mi TV)
@@ -297,7 +298,8 @@ export async function enviarEstado(estado) {
   try {
     // Alarma y ajustes se guardan por su propio camino (guardarAlarma / guardarAjustes).
     if (estado.tipo === 'alarma' || estado.tipo === 'ajustes') return { exito: true, version: await reservarVersion() };
-    if (['actualizar', 'restablecer', 'juego'].includes(estado.tipo)) return { exito: false, error: NO_DISPONIBLE.error };
+    if (estado.tipo === 'actualizar') return await ordenActualizar();
+    if (['restablecer', 'juego'].includes(estado.tipo)) return { exito: false, error: NO_DISPONIBLE.error };
 
     await asegurarConexion();
     const version = await reservarVersion();
@@ -419,10 +421,159 @@ export async function guardarAjustes(datos) {
 }
 
 // ===================================================
-// Sistema de la TV (actualizar / restablecer): una TV Lite no lo tiene
+// Sistema de la TV: actualizar el programa por Bluetooth (2026-11-23; plan en docs/plan-ota-lite.md, protocolo en la sección 8.5
+// de docs/evaluacion-version-lite.md). Restablecer no existe en una TV Lite.
+//
+// La pantalla Sistema es la de la Pro (mas.js, sin cambios): lee cargarSistema() y, tras la orden "actualizar" (enviarEstado),
+// escucha suscribirFirmwareTV() esperando los mismos estados que una TV Pro escribe en dispositivos/{id}/firmware
+// (actualizando, reiniciando, ok, al_dia, ocupada, firma_invalida…). Aquí los produce la app, que es la que baja el programa de
+// Firebase (firmware/lite/<modelo>/…) y se lo pasa a la TV.
 // ===================================================
-export async function cargarSistema() { return { exito: true, esDueno: false, firmware: null, manifiestoBuild: null }; }
-export function suscribirFirmwareTV(callback) { callback(null); return () => {}; }
+const MODELOS = { 1: 'c3', 2: 's3' };
+const ESPERA_REINICIO_MS = 3000;     // la TV contesta, espera ~1 s y se reinicia: no se intenta reconectar antes
+const ESPERA_VUELTA_MS = 90000;      // lo máximo que se espera a que la TV vuelva tras reiniciarse
+const PAUSA_RECONEXION_MS = 2000;
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let firmwareActual = null;           // { build, estado, fecha } (como el nodo de la Pro)
+const escuchasFirmware = new Set();
+let ultimaFecha = 0;
+const fechaNueva = () => (ultimaFecha = Math.max(Date.now(), ultimaFecha + 1)); // siempre distinta: mas.js compara fechas
+
+function informarFirmware(build, estado) {
+  firmwareActual = { build, estado, fecha: fechaNueva() };
+  for (const f of escuchasFirmware) { try { f(firmwareActual); } catch (e) { console.error(e); } }
+}
+
+export function suscribirFirmwareTV(callback) {
+  escuchasFirmware.add(callback);
+  callback(firmwareActual);
+  return () => escuchasFirmware.delete(callback);
+}
+
+// La versión publicada para ese modelo: { build, tamano, sha256, firma } o null.
+async function leerManifiesto(modelo) {
+  if (!leerNube || !MODELOS[modelo]) return null;
+  const m = await leerNube(`firmware/lite/${MODELOS[modelo]}/estable`);
+  if (!m || typeof m !== 'object') return null;
+  const build = Number(m.build), tamano = Number(m.tamano);
+  if (!Number.isInteger(build) || build < 1 || !Number.isInteger(tamano) || tamano < 1) return null;
+  if (typeof m.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(m.sha256) || typeof m.firma !== 'string') return null;
+  return { build, tamano, sha256: m.sha256, firma: m.firma };
+}
+
+async function estadoDeLaTV() {
+  if (!(await ble.reconectar())) return null; // sin buscar ni emparejar: se abre desde Config, no desde un "Enviar"
+  return ble.exclusivo(() => ble.pedirEstado());
+}
+
+export async function cargarSistema() {
+  try {
+    const e = await estadoDeLaTV();
+    if (!e) return { exito: false, error: 'Pepito no está conectado.' };
+    // Una Lite sin actualización por Bluetooth (ESTADO de 10 bytes): firmware null y la pantalla lo dice.
+    if (e.build === null) return { exito: true, esDueno: true, firmware: null, manifiestoBuild: null };
+    if (!firmwareActual || firmwareActual.build !== e.build) firmwareActual = { build: e.build, estado: 'ok', fecha: fechaNueva() };
+    const m = await leerManifiesto(e.modelo);
+    return { exito: true, esDueno: true, firmware: Object.assign({}, firmwareActual), manifiestoBuild: m ? m.build : null };
+  } catch (err) {
+    if (!(err instanceof ble.ErrorTV)) console.error('Error al leer el estado de la TV Lite:', err);
+    return { exito: false, error: describirErrorTV(err) };
+  }
+}
+
+const hexDe = (buf) => [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, '0')).join('');
+
+/** Lo que viaja a la TV: [firma 256 bytes][sha256 32 bytes][programa]. null si lo bajado no coincide con el manifiesto. */
+async function armarPrograma(m, b64) {
+  const bin = base64ABytes(b64);
+  if (bin.length !== m.tamano) return null;
+  const sha = await crypto.subtle.digest('SHA-256', bin);
+  if (hexDe(sha) !== m.sha256) return null;
+  const firma = base64ABytes(m.firma);
+  if (firma.length !== 256) return null;
+  const todo = new Uint8Array(288 + bin.length);
+  todo.set(firma, 0);
+  todo.set(new Uint8Array(sha), 256);
+  todo.set(bin, 288);
+  return todo;
+}
+
+/** Avance REAL del envío del programa (0 a 1): lo dibuja la barra de la pantalla Sistema (src/barra-actualizar.js). */
+function avanceActualizar(p) {
+  try { window.dispatchEvent(new CustomEvent('pepito-avance-actualizar', { detail: p })); } catch (e) { /* sin pantalla */ }
+}
+
+const CODIGOS_INICIO = { 2: 'al_dia', 3: 'no_cabe', 4: 'ocupada' };
+const MOTIVOS_FIN = { 1: 'descarga_incompleta', 2: 'firma_invalida', 3: 'imagen_invalida' };
+
+// Tras reiniciarse, la TV vuelve a anunciarse: se reconecta (eso manda la hora, que la TV toma como "la versión nueva funciona")
+// y se pregunta qué versión quedó. Devuelve el ESTADO o null si no volvió a tiempo.
+async function esperarVuelta() {
+  await pausa(ESPERA_REINICIO_MS);
+  const limite = Date.now() + ESPERA_VUELTA_MS;
+  while (Date.now() < limite) {
+    if (await ble.reconectar()) {
+      try { return await ble.exclusivo(() => ble.pedirEstado()); } catch (e) { /* se volvió a cortar: otro intento */ }
+    }
+    await pausa(PAUSA_RECONEXION_MS);
+  }
+  return null;
+}
+
+let actualizando = false;
+
+/** La orden "actualizar": contesta enseguida (como la Pro al escribir la orden) y el trabajo sigue aparte, informando su estado. */
+async function ordenActualizar() {
+  if (actualizando) return { exito: false, error: 'Ya se está actualizando' };
+  if (!ble.estaConectado() && !(await ble.reconectar())) return { exito: false, error: 'Pepito no está conectado' };
+  actualizando = true;
+  const version = await reservarVersion();
+  actualizar().catch((err) => console.error('[Pepito] Error al actualizar la TV Lite:', err)).finally(() => { actualizando = false; });
+  return { exito: true, version };
+}
+
+async function actualizar() {
+  let antes = null;
+  try {
+    antes = await ble.exclusivo(() => ble.pedirEstado());
+  } catch (e) {
+    return informarFirmware(firmwareActual ? firmwareActual.build : 0, 'error_red');
+  }
+  if (antes.build === null) return informarFirmware(0, 'sin_manifiesto');
+  informarFirmware(antes.build, 'actualizando');
+
+  let m = null, b64 = null;
+  try {
+    m = await leerManifiesto(antes.modelo);
+    if (m) b64 = await leerNube(`firmware/lite/${MODELOS[antes.modelo]}/datos/${m.build}`);
+  } catch (e) {
+    console.error('[Pepito] No se pudo bajar la actualización:', e);
+    return informarFirmware(antes.build, 'error_red');
+  }
+  if (!m || typeof b64 !== 'string') return informarFirmware(antes.build, 'sin_manifiesto');
+  if (m.build <= antes.build) return informarFirmware(antes.build, 'al_dia');
+  const programa = await armarPrograma(m, b64);
+  if (!programa) return informarFirmware(antes.build, 'hash_invalido');
+
+  let r = null;
+  try {
+    r = await ble.exclusivo(() => ble.enviarArchivo(programa, { build: m.build, alProgreso: avanceActualizar }));
+  } catch (err) {
+    if (err instanceof ble.ErrorInicioPrograma) return informarFirmware(antes.build, CODIGOS_INICIO[err.codigo] || 'error_inicio');
+    console.warn('[Pepito] Se cortó la actualización:', err && err.message);
+    return informarFirmware(antes.build, 'error_red');
+  }
+  if (!r.ok) return informarFirmware(antes.build, MOTIVOS_FIN[r.motivo] || 'descarga_incompleta');
+
+  // La TV quedó con el programa nuevo y se reinicia: se suelta la conexión (el corte es esperado, no un error).
+  informarFirmware(antes.build, 'reiniciando');
+  try { await ble.desconectar(); } catch (e) { /* ya se cortó */ }
+  const despues = await esperarVuelta();
+  if (!despues) return; // no volvió: la pantalla espera hasta su tiempo máximo y dice que la TV no respondió
+  // Con la versión nueva, éxito; con la vieja (la nueva se cayó y volvió sola a la anterior), mas.js dice que no se pudo.
+  informarFirmware(despues.build === null ? antes.build : despues.build, 'ok');
+}
 
 // ===================================================
 // Añadir una TV Lite (lo usa la pantalla "Añade tu TV")

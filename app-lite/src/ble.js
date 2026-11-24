@@ -310,7 +310,13 @@ export async function pedirEstado() {
   await escribirCtrl([0x04]);
   const a = await esperarAvisoTipo(0x84, 3000);
   if (!a) throw new ErrorTV('La TV no respondió.');
-  return { mtu: a.getUint16(2, true), memoria: leer32(a, 4), vinculos: a.byteLength >= 10 ? a.getUint8(8) : null };
+  // Desde la Lite con actualización por Bluetooth (2026-11-23, sección 8.5 de la especificación) el aviso trae además la versión
+  // del programa, el modelo (1 = C3, 2 = S3) y si esa versión está pendiente de darse por buena. Sin eso (10 bytes): build null.
+  const largo = a.byteLength >= 16;
+  return {
+    mtu: a.getUint16(2, true), memoria: leer32(a, 4), vinculos: a.byteLength >= 10 ? a.getUint8(8) : null,
+    build: largo ? leer32(a, 10) : null, modelo: largo ? a.getUint8(14) : null, pendiente: largo ? a.getUint8(15) === 1 : null,
+  };
 }
 
 // Ids de las canciones que la TV ya tiene guardadas.
@@ -340,20 +346,33 @@ export async function parar() {
 }
 
 // ---------- Envío de un archivo ----------
-// "extra": { id } para guardarlo como canción en la biblioteca de la TV; "banderas" para las pruebas.
-// Devuelve { ok, ms, reenvios, kbs, msTotalTV }.
-export async function enviarArchivo(datos, { id = null, banderas = 0, alProgreso = () => {} } = {}) {
+// "extra": { id } para guardarlo como canción en la biblioteca de la TV; "banderas" para las pruebas;
+// "build": el envío es un PROGRAMA nuevo para la TV (bit 5, sección 8.5 de la especificación).
+// Devuelve { ok, ms, reenvios, kbs, msTotalTV, motivo }.
+
+// La TV no aceptó empezar a recibir un programa: "codigo" es el valor del aviso 0x82 (0 no válido, 2 ya tiene esa versión o una
+// más nueva, 3 no cabe, 4 ocupada).
+export class ErrorInicioPrograma extends ErrorTV {
+  constructor(codigo) { super('La TV no pudo empezar la actualización.'); this.codigo = codigo; }
+}
+
+export async function enviarArchivo(datos, { id = null, banderas = 0, build = null, alProgreso = () => {} } = {}) {
   const tamano = datos.length;
   const crc = crc32(datos);
   const total = Math.ceil(tamano / TROZO);
   avisos.length = 0;
 
-  const cabecera = [0x02, ...u32(tamano), ...u32(crc), VENTANA, id !== null ? (banderas | 4) : banderas];
+  const programa = build !== null;
+  const cabecera = [0x02, ...u32(tamano), ...u32(crc), VENTANA, programa ? 32 : id !== null ? (banderas | 4) : banderas];
   if (id !== null) cabecera.push(id & 255, (id >> 8) & 255);
+  if (programa) cabecera.push(0, 0, ...u32(build));
   await escribirCtrl(cabecera);
   const inicio = await esperarAvisoTipo(0x82, 5000);
   if (!inicio) throw new ErrorTV('La TV no respondió.');
-  if (inicio.getUint8(1) !== 1) throw new ErrorTV('La TV no tiene espacio para esto.');
+  if (inicio.getUint8(1) !== 1) {
+    if (programa) throw new ErrorInicioPrograma(inicio.getUint8(1));
+    throw new ErrorTV('La TV no tiene espacio para esto.');
+  }
 
   let sig = 0;
   let confirmado = 0;
@@ -404,6 +423,8 @@ export async function enviarArchivo(datos, { id = null, banderas = 0, alProgreso
     ok: fin.getUint8(1) === 1, ms, reenvios,
     kbs: (tamano / 1024) / (ms / 1000),
     msTotalTV: fin.byteLength >= 14 ? leer32(fin, 10) : leer32(fin, 6),
+    // Solo con un programa (bit 5): 0 bien, 1 incompleto o dañado, 2 firma o huella no válidas, 3 no es para esta TV.
+    motivo: fin.byteLength >= 15 ? fin.getUint8(14) : null,
   };
 }
 
