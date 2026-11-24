@@ -67,7 +67,7 @@ copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 
 // Sin internet, cuentas.js de la Pro corta el arranque con "Sin conexión…" ANTES de pedir la lista de TV. En la unificada esa
 // decisión la toma el enrutador (listarMisDispositivos, con el mismo texto): con una TV Lite ya añadida se sigue, porque va por
