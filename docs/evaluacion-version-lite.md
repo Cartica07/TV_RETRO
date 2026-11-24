@@ -15,7 +15,7 @@ Una TV más barata y simple que la Pro, pensada para quien quiere sobre todo las
 | Transporte | **Bluetooth LE** como único canal (red propia y Wi-Fi local descartadas: ver la investigación) |
 | Hora y alarma | Sí importan. La hora la da el celular al conectar. Idea del dueño, sin decidir: que la TV baje la hora de internet. Recomendación: v1 sin Wi-Fi, medir la deriva del reloj de la C3 real y entonces elegir entre Wi-Fi opcional para la hora, chip DS3231 o solo el celular |
 | Canciones | Se guardan en la TV como **caché** (las más usadas); el catálogo completo vive en la app |
-| Actualizaciones (OTA) | Sin decidir. Recomendación: dejar la puerta abierta (por Bluetooth, no por Wi-Fi) |
+| Actualizaciones (OTA) | **Decidido 2026-11-23:** por Bluetooth; la app baja el programa firmado de Firebase y se lo pasa a la TV. Debe estar hecha ANTES de vender el primer Lite (sin hacer todavía; plan en `docs/prompt-siguiente-ota-lite.md`, paso 1) |
 | Placa de pruebas | La **ESP32-S3** (misma pila Bluetooth NimBLE que la C3) mientras llega la C3 |
 
 ## 3. Presupuesto de memoria (C3, 4 MB de flash) — ESTIMADO, falta medir el programa final
@@ -45,7 +45,7 @@ Servicio `7a1c0001-5e7d-4f0e-9a3b-0c1d2e3f4a5b`. `CTRL` (`…0002`, escritura + 
 1. **Hora y alarma** (paso 2.3), cara del reloj y la imagen/texto/GIF enviado "al momento" (con su espacio reservado).
 2. Repetir todo en la **C3 real** (una sola CPU: guardar y dibujar mientras llega el Bluetooth puede costar más), con el **alcance**, el **consumo de batería** y la **deriva del reloj**. Elegir placa con cargador y, si se quiere meses de batería, cristal de 32 kHz (la "Pro Mini" probablemente no lo trae: sin verificar).
 3. App real (Capacitor, Android): plugin BLE, `createBond()`, catálogo de canciones en la app o en archivos estáticos.
-4. Actualización por Bluetooth (OTA) con la firma que ya usa la Pro.
+4. Actualización por Bluetooth (OTA) con la firma que ya usa la Pro. **Siguiente trabajo (2026-11-23):** la app la baja de Firebase (`firmware/lite/…`, por aprobar); bit 5 de las banderas del INICIO para el programa (el bit 4 queda para las caras de reloj). Plan en `docs/prompt-siguiente-ota-lite.md`.
 5. La TV ya tenía 1 vínculo guardado al arrancar la primera vez (origen desconocido).
 
 ## 7. Cambio de alcance (2026-11-22): la app Lite = la app Pro con otro canal de envío

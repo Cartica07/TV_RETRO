@@ -96,10 +96,12 @@ En la app, Más > Config > Ajustes de Pepito > "Apagar pantalla": elegir **5 min
 1. Dejar la TV quieta 5 min: la pantalla se apaga (`[lite] pantalla apagada sola`).
 2. Un toque: se prende en la misma pantalla y NO cambia de pantalla.
 3. Con la pantalla apagada en el reloj, enviar un texto: pita, se prende 10 s en el reloj con el sobre y se vuelve a apagar. En el contenido: se prende 10 s mostrando el texto nuevo.
-4. Con una canción con letra en pantalla, no se apaga mientras suena.
+4. Con una canción con letra en pantalla, no se apaga mientras suena. Al terminar vuelve el contenido que había antes (no se queda en el último cuadro) y el apagado sigue: si se prendió sola por la canción, se apaga a los 10 s; si ya estaba prendida, sigue contando lo que faltaba (mínimo 10 s).
 5. La alarma prende la pantalla; al callarla vuelve la pantalla que había.
 6. El botón ya no lleva a la pantalla apagada: contenido <-> reloj.
 7. Elegir **Nunca**: la app muestra el aviso y la pantalla ya no se apaga.
+
+**Resultados (2026-11-23, placa S3 con el dueño):** 1 a 6 bien. La canción con letra se quedaba en su último cuadro y no dejaba apagar: arreglado (`22c9de8` Lite, `60b74c1` Pro), regrabado y probado bien. **Faltan:** el apagado con **10 min** y **Nunca** (punto 7).
 
 ## 6. Qué medir mientras tanto
 
