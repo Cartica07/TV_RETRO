@@ -146,6 +146,21 @@ Copia de la Pro v11 con ESP-NOW encendido por orden serie (`TVRETRO_ESPNOW_ON`, 
 - (Esta vez la TV no tenía la cara Clima: por eso hay más memoria libre que en la medición del Bluetooth.)
 - Prueba con carga (2026-11-24): GIF grande, canción con letra (33 KB en 1,3 s), ajustes y actualización por Wi-Fi a la v11 (1,6 MB en 42 s, validada): **todo bien**, mínimo interno 23,6 KB. **Pero la placa se reinició al empezar y ESP-NOW quedó apagado** (solo se enciende con la orden): la prueba con ESP-NOW encendido bajo carga queda para la fase 0. La cara Clima no se pudo probar (pide la v11 y la copia decía ser la 10: error de orden del plan de prueba).
 
+#### Fase 0 hecha (2026-11-24): la prueba aislada FUNCIONA
+
+`Duos_Prueba/` del repo del firmware: la S3 del dueño (izquierda, módulo Hall en GPIO 11 a 3,3 V) y su primera TV con ESP8266 (derecha; ESP-NOW se entiende entre los dos chips), canal 1, sin router. Un corazón entra por la derecha, cruza las dos pantallas, late en la izquierda y suena.
+
+| Medida | Resultado |
+|---|---|
+| Contactos con respuesta | 14 de 14 |
+| Del contacto confirmado (80 ms de confirmación del sensor) al arranque | 36-42 ms |
+| Ida y vuelta de un mensaje | 2-4 ms |
+| Señal lado a lado | -36 a -48 dBm |
+| Separar a mitad | se corta en las dos (5 de 5) |
+
+- El dueño: "funcionan súper bien todas"; cortar al separar es lo que se quiere.
+- Pendiente: medir la señal a 20-30 cm para poner el límite (que no se junte con una TV cercana no pegada); el canal del router (la Pro real estará en el de su router); un catálogo de verdad (m1) en vez del corazón dibujado; el consumo.
+
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
