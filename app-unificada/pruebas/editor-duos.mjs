@@ -95,6 +95,16 @@ informe('mitades: correr la mitad izquierda 20 puntos la mueve 20 puntos en su p
 await pagina.click('#botonJuntar');
 await pagina.waitForTimeout(800);
 informe('mitades: "Volver a juntarlas en el borde" la devuelve', (await primeraColumna('vistaIzq')) === antesX);
+// Mover y cortar no vuelve a leer el GIF ni guarda copias nuevas (antes se llenaba la memoria).
+const guardadasAntes = await pagina.evaluate(() => window.__editorDuos.lecturasGuardadas());
+for (const v of ['5', '10', '-7', '3']) { await pagina.fill('#movDerX', v); await pagina.waitForTimeout(250); }
+await pagina.fill('#corteMitades', '40');
+await pagina.waitForTimeout(600);
+const guardadasDespues = await pagina.evaluate(() => window.__editorDuos.lecturasGuardadas());
+informe('mitades: mover y cortar no acumula lecturas del GIF', guardadasDespues === guardadasAntes, `${guardadasAntes} -> ${guardadasDespues}`);
+await pagina.fill('#movDerX', '0');
+await pagina.fill('#corteMitades', '50');
+await pagina.waitForTimeout(400);
 
 await pagina.selectOption('#modo', 'dos');
 await pagina.setInputFiles('#gif1', gifChico);

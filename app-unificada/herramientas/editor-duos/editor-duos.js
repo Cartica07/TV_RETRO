@@ -19,7 +19,17 @@ const marcado = (id) => $(id).checked;
 // GIF: cada uno se lee una vez por geometría (lo caro) y se binariza cada vez que cambian los ajustes (lo barato).
 // ---------------------------------------------------------------------------------------------------------------------
 const gifs = { tiempo: null, escena: null, g1: null, g2: null }; // { buffer, nombre }
-const lecturas = new Map(); // clave -> { grises: Uint8Array[], delays: number[] }
+// UNA sola lectura guardada por GIF y uso ("hueco" -> { clave, valor }): si cambia algo se reemplaza. Antes cada ajuste guardaba
+// otra lectura completa sin borrar las anteriores y, con un GIF largo, se llenaba la memoria (2026-11-24, revisión del asesor).
+const lecturas = new Map();
+function deCache(hueco, clave, crear) {
+  const e = lecturas.get(hueco);
+  if (e && e.clave === clave) return e.valor;
+  const valor = crear();
+  lecturas.set(hueco, { clave, valor });
+  return valor;
+}
+window.__editorDuos = { lecturasGuardadas: () => lecturas.size }; // para las pruebas
 
 const geometria = () => ({
   escala: valor('escala'),
@@ -36,8 +46,11 @@ const recorte = () => ({
 function leer(id, ancho) {
   const gif = gifs[id];
   if (!gif) return null;
-  const clave = id + '|' + ancho + '|' + JSON.stringify(geometria()) + '|' + JSON.stringify(recorte());
-  if (lecturas.has(clave)) return lecturas.get(clave);
+  const clave = JSON.stringify(geometria()) + '|' + JSON.stringify(recorte());
+  return deCache(id + '|' + ancho, clave, () => leerSinCache(gif, ancho));
+}
+
+function leerSinCache(gif, ancho) {
   const origen = document.createElement('canvas');
   const recortado = document.createElement('canvas');
   const destino = document.createElement('canvas');
@@ -65,9 +78,7 @@ function leer(id, ancho) {
     grises.push(grisesDeCanvas(destino));
     delays.push(delay);
   });
-  const leido = { grises, delays };
-  lecturas.set(clave, leido);
-  return leido;
+  return { grises, delays };
 }
 
 // ---- Partir en dos MITADES movibles (pedido del dueño, 2026-11-24) ----
@@ -92,21 +103,22 @@ function orientar(fuente, sw, sh, g, lienzo) {
   ctx.restore();
 }
 
-function leerMitades() {
+// Lo caro (leer el GIF, recortar, girar y escalarlo al tamaño de la escena) se guarda UNA vez por GIF y geometría; cortar y
+// mover las mitades solo recompone la escena desde ahí.
+function leerEscalado() {
   const gif = gifs.escena;
   if (!gif) return null;
-  const corte = numero('corteMitades', 50, 10, 90);
-  const m = mover();
   const g = geometria();
-  const clave = 'escena|mitades|' + JSON.stringify(g) + '|' + JSON.stringify(recorte()) + '|' + corte + '|' + JSON.stringify(m);
-  if (lecturas.has(clave)) return lecturas.get(clave);
+  return deCache('escena|escalado', JSON.stringify(g) + '|' + JSON.stringify(recorte()), () => leerEscaladoSinCache(gif, g));
+}
+
+function leerEscaladoSinCache(gif, g) {
   const origen = document.createElement('canvas');
   const recortado = document.createElement('canvas');
   const orientado = document.createElement('canvas');
-  const pantallas = { izq: document.createElement('canvas'), der: document.createElement('canvas') };
-  for (const c of Object.values(pantallas)) { c.width = D.ANCHO; c.height = D.ALTO; }
   const r = recorte();
-  const izq = [], der = [], delays = [];
+  const cuadros = [], delays = [];
+  let medidas = null;
   let octx = null;
   decodificarGif(gif.buffer, (rgba, delay, i, W, H) => {
     if (!octx || origen.width !== W || origen.height !== H) {
@@ -129,27 +141,54 @@ function leerMitades() {
     else if (g.escala === 'original') { fw = rw; fh = rh; }
     else if ((g.escala === 'llenar') === (rw / rh > ANCHO_ESCENA / D.ALTO)) { fh = D.ALTO; fw = Math.max(1, Math.round((D.ALTO * rw) / rh)); }
     else { fw = ANCHO_ESCENA; fh = Math.max(1, Math.round((ANCHO_ESCENA * rh) / rw)); }
-    const x0 = Math.round((ANCHO_ESCENA - fw) / 2), y0 = Math.round((D.ALTO - fh) / 2);
-    const corteFuente = Math.max(1, Math.min(rw - 1, Math.round((rw * corte) / 100)));
-    const corteEscena = (corteFuente * fw) / rw;
-    for (const [tv, desde, ancho, x, y] of [
-      ['izq', 0, corteFuente, x0 + m.izqX, y0 + m.izqY],
-      ['der', corteFuente, rw - corteFuente, x0 + corteEscena - D.ANCHO + m.derX, y0 + m.derY],
-    ]) {
-      const ctx = pantallas[tv].getContext('2d', { willReadFrequently: true });
-      ctx.fillStyle = g.fondo === 'blanco' ? '#ffffff' : '#000000';
-      ctx.fillRect(0, 0, D.ANCHO, D.ALTO);
-      ctx.imageSmoothingEnabled = g.escala !== 'original';
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(orientado, desde, 0, ancho, rh, Math.round(x), Math.round(y), (ancho * fw) / rw, fh);
-    }
-    izq.push(grisesDeCanvas(pantallas.izq));
-    der.push(grisesDeCanvas(pantallas.der));
+    medidas = { fw, fh, x0: Math.round((ANCHO_ESCENA - fw) / 2), y0: Math.round((D.ALTO - fh) / 2) };
+    // El cuadro ya escalado al tamaño de la escena (lo que se guarda).
+    const escalado = document.createElement('canvas');
+    escalado.width = fw;
+    escalado.height = fh;
+    const ectx = escalado.getContext('2d');
+    ectx.imageSmoothingEnabled = g.escala !== 'original';
+    ectx.imageSmoothingQuality = 'high';
+    ectx.drawImage(orientado, 0, 0, rw, rh, 0, 0, fw, fh);
+    cuadros.push(escalado);
     delays.push(delay);
   });
-  const leido = { izq, der, delays };
-  lecturas.set(clave, leido);
-  return leido;
+  return { cuadros, delays, ...medidas, fondo: g.fondo };
+}
+
+// Escena de 256×64 con cada mitad recortada a SU pantalla y corrida lo pedido; se pixela entera (sin costura cuando están
+// juntas) y después se parte. Devuelve { izq: [bitmap], der: [bitmap], delays }.
+function mitades() {
+  const e = leerEscalado();
+  if (!e) return null;
+  const corte = numero('corteMitades', 50, 10, 90);
+  const m = mover();
+  const escena = document.createElement('canvas');
+  escena.width = 2 * D.ANCHO;
+  escena.height = D.ALTO;
+  const ctx = escena.getContext('2d', { willReadFrequently: true });
+  const cortePx = Math.max(1, Math.min(e.fw - 1, Math.round((e.fw * corte) / 100)));
+  const izq = [], der = [];
+  for (const cuadro of e.cuadros) {
+    ctx.fillStyle = e.fondo === 'blanco' ? '#ffffff' : '#000000';
+    ctx.fillRect(0, 0, escena.width, D.ALTO);
+    for (const [desde, ancho, x, y, recorteX] of [
+      // En 0 la mitad izquierda termina justo en el borde donde se juntan (x 128) y la derecha empieza ahí, sea cual sea el corte.
+      [0, cortePx, D.ANCHO - cortePx + m.izqX, e.y0 + m.izqY, 0],
+      [cortePx, e.fw - cortePx, D.ANCHO + m.derX, e.y0 + m.derY, D.ANCHO],
+    ]) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(recorteX, 0, D.ANCHO, D.ALTO); // cada mitad solo se ve en su pantalla
+      ctx.clip();
+      ctx.drawImage(cuadro, desde, 0, ancho, e.fh, x, y, ancho, e.fh);
+      ctx.restore();
+    }
+    const partes = D.partirEscena(binarizar(grisesDeCanvas(escena), 2 * D.ANCHO));
+    izq.push(partes.izq);
+    der.push(partes.der);
+  }
+  return { izq, der, delays: e.delays };
 }
 
 function binarizar(gris, ancho) {
@@ -189,11 +228,11 @@ function pistasYSonidoInicio() {
   }
   if (valor('modo') === 'escena') {
     // Un GIF partido en dos MITADES, cada una en su pantalla y movible.
-    const leido = leerMitades();
+    const leido = mitades();
     if (!leido) return null;
     $('corteMitadesTexto').textContent = `${numero('corteMitades', 50, 10, 90)} %`;
-    const izq = leido.izq.map((gris, i) => ({ dur: leido.delays[i], bitmap: binarizar(gris, D.ANCHO) }));
-    const der = leido.der.map((gris, i) => ({ dur: leido.delays[i], bitmap: binarizar(gris, D.ANCHO) }));
+    const izq = leido.izq.map((bitmap, i) => ({ dur: leido.delays[i], bitmap }));
+    const der = leido.der.map((bitmap, i) => ({ dur: leido.delays[i], bitmap }));
     const op = { vueltas: numero('vueltasEscena', 1, 1, 20), velocidad: numero('velocidadEscena', 100, 10, 400) / 100 };
     return {
       pistas: [{ tv: 'izq', inicio: 0, cuadros: D.prepararCuadros(izq, op) }, { tv: 'der', inicio: 0, cuadros: D.prepararCuadros(der, op) }],
