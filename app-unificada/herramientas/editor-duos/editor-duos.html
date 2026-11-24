@@ -224,10 +224,31 @@ input[type="number"] { width: 84px; }
           </select>
         </label>
         <label class="campo" id="campoSonidoMs" hidden>Milisegundos <input type="number" id="sonidoMs" min="0" max="15000" step="50" value="0" /></label>
+        <div id="panelCancion" class="columna" hidden>
+          <label class="campo">Desde el segundo <span class="fila"><input type="number" id="cancionDesde" min="0" max="600" step="0.1" value="0" /> <span class="nota" id="cancionLargo"></span></span></label>
+          <label class="campo">Cuánto suena
+            <select id="cancionCuanto">
+              <option value="animacion">lo que dura la animación</option>
+              <option value="segundos">… segundos</option>
+            </select>
+          </label>
+          <label class="campo" id="campoCancionSegundos" hidden>Segundos <input type="number" id="cancionSegundos" min="0.2" max="15" step="0.1" value="3" /></label>
+          <p class="nota">Se usan solo las notas de la canción (no su letra ni sus imágenes).</p>
+        </div>
       </section>
     </div>
 
     <div class="columna">
+      <section class="tarjeta" aria-labelledby="tituloCuenta">
+        <h2 id="tituloCuenta">Tu cuenta</h2>
+        <form id="formEntrar" class="fila">
+          <input type="email" id="correo" placeholder="Correo" autocomplete="username" required />
+          <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password" required />
+          <button type="submit">Entrar</button>
+        </form>
+        <p class="nota" id="estadoCuenta">Entra para usar tus canciones como sonido y para probar en tu Pepito. Lo demás funciona sin entrar.</p>
+      </section>
+
       <section class="tarjeta" aria-labelledby="tituloVista">
         <h2 id="tituloVista">Vista previa</h2>
         <div class="tvs">
@@ -247,6 +268,7 @@ input[type="number"] { width: 84px; }
       <section class="tarjeta" aria-labelledby="tituloGuardar">
         <h2 id="tituloGuardar">4. Guardar</h2>
         <label class="campo">Nombre <input type="text" id="nombre" maxlength="30" placeholder="Por ejemplo: Corazón" /></label>
+        <label class="campo">Portada (ms) <span class="fila"><input type="number" id="portadaMs" min="0" max="15000" step="20" value="" placeholder="la mitad" /> <button type="button" id="botonPortadaAqui">Usar el momento de la barra</button></span></label>
         <div class="fila">
           <button type="button" id="botonPaquete" disabled>Descargar el dúo (.json)</button>
           <button type="button" id="botonCabecera" disabled>Descargar para el firmware (.h)</button>
