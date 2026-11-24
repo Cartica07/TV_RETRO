@@ -44,6 +44,7 @@
     clavesPublicas: [],            // claves públicas (SPKI en Base64) con las que se verifica la firma; las pone la prueba
     ocupada: false,                // simula una alarma sonando (el INICIO del programa responde 4)
     caerAlArrancar: false,         // la versión nueva se cae al arrancar: el arranque vuelve solo a la anterior
+    caerTardeMs: 0,                // != 0: la versión nueva arranca, nunca se da por buena y se cae a los N ms (vuelve a la anterior)
     tamanoEspacio: 1310720,        // el otro espacio de programa (1,25 MB)
     msReinicio: 300,               // lo que tarda en volver a aceptar conexiones tras reiniciarse
     programas: [],                 // bitácora de actualizaciones: { build, ok, motivo }
@@ -109,15 +110,26 @@
     tv.reinicios++;
     if (tv.conectado) tv.desconectar();
     if (tv.caerAlArrancar) { tv.pendiente = false; return; } // el arranque vuelve solo a la anterior
+    const anterior = tv.build;
     tv.build = nuevaBuild;
     tv.pendiente = true;
+    if (tv.caerTardeMs) {
+      // Como la versión de prueba con -DPEPITO_LITE_PRUEBA_ROLLBACK: no se confirma nunca y se cae; el arranque vuelve a la anterior.
+      tv.sinConfirmar = true;
+      setTimeout(() => {
+        reiniciandoHasta = Date.now() + tv.msReinicio;
+        tv.reinicios++;
+        if (tv.conectado) tv.desconectar();
+        tv.build = anterior; tv.pendiente = false; tv.sinConfirmar = false;
+      }, tv.caerTardeMs);
+    }
   }
 
   function cmdCtrl(d) {
     if (tv.sinResponder) return;
     tv.escrituras.push(d[0]);
     // La versión recién instalada se da por buena con la primera escritura del celular vinculado.
-    if (tv.pendiente) tv.pendiente = false;
+    if (tv.pendiente && !tv.sinConfirmar) tv.pendiente = false;
     switch (d[0]) {
       case 0x01: { const epoch = leer32(d, 1); const ok = epoch >= 1700000000; if (ok) { tv.hora = epoch; tv.zona = (d[5] | (d[6] << 8)) << 16 >> 16; } avisar([0x81, ok ? 1 : 0]); break; }
       case 0x02: {

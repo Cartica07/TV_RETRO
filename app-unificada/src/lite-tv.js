@@ -518,7 +518,13 @@ async function esperarVuelta() {
     // Un fallo pasajero justo después del reinicio pausaría la reconexión (como un vínculo roto): se reanuda en cada intento.
     ble.reanudarReconexion();
     if (await ble.reconectar()) {
-      try { return await ble.exclusivo(() => ble.pedirEstado()); } catch (e) { /* se volvió a cortar: otro intento */ }
+      try {
+        const e = await ble.exclusivo(() => ble.pedirEstado());
+        // Solo vale cuando la TV ya dio por buena la versión que arrancó (al reconectar se manda la hora, y eso la confirma).
+        // Si sigue "pendiente" se vuelve a preguntar: una versión que se cae antes de confirmarse vuelve sola a la anterior,
+        // y entonces la TV dirá la versión vieja (la pantalla Sistema lo explica).
+        if (e.pendiente !== true) return e;
+      } catch (e) { /* se volvió a cortar: otro intento */ }
     }
     await pausa(PAUSA_RECONEXION_MS);
   }

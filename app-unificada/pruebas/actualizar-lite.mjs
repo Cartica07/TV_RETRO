@@ -127,6 +127,21 @@ const esperarFin = (p, ms = 60000) => p.waitForFunction(() => {
   await navegador.close();
 }
 
+// ---------- 3b. La versión nueva arranca, la app se reconecta, pero se cae ANTES de confirmarse (como -DPEPITO_LITE_PRUEBA_ROLLBACK):
+// la app no debe decir que se actualizó (antes lo decía apenas veía la versión nueva).
+{
+  const { navegador, pagina } = await abrir(semilla(publicar(2, programa(20000))), { antes: conTVLite({ tv: { caerTardeMs: 6000 } }) });
+  await esperarPanel(pagina);
+  await abrirSistema(pagina);
+  await pagina.click('#botonSistemaActualizar');
+  await esperarFin(pagina, 90000);
+  const e = await estadoTV(pagina);
+  const aviso = await txt(pagina, '#estadoTexto');
+  const t = await txt(pagina, '#sistemaEstadoActualizar');
+  informe('se cae tarde: la TV vuelve a la versión 1 y la app NO dice que se actualizó', e.build === 1 && e.reinicios === 2 && !/se actualizó/.test(t) && /reinició sin terminar/.test(aviso), `${t} | ${aviso} | reinicios ${e.reinicios}`);
+  await navegador.close();
+}
+
 // ---------- 4. Ocupada (alarma sonando): no empieza y lo dice ----------
 {
   const { navegador, pagina } = await abrir(semilla(publicar(2, programa(20000))), { antes: conTVLite({ tv: { ocupada: true } }) });
