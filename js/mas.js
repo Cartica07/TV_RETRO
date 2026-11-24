@@ -117,11 +117,12 @@ export function crearMas({
       const b = grupo.querySelector('button[aria-pressed="true"]');
       return b ? Number(b.dataset.valor) : defecto;
     };
-    ajustesDatos = normalizarAjustes({
+    // Parte de lo que se leyó (2026-11-24): así se conservan los ajustes que este panel no muestra (apagado y ciudad, de la app Pepito).
+    ajustesDatos = normalizarAjustes(Object.assign({}, ajustesDatos, {
       brillo: elegido(E().grupoBrillo, ajustesDatos.brillo),
       volumen: elegido(E().grupoVolumen, ajustesDatos.volumen),
       zona: Number(E().ajusteZona.value)
-    });
+    }));
   }
 
   // Auditoría 2026-11-15 (H-29): mientras los ajustes no se hayan leído bien, Guardar queda bloqueado. Antes

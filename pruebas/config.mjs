@@ -83,6 +83,16 @@ const escenarios = {
       d.ajustes && d.ajustes.brillo === 1 && d.ajustes.volumen === 0 && d.ajustes.zona === -360 && d.oled_remota.pantalla.tipo === 'ajustes' && d.oled_remota.version > antes && /Ajustes guardados/.test(estado),
       JSON.stringify({ ajustes: d.ajustes, tipo: d.oled_remota.pantalla.tipo, v0: antes, v1: d.oled_remota.version, estado }));
   },
+  async 'Ajustes: guardar conserva el apagado y la ciudad que puso la app Pepito'() {
+    const ciudad = { nombre: 'Armenia, Quindío, Colombia', lat: 4.5339, lon: -75.6811 };
+    const { navegador, pagina } = await abrirApp({ extra: { ajustes: { brillo: 2, volumen: 1, zona: -300, apagado: 0, ciudad } } }); await abrirConfig(pagina); await apartado(pagina, 'tv');
+    await pagina.click('#grupoBrillo button[data-valor="3"]');
+    await pagina.click('#botonGuardarAjustes'); await pagina.waitForTimeout(800);
+    const d = await db(pagina);
+    await navegador.close();
+    return informe('Guardar conserva apagado (Nunca) y ciudad (2026-11-24; antes se borraban)',
+      d.ajustes && d.ajustes.brillo === 3 && d.ajustes.apagado === 0 && JSON.stringify(d.ajustes.ciudad) === JSON.stringify(ciudad), JSON.stringify(d.ajustes));
+  },
   async 'Ajustes: lee los guardados (y una zona que no está en la lista)'() {
     const { navegador, pagina } = await abrirApp({ extra: { ajustes: { brillo: 2, volumen: 1, zona: 60 } } }); await abrirConfig(pagina); await apartado(pagina, 'tv');
     const brillo = await marcado(pagina, 'grupoBrillo'), volumen = await marcado(pagina, 'grupoVolumen'), zona = await pagina.inputValue('#ajusteZona');

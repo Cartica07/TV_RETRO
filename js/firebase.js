@@ -1644,7 +1644,12 @@ export function normalizarAjustes(datos) {
   return {
     brillo: entero(d.brillo, 1, 3, AJUSTES_DEFECTO.brillo),
     volumen: entero(d.volumen, 0, 3, AJUSTES_DEFECTO.volumen),
-    zona: entero(d.zona, -720, 840, AJUSTES_DEFECTO.zona)
+    zona: entero(d.zona, -720, 840, AJUSTES_DEFECTO.zona),
+    // Campos que pone la app Pepito (apagado automático, 2026-11-23; ciudad para el clima, 2026-11-24). Este panel no los
+    // muestra, pero los conserva al guardar (antes los borraba). Solo si vienen y tienen sentido.
+    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),
+    ...(d.ciudad && typeof d.ciudad === 'object' && typeof d.ciudad.nombre === 'string' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180
+      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})
   };
 }
 

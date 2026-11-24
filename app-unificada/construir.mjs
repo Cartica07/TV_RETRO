@@ -118,9 +118,11 @@ if (!sinPepito) {
   const ruta = join(www, 'js', 'firebase-pro.js');
   const fuente = readFileSync(ruta, 'utf8');
   const patron = /(    zona: entero\(d\.zona, -720, 840, AJUSTES_DEFECTO\.zona\))(\r?\n  \};)/g;
+  // Desde el 2026-11-24 la Pro ya los conserva (arreglo de la app vieja, aprobado por el dueño): entonces no se parchea.
+  const yaLosConserva = /\.\.\.\(d\.apagado !== undefined/.test(fuente) && /ciudad: \{ nombre: d\.ciudad\.nombre/.test(fuente);
   const veces = (fuente.match(patron) || []).length;
-  if (veces !== 1) throw new Error('js/firebase.js de la Pro ya no tiene normalizarAjustes como se esperaba: revisa app-unificada/construir.mjs');
-  writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),\n    // unificada: ciudad para el clima de las caras de reloj (2026-11-24), solo si viene y tiene sentido\n    ...(d.ciudad && typeof d.ciudad === \'object\' && typeof d.ciudad.nombre === \'string\' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180\n      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})$2'));
+  if (!yaLosConserva && veces !== 1) throw new Error('js/firebase.js de la Pro ya no tiene normalizarAjustes como se esperaba: revisa app-unificada/construir.mjs');
+  if (!yaLosConserva) writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),\n    // unificada: ciudad para el clima de las caras de reloj (2026-11-24), solo si viene y tiene sentido\n    ...(d.ciudad && typeof d.ciudad === \'object\' && typeof d.ciudad.nombre === \'string\' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180\n      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})$2'));
 }
 
 
