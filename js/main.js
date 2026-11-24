@@ -1850,6 +1850,13 @@ async function enviarAFirebase() {
     // catálogo, ver renderizarAnimaciones), así que cae directo en el
     // enviarEstado(estadoActual) genérico de más abajo.
 
+    // Una animación sin cuadros no se envía (2026-11-24): pasa si al abrir el panel no se pudo leer su archivo (por ejemplo con
+    // mala señal); la TV recibiría una animación vacía y el panel diría "Enviado".
+    if (estadoActual.tipo === 'animacion' && !(Array.isArray(estadoActual.animacionCuadros) && estadoActual.animacionCuadros.length > 0)) {
+      marcarEstado('Esta animación no se pudo cargar. Elígela otra vez en la Galería.', 'error', elementos);
+      return;
+    }
+
     // asegurar que el estadoActual tiene campos de canción cuando corresponda
     let aEnviar = estadoActual;
     if (estadoActual.tipo === 'cancion') {
