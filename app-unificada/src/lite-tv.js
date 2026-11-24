@@ -593,12 +593,14 @@ export async function caraActual() {
   try { return (await almacen.leer('meta', claveTV('cara'))) || ''; } catch (e) { return ''; }
 }
 
-/** true si la TV entiende caras (la Lite con actualización por Bluetooth), false si hay que actualizarla, null si no se sabe. */
+/** true si la TV entiende caras (Lite versión 4 o más), false si hay que actualizarla, null si no se sabe. */
+const CARAS_DESDE_BUILD = 4;
 export async function puedeCaras() {
   try {
     if (!(await ble.reconectar())) return null;
     const e = await ble.exclusivo(() => ble.pedirEstado());
-    return e.build !== null;
+    // Las caras llegaron con la versión 4 (2026-11-24); las 1 a 3 ya tenían actualización por Bluetooth pero no caras.
+    return e.build !== null && e.build >= CARAS_DESDE_BUILD;
   } catch (e) {
     return null;
   }

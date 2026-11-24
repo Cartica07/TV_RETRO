@@ -114,7 +114,7 @@ const enviarYEsperar = async (p) => {
 
 // ---------- 3. Pepito Lite ----------
 {
-  const { navegador, pagina, errores } = await abrir(semilla(11), { antes: conTVLite() });
+  const { navegador, pagina, errores } = await abrir(semilla(11), { antes: conTVLite({ build: 4 }) });
   await esperarPanel(pagina);
   await abrirCaras(pagina, true);
   informe('Lite: la lista es la misma (catálogo de la nube) y sin aviso', (await pagina.$$eval('#caraLista option', (os) => os.length)) === 4 && !(await visible(pagina, '#caraAviso')));
@@ -129,6 +129,15 @@ const enviarYEsperar = async (p) => {
   e = await estadoTV(pagina);
   informe('Lite: la Cara 1 se pide con 0x24 (la TV borra la suya)', e.cara === null && e.caras === 2);
   informe('Lite: sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
+  await navegador.close();
+}
+
+// ---------- 3b. Pepito Lite con actualización pero sin caras (versiones 1 a 3) ----------
+{
+  const { navegador, pagina } = await abrir(semilla(11), { antes: conTVLite({ build: 3 }) });
+  await esperarPanel(pagina);
+  await abrirCaras(pagina, true);
+  informe('Lite v3 (sin caras): pide actualizar y no deja enviar', (await txt(pagina, '#caraAviso')) === 'Actualiza tu Pepito para cambiar la cara del reloj.' && (await pagina.$eval('#botonEnviarCara', (b) => b.disabled)));
   await navegador.close();
 }
 
