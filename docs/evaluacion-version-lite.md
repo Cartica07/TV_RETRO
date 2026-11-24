@@ -70,9 +70,9 @@ Es la referencia de TODO lo que viaja por Bluetooth. La app (`app-lite/src/ble.j
 | Cmd | Nombre | Datos | Aviso de la TV |
 |---|---|---|---|
 | `0x01` | HORA | `epoch u32`, `zona i16` (minutos del celular) | `[0x81][1]` |
-| `0x02` | INICIO de envío | `tamaño u32`, `crc32 u32`, `ventana u8`, `banderas u8`, (si bit 2) `id u16` | `[0x82][ok]` |
-| `0x03` | FIN de envío | — | `[0x83][ok][bytes u32][ms recepción u32][ms total u32]` (14 bytes) |
-| `0x04` | ESTADO | — | `[0x84][1][mtu u16][memoria libre u32][vínculos u8][ventana abierta u8]` (10 bytes) |
+| `0x02` | INICIO de envío | `tamaño u32`, `crc32 u32`, `ventana u8`, `banderas u8`, (si bit 2) `id u16`; (si bit 5) `id u16 = 0` y `build u32` | `[0x82][ok]` (con el bit 5, ver 8.5) |
+| `0x03` | FIN de envío | — | `[0x83][ok][bytes u32][ms recepción u32][ms total u32]` (14 bytes); con el bit 5, + `motivo u8` (15 bytes, ver 8.5) |
+| `0x04` | ESTADO | — | `[0x84][1][mtu u16][memoria libre u32][vínculos u8][ventana abierta u8]` (10 bytes); desde la Lite con actualización por Bluetooth, + `[build u32][modelo u8][pendiente u8]` (16 bytes, ver 8.5) |
 | `0x10` | LISTAR canciones | — | `[0x90][n][id u16 × n]` (n ≤ 100) |
 | `0x12` | TOCAR | `id u16`, `repeticiones u8`, `con letra u8` | `[0x92][ok][id u16]` (ok = 0 si no la tiene o hay un envío en curso) |
 | `0x13` | PARAR | — | `[0x93][1]` |
@@ -81,7 +81,7 @@ Es la referencia de TODO lo que viaja por Bluetooth. La app (`app-lite/src/ble.j
 | `0x20` | ALARMAS | `tono u16` (id de canción, 0 = aviso simple) y 3 × (`activa`, `hora`, `minuto`, `días` máscara bit 0 = domingo) | `[0xA0][ok]` |
 | `0x22` | AJUSTES | `brillo u8` (1–3), `volumen u8` (0–3), `zona i16`, y desde el 2026-11-23 opcional `apagado u8` (0 = nunca, 5, 10, 20 minutos; si falta, 5) | `[0xA2][ok]` |
 
-**Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o contenido no válido). **Un INICIO nuevo reemplaza al envío que estuviera en curso** (por ejemplo, uno que quedó a medias porque la app falló): la TV lo abandona y empieza el nuevo. El aviso de HORA es `[0x81][ok]` (`ok = 0` si la hora no tiene sentido: antes de 2023).
+**Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3), **bit 4 = cara de reloj** (reservado, aprobado el 2026-11-23; ver `plan-caras-de-reloj.md`), **bit 5 = programa** (actualización de la TV, ver 8.5). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o contenido no válido). **Un INICIO nuevo reemplaza al envío que estuviera en curso** (por ejemplo, uno que quedó a medias porque la app falló): la TV lo abandona y empieza el nuevo. El aviso de HORA es `[0x81][ok]` (`ok = 0` si la hora no tiene sentido: antes de 2023).
 
 ### 8.2 Trozos y confirmaciones (DATOS)
 
@@ -106,6 +106,18 @@ Lo que la app Pro escribía en Firebase (`pantalla` y `archivo`) viaja en UN env
 - **Lo que llega del celular NO cambia la pantalla por su cuenta (igual que la Pro, 2026-11-22):** el contenido nuevo se guarda; si se está viendo el contenido se dibuja, y si se está en el reloj o con la pantalla apagada la TV se queda ahí. Suena el aviso de dos pitidos de la Pro (1500 y 1900 Hz; no suena si ya hay una canción o la alarma sonando). El reloj muestra un **sobre** arriba a la derecha (mensaje sin ver) hasta que se vuelve al contenido; una canción que manda el celular también lo activa pero sin aviso propio. La TV arranca en el contenido (sin nada que mostrar se ve el reloj). El aviso simple de la alarma usa esos mismos pitidos cada 1,4 s. Diferencias que se dejan a propósito (decide el dueño): con una canción sonando, un toque en la pantalla de la canción cambia de pantalla y la calla, como la Pro, pero en otra pantalla lleva primero a la de la canción sin callarla (la Pro calla y cambia en cualquier caso), sin posponer la alarma 5 min (la Pro usa el botón de la rueda), y tras una alarma no se repone la última imagen de un musical (H-33 de la Pro).
 - **Memoria permanente propia:** la Lite usa nombres propios en la NVS (`lite_alarma`, `lite_ajustes`, `lite_reloj`) y en LittleFS (`/lite_ultimo.json`, `/c/` con la marca `.formato1`) para no mezclarse con los datos de una TV Pro que estuvo en la misma placa; si falta la marca del formato, la biblioteca se vacía.
 - **Espacio:** la caché de canciones borra las menos usadas (salvo la de la alarma); un envío (canción o contenido) que no cabe se rechaza con `0x82` `ok = 0` y la app avisa antes de empezar si ve que un GIF no cabe (`0x15`).
+
+### 8.5 Programa (bandera 32): actualización de la TV por Bluetooth (aprobado por el dueño el 2026-11-23)
+
+Plan y motivos: [plan-ota-lite.md](plan-ota-lite.md). La app baja el programa firmado de Firebase (`firmware/lite/<modelo>/…`, ver `formatos-datos.md`) y lo manda con el mismo sistema de trozos (8.2).
+
+- **INICIO:** `[0x02][tamaño u32][crc32 u32][ventana u8][banderas u8 = 32][id u16 = 0][build u32]`, con `tamaño` = 288 + tamaño del programa. La TV contesta `[0x82][ok]`: `1` = adelante; `0` = no se puede (no válido); `2` = la TV ya tiene esa versión o una más nueva (`build` ≤ el suyo); `3` = no cabe en el otro espacio de programa; `4` = ocupada (alarma sonando). Solo con `1` empieza el envío.
+- **Lo que viaja:** `[firma 256 bytes][sha256 32 bytes][programa .bin]`. La firma es RSA-2048 PKCS#1 v1.5 con SHA-256 (las mismas dos claves de la Pro) sobre el texto `lite|<modelo>|build|tamaño del programa|sha256 en hexadecimal minúscula` (`modelo` = `c3` o `s3`). El prefijo hace que la firma de un programa de la Pro, o de otro modelo, nunca valga. La TV guarda la firma y la huella en la memoria y escribe el programa directo al otro espacio (`Update`), calculando su SHA-256 mientras llega.
+- **FIN:** la TV comprueba tamaño y CRC32 del envío, que el SHA-256 calculado sea el recibido, la firma y la imagen (`Update.end`, que también rechaza un programa de otro chip). Contesta `[0x83][ok][bytes u32][ms recepción u32][ms total u32][motivo u8]` (15 bytes): `motivo` `0` = bien, `1` = incompleto o dañado, `2` = firma o huella no válidas, `3` = programa que no es para esta TV. Con `ok = 1` la TV espera ~1 s (para que salga el aviso) y se reinicia en la versión nueva. La app espera ese corte (no es "se perdió la conexión" ni un vínculo roto) y se reconecta.
+- **Abandono:** una desconexión o un INICIO nuevo abandonan la actualización (`Update.abort`); lo instalado no cambia.
+- **ESTADO largo:** `[0x84][1][mtu u16][memoria u32][vínculos u8][ventana u8][build u32][modelo u8][pendiente u8]` (16 bytes). `modelo` 1 = C3, 2 = S3; `pendiente` 1 = versión recién instalada que aún no se dio por buena. Un ESTADO de 10 bytes = Lite sin actualización por Bluetooth (la app no ofrece actualizar).
+- **Dar por buena la versión nueva** (decidido por Claude por delegación del dueño, 2026-11-23): arranca "pendiente" y se da por buena con la **primera escritura del celular vinculado** después del arranque (la app manda la HORA al conectar), lo que prueba que el Bluetooth, el vínculo y la app funcionan. Si se cae o se reinicia antes, el arranque vuelve solo a la anterior; si en **10 minutos** nadie escribe, la TV vuelve a la anterior (`esp_ota_mark_app_invalid_rollback_and_reboot`). Cada versión debe dejar la NVS y LittleFS legibles por la anterior.
+- **Pantalla de la TV durante la actualización:** "Actualizando" con una barra de avance (texto 48, por confirmar). La canción que sonaba se corta; la alarma suena si llega su hora.
 
 ## 9. Batería: lo que se encontró y lo que falta decidir (2026-11-22)
 

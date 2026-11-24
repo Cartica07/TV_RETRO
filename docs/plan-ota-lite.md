@@ -1,4 +1,4 @@
-# Actualización por Bluetooth de Pepito Lite: plan (BORRADOR, falta que el dueño lo apruebe)
+# Actualización por Bluetooth de Pepito Lite: plan (APROBADO el 2026-11-23, ver sección 12)
 
 > Escrito el 2026-11-23. Nada de esto está hecho. Los cambios del protocolo Bluetooth y las rutas de Firebase
 > necesitan la aprobación del dueño antes de escribir código. Al aprobarse, el protocolo pasa a la sección 8 de
@@ -167,3 +167,14 @@ con una Lite:
 4. Textos 46, 47 y 48 (sección 8).
 5. La clave de servicio de Firebase: ¿la borras ya o la guardas hasta probar la actualización de la Lite (para
    publicar las versiones de prueba)?
+
+## 12. Respuestas del dueño (2026-11-23)
+
+1. Lo decide Claude: queda la propuesta de la sección 5 (se da por buena con la primera escritura del celular después
+   del arranque; si se cae, o nadie escribe en 10 minutos, vuelve sola a la anterior).
+2. **Sí**: rutas `firmware/lite/c3/…` y `firmware/lite/s3/…`.
+3. **Sí**: todos los cambios del protocolo de la sección 4. Ya están en la especificación (sección 8.5 de
+   `evaluacion-version-lite.md`).
+4. El dueño pide **barra de avance en la pantalla de la TV en las dos (Lite y Pro)**: "más entretenido y
+   visualmente mejor". En la Pro va con la v10. Textos 46 y 47: por confirmar.
+5. La clave de servicio se **guarda** para publicar las versiones de prueba de la Lite.
