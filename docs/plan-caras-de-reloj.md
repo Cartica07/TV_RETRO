@@ -1,4 +1,4 @@
-# Caras de reloj: plan (BORRADOR, falta que el dueño lo apruebe)
+# Caras de reloj: plan (APROBADO por el dueño, 2026-11-23/24; hardware de la batería por decidir)
 
 > Escrito el 2026-11-23 para retomarlo en otra conversación. Nada de esto está hecho. Los textos visibles son PROPUESTAS
 > salvo los que dictó el dueño ("Cara 1", "Cara 2", "crear una cara"). Los campos de Firebase y el comando Bluetooth
@@ -55,6 +55,21 @@ Elementos de la primera versión:
 | Campana | una campanita si hay una alarma activa | posición |
 | Texto fijo | por ejemplo "Pepito" | texto corto, fuente, tamaño, posición |
 | Rectángulo / línea | marcos y separadores | posición, tamaño, relleno o no |
+| Fondo | una imagen de 128×64 | se pixela como en la Galería (va en la cabecera de la receta) |
+| **Próxima alarma** (2026-11-24) | `⏰ 7:00` (nada si no hay alarma activa) | fuente, tamaño, posición, con o sin ícono |
+| **Clima** (2026-11-24, solo Pro) | `☀ 24°` | posición, tamaño; la Lite (sin internet) no lo dibuja |
+| **Cuenta regresiva** (2026-11-24) | `Faltan 12 días` | la fecha (se elige al crear la cara), fuente, tamaño, posición |
+| **Batería** (2026-11-24, por definir el hardware) | ícono con 4 niveles (y quizá %) | posición, estilo; una TV sin medidor no lo dibuja |
+
+**Estilos de íconos (pedido del dueño, 2026-11-24):** la zona de estado y la campana llevan un **estilo** a elegir: Wi-Fi
+como barras que suben o como ondas `)))`; mensaje como sobre o como burbuja; campana con dos dibujos. Se empieza con 2 o 3
+estilos por ícono y el dueño los ve dibujados en píxeles antes de hacerlos.
+
+**Batería (pendiente de decidir el hardware, las dos TV llevarán batería):** recomendado un divisor de voltaje (2
+resistencias de ~470 kΩ y un condensador a un pin analógico: ~4 µA, centavos, 4-5 niveles); alternativas: chip medidor
+MAX17048 (I2C, % exacto, ~23 µA) o leer los LEDs del módulo de carga (4 pines, se confunde al cargar). Si el módulo de 4
+LEDs del dueño trae un IP5306 en versión I2C, la TV podría leer sus 4 niveles por el mismo bus de la pantalla. El elemento
+va en la receta desde la primera versión; la lectura se agrega por actualización cuando esté el hardware.
 
 - **Zona de estado:** la cara solo dice DÓNDE van los íconos; cada TV pone los suyos (Pro: señal, conexión y sobre de
   mensaje nuevo; Lite: el sobre). Así una misma cara sirve para los dos.
@@ -148,7 +163,9 @@ Estimado: 3 o 4 sesiones de trabajo. Todo antes de vender la Lite.
 5. **Sí**: por ahora crear caras es solo para el dueño.
 6. **Sí**: aprobadas `relojes/indice`, `relojes/datos` y `dispositivos/{id}/reloj`.
 7. **Sí**: aprobados el bit 4 del envío y el comando `0x24`.
-8. **Pendiente**: primero se revisa la OTA de la Lite.
+8. **Sí (2026-11-24)**, la lista de la sección 4 tal cual, más **próxima alarma**, **clima (solo Pro)**, **cuenta
+   regresiva**, **batería** (hardware por decidir) y **estilos de íconos**. La OTA de la Lite ya está hecha, así que la
+   lista puede crecer después (una TV sin actualizar salta lo que no conoce).
 9. **Sí**: "Caras de reloj" y "Actualiza tu Pepito para cambiar la cara del reloj."
 
 Preguntas tal como se hicieron:
