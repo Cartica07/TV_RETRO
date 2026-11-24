@@ -18,15 +18,15 @@ export const CARAS = [
       { tipo: TIPO.CAMPANA, datos: [2, 0, 0, 0] },
       { tipo: TIPO.HORA, datos: [64, 13, 0, 2, 5, 1, 0] },
       { tipo: TIPO.AMPM, datos: [124, 30, 0, 0, 1, 2] },
-      { tipo: TIPO.FECHA, datos: [64, 54, 0, 1, 1, 1, 3] },
+      { tipo: TIPO.FECHA, datos: [64, 50, 0, 1, 1, 1, 3] }, // y=50: en 54 la fecha se cortaba abajo (2026-11-24)
     ],
   },
   {
     clave: 'agujas', nombre: 'Agujas', orden: 2,
     elementos: [
       { tipo: TIPO.AGUJAS, datos: [31, 31, 0, 30, 2] },
-      { tipo: TIPO.DIA, datos: [96, 6, 0, 2, 2, 1, 0] },
-      { tipo: TIPO.FECHA, datos: [96, 26, 0, 0, 1, 1, 2] },
+      { tipo: TIPO.DIA, datos: [96, 3, 0, 2, 1, 1, 0] }, // tamaño 1: en 2 "Miércoles" y "Sábado" no cabían (2026-11-24)
+      { tipo: TIPO.FECHA, datos: [96, 22, 0, 0, 1, 1, 2] },
       { tipo: TIPO.LINEA, datos: [72, 38, 0, 120, 38] },
       { tipo: TIPO.PROXIMA_ALARMA, datos: [96, 45, 0, 0, 1, 1, 1] },
       { tipo: TIPO.ESTADO, datos: [125, 54, 0, 1, 2, 1, 1] },
