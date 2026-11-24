@@ -78,6 +78,36 @@ export function prepararCuadros(cuadros, { vueltas = 1, velocidad = 1 } = {}) {
 
 export const duracionDe = (cuadros) => cuadros.reduce((s, c) => s + c.dur, 0);
 
+/** Orden de reproducción de un GIF (2026-11-24): 'normal', 'reves' (al revés) o 'idavuelta' (ida y vuelta, sin repetir los extremos). */
+export function ordenar(cuadros, modo) {
+  if (modo === 'reves') return cuadros.slice().reverse();
+  if (modo === 'idavuelta') return cuadros.concat(cuadros.slice(1, -1).reverse());
+  return cuadros;
+}
+
+/**
+ * Texto (u otra máscara de 1024 bytes) encima de una mitad, solo entre "desde" y "hasta" ms (2026-11-24). La línea de tiempo se
+ * parte justo en esos momentos. apagar = true apaga los puntos de la máscara (texto oscuro sobre lo encendido); si no, los
+ * enciende. Devuelve una línea nueva [{t, bitmap}] (los cuadros seguidos iguales, unidos).
+ */
+export function superponer(cuadros, duracion, mascara, desde, hasta, apagar = false) {
+  const ini = Math.max(0, Math.round(desde));
+  const fin = Math.min(Math.round(duracion), Math.round(hasta));
+  if (fin <= ini) return cuadros;
+  const tiempos = [...new Set([...cuadros.map((c) => c.t), ini, fin].filter((t) => t < duracion))].sort((a, b) => a - b);
+  const salida = [];
+  for (const t of tiempos) {
+    let bm = cuadroEn(cuadros, t).bitmap;
+    if (t >= ini && t < fin) {
+      const o = new Uint8Array(bm.length);
+      for (let i = 0; i < bm.length; i++) o[i] = apagar ? bm[i] & ~mascara[i] : bm[i] | mascara[i];
+      bm = o;
+    }
+    if (!salida.length || !igual(salida[salida.length - 1].bitmap, bm)) salida.push({ t, bitmap: bm });
+  }
+  return salida;
+}
+
 /**
  * Parte un GIF en el TIEMPO (pedido del dueño, 2026-11-24): lo de antes de "corte" ms va en un Pepito y lo de después en el
  * otro, que lo sigue apenas termina el primero. Un cuadro que cruza el corte se parte en dos (cada parte con su duración).

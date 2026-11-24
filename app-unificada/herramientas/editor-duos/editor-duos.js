@@ -7,6 +7,7 @@ import { acomodarEnDestino, grisesDeCanvas, grisABitmapAtkinson, grisABitmapUmbr
 import { codificarMusical, decodificarMusical } from './compresion.js';
 import * as D from './duo.js';
 import { escucharSesion, iniciarSesion, listarMusicales, leerMusical } from './firebase.js';
+import { dibujarOLED } from './renderer.js';
 
 const $ = (id) => document.getElementById(id);
 const valor = (id) => $(id).value;
@@ -216,6 +217,24 @@ function mitades() {
   return { izq, der, delays: e.delays };
 }
 
+// Texto encima (2026-11-24): se dibuja con dibujarOLED de la app (las mismas letras que la TV) en una pantalla de 128×64 y se
+// toma como máscara de 1024 bytes. null si no hay texto.
+function mascaraTexto() {
+  const texto = valor('textoEncima').trim();
+  if (!texto) return null;
+  const lienzo = document.createElement('canvas');
+  lienzo.width = D.ANCHO;
+  lienzo.height = D.ALTO;
+  dibujarOLED(lienzo, {
+    tipo: 'texto', texto, tamano: numero('textoTamano', 1, 1, 5), fuente: valor('textoFuente'), alineacion: 'izquierda', alineacionV: 'arriba',
+    modoTexto: 'ajustar', manual: true, x: numero('textoX', 0, 0, 127), y: numero('textoY', 0, 0, 63), invertido: false, direccion: 'h',
+  });
+  const d = lienzo.getContext('2d').getImageData(0, 0, D.ANCHO, D.ALTO).data;
+  const m = new Uint8Array(D.BYTES_PANTALLA);
+  for (let y = 0; y < D.ALTO; y++) for (let x = 0; x < D.ANCHO; x++) if (d[(y * D.ANCHO + x) * 4 + 2] > 128) m[y * 16 + (x >> 3)] |= 0x80 >> (x & 7);
+  return m;
+}
+
 function binarizar(gris, ancho, a) {
   const umbral = limitar(a.umbral, 127, 1, 254);
   const bm = a.pixelar ? grisABitmapAtkinson(gris, ancho, D.ALTO, umbral) : grisABitmapUmbral(gris, ancho, D.ALTO, umbral);
@@ -237,7 +256,7 @@ function cuadrosDeGif(id, vueltasId, velocidadId, sufijo) {
   if (!leido) return null;
   const [a, b] = rangoDeCuadros(sufijo, leido.grises.length);
   const crudos = leido.grises.slice(a, b).map((gris, i) => ({ dur: leido.delays[a + i], bitmap: binarizar(gris, D.ANCHO, ajustesDe(id)) }));
-  return D.prepararCuadros(crudos, { vueltas: numero(vueltasId, 1, 1, 20), velocidad: numero(velocidadId, 100, 10, 400) / 100 });
+  return D.prepararCuadros(D.ordenar(crudos, valor('orden' + sufijo)), { vueltas: numero(vueltasId, 1, 1, 20), velocidad: numero(velocidadId, 100, 10, 400) / 100 });
 }
 
 // El hueco entre las pantallas, en puntos: la pantalla de 0,96" mide ~21,74 mm de ancho para sus 128 puntos.
@@ -284,7 +303,7 @@ function pistasYSonidoInicio() {
     const der = leido.der.slice(a, b).map((bitmap, i) => ({ dur: leido.delays[a + i], bitmap }));
     const op = { vueltas: numero('vueltasEscena', 1, 1, 20), velocidad: numero('velocidadEscena', 100, 10, 400) / 100 };
     return {
-      pistas: [{ tv: 'izq', inicio: 0, cuadros: D.prepararCuadros(izq, op) }, { tv: 'der', inicio: 0, cuadros: D.prepararCuadros(der, op) }],
+      pistas: [{ tv: 'izq', inicio: 0, cuadros: D.prepararCuadros(D.ordenar(izq, valor('ordenEscena')), op) }, { tv: 'der', inicio: 0, cuadros: D.prepararCuadros(D.ordenar(der, valor('ordenEscena')), op) }],
       inicioDe: () => 0,
     };
   }
@@ -340,6 +359,12 @@ async function armar() {
   }
   const sonido = notasSonido && notasSonido.length ? { tv: tvSonido, inicio: inicioSonido, notas: notasSonido } : null;
   const duo = D.armarDuo({ pistas: base.pistas, espera: { izq: valor('espera'), der: valor('espera') }, alTerminar: valor('alTerminar'), sonido });
+  const mascara = mascaraTexto();
+  if (mascara) {
+    const tvTexto = valor('textoTv');
+    const hasta = numero('textoHasta', 0, 0, 15000) || duo.duracion;
+    duo[tvTexto].cuadros = D.superponer(duo[tvTexto].cuadros, duo.duracion, mascara, numero('textoDesde', 0, 0, 15000), hasta, valor('textoColor') === 'apagar');
+  }
   const nombre = valor('nombre').trim() || 'Dúo';
   const portadaMs = $('portadaMs').value === '' ? undefined : numero('portadaMs', 0, 0, 15000);
   const paquete = await D.empaquetarDuo(duo, { nombre, clave: D.claveDe(nombre), codificarMusical, portadaMs });
@@ -690,7 +715,7 @@ function iniciar() {
   document.addEventListener('input', (e) => {
     if (soloVista(e.target)) return;
     guardarAjustes(e.target);
-    if (e.target && (e.target.type === 'range' || e.target.type === 'number' || e.target.id === 'nombre')) programar();
+    if (e.target && (e.target.type === 'range' || e.target.type === 'number' || e.target.id === 'nombre' || e.target.id === 'textoEncima')) programar();
   });
   $('botonReproducir').addEventListener('click', reproducir);
   $('botonParar').addEventListener('click', () => parar());

@@ -131,6 +131,20 @@ const comprobarMitades = (duo, nombre) => {
   informe('tramo de canción: el silencio antes de la primera nota se respeta', JSON.stringify(tramo3) === JSON.stringify([[0, 400], [660, 600]]), JSON.stringify(tramo3));
 }
 
+// ---- Al revés, ida y vuelta, y texto encima ----
+{
+  const [a, b, c] = [lleno(1), lleno(2), lleno(3)].map((bitmap) => ({ dur: 100, bitmap }));
+  informe('al revés', D.ordenar([a, b, c], 'reves').map((x) => x.bitmap[0]).join() === '3,2,1');
+  informe('ida y vuelta (sin repetir los extremos)', D.ordenar([a, b, c], 'idavuelta').map((x) => x.bitmap[0]).join() === '1,2,3,2');
+  const linea = [{ t: 0, bitmap: lleno(0x00) }, { t: 300, bitmap: lleno(0xF0) }];
+  const mascara = lleno(0x0F);
+  const s = D.superponer(linea, 600, mascara, 100, 400);
+  informe('texto encima de 100 a 400 ms: la línea se parte en esos momentos y solo ahí lleva la máscara',
+    JSON.stringify(s.map((x) => [x.t, x.bitmap[0]])) === JSON.stringify([[0, 0x00], [100, 0x0F], [300, 0xFF], [400, 0xF0]]), JSON.stringify(s.map((x) => [x.t, x.bitmap[0]])));
+  const ap = D.superponer([{ t: 0, bitmap: lleno(0xFF) }], 200, mascara, 0, 200, true);
+  informe('texto que apaga: quita los puntos de la máscara', ap.length === 1 && ap[0].bitmap[0] === 0xF0);
+}
+
 // ---- Claves ----
 informe('clave: sin tildes ni espacios', D.claveDe('¡Gatitos Bailando!') === 'gatitos_bailando' && D.claveDe('') === 'duo');
 

@@ -214,6 +214,27 @@ await pagina.fill('#cancionSegundos', '1.5');
 await pagina.waitForFunction(() => /Duración: 1.60 s/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
 informe('canción: 1,5 s de canción desde que empieza el izquierdo (a los 100 ms) alargan el dúo a 1,60 s', true);
 
+// ---- Al revés y texto encima (en el tiempo: al principio solo se ve el derecho) ----
+await pagina.selectOption('#sonido', '');
+await pagina.waitForTimeout(700);
+await verEn(0);
+const normalX = await primeraColumna('vistaDer');
+await pagina.selectOption('#ordenTiempo', 'reves');
+await pagina.waitForTimeout(900);
+await verEn(0);
+const revesX = await primeraColumna('vistaDer');
+informe('al revés: el primer cuadro del Pepito derecho es el último del GIF (el cuadrado empieza a la derecha)', normalX === 0 && revesX > 64, `${normalX} -> ${revesX}`);
+await pagina.selectOption('#ordenTiempo', 'normal');
+await pagina.waitForTimeout(700);
+await verEn(0);
+const sinTexto = await puntos('vistaIzq');
+await pagina.fill('#textoEncima', 'Hola');
+await pagina.waitForTimeout(900);
+await verEn(0);
+const conTexto = await puntos('vistaIzq');
+informe('texto encima: "Hola" aparece en el Pepito izquierdo (que estaba en negro)', sinTexto === 0 && conTexto > 0, `${sinTexto} -> ${conTexto}`);
+await pagina.fill('#textoEncima', '');
+
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();
 cerrar();
