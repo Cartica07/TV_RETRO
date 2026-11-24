@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pepito · Editor de dúos</title>
+<link rel="stylesheet" href="css/fuentes.css" />
+<link rel="stylesheet" href="css/tokens.css" />
+<style>
+/* Herramienta del dueño (administrador): crea los dúos (docs/plan-duos.md; solo Pepito Pro). Mismos colores y letras que la
+   app (tokens.css) y que el editor de caras. */
+[hidden] { display: none !important; } /* las reglas de abajo (display: grid) no deben ganarle a "hidden" */
+body { margin: 0; background: var(--fondo, #0B1016); color: var(--texto, #E6EDF5); font-family: var(--fuente-ui, "Space Grotesk", system-ui, sans-serif); }
+.pagina { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 1.6rem; }
+h2 { margin: 0 0 12px; font-size: 1.05rem; }
+.tarjeta { background: var(--superficie, #121821); border: 1px solid var(--borde, #253041); border-radius: 14px; padding: 16px; display: grid; gap: 10px; }
+.rejilla { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .rejilla { grid-template-columns: 1fr; } }
+.columna { display: grid; gap: 16px; }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nota { color: var(--texto-2, #8A9AAE); font-size: 0.85rem; margin: 0; }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--superficie-alta, #1A2230); border: 1px solid var(--borde, #253041); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+button.primario { background: var(--acento-relleno, #50C5EC); color: #04141c; border-color: transparent; font-weight: 600; }
+button:disabled { opacity: 0.5; cursor: default; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--acento, #4DD2FF); outline-offset: 2px; }
+select, input[type="text"], input[type="number"] { background: var(--superficie-hundida, #0E141C); border: 1px solid var(--borde, #253041); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+input[type="number"] { width: 84px; }
+.campo { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 0.92rem; }
+.pista { border: 1px solid var(--borde, #253041); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+.pista h3 { margin: 0; font-size: 0.95rem; color: var(--acento, #4DD2FF); }
+/* Las dos pantallas lado a lado, como quedan las TV pegadas: la izquierda (la que detecta) y la derecha. */
+.tvs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tv { display: grid; gap: 6px; }
+.tv canvas { width: 100%; height: auto; aspect-ratio: 2 / 1; display: block; background: #000; border-radius: 8px; border: 3px solid #1d2733; image-rendering: pixelated; }
+.tv span { font-size: 0.8rem; color: var(--texto-2, #8A9AAE); text-align: center; }
+#datos { font-family: var(--fuente-mono, "JetBrains Mono", monospace); font-size: 0.8rem; color: var(--texto-2, #8A9AAE); margin: 0; white-space: pre-wrap; }
+#datos.mal, #aviso.mal { color: #ff8a8a; }
+#aviso { min-height: 1.4em; margin: 0; }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <h1>Editor de dúos</h1>
+    <p class="nota">Dos Pepito Pro pegados hacen una animación entre los dos: empieza en el de la derecha y sigue en el de la izquierda (la que detecta). Por ahora el dúo se guarda como archivo; el catálogo en la nube viene después.</p>
+  </header>
+
+  <div class="rejilla">
+    <div class="columna">
+      <section class="tarjeta" aria-labelledby="tituloAnimacion">
+        <h2 id="tituloAnimacion">1. Animación</h2>
+        <label class="campo">Modo
+          <select id="modo">
+            <option value="escena">Una escena para los dos (un GIF ancho)</option>
+            <option value="dos">Un GIF para cada Pepito</option>
+          </select>
+        </label>
+
+        <div id="panelEscena" class="pista">
+          <h3>La escena</h3>
+          <label class="campo">GIF <input type="file" id="gifEscena" accept="image/gif" /></label>
+          <div class="fila">
+            <label class="fila">Vueltas <input type="number" id="vueltasEscena" min="1" max="20" value="1" /></label>
+            <label class="fila">Velocidad % <input type="number" id="velocidadEscena" min="10" max="400" value="100" /></label>
+          </div>
+          <p class="nota">Se acomoda en 256×64 y se parte por la mitad: la mitad izquierda va en el Pepito de la izquierda y la derecha en el de la derecha.</p>
+        </div>
+
+        <div id="panelDos" class="columna" hidden>
+          <div class="pista">
+            <h3>Primer GIF</h3>
+            <label class="campo">GIF <input type="file" id="gif1" accept="image/gif" /></label>
+            <label class="campo">Va en
+              <select id="tv1">
+                <option value="der">el Pepito de la derecha</option>
+                <option value="izq">el Pepito de la izquierda</option>
+              </select>
+            </label>
+            <div class="fila">
+              <label class="fila">Vueltas <input type="number" id="vueltas1" min="1" max="20" value="1" /></label>
+              <label class="fila">Velocidad % <input type="number" id="velocidad1" min="10" max="400" value="100" /></label>
+            </div>
+          </div>
+          <div class="pista">
+            <h3>Segundo GIF <span class="nota" id="tv2texto">(en el Pepito de la izquierda)</span></h3>
+            <label class="campo">GIF <input type="file" id="gif2" accept="image/gif" /></label>
+            <label class="campo">Empieza
+              <select id="inicio2">
+                <option value="alTerminar">cuando termina el primero</option>
+                <option value="ms">a los … milisegundos</option>
+              </select>
+            </label>
+            <label class="campo" id="campoInicioMs" hidden>Milisegundos <input type="number" id="inicioMs" min="0" max="15000" step="50" value="0" /></label>
+            <div class="fila">
+              <label class="fila">Vueltas <input type="number" id="vueltas2" min="1" max="20" value="1" /></label>
+              <label class="fila">Velocidad % <input type="number" id="velocidad2" min="10" max="400" value="100" /></label>
+            </div>
+          </div>
+          <label class="campo">Mientras espera
+            <select id="espera">
+              <option value="negro">cada uno queda en negro</option>
+              <option value="primero">cada uno muestra el primer cuadro de su GIF</option>
+            </select>
+          </label>
+          <label class="campo">Al terminar su GIF
+            <select id="alTerminar">
+              <option value="ultimo">se queda el último cuadro</option>
+              <option value="negro">queda en negro</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="tarjeta" aria-labelledby="tituloImagen">
+        <h2 id="tituloImagen">2. Ajustes de imagen</h2>
+        <div class="fila">
+          <label class="fila"><input type="checkbox" id="pixelar" checked /> Pixelar</label>
+          <label class="fila">Nivel de pixelado <input type="range" id="umbral" min="1" max="254" value="127" /></label>
+          <label class="fila"><input type="checkbox" id="invertir" /> Invertir</label>
+        </div>
+        <label class="campo">Encuadre
+          <select id="escala">
+            <option value="ajustar">Ajustar (entra entera)</option>
+            <option value="llenar">Llenar (recorta los bordes)</option>
+            <option value="estirar">Estirar</option>
+            <option value="original">Tamaño original</option>
+          </select>
+        </label>
+        <label class="campo">Fondo
+          <select id="fondo">
+            <option value="negro">Negro</option>
+            <option value="blanco">Blanco</option>
+          </select>
+        </label>
+        <label class="campo">Girar
+          <select id="rotar">
+            <option value="0">No</option>
+            <option value="90">90°</option>
+            <option value="180">180°</option>
+            <option value="270">270°</option>
+          </select>
+        </label>
+        <div class="fila">
+          <label class="fila"><input type="checkbox" id="volteoH" /> Voltear de lado</label>
+          <label class="fila"><input type="checkbox" id="volteoV" /> Voltear de arriba abajo</label>
+        </div>
+        <div class="fila" aria-label="Recorte del GIF original (porcentaje que se quita de cada borde)">
+          <span class="nota">Recortar %:</span>
+          <label class="fila">izq. <input type="number" id="recorteIzq" min="0" max="45" value="0" /></label>
+          <label class="fila">arriba <input type="number" id="recorteArriba" min="0" max="45" value="0" /></label>
+          <label class="fila">der. <input type="number" id="recorteDer" min="0" max="45" value="0" /></label>
+          <label class="fila">abajo <input type="number" id="recorteAbajo" min="0" max="45" value="0" /></label>
+        </div>
+      </section>
+
+      <section class="tarjeta" aria-labelledby="tituloSonido">
+        <h2 id="tituloSonido">3. Sonido</h2>
+        <label class="campo">Sonido <select id="sonido"></select></label>
+        <label class="campo">Suena en
+          <select id="sonidoTv">
+            <option value="izq">el Pepito de la izquierda</option>
+            <option value="der">el Pepito de la derecha</option>
+          </select>
+        </label>
+        <label class="campo">Empieza
+          <select id="sonidoInicio">
+            <option value="parte">cuando empieza la parte de ese Pepito</option>
+            <option value="ms">a los … milisegundos</option>
+          </select>
+        </label>
+        <label class="campo" id="campoSonidoMs" hidden>Milisegundos <input type="number" id="sonidoMs" min="0" max="15000" step="50" value="0" /></label>
+      </section>
+    </div>
+
+    <div class="columna">
+      <section class="tarjeta" aria-labelledby="tituloVista">
+        <h2 id="tituloVista">Vista previa</h2>
+        <div class="tvs">
+          <div class="tv"><canvas id="vistaIzq" width="512" height="256" aria-label="Pepito de la izquierda"></canvas><span>Pepito izquierdo (detecta)</span></div>
+          <div class="tv"><canvas id="vistaDer" width="512" height="256" aria-label="Pepito de la derecha"></canvas><span>Pepito derecho</span></div>
+        </div>
+        <div class="fila">
+          <button type="button" id="botonReproducir" class="primario" disabled>Reproducir</button>
+          <button type="button" id="botonParar" disabled>Parar</button>
+          <label class="fila"><input type="checkbox" id="conSonido" checked /> Con sonido</label>
+        </div>
+        <p id="datos">Carga un GIF para empezar.</p>
+        <p class="nota">La vista previa sale del archivo ya armado (lo mismo que reciben los Pepitos).</p>
+      </section>
+
+      <section class="tarjeta" aria-labelledby="tituloGuardar">
+        <h2 id="tituloGuardar">4. Guardar</h2>
+        <label class="campo">Nombre <input type="text" id="nombre" maxlength="30" placeholder="Por ejemplo: Corazón" /></label>
+        <div class="fila">
+          <button type="button" id="botonPaquete" disabled>Descargar el dúo (.json)</button>
+          <button type="button" id="botonCabecera" disabled>Descargar para el firmware (.h)</button>
+        </div>
+        <p id="aviso" role="status" aria-live="polite"></p>
+        <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/editor-duos.js"></script>
+</body>
+</html>
