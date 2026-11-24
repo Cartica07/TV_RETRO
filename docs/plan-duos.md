@@ -144,7 +144,7 @@ Copia de la Pro v11 con ESP-NOW encendido por orden serie (`TVRETRO_ESPNOW_ON`, 
 
 - **ESP-NOW cuesta ~220 bytes de memoria interna** (el Bluetooth, ~72 KB) y **~8 KB de programa**. 34 saludos enviados sin errores; el streaming siguió bien.
 - (Esta vez la TV no tenía la cara Clima: por eso hay más memoria libre que en la medición del Bluetooth.)
-- Falta: con ESP-NOW encendido, un GIF grande, una canción con letra, la cara Clima y una actualización por Wi-Fi.
+- Prueba con carga (2026-11-24): GIF grande, canción con letra (33 KB en 1,3 s), ajustes y actualización por Wi-Fi a la v11 (1,6 MB en 42 s, validada): **todo bien**, mínimo interno 23,6 KB. **Pero la placa se reinició al empezar y ESP-NOW quedó apagado** (solo se enciende con la orden): la prueba con ESP-NOW encendido bajo carga queda para la fase 0. La cara Clima no se pudo probar (pide la v11 y la copia decía ser la 10: error de orden del plan de prueba).
 
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
