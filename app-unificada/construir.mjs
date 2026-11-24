@@ -67,7 +67,32 @@ copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+
+// Más > Caras de reloj (2026-11-24): mas.js y main.js de la Pro no conocen la pantalla nueva. En la COPIA se agrega "caras" a las
+// pantallas de Más (mas.js avisa a js/caras.js al abrirla) y main.js la muestra con su título. Si esas líneas de la Pro cambian,
+// la compilación falla (no queda a medias).
+{
+  const parchar = (archivo, cambios) => {
+    const ruta = join(www, 'js', archivo);
+    let fuente = readFileSync(ruta, 'utf8');
+    for (const [viejo, nuevo] of cambios) {
+      const veces = fuente.split(viejo).length - 1;
+      if (veces !== 1) throw new Error(`Caras de reloj: en js/${archivo} "${viejo.slice(0, 60)}" aparece ${veces} veces (se esperaba 1). La Pro cambió: revisa app-unificada/construir.mjs`);
+      fuente = fuente.replace(viejo, () => nuevo);
+    }
+    writeFileSync(ruta, fuente);
+  };
+  parchar('mas.js', [
+    ["['juegos', 'galeria', 'alarma', 'config'].includes(vista)", "['juegos', 'galeria', 'alarma', 'config', 'caras'].includes(vista)"],
+    ["    if (masVista === 'alarma') abrirAlarma();", "    if (masVista === 'alarma') abrirAlarma();\n    if (masVista === 'caras') window.dispatchEvent(new CustomEvent('pepito-abrir-caras'));"],
+  ]);
+  parchar('main.js', [
+    ["  const enGaleria = enMas && obtenerMasVista() === 'galeria';", "  const enGaleria = enMas && obtenerMasVista() === 'galeria';\n  const enCaras = enMas && obtenerMasVista() === 'caras';"],
+    ["  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';", "  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';\n  { const sc = document.getElementById('seccionCaras'); if (sc) sc.style.display = enCaras ? 'block' : 'none'; }"],
+    ["enAlarma ? 'Alarma' :", "enAlarma ? 'Alarma' : enCaras ? 'Caras de reloj' :"],
+  ]);
+}
 
 // Sin internet, cuentas.js de la Pro corta el arranque con "Sin conexión…" ANTES de pedir la lista de TV. En la unificada esa
 // decisión la toma el enrutador (listarMisDispositivos, con el mismo texto): con una TV Lite ya añadida se sigue, porque va por
@@ -236,6 +261,8 @@ if (!sinPepito) cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|priva
 // Más > Caras de reloj (2026-11-24, docs/plan-caras-de-reloj.md; la maneja js/caras.js): un botón en el menú Más (después de
 // Alarma) y su pantalla: la vista previa de la cara (dibujada por js/cara.js, igual que la TV), la lista de caras (se abre en
 // la ventanita de listas cortas) y "Enviar a Pepito". "Caras de reloj" y el aviso de la Pro vieja: textos aprobados.
+// (Con --sin-pepito no se agrega: esa copia es la que usan las pruebas ORIGINALES de la Pro, que cuentan 4 opciones en Más.)
+if (!sinPepito) {
 cambiar(/(<button type="button" class="fila-mas" data-mas="config">)/,
   `<button type="button" class="fila-mas" data-mas="caras">
           <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
@@ -259,6 +286,7 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
     </div>
 
     $1`, 'la sección de la Alarma');
+}
 // Más > Config > Sistema: barra de avance de "Actualizar" (pedido del dueño, 2026-11-23, Pepito Pro y Lite; la mueve
 // js/barra-actualizar.js). Oculta hasta que empieza una actualización.
 cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
@@ -266,7 +294,7 @@ cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
   'el estado de la actualización (Sistema)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
-  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>',
+  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>',
   'el script js/main.js');
 
 if (paraApk) {

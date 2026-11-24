@@ -212,7 +212,15 @@ export function describirError(error) {
 // ---------- POR TV ----------
 // Asíncronas: con una TV Lite esperan a que cargue la parte Bluetooth.
 const porTV = (nombre) => (...a) => (tvLite ? cargarLite().then((m) => m[nombre](...a)) : pro[nombre](...a));
-export const cargarEstado = porTV('cargarEstado');
+// El último estado del panel (lo que se ve en la TV): una cara de reloj para una TV Pro se manda con la orden "ajustes", y
+// enviarEstado de la Pro arma esa orden a partir del estado (texto, configuración…).
+let ultimoEstado = null;
+const ORDENES = ['alarma', 'ajustes', 'actualizar', 'restablecer', 'juego'];
+export async function cargarEstado(...a) {
+  const r = await (tvLite ? cargarLite().then((m) => m.cargarEstado(...a)) : pro.cargarEstado(...a));
+  if (r && r.exito !== false) ultimoEstado = r;
+  return r;
+}
 export const leerMostrada = porTV('leerMostrada');
 export const cargarAlarma = porTV('cargarAlarma');
 export const guardarAlarma = porTV('guardarAlarma');
@@ -262,7 +270,68 @@ export async function guardarAjustes(datos, ...resto) {
   return r;
 }
 export const cargarSistema = porTV('cargarSistema');
-export const enviarEstado = porTV('enviarEstado');
+export async function enviarEstado(estado, ...resto) {
+  if (estado && !ORDENES.includes(estado.tipo)) ultimoEstado = estado;
+  return tvLite ? (await cargarLite()).enviarEstado(estado, ...resto) : pro.enviarEstado(estado, ...resto);
+}
+
+// ---------- Caras de reloj (2026-11-24, docs/plan-caras-de-reloj.md; las usa js/caras.js) ----------
+// El catálogo (relojes/) viene de la nube para las dos TV. La cara elegida: TV Pro -> dispositivos/{id}/reloj = { clave, datos }
+// + la orden "ajustes" (la TV la lee con sus ajustes); TV Lite -> por Bluetooth (lite-tv.js).
+const ESTADO_MINIMO = { tipo: 'texto', texto: '', tamano: 2, alineacion: 'centro', alineacionV: 'centro', invertido: false, modoTexto: 'ajustar', fuente: 'sans', manual: false, x: 0, y: 0, direccion: 'h' };
+const deBase64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const aBase64 = (bytes) => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+
+/** Las caras del catálogo: [{ clave, nombre }] en el orden que les dio el dueño, o null si no se pudo leer (sin internet). */
+export async function unificadaListarCaras() {
+  const v = await leerNube('relojes/indice');
+  if (!v || typeof v !== 'object') return [];
+  return Object.entries(v)
+    .filter(([, c]) => c && typeof c.nombre === 'string')
+    .map(([clave, c]) => ({ clave, nombre: c.nombre, orden: Number(c.orden) || 0 }))
+    .sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+/** La receta de una cara del catálogo (Uint8Array) o null. */
+export async function unificadaLeerCara(clave) {
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(clave))) return null;
+  const b64 = await leerNube(`relojes/datos/${clave}`);
+  return typeof b64 === 'string' ? deBase64(b64) : null;
+}
+
+/** La clave de la cara que tiene la TV en uso ('' = Cara 1). */
+export async function unificadaCaraActual() {
+  if (tvLite) return (await cargarLite()).caraActual();
+  const id = pro.dispositivoActual();
+  if (!id) return '';
+  const v = await leerNube(`dispositivos/${id}/reloj/clave`);
+  return typeof v === 'string' ? v : '';
+}
+
+/** ¿La TV en uso puede cambiar de cara? true / false (hay que actualizarla) / null (no se sabe: sin conexión). */
+export async function unificadaPuedeCaras() {
+  if (tvLite) return (await cargarLite()).puedeCaras();
+  const s = await pro.cargarSistema();
+  if (!s || !s.exito) return null;
+  return !!(s.firmware && s.firmware.build >= 11); // Pepito Pro v11: la primera con caras
+}
+
+/** Copia la cara a la TV en uso (clave '' = Cara 1). { exito } o { exito: false, error }. */
+export async function unificadaElegirCara(clave, receta) {
+  if (tvLite) return (await cargarLite()).elegirCara(clave, receta);
+  const id = pro.dispositivoActual();
+  if (!id) return { exito: false, error: 'No hay ningún Pepito elegido' };
+  try {
+    const m = await import(SDK_DB);
+    const ruta = m.ref(pro.db, `dispositivos/${id}/reloj`);
+    if (clave) await m.set(ruta, { clave, datos: aBase64(receta) });
+    else await m.remove(ruta);
+  } catch (error) {
+    console.error('[Pepito] No se pudo guardar la cara:', error);
+    return { exito: false, error: pro.describirError(error) };
+  }
+  return pro.enviarEstado(Object.assign({}, ultimoEstado || ESTADO_MINIMO, { tipo: 'ajustes' }));
+}
 
 // Suscripciones (devuelven la función para dejar de escuchar): con una TV Lite se suscriben cuando cargue la parte Bluetooth.
 const suscripcion = (nombre) => (...a) => {

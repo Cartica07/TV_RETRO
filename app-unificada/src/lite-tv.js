@@ -586,6 +586,44 @@ async function actualizar() {
 }
 
 // ===================================================
+// Caras de reloj (2026-11-24; sección 8.6 de docs/evaluacion-version-lite.md): la cara elegida viaja por Bluetooth (bit 4) y
+// el celular recuerda cuál le mandó a cada TV (la TV no lo cuenta).
+// ===================================================
+export async function caraActual() {
+  try { return (await almacen.leer('meta', claveTV('cara'))) || ''; } catch (e) { return ''; }
+}
+
+/** true si la TV entiende caras (la Lite con actualización por Bluetooth), false si hay que actualizarla, null si no se sabe. */
+export async function puedeCaras() {
+  try {
+    if (!(await ble.reconectar())) return null;
+    const e = await ble.exclusivo(() => ble.pedirEstado());
+    return e.build !== null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function elegirCara(clave, receta) {
+  try {
+    await asegurarConexion();
+    await ble.exclusivo(async () => {
+      if (clave && receta) {
+        const r = await ble.enviarArchivo(receta, { banderas: 16 });
+        if (!r.ok) throw new ble.ErrorTV('La cara no llegó bien. Vuelve a intentarlo.');
+      } else {
+        await ble.volverCara1();
+      }
+    });
+    await almacen.guardar('meta', claveTV('cara'), clave || '');
+    return { exito: true };
+  } catch (err) {
+    if (!(err instanceof ble.ErrorTV)) console.error('Error al enviar la cara del reloj:', err);
+    return { exito: false, error: describirErrorTV(err) };
+  }
+}
+
+// ===================================================
 // Añadir una TV Lite (lo usa la pantalla "Añade tu TV")
 // ===================================================
 /** La TV Lite que ya está emparejada con este celular ({ deviceId, name }) o null. */

@@ -56,7 +56,7 @@ function iniciar() {
 
   // Las listas que se abren en esta ventana. Las de canciones llevan buscador; las cortas (Letra, Encuadre, Zona horaria, pedido
   // del dueño 2026-11-23: que no se vea la lista gris de Android), no: arriba va el nombre que la lista ya tiene en pantalla.
-  const LISTAS = { seleccionCancion: true, alarmaTono: true, fuenteTexto: false, escalaImagen: false, ajusteZona: false, ajusteApagado: false };
+  const LISTAS = { seleccionCancion: true, alarmaTono: true, fuenteTexto: false, escalaImagen: false, ajusteZona: false, ajusteApagado: false, caraLista: false };
   const conBuscador = (select) => LISTAS[select.id] === true;
   const SELECTOR_LISTAS = Object.keys(LISTAS).map((id) => ':scope > #' + id).join(', ');
   const nombreDeLaLista = (select) => {

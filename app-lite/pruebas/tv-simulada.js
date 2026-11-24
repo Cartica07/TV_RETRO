@@ -48,6 +48,8 @@
     tamanoEspacio: 1310720,        // el otro espacio de programa (1,25 MB)
     msReinicio: 300,               // lo que tarda en volver a aceptar conexiones tras reiniciarse
     programas: [],                 // bitácora de actualizaciones: { build, ok, motivo }
+    cara: null,                    // la cara de reloj guardada (Uint8Array de la receta R1) o null = Cara 1 (sección 8.6)
+    caras: 0,                      // cuántas veces se cambió la cara
     reinicios: 0,
   };
   let reiniciandoHasta = 0;
@@ -134,7 +136,7 @@
       case 0x01: { const epoch = leer32(d, 1); const ok = epoch >= 1700000000; if (ok) { tv.hora = epoch; tv.zona = (d[5] | (d[6] << 8)) << 16 >> 16; } avisar([0x81, ok ? 1 : 0]); break; }
       case 0x02: {
         const tam = leer32(d, 1), crc = leer32(d, 5), ventana = d[9] || 1, banderas = d[10] || 0;
-        const esCancion = !!(banderas & 4), contenido = !!(banderas & 8), programa = !!(banderas & 32);
+        const esCancion = !!(banderas & 4), contenido = !!(banderas & 8), programa = !!(banderas & 32), esCara = !programa && !!(banderas & 16);
         const id = esCancion ? (d[11] | (d[12] << 8)) : 0;
         if (programa) {
           const build = d.length >= 17 ? leer32(d, 13) : 0;
@@ -146,6 +148,12 @@
           rx = codigo === 1 ? { tam, crc, ventana, programa: true, build, seq: 0, partes: [], bytes: 0, aceptados: 0, avisoHueco: -1 } : null;
           if (codigo === 1) tv.sonando = null;
           avisar([0x82, codigo]);
+          break;
+        }
+        if (esCara) {
+          const okCara = tam >= 5 && tam <= 2048;
+          rx = okCara ? { tam, crc, ventana, esCara: true, seq: 0, partes: [], bytes: 0, aceptados: 0, avisoHueco: -1 } : null;
+          avisar([0x82, okCara ? 1 : 0]);
           break;
         }
         let ok = true; // un INICIO nuevo reemplaza al que estuviera en curso
@@ -167,6 +175,14 @@
             avisar([0x83, motivo === 0 ? 1 : 0, ...u32(todo.length), ...u32(1), ...u32(2), motivo]);
             if (motivo === 0) setTimeout(() => reiniciar(r.build), 50);
           });
+          break;
+        }
+        if (rx.esCara) {
+          // Como cara_valida del firmware: empieza con R1 (la TV simulada no revisa el resto).
+          const okCara = todo.length === rx.tam && crc32(todo) === rx.crc && todo[0] === 0x52 && todo[1] === 0x31;
+          if (okCara) { tv.cara = todo; tv.caras++; }
+          rx = null;
+          avisar([0x83, okCara ? 1 : 0, ...u32(todo.length), ...u32(1), ...u32(2)]);
           break;
         }
         const ok = todo.length === rx.tam && crc32(todo) === rx.crc;
@@ -208,6 +224,7 @@
         avisar([0xA0, 1]);
         break;
       }
+      case 0x24: { const ok = d[1] === 0; if (ok) { tv.cara = null; tv.caras++; } avisar([0xA4, ok ? 1 : 0]); break; }
       case 0x22: // [brillo][volumen][zona i16][apagado u8, opcional desde el 2026-11-23; si falta, 5]
         tv.ajustes = { brillo: d[1], volumen: d[2], zona: (d[3] | (d[4] << 8)) << 16 >> 16, apagado: d.length >= 6 ? d[5] : 5 };
         avisar([0xA2, 1]);
@@ -265,6 +282,7 @@
     hora: tv.hora, zona: tv.zona, contenidos: tv.contenidos, sonando: tv.sonando, alarmas: tv.alarmas, ajustes: tv.ajustes,
     biblioteca: [...tv.biblioteca.keys()], libre: libre(), conectado: tv.conectado, escrituras: tv.escrituras.length,
     build: tv.build, pendiente: tv.pendiente, programas: tv.programas, reinicios: tv.reinicios,
+    cara: tv.cara ? Array.from(tv.cara) : null, caras: tv.caras,
   });
   window.__tv = tv;
 

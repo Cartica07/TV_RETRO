@@ -464,6 +464,16 @@ export async function guardarAlarmasEnTV({ tonoId, alarmas }) {
   if (r.getUint8(1) !== 1) throw new ErrorTV('La TV no pudo guardar la alarma.');
 }
 
+// CARA [0x24][0]: vuelve la Cara 1 (la de siempre)  ->  aviso [0xA4][ok]. Una cara del catálogo viaja como envío con el bit 4
+// (enviarArchivo(receta, { banderas: 16 })). Sección 8.6 de docs/evaluacion-version-lite.md.
+export async function volverCara1() {
+  avisos.length = 0;
+  await escribirCtrl([0x24, 0]);
+  const r = await esperarAvisoTipo(0xA4, 4000);
+  if (!r) throw new ErrorTV('La TV no respondió.');
+  if (r.getUint8(1) !== 1) throw new ErrorTV('No se pudo cambiar la cara del reloj.');
+}
+
 // AJUSTES: [0x22][brillo][volumen][zona i16, minutos][apagado u8, opcional]  ->  aviso [0xA2][1]
 // "apagado" (minutos sin usar el botón para que la pantalla se apague: 0 = nunca, 5, 10, 20) lo manda solo quien lo conoce
 // (la app Pepito, desde el 2026-11-23); sin él la TV usa 5. Un firmware anterior ignora el byte de más.
