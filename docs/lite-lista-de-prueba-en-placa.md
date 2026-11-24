@@ -113,6 +113,14 @@ Placa S3 con la Lite versión 1 grabada por cable; versiones de prueba publicada
 
 Falta: repetirlo en la **C3 real** cuando llegue (publicando en `firmware/lite/c3`), y la versión vieja/firma mala solo se probaron con la TV simulada (la herramienta de publicación no deja firmar con otra clave).
 
+## 5e. Caras de reloj (firmware versión 4, 2026-11-24) — PROBADA EN LA S3
+
+- [x] Más > Caras de reloj muestra la Cara 1 y el catálogo, sin pedir actualizar (versión 4).
+- [x] Enviar Grande y Agujas: la TV pasa sola al reloj con esa cara (`[caras] cara elegida guardada`).
+- [x] Enviar la Cara 1 (comando 0x24): vuelve el reloj de siempre.
+- [x] Sistema no ofrece actualizar (en la nube está la 3, menor que la 4).
+- [ ] Lo mismo en la C3 real.
+
 ## 6. Qué medir mientras tanto
 
 Velocidad de un envío de 100 KB (en la prueba anterior, **22 KB/s** con el plugin y 36–63 KB/s con el navegador), memoria libre (`[lite] listo. Memoria libre…` en el registro; con la S3 sin memoria extra), y que ningún comando deje la TV colgada.
