@@ -159,7 +159,8 @@ Copia de la Pro v11 con ESP-NOW encendido por orden serie (`TVRETRO_ESPNOW_ON`, 
 | Separar a mitad | se corta en las dos (5 de 5) |
 
 - El dueño: "funcionan súper bien todas"; cortar al separar es lo que se quiere.
-- Pendiente: medir la señal a 20-30 cm para poner el límite (que no se junte con una TV cercana no pegada); el canal del router (la Pro real estará en el de su router); un catálogo de verdad (m1) en vez del corazón dibujado; el consumo.
+- **Señal según la distancia** (S3 + ESP8266, 2026-11-24; distancias aproximadas): pegadas -46/-47 dBm, 10 cm -49/-50, 20 cm -53/-54, **30 cm -65/-68**, 50 cm -65/-67, 1 m -67/-72. Hay un salto de >10 dB entre 20 y 30 cm. **Regla propuesta:** aceptar solo respuestas por encima de **-58 dBm** y, si responden varias, la más fuerte (la búsqueda solo ocurre con el sensor sintiendo el imán). Pegadas y a 10 cm no se distinguen por señal (3 dB), y no hace falta.
+- Pendiente: el canal del router (la Pro real estará en el de su router); un catálogo de verdad (m1) en vez del corazón dibujado; el consumo.
 
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
