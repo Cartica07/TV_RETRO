@@ -53,19 +53,53 @@ input[type="number"] { width: 84px; }
         <h2 id="tituloAnimacion">1. Animación</h2>
         <label class="campo">Modo
           <select id="modo">
-            <option value="escena">Una escena para los dos (un GIF ancho)</option>
+            <option value="tiempo">Partir un GIF en el tiempo (primero en un Pepito, después en el otro)</option>
+            <option value="escena">Partir un GIF en dos mitades (una en cada Pepito)</option>
             <option value="dos">Un GIF para cada Pepito</option>
           </select>
         </label>
 
-        <div id="panelEscena" class="pista">
-          <h3>La escena</h3>
+        <div id="panelTiempo" class="pista">
+          <h3>El GIF</h3>
+          <label class="campo">GIF <input type="file" id="gifTiempo" accept="image/gif" /></label>
+          <label class="campo">Empieza en
+            <select id="tvTiempo">
+              <option value="der">el Pepito de la derecha</option>
+              <option value="izq">el Pepito de la izquierda</option>
+            </select>
+          </label>
+          <label class="campo">Corte <span class="fila"><input type="range" id="corteTiempo" min="5" max="95" value="50" /> <span class="nota" id="corteTiempoTexto">50 %</span></span></label>
+          <div class="fila">
+            <label class="fila">Vueltas <input type="number" id="vueltasTiempo" min="1" max="20" value="1" /></label>
+            <label class="fila">Velocidad % <input type="number" id="velocidadTiempo" min="10" max="400" value="100" /></label>
+          </div>
+          <p class="nota">Lo de antes del corte se ve en un Pepito; apenas termina, el resto sigue en el otro.</p>
+        </div>
+
+        <div id="panelEscena" class="pista" hidden>
+          <h3>El GIF</h3>
           <label class="campo">GIF <input type="file" id="gifEscena" accept="image/gif" /></label>
+          <label class="campo">Corte <span class="fila"><input type="range" id="corteMitades" min="10" max="90" value="50" /> <span class="nota" id="corteMitadesTexto">50 %</span></span></label>
+          <div class="campo">Mitad izquierda
+            <span class="fila">
+              <label class="fila">↔ <input type="number" id="movIzqX" min="-128" max="128" value="0" /></label>
+              <label class="fila">↕ <input type="number" id="movIzqY" min="-64" max="64" value="0" /></label>
+            </span>
+          </div>
+          <div class="campo">Mitad derecha
+            <span class="fila">
+              <label class="fila">↔ <input type="number" id="movDerX" min="-128" max="128" value="0" /></label>
+              <label class="fila">↕ <input type="number" id="movDerY" min="-64" max="64" value="0" /></label>
+            </span>
+          </div>
+          <div class="fila">
+            <button type="button" id="botonJuntar">Volver a juntarlas en el borde</button>
+          </div>
           <div class="fila">
             <label class="fila">Vueltas <input type="number" id="vueltasEscena" min="1" max="20" value="1" /></label>
             <label class="fila">Velocidad % <input type="number" id="velocidadEscena" min="10" max="400" value="100" /></label>
           </div>
-          <p class="nota">Se acomoda en 256×64 y se parte por la mitad: la mitad izquierda va en el Pepito de la izquierda y la derecha en el de la derecha.</p>
+          <p class="nota">La mitad izquierda del GIF va en el Pepito de la izquierda y la derecha en el de la derecha. Con ↔ y ↕ (en puntos) cada mitad se corre dentro de su pantalla: en 0 quedan pegadas al borde donde se juntan los Pepitos.</p>
         </div>
 
         <div id="panelDos" class="columna" hidden>
@@ -98,13 +132,16 @@ input[type="number"] { width: 84px; }
               <label class="fila">Velocidad % <input type="number" id="velocidad2" min="10" max="400" value="100" /></label>
             </div>
           </div>
+        </div>
+
+        <div id="panelEspera" class="columna">
           <label class="campo">Mientras espera
             <select id="espera">
               <option value="negro">cada uno queda en negro</option>
-              <option value="primero">cada uno muestra el primer cuadro de su GIF</option>
+              <option value="primero">cada uno muestra el primer cuadro de su parte</option>
             </select>
           </label>
-          <label class="campo">Al terminar su GIF
+          <label class="campo">Al terminar su parte
             <select id="alTerminar">
               <option value="ultimo">se queda el último cuadro</option>
               <option value="negro">queda en negro</option>
