@@ -31,33 +31,52 @@ function deCache(hueco, clave, crear) {
 }
 window.__editorDuos = { lecturasGuardadas: () => lecturas.size }; // para las pruebas
 
-const geometria = () => ({
-  escala: valor('escala'),
-  fondo: valor('fondo'),
-  rotar: Number(valor('rotar')),
-  volteoH: marcado('volteoH'),
-  volteoV: marcado('volteoV'),
+// ---- Ajustes de imagen (tarjeta 2). En el modo "un GIF para cada Pepito" cada GIF puede tener los suyos (pedido 2026-11-24):
+// se guardan aquí y los campos de la tarjeta muestran los del GIF que se está editando.
+const CAMPOS_IMAGEN = ['pixelar', 'umbral', 'invertir', 'escala', 'fondo', 'rotar', 'volteoH', 'volteoV',
+  'recorteIzq', 'recorteArriba', 'recorteDer', 'recorteAbajo'];
+const ajustes = { general: null, g1: null, g2: null };
+let editando = 'general';
+function leerAjustesDePantalla() {
+  const a = {};
+  for (const id of CAMPOS_IMAGEN) a[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value;
+  return a;
+}
+function ponerAjustesEnPantalla(a) {
+  for (const id of CAMPOS_IMAGEN) { if ($(id).type === 'checkbox') $(id).checked = !!a[id]; else $(id).value = a[id]; }
+}
+const separados = () => valor('modo') === 'dos' && marcado('ajustesSeparados');
+const ajustesDe = (id) => (separados() && (id === 'g1' || id === 'g2') && ajustes[id]) || ajustes.general;
+const limitar = (v, def, min, max) => { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
+
+const geometria = (a) => ({
+  escala: a.escala,
+  fondo: a.fondo,
+  rotar: Number(a.rotar),
+  volteoH: !!a.volteoH,
+  volteoV: !!a.volteoV,
 });
-const recorte = () => ({
-  izq: numero('recorteIzq', 0, 0, 45), arriba: numero('recorteArriba', 0, 0, 45),
-  der: numero('recorteDer', 0, 0, 45), abajo: numero('recorteAbajo', 0, 0, 45),
+const recorte = (a) => ({
+  izq: limitar(a.recorteIzq, 0, 0, 45), arriba: limitar(a.recorteArriba, 0, 0, 45),
+  der: limitar(a.recorteDer, 0, 0, 45), abajo: limitar(a.recorteAbajo, 0, 0, 45),
 });
 
 function leer(id, ancho) {
   const gif = gifs[id];
   if (!gif) return null;
-  const clave = JSON.stringify(geometria()) + '|' + JSON.stringify(recorte());
-  return deCache(id + '|' + ancho, clave, () => leerSinCache(gif, ancho));
+  const a = ajustesDe(id);
+  const clave = JSON.stringify(geometria(a)) + '|' + JSON.stringify(recorte(a));
+  return deCache(id + '|' + ancho, clave, () => leerSinCache(gif, ancho, a));
 }
 
-function leerSinCache(gif, ancho) {
+function leerSinCache(gif, ancho, a) {
   const origen = document.createElement('canvas');
   const recortado = document.createElement('canvas');
   const destino = document.createElement('canvas');
   destino.width = ancho;
   destino.height = D.ALTO;
-  const r = recorte();
-  const g = geometria();
+  const r = recorte(a);
+  const g = geometria(a);
   const grises = [];
   const delays = [];
   let octx = null;
@@ -108,15 +127,15 @@ function orientar(fuente, sw, sh, g, lienzo) {
 function leerEscalado() {
   const gif = gifs.escena;
   if (!gif) return null;
-  const g = geometria();
-  return deCache('escena|escalado', JSON.stringify(g) + '|' + JSON.stringify(recorte()), () => leerEscaladoSinCache(gif, g));
+  const a = ajustesDe('escena');
+  const g = geometria(a);
+  return deCache('escena|escalado', JSON.stringify(g) + '|' + JSON.stringify(recorte(a)), () => leerEscaladoSinCache(gif, g, recorte(a)));
 }
 
-function leerEscaladoSinCache(gif, g) {
+function leerEscaladoSinCache(gif, g, r) {
   const origen = document.createElement('canvas');
   const recortado = document.createElement('canvas');
   const orientado = document.createElement('canvas');
-  const r = recorte();
   const cuadros = [], delays = [];
   let medidas = null;
   let octx = null;
@@ -189,17 +208,17 @@ function mitades() {
       ctx.drawImage(cuadro, desde, 0, ancho, e.fh, x, y, ancho, e.fh);
       ctx.restore();
     }
-    const partes = D.partirEscena(binarizar(grisesDeCanvas(escena), 2 * D.ANCHO));
+    const partes = D.partirEscena(binarizar(grisesDeCanvas(escena), 2 * D.ANCHO, ajustesDe('escena')));
     izq.push(partes.izq);
     der.push(partes.der);
   }
   return { izq, der, delays: e.delays };
 }
 
-function binarizar(gris, ancho) {
-  const umbral = numero('umbral', 127, 1, 254);
-  const bm = marcado('pixelar') ? grisABitmapAtkinson(gris, ancho, D.ALTO, umbral) : grisABitmapUmbral(gris, ancho, D.ALTO, umbral);
-  return marcado('invertir') ? D.invertir(bm) : bm;
+function binarizar(gris, ancho, a) {
+  const umbral = limitar(a.umbral, 127, 1, 254);
+  const bm = a.pixelar ? grisABitmapAtkinson(gris, ancho, D.ALTO, umbral) : grisABitmapUmbral(gris, ancho, D.ALTO, umbral);
+  return a.invertir ? D.invertir(bm) : bm;
 }
 
 // GIF de una TV (128×64) -> cuadros [{dur, bitmap}] ya con vueltas y velocidad.
@@ -216,7 +235,7 @@ function cuadrosDeGif(id, vueltasId, velocidadId, sufijo) {
   const leido = leer(id, D.ANCHO);
   if (!leido) return null;
   const [a, b] = rangoDeCuadros(sufijo, leido.grises.length);
-  const crudos = leido.grises.slice(a, b).map((gris, i) => ({ dur: leido.delays[a + i], bitmap: binarizar(gris, D.ANCHO) }));
+  const crudos = leido.grises.slice(a, b).map((gris, i) => ({ dur: leido.delays[a + i], bitmap: binarizar(gris, D.ANCHO, ajustesDe(id)) }));
   return D.prepararCuadros(crudos, { vueltas: numero(vueltasId, 1, 1, 20), velocidad: numero(velocidadId, 100, 10, 400) / 100 });
 }
 
@@ -460,8 +479,71 @@ function fallo(e) {
   aviso('Algo salió mal. Vuelve a intentarlo.', true);
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Proyectos (pedido 2026-11-24): guardar los GIF y todos los ajustes para seguir otro día; abrir un dúo ya hecho para verlo.
+// ---------------------------------------------------------------------------------------------------------------------
+const SIN_GUARDAR = ['barraTiempo', 'conSonido', 'archivoAbrir'];
+const camposDelProyecto = () => [...document.querySelectorAll('input, select')].filter((el) => el.id && el.type !== 'file' && !SIN_GUARDAR.includes(el.id));
+
+function guardarProyecto() {
+  ajustes[editando] = leerAjustesDePantalla();
+  const controles = {};
+  for (const el of camposDelProyecto()) controles[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+  const archivos = {};
+  for (const [id, g] of Object.entries(gifs)) if (g) archivos[id] = { nombre: g.nombre, datos: D.aBase64(new Uint8Array(g.buffer)) };
+  const proyecto = { formato: 'duo-proyecto', version: 1, controles, ajustes, editando, gifs: archivos };
+  descargar(`${D.claveDe(valor('nombre') || 'duo')}.proyecto-duo.json`, JSON.stringify(proyecto), 'application/json');
+  aviso('Proyecto guardado.');
+}
+
+async function abrirArchivo(input) {
+  const archivo = input.files && input.files[0];
+  if (!archivo) return;
+  input.value = '';
+  let j;
+  try { j = JSON.parse(await archivo.text()); } catch (e) { aviso('Ese archivo no es un proyecto ni un dúo.', true); return; }
+  if (j && j.formato === 'duo-proyecto') {
+    for (const id of Object.keys(gifs)) gifs[id] = null;
+    for (const [id, g] of Object.entries(j.gifs || {})) if (id in gifs && g && g.datos) gifs[id] = { nombre: g.nombre || id, buffer: D.deBase64(g.datos).buffer };
+    lecturas.clear();
+    for (const [id, v] of Object.entries(j.controles || {})) {
+      const el = $(id);
+      if (!el || el.type === 'file') continue;
+      if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+    }
+    for (const k of ['general', 'g1', 'g2']) ajustes[k] = (j.ajustes && j.ajustes[k]) || null;
+    if (!ajustes.general) ajustes.general = leerAjustesDePantalla();
+    editando = ajustes[j.editando] ? j.editando : 'general';
+    ponerAjustesEnPantalla(ajustes[editando]);
+    actualizarPaneles();
+    programar();
+    aviso('Proyecto abierto.');
+    return;
+  }
+  if (j && j.formato === 'duo1' && j.izq && j.der) {
+    // Un dúo ya armado: solo para ver (y volver a bajar). Al cambiar cualquier ajuste se vuelve a lo que se está editando.
+    turno++;
+    const mitadesDuo = { izq: await decodificarMusical(j.izq.datos), der: await decodificarMusical(j.der.datos) };
+    const duo = { duracion: j.duracion, izq: { cuadros: mitadesDuo.izq.cuadros, notas: mitadesDuo.izq.notas }, der: { cuadros: mitadesDuo.der.cuadros, notas: mitadesDuo.der.notas } };
+    ultimo = { duo, paquete: j, mitades: mitadesDuo };
+    $('nombre').value = j.nombre || '';
+    parar();
+    visto.izq = visto.der = null;
+    dibujarEn(0);
+    habilitar(true);
+    mostrarDatos(`Dúo abierto (solo para ver): ${j.nombre || j.clave}\nDuración: ${(j.duracion / 1000).toFixed(2)} s\nIzquierda: ${(j.izq.bytes / 1024).toFixed(1)} KB · Derecha: ${(j.der.bytes / 1024).toFixed(1)} KB`);
+    aviso('Dúo abierto.');
+    return;
+  }
+  aviso('Ese archivo no es un proyecto ni un dúo.', true);
+}
+
 function actualizarPaneles() {
   const modo = valor('modo');
+  $('filaSeparados').hidden = modo !== 'dos';
+  $('campoDeQue').hidden = !separados();
+  // Fuera del modo de dos GIF (o sin ajustes separados) se editan los ajustes generales.
+  if (!separados() && editando !== 'general') { editando = 'general'; ponerAjustesEnPantalla(ajustes.general); }
   $('panelTiempo').hidden = modo !== 'tiempo';
   $('panelEscena').hidden = modo !== 'escena';
   $('panelDos').hidden = modo !== 'dos';
@@ -502,14 +584,36 @@ function iniciar() {
   });
   $('gif1').addEventListener('change', (e) => tomarArchivo(e.target, 'g1'));
   $('gif2').addEventListener('change', (e) => tomarArchivo(e.target, 'g2'));
+  // Ajustes de imagen: los de la tarjeta se guardan en los del GIF que se está editando (o en los generales).
+  ajustes.general = leerAjustesDePantalla();
+  const guardarAjustes = (el) => { if (el && CAMPOS_IMAGEN.includes(el.id)) ajustes[editando] = leerAjustesDePantalla(); };
+  $('ajustesSeparados').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      ajustes.g1 = Object.assign({}, ajustes.general);
+      ajustes.g2 = Object.assign({}, ajustes.general);
+      editando = valor('ajustesDeQue');
+    } else {
+      editando = 'general';
+    }
+    ponerAjustesEnPantalla(ajustes[editando]);
+  });
+  $('ajustesDeQue').addEventListener('change', (e) => {
+    editando = e.target.value;
+    ponerAjustesEnPantalla(ajustes[editando] || ajustes.general);
+  });
+  $('botonGuardarProyecto').addEventListener('click', guardarProyecto);
+  $('archivoAbrir').addEventListener('change', (e) => { abrirArchivo(e.target).catch(fallo); });
+
   const soloVista = (el) => el && (el.id === 'barraTiempo' || el.id === 'conSonido'); // no cambian el dúo
   document.addEventListener('change', (e) => {
     if (!e.target || e.target.type === 'file' || soloVista(e.target)) return;
+    guardarAjustes(e.target);
     actualizarPaneles();
     programar();
   });
   document.addEventListener('input', (e) => {
     if (soloVista(e.target)) return;
+    guardarAjustes(e.target);
     if (e.target && (e.target.type === 'range' || e.target.type === 'number' || e.target.id === 'nombre')) programar();
   });
   $('botonReproducir').addEventListener('click', reproducir);

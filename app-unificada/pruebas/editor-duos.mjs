@@ -154,6 +154,41 @@ await pagina.waitForFunction(() => /≈ 29 puntos/.test(document.getElementById(
 informe('hueco: 5 mm son unos 29 puntos de pantalla', true, await pagina.textContent('#huecoTexto'));
 await pagina.fill('#huecoMm', '0');
 
+// ---- Ajustes separados por GIF: invertir solo el segundo (que va en el izquierdo) ----
+await pagina.selectOption('#modo', 'dos');
+await pagina.waitForTimeout(1200); // que termine de armarse el modo recién elegido
+const verEn = async (t) => { await pagina.$eval('#barraTiempo', (b, v) => { b.value = String(v); b.dispatchEvent(new Event('input', { bubbles: true })); }, t); await pagina.waitForTimeout(200); };
+await verEn(400);
+const sinInvertir = { izq: await puntos('vistaIzq'), der: await puntos('vistaDer') };
+await pagina.check('#ajustesSeparados');
+await pagina.selectOption('#ajustesDeQue', 'g2');
+await pagina.check('#invertir');
+await pagina.waitForTimeout(900);
+await verEn(400);
+const conInvertir = { izq: await puntos('vistaIzq'), der: await puntos('vistaDer') };
+informe('ajustes separados: invertir solo el segundo GIF invierte solo el Pepito izquierdo', conInvertir.izq > sinInvertir.izq * 3 && conInvertir.der === sinInvertir.der, JSON.stringify({ sinInvertir, conInvertir }));
+await pagina.selectOption('#ajustesDeQue', 'g1');
+informe('ajustes separados: al pasar a editar el primer GIF, la casilla Invertir muestra la suya (sin marcar)', !(await pagina.isChecked('#invertir')));
+
+// ---- Guardar el proyecto y abrirlo en una página nueva: el mismo dúo ----
+const duracionAntes = (await datos()).split('\n')[0];
+const [bajadaP] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonGuardarProyecto')]);
+const rutaProyecto = path.join(carpeta, 'proyecto.json');
+fs.copyFileSync(await bajadaP.path(), rutaProyecto);
+const proyecto = JSON.parse(fs.readFileSync(rutaProyecto, 'utf8'));
+informe('proyecto: guarda los GIF, los controles y los ajustes de cada GIF', proyecto.formato === 'duo-proyecto' && proyecto.gifs.g1 && proyecto.gifs.g2 && proyecto.ajustes.g2.invertir === true && proyecto.controles.modo === 'dos');
+const rutaDuo = path.join(carpeta, 'duo.json');
+const [bajadaD] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonPaquete')]);
+fs.copyFileSync(await bajadaD.path(), rutaDuo);
+await pagina.reload();
+await pagina.waitForSelector('#modo');
+await pagina.setInputFiles('#archivoAbrir', rutaProyecto);
+await pagina.waitForFunction((d) => document.getElementById('datos').textContent.startsWith(d), duracionAntes, { timeout: 15000 });
+informe('proyecto: al abrirlo vuelve el mismo dúo (modo, GIF y ajustes)', (await pagina.inputValue('#modo')) === 'dos' && (await pagina.isChecked('#ajustesSeparados')), duracionAntes);
+await pagina.setInputFiles('#archivoAbrir', rutaDuo);
+await pagina.waitForFunction(() => /Dúo abierto \(solo para ver\)/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
+informe('abrir un dúo ya hecho (.duo.json): se puede ver y volver a bajar', !(await pagina.$eval('#botonReproducir', (b) => b.disabled)));
+
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();
 cerrar();
