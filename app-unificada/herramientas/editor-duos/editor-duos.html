@@ -69,6 +69,13 @@ input[type="number"] { width: 84px; }
             </select>
           </label>
           <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desdeTiempo" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hastaTiempo" min="1" max="9999" value="9999" /> <span class="nota" id="totalTiempo"></span></div>
+          <label class="campo">Reproducción
+            <select id="ordenTiempo">
+              <option value="normal">normal</option>
+              <option value="reves">al revés</option>
+              <option value="idavuelta">ida y vuelta</option>
+            </select>
+          </label>
           <label class="campo">Corte <span class="fila"><input type="range" id="corteTiempo" min="1" max="1" value="1" /> <span class="nota" id="corteTiempoTexto"></span></span></label>
           <label class="campo">Pausa entre las partes <span class="fila"><input type="number" id="pausaTiempo" min="0" max="5000" step="20" value="0" /> <span class="nota">ms (lo que tarda en cruzar el hueco entre las pantallas)</span></span></label>
           <div class="fila">
@@ -82,6 +89,13 @@ input[type="number"] { width: 84px; }
           <h3>El GIF</h3>
           <label class="campo">GIF <input type="file" id="gifEscena" accept="image/gif" /></label>
           <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desdeEscena" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hastaEscena" min="1" max="9999" value="9999" /> <span class="nota" id="totalEscena"></span></div>
+          <label class="campo">Reproducción
+            <select id="ordenEscena">
+              <option value="normal">normal</option>
+              <option value="reves">al revés</option>
+              <option value="idavuelta">ida y vuelta</option>
+            </select>
+          </label>
           <label class="campo">Corte <span class="fila"><input type="range" id="corteMitades" min="10" max="90" value="50" /> <span class="nota" id="corteMitadesTexto">50 %</span></span></label>
           <div class="campo">Mitad izquierda
             <span class="fila">
@@ -116,6 +130,13 @@ input[type="number"] { width: 84px; }
               </select>
             </label>
             <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desde1" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hasta1" min="1" max="9999" value="9999" /> <span class="nota" id="total1"></span></div>
+            <label class="campo">Reproducción
+              <select id="orden1">
+                <option value="normal">normal</option>
+                <option value="reves">al revés</option>
+                <option value="idavuelta">ida y vuelta</option>
+              </select>
+            </label>
             <div class="fila">
               <label class="fila">Vueltas <input type="number" id="vueltas1" min="1" max="20" value="1" /></label>
               <label class="fila">Velocidad % <input type="number" id="velocidad1" min="10" max="400" value="100" /></label>
@@ -132,6 +153,13 @@ input[type="number"] { width: 84px; }
             </label>
             <label class="campo" id="campoInicioMs" hidden>Milisegundos <input type="number" id="inicioMs" min="0" max="15000" step="50" value="0" /></label>
             <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desde2" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hasta2" min="1" max="9999" value="9999" /> <span class="nota" id="total2"></span></div>
+            <label class="campo">Reproducción
+              <select id="orden2">
+                <option value="normal">normal</option>
+                <option value="reves">al revés</option>
+                <option value="idavuelta">ida y vuelta</option>
+              </select>
+            </label>
             <div class="fila">
               <label class="fila">Vueltas <input type="number" id="vueltas2" min="1" max="20" value="1" /></label>
               <label class="fila">Velocidad % <input type="number" id="velocidad2" min="10" max="400" value="100" /></label>
@@ -235,6 +263,44 @@ input[type="number"] { width: 84px; }
           <label class="campo" id="campoCancionSegundos" hidden>Segundos <input type="number" id="cancionSegundos" min="0.2" max="15" step="0.1" value="3" /></label>
           <p class="nota">Se usan solo las notas de la canción (no su letra ni sus imágenes).</p>
         </div>
+      </section>
+
+      <section class="tarjeta" aria-labelledby="tituloTexto">
+        <h2 id="tituloTexto">Texto encima (opcional)</h2>
+        <label class="campo">Texto <input type="text" id="textoEncima" maxlength="40" placeholder="Por ejemplo: ¡Te quiero!" /></label>
+        <div class="fila">
+          <label class="fila">Letra
+            <select id="textoFuente">
+              <option value="clasica">Clásica</option>
+              <option value="sans" selected>Sans</option>
+              <option value="sansb">Sans negrita</option>
+              <option value="serif">Serif</option>
+              <option value="serifi">Serif cursiva</option>
+            </select>
+          </label>
+          <label class="fila">Tamaño <input type="number" id="textoTamano" min="1" max="5" value="1" /></label>
+        </div>
+        <div class="fila">
+          <label class="fila">x <input type="number" id="textoX" min="0" max="127" value="4" /></label>
+          <label class="fila">y <input type="number" id="textoY" min="0" max="63" value="4" /></label>
+          <label class="fila">En
+            <select id="textoTv">
+              <option value="izq">el Pepito de la izquierda</option>
+              <option value="der">el Pepito de la derecha</option>
+            </select>
+          </label>
+        </div>
+        <div class="fila">
+          <label class="fila">Desde (ms) <input type="number" id="textoDesde" min="0" max="15000" step="50" value="0" /></label>
+          <label class="fila">Hasta (ms) <input type="number" id="textoHasta" min="0" max="15000" step="50" value="0" /></label>
+          <label class="fila">Puntos
+            <select id="textoColor">
+              <option value="encender">encendidos</option>
+              <option value="apagar">apagados (sobre lo encendido)</option>
+            </select>
+          </label>
+        </div>
+        <p class="nota">Con las letras de la app, igual que en la TV. "Hasta" en 0 = hasta el final del dúo.</p>
       </section>
     </div>
 
