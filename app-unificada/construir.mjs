@@ -68,6 +68,11 @@ copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.j
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
 for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+// Editor de caras de reloj (herramienta del dueño, solo administrador): www/editor-caras.html, no va en la APK.
+if (!paraApk) {
+  copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.html'), join(www, 'editor-caras.html'));
+  copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.js'), join(www, 'js', 'editor-caras.js'));
+}
 
 // Más > Caras de reloj (2026-11-24): mas.js y main.js de la Pro no conocen la pantalla nueva. En la COPIA se agrega "caras" a las
 // pantallas de Más (mas.js avisa a js/caras.js al abrirla) y main.js la muestra con su título. Si esas líneas de la Pro cambian,

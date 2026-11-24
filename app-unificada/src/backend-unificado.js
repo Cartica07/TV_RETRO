@@ -316,6 +316,33 @@ export async function unificadaPuedeCaras() {
   return !!(s.firmware && s.firmware.build >= 11); // Pepito Pro v11: la primera con caras
 }
 
+/** Editor del dueño: guarda una cara en el catálogo (relojes/datos y relojes/indice; las reglas solo dejan a un administrador). */
+export async function unificadaGuardarCaraCatalogo(clave, nombre, orden, receta) {
+  try {
+    const m = await import(SDK_DB);
+    await m.update(m.ref(pro.db), {
+      [`relojes/datos/${clave}`]: aBase64(receta),
+      [`relojes/indice/${clave}`]: { nombre, orden, fecha: Date.now() },
+    });
+    return { exito: true };
+  } catch (error) {
+    console.error('[Pepito] No se pudo guardar la cara en el catálogo:', error);
+    return { exito: false, error: 'No se pudo guardar: ' + pro.describirError(error) + '.' };
+  }
+}
+
+/** Editor del dueño: borra una cara del catálogo (las TV que ya la tienen la conservan: es una copia). */
+export async function unificadaBorrarCaraCatalogo(clave) {
+  try {
+    const m = await import(SDK_DB);
+    await m.update(m.ref(pro.db), { [`relojes/datos/${clave}`]: null, [`relojes/indice/${clave}`]: null });
+    return { exito: true };
+  } catch (error) {
+    console.error('[Pepito] No se pudo borrar la cara del catálogo:', error);
+    return { exito: false, error: 'No se pudo borrar: ' + pro.describirError(error) + '.' };
+  }
+}
+
 /** Copia la cara a la TV en uso (clave '' = Cara 1). { exito } o { exito: false, error }. */
 export async function unificadaElegirCara(clave, receta) {
   if (tvLite) return (await cargarLite()).elegirCara(clave, receta);
