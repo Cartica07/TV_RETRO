@@ -3,12 +3,36 @@
    Lo que una TV Lite no tiene SE OCULTA, no se borra del HTML: un ID que falta rompe la app (regla de la Pro).
    ========================================================= */
 
-/* Con una TV Lite en uso (el enrutador pone la clase "tv-lite" en <body>): sin juegos ni actualizar/restablecer la TV. */
+/* Con una TV Lite en uso (el enrutador pone la clase "tv-lite" en <body>): sin juegos ni restablecer la TV. Actualizar SÍ
+   (por Bluetooth, desde el 2026-11-23: docs/plan-ota-lite.md). mas.js muestra Restablecer con un estilo en línea: hace falta !important. */
 body.tv-lite [data-mas="juegos"],
 body.tv-lite #seccionJuegos,
-body.tv-lite [data-config="sistema"],
-body.tv-lite #configSistema {
+body.tv-lite #campoSistemaRestablecer {
   display: none !important;
+}
+
+/* Barra de avance de "Actualizar" (Más > Config > Sistema; la mueve js/barra-actualizar.js). */
+.barra-actualizar {
+  height: 10px;
+  margin: var(--esp-2, 8px) 0;
+  border-radius: var(--radio-pill, 999px);
+  background: var(--superficie-hundida, #0E141C);
+  border: 1px solid var(--borde, #253041);
+  overflow: hidden;
+}
+.barra-actualizar[hidden] {
+  display: none;
+}
+.barra-actualizar-relleno {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--acento-relleno, #50C5EC);
+  transition: width 0.7s ease-out;
+}
+/* El mensaje de éxito espera a que la barra se llene. */
+#sistemaEstadoActualizar.espera-barra {
+  visibility: hidden;
 }
 
 /* Sin cuenta (eligió "TV Lite" en la primera pantalla; js/anadir-lite.js pone la clase "sin-cuenta" en <body>): no hay inicio de
