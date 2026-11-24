@@ -1,0 +1,236 @@
+<title>Íconos del reloj de Pepito</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Una sola estética a propósito: la de la app Pepito y su pantalla OLED (fondo oscuro, puntos celestes). */
+:root {
+  --fondo: #0B1016;
+  --panel: #121821;
+  --panel-alto: #1A2230;
+  --borde: #253041;
+  --texto: #E6EDF5;
+  --texto-suave: #8A9AAE;
+  --oled: #4DD2FF;
+  --oled-apagado: #0A1A22;
+  --elegido: #50C5EC;
+  --f-titulo: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-cuerpo: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-dato: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--fondo); color: var(--texto); font-family: var(--f-cuerpo); line-height: 1.5; }
+.pagina { max-width: 980px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1 { font-family: var(--f-titulo); font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-family: var(--f-titulo); font-size: 1.15rem; margin: 0; }
+.bajada { color: var(--texto-suave); margin: 6px 0 0; max-width: 62ch; }
+.previa { display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--borde); border-radius: 16px; padding: 18px; }
+.marco { background: #000; border-radius: 10px; padding: 12px; border: 2px solid #1d2733; max-width: 560px; width: 100%; box-sizing: border-box; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.controles { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 0.92rem; }
+.grupo { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.grupo > span { color: var(--texto-suave); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+button.chip { font: inherit; color: var(--texto); background: var(--panel-alto); border: 1px solid var(--borde); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+button.chip[aria-pressed="true"] { background: var(--elegido); color: #04141c; border-color: var(--elegido); font-weight: 600; }
+button:focus-visible { outline: 2px solid var(--oled); outline-offset: 2px; }
+.categoria { display: grid; gap: 12px; }
+.categoria > p { margin: -6px 0 0; color: var(--texto-suave); font-size: 0.92rem; }
+.opciones { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+button.opcion { font: inherit; color: var(--texto); text-align: left; background: var(--panel); border: 1px solid var(--borde); border-radius: 14px; padding: 12px; cursor: pointer; display: grid; gap: 8px; min-width: 0; }
+button.opcion[aria-pressed="true"] { border-color: var(--elegido); box-shadow: 0 0 0 1px var(--elegido) inset; }
+.opcion .muestras { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; background: #000; border-radius: 8px; padding: 10px; min-height: 64px; }
+.opcion canvas { width: auto; }
+.opcion .nombre { font-weight: 600; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.etiqueta { font-family: var(--f-dato); font-size: 0.72rem; color: var(--texto-suave); letter-spacing: 0.04em; }
+.etiqueta.hoy { color: var(--oled); }
+.resumen { background: var(--panel); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; }
+.resumen code { font-family: var(--f-dato); font-size: 0.88rem; white-space: pre-wrap; word-break: break-word; color: var(--texto); }
+.nota { color: var(--texto-suave); font-size: 0.85rem; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="pagina">
+  <header>
+    <h1>Íconos del reloj de Pepito</h1>
+    <p class="bajada">Elige un dibujo para cada ícono. Arriba se ve cómo quedaría el reloj en la pantalla de la TV, punto por punto (128×64). Cada cara de reloj podrá usar cualquiera de estos estilos.</p>
+  </header>
+
+  <section class="previa" aria-label="Vista previa del reloj">
+    <div class="marco"><canvas id="pantalla" width="128" height="64" aria-label="Reloj de 128 por 64 puntos"></canvas></div>
+    <div class="controles">
+      <div class="grupo" role="group" aria-label="Tipo de Pepito"><span>Pepito</span>
+        <button class="chip" id="tvPro" aria-pressed="true">Pro</button>
+        <button class="chip" id="tvLite" aria-pressed="false">Lite</button>
+      </div>
+      <div class="grupo" role="group" aria-label="Señal"><span>Señal</span>
+        <button class="chip senal" data-nivel="0" aria-pressed="false">sin Wi-Fi</button>
+        <button class="chip senal" data-nivel="1" aria-pressed="false">1</button>
+        <button class="chip senal" data-nivel="2" aria-pressed="false">2</button>
+        <button class="chip senal" data-nivel="3" aria-pressed="false">3</button>
+        <button class="chip senal" data-nivel="4" aria-pressed="true">4</button>
+      </div>
+      <div class="grupo"><span>Ver</span>
+        <button class="chip" id="verMensaje" aria-pressed="true">mensaje nuevo</button>
+        <button class="chip" id="verAlarma" aria-pressed="true">alarma activa</button>
+        <button class="chip" id="verBateria" aria-pressed="true">batería</button>
+        <button class="chip" id="verClima" aria-pressed="true">clima</button>
+      </div>
+    </div>
+    <p class="nota">Los ajustes de arriba son solo para mirar: muestran cómo se ve cada ícono en sus distintos estados.</p>
+  </section>
+
+  <div id="categorias" style="display:grid; gap:28px"></div>
+
+  <section class="resumen" aria-label="Tu elección">
+    <h2>Tu elección</h2>
+    <code id="eleccion"></code>
+    <div><button class="chip" id="copiar">Copiar para Claude</button> <span class="nota" id="copiado" role="status"></span></div>
+  </section>
+</div>
+
+<script>
+// Letra clásica de la TV (glcdfont de Adafruit, la misma de js/fonts.js): 5 columnas por carácter, bit 0 arriba.
+const FUENTE = __FUENTE__;
+
+// ---------- Dibujos (1 = punto encendido). Lo que se elija pasa tal cual a la app y a las dos TV. ----------
+const C = (filas) => filas.map((f) => [...f].map((c) => (c === '#' ? 1 : 0)));
+const ICONOS = {
+  wifi: {
+    titulo: 'Wi-Fi (solo Pepito Pro)', texto: 'Muestra la fuerza de la señal (0 a 4) o que no hay Wi-Fi.',
+    estilos: __WIFI__,
+  },
+  mensaje: {
+    titulo: 'Mensaje nuevo', texto: 'Aparece cuando llegó algo que todavía no viste (en Pro y Lite).',
+    estilos: __MENSAJE__,
+  },
+  conexion: {
+    titulo: 'Conexión con la app (solo Pepito Pro)', texto: 'Lleno: conectado. Hueco: sin conexión con la app.',
+    estilos: __CONEXION__,
+  },
+  campana: {
+    titulo: 'Alarma activa', texto: 'Aparece si hay una alarma puesta. El mismo dibujo puede ir junto a la hora de la próxima alarma.',
+    estilos: __CAMPANA__,
+  },
+  bateria: {
+    titulo: 'Batería (cuando las TV tengan medidor)', texto: 'Cuatro niveles: 25, 50, 75 y 100 %.',
+    estilos: __BATERIA__,
+  },
+  clima: {
+    titulo: 'Clima (solo Pepito Pro)', texto: 'Un dibujo por tipo de día, junto a la temperatura.',
+    estilos: __CLIMA__,
+  },
+};
+
+const estado = { tv: 'pro', senal: 4, mensaje: true, alarma: true, bateria: true, clima: true, nivelBateria: 3, eleccion: {} };
+for (const k of Object.keys(ICONOS)) estado.eleccion[k] = 0;
+try { const g = JSON.parse(localStorage.getItem('pepito.iconos') || 'null'); if (g) Object.assign(estado.eleccion, g); } catch (e) { /* sin almacenamiento */ }
+
+// ---------- Dibujo en una "pantalla" de puntos ----------
+function lienzo(w, h) { return { w, h, p: new Uint8Array(w * h) }; }
+function punto(l, x, y, v = 1) { if (x >= 0 && y >= 0 && x < l.w && y < l.h) l.p[y * l.w + x] = v; }
+function pegar(l, bmp, x, y) { bmp.forEach((fila, j) => fila.forEach((v, i) => { if (v) punto(l, x + i, y + j); })); }
+function letra(l, ch, x, y, t) {
+  const i = ch.charCodeAt(0) - 32; if (i < 0 || i >= 95) return;
+  for (let c = 0; c < 5; c++) { const col = FUENTE[i * 5 + c]; for (let r = 0; r < 8; r++) if (col & (1 << r)) for (let a = 0; a < t; a++) for (let b = 0; b < t; b++) punto(l, x + c * t + a, y + r * t + b); }
+}
+function texto(l, s, x, y, t) { [...s].forEach((ch, k) => letra(l, ch, x + k * 6 * t, y, t)); }
+const anchoTexto = (s, t) => s.length * 6 * t - t;
+
+function pintar(canvas, l, escala, conGrilla) {
+  canvas.width = l.w * escala; canvas.height = l.h * escala;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const g = conGrilla && escala >= 4 ? 1 : 0;
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) {
+    ctx.fillStyle = l.p[y * l.w + x] ? '#4DD2FF' : (g ? '#081218' : '#000');
+    ctx.fillRect(x * escala, y * escala, escala - g, escala - g);
+  }
+}
+
+function dibujoDe(cat, estilo, variante) {
+  const e = ICONOS[cat].estilos[estilo];
+  return C(e.dibujos[variante] || e.dibujos[e.normal]);
+}
+
+// ---------- La pantalla del reloj (como la Cara 1 de hoy, con los íconos elegidos) ----------
+function dibujarReloj() {
+  const l = lienzo(128, 64);
+  const pro = estado.tv === 'pro';
+  texto(l, 'AM', 2, 1, 1);
+  let x = 126; // los íconos de estado se acomodan de derecha a izquierda, con 3 puntos entre uno y otro
+  const poner = (bmp) => { const w = bmp[0].length; x -= w; pegar(l, bmp, x, 0); x -= 3; };
+  if (pro) {
+    poner(dibujoDe('wifi', estado.eleccion.wifi, estado.senal === 0 ? 'sin' : 'n' + estado.senal));
+    poner(dibujoDe('conexion', estado.eleccion.conexion, estado.senal === 0 ? 'falla' : 'ok'));
+  }
+  if (estado.mensaje) poner(dibujoDe('mensaje', estado.eleccion.mensaje, 'normal'));
+  if (estado.alarma) poner(dibujoDe('campana', estado.eleccion.campana, 'normal'));
+  if (estado.bateria) poner(dibujoDe('bateria', estado.eleccion.bateria, 'n' + estado.nivelBateria));
+  const hora = '9:05';
+  texto(l, hora, Math.floor((128 - anchoTexto(hora, 3)) / 2), 22, 3);
+  const fecha = '24/11/2026';
+  if (pro && estado.clima) {
+    const cl = dibujoDe('clima', estado.eleccion.clima, 'sol');
+    pegar(l, cl, 2, 53); texto(l, '24', 2 + cl[0].length + 2, 54, 1); punto(l, 2 + cl[0].length + 2 + 12, 54); punto(l, 2 + cl[0].length + 2 + 13, 54); punto(l, 2 + cl[0].length + 2 + 12, 55); punto(l, 2 + cl[0].length + 2 + 13, 55);
+    texto(l, fecha, 126 - anchoTexto(fecha, 1), 54, 1);
+  } else {
+    texto(l, fecha, Math.floor((128 - anchoTexto(fecha, 1)) / 2), 54, 1);
+  }
+  pintar(document.getElementById('pantalla'), l, 4, true);
+}
+
+// ---------- Las tarjetas de cada ícono ----------
+function tarjetas() {
+  const cont = document.getElementById('categorias');
+  cont.textContent = '';
+  for (const [cat, info] of Object.entries(ICONOS)) {
+    const sec = document.createElement('section'); sec.className = 'categoria';
+    const h = document.createElement('h2'); h.textContent = info.titulo; sec.append(h);
+    const p = document.createElement('p'); p.textContent = info.texto; sec.append(p);
+    const ops = document.createElement('div'); ops.className = 'opciones'; ops.setAttribute('role', 'group'); ops.setAttribute('aria-label', info.titulo);
+    info.estilos.forEach((est, i) => {
+      const b = document.createElement('button'); b.className = 'opcion'; b.id = `opcion-${cat}-${i}`;
+      b.setAttribute('aria-pressed', String(estado.eleccion[cat] === i));
+      const nom = document.createElement('div'); nom.className = 'nombre';
+      const n = document.createElement('span'); n.textContent = est.nombre; nom.append(n);
+      const t = document.createElement('span'); t.className = 'etiqueta' + (i === 0 ? ' hoy' : ''); t.textContent = i === 0 ? 'el de hoy' : `estilo ${i}`; nom.append(t);
+      const m = document.createElement('div'); m.className = 'muestras';
+      for (const v of est.muestras) {
+        const bmp = C(est.dibujos[v]); const l = lienzo(bmp[0].length, bmp.length); pegar(l, bmp, 0, 0);
+        const cv = document.createElement('canvas'); cv.title = est.rotulos?.[v] || v; pintar(cv, l, 6, true);
+        cv.style.width = (l.w * 6) / 1.25 + 'px'; m.append(cv);
+      }
+      b.append(nom, m);
+      b.addEventListener('click', () => { estado.eleccion[cat] = i; guardar(); tarjetas(); dibujarReloj(); resumen(); });
+      ops.append(b);
+    });
+    sec.append(ops);
+    cont.append(sec);
+  }
+}
+
+function resumen() {
+  const lineas = Object.entries(ICONOS).map(([cat, info]) => `${info.titulo.replace(/ \(.*\)/, '')}: ${info.estilos[estado.eleccion[cat]].nombre}`);
+  document.getElementById('eleccion').textContent = lineas.join('\n');
+}
+function guardar() { try { localStorage.setItem('pepito.iconos', JSON.stringify(estado.eleccion)); } catch (e) { /* sin almacenamiento */ } }
+
+// ---------- Controles de la vista previa ----------
+const alternar = (id, clave) => document.getElementById(id).addEventListener('click', (ev) => { estado[clave] = !estado[clave]; ev.currentTarget.setAttribute('aria-pressed', String(estado[clave])); dibujarReloj(); });
+alternar('verMensaje', 'mensaje'); alternar('verAlarma', 'alarma'); alternar('verBateria', 'bateria'); alternar('verClima', 'clima');
+for (const [id, tv] of [['tvPro', 'pro'], ['tvLite', 'lite']]) document.getElementById(id).addEventListener('click', () => {
+  estado.tv = tv; document.getElementById('tvPro').setAttribute('aria-pressed', String(tv === 'pro')); document.getElementById('tvLite').setAttribute('aria-pressed', String(tv === 'lite')); dibujarReloj();
+});
+document.querySelectorAll('.senal').forEach((b) => b.addEventListener('click', () => {
+  estado.senal = Number(b.dataset.nivel); document.querySelectorAll('.senal').forEach((o) => o.setAttribute('aria-pressed', String(o === b))); dibujarReloj();
+}));
+document.getElementById('copiar').addEventListener('click', () => {
+  const t = 'Íconos elegidos para el reloj:\n' + document.getElementById('eleccion').textContent;
+  const aviso = document.getElementById('copiado');
+  navigator.clipboard.writeText(t).then(() => { aviso.textContent = 'Copiado. Pégalo en el chat.'; }).catch(() => {
+    const r = document.createRange(); r.selectNodeContents(document.getElementById('eleccion')); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    aviso.textContent = 'Texto seleccionado: cópialo y pégalo en el chat.';
+  });
+});
+
+tarjetas(); dibujarReloj(); resumen();
+</script>
