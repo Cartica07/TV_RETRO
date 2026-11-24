@@ -243,6 +243,19 @@
             ".validate": false
           }
         },
+        "reloj": {
+          ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['clave', 'datos'])",
+          "clave": {
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,40}$/)"
+          },
+          "datos": {
+            ".validate": "newData.isString() && newData.val().length >= 8 && newData.val().length <= 2732"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        },
         "miembros": {
           ".write": "auth != null && !newData.exists() && data.parent().child('dueno').val() === auth.uid",
           "$uid": {
@@ -686,6 +699,34 @@
           "$otro": {
             ".validate": false
           }
+        }
+      }
+    },
+    "relojes": {
+      "indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$clave.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.hasChildren(['nombre', 'orden', 'fecha'])",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+          },
+          "orden": {
+            ".validate": "newData.isNumber()"
+          },
+          "fecha": {
+            ".validate": "newData.isNumber()"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "datos": {
+        "$clave": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$clave.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.isString() && newData.val().length >= 8 && newData.val().length <= 2732"
         }
       }
     },

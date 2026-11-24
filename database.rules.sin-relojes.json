@@ -1,0 +1,768 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "administradores": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "dispositivos": {
+      "$id": {
+        ".read": "auth != null && (data.child('dueno').val() === auth.uid || data.child('miembros').child(auth.uid).exists() || auth.token.dispositivo === $id)",
+        "dueno": {
+          ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('id').val() === $id && root.child('emparejamiento').child(newData.parent().child('codigoUsado').val()).child('creado').val() > now - 600000) || (data.val() === auth.uid && !newData.exists()))",
+          ".validate": "newData.isString() && newData.val().length <= 128"
+        },
+        "codigoUsado": {
+          ".write": "auth != null && ((!data.parent().child('dueno').exists() && newData.parent().child('dueno').val() === auth.uid) || data.parent().child('dueno').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().matches(/^[A-HJ-NP-Z2-9]{6}$/)"
+        },
+        "oled_remota": {
+          "lastSeen": {
+            ".write": "auth != null && auth.token.dispositivo === $id",
+            ".validate": "newData.isNumber()"
+          },
+          "version": {
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists()) && (!newData.exists() || newData.val() >= 0 || root.child('dispositivos').child($id).child('dueno').val() === auth.uid)",
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= -2 && newData.val() < 2000000000"
+          },
+          "contadorVersion": {
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() < 2000000000"
+          },
+          "mostrada": {
+            ".write": "auth != null && auth.token.dispositivo === $id",
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() < 2000000000"
+          },
+          "pantalla": {
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || (root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists() && newData.child('tipo').val() !== 'actualizar' && newData.child('tipo').val() !== 'restablecer'))",
+            ".validate": "newData.hasChildren(['tipo']) && newData.child('tipo').isString() && (newData.child('tipo').val() === 'texto' || newData.child('tipo').val() === 'imagen' || newData.child('tipo').val() === 'cancion' || newData.child('tipo').val() === 'animacion' || newData.child('tipo').val() === 'musical' || newData.child('tipo').val() === 'juego' || newData.child('tipo').val() === 'alarma' || newData.child('tipo').val() === 'ajustes' || newData.child('tipo').val() === 'actualizar' || newData.child('tipo').val() === 'restablecer')",
+            "texto": {
+              ".validate": "newData.isString() && newData.val().length <= 5000"
+            },
+            "imagen": {
+              "ancho": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+              },
+              "alto": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+              },
+              "datos": {
+                ".validate": "newData.isString() && newData.val().length <= 100000"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "tipo": {
+              ".validate": "newData.isString()"
+            },
+            "config": {
+              "tamano": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+              },
+              "alineacion": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "alineacionV": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "invertido": {
+                ".validate": "newData.isBoolean()"
+              },
+              "modoTexto": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fuente": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "manual": {
+                ".validate": "newData.isBoolean()"
+              },
+              "x": {
+                ".validate": "newData.isNumber() && newData.val() >= -4096 && newData.val() <= 4096"
+              },
+              "y": {
+                ".validate": "newData.isNumber() && newData.val() >= -4096 && newData.val() <= 4096"
+              },
+              "direccion": {
+                ".validate": "newData.isString() && newData.val().length <= 4"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "cancion": {
+              "nombre": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "repeticiones": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+              },
+              "notas": {
+                "$i": {
+                  "0": {
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+                  },
+                  "1": {
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
+                  },
+                  ".validate": "$i.matches(/^[0-9]{1,4}$/) && newData.hasChildren(['0', '1'])",
+                  "$otro": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "animacion": {
+              "nombre": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "ancho": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+              },
+              "alto": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+              },
+              "formato": {
+                ".validate": "newData.isString() && newData.val().length <= 10"
+              },
+              "cantidad": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+              },
+              "cuadros": {
+                "$i": {
+                  ".validate": "$i.matches(/^[0-9]{1,3}$/) && newData.hasChildren(['datos'])",
+                  "datos": {
+                    ".validate": "newData.isString() && newData.val().length <= 4096"
+                  },
+                  "dur": {
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600000"
+                  },
+                  "$otro": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "juego": {
+              "id": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z]{1,12}$/)"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "musical": {
+              "nombre": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "repeticiones": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+              },
+              "formato": {
+                ".validate": "newData.isString() && newData.val().length <= 10"
+              },
+              "clave": {
+                ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150 && !newData.val().contains('/') && !newData.val().contains('.') && !newData.val().contains('$') && !newData.val().contains('#') && !newData.val().contains('[') && !newData.val().contains(']')"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "$otro": {
+              ".validate": false
+            }
+          },
+          "archivo": {
+            ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+            "version": {
+              ".validate": "newData.isNumber()"
+            },
+            "datos": {
+              ".validate": "newData.isString() && newData.val().length <= 10000000"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        },
+        "alarma": {
+          ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['tono', 'alarmas'])",
+          "tono": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "alarmas": {
+            "$i": {
+              ".validate": "$i.matches(/^[0-2]$/) && newData.hasChildren(['activa', 'hora', 'minuto', 'dias'])",
+              "activa": {
+                ".validate": "newData.isBoolean()"
+              },
+              "hora": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 23"
+              },
+              "minuto": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 59"
+              },
+              "dias": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 127"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        },
+        "ajustes": {
+          ".write": "auth != null && (root.child('dispositivos').child($id).child('dueno').val() === auth.uid || root.child('dispositivos').child($id).child('miembros').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['brillo', 'volumen', 'zona'])",
+          "brillo": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 3"
+          },
+          "volumen": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 3"
+          },
+          "zona": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= -720 && newData.val() <= 840"
+          },
+          "apagado": {
+            ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        },
+        "miembros": {
+          ".write": "auth != null && !newData.exists() && data.parent().child('dueno').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && ((data.parent().parent().child('dueno').val() === auth.uid && !newData.exists()) || (auth.uid === $uid && !newData.exists()) || (auth.uid === $uid && !data.exists() && newData.isString() && root.child('invitaciones').child(newData.val()).child('id').val() === $id && root.child('invitaciones').child(newData.val()).child('creado').val() > now - 600000 && data.parent().parent().child('dueno').exists() && data.parent().parent().child('dueno').val() !== auth.uid && !newData.parent().parent().parent().parent().child('invitaciones').child(newData.val()).exists()))",
+            ".validate": "newData.isString() && newData.val().matches(/^[A-HJ-NP-Z2-9]{6}$/)"
+          }
+        },
+        "apodos": {
+          ".write": "auth != null && !newData.exists() && data.parent().child('dueno').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && (data.parent().parent().child('dueno').val() === auth.uid || (auth.uid === $uid && !newData.exists()))",
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && newData.parent().parent().child('miembros').child($uid).exists()"
+          }
+        },
+        "firmware": {
+          ".write": "auth != null && auth.token.dispositivo === $id",
+          ".validate": "newData.hasChildren(['build', 'estado'])",
+          "build": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() < 2000000000"
+          },
+          "estado": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z_]{1,30}$/)"
+          },
+          "fecha": {
+            ".validate": "newData.isNumber()"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "emparejamiento": {
+      "$codigo": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('id').val() === auth.token.dispositivo) || (data.exists() && data.child('id').val() === auth.token.dispositivo))",
+        ".validate": "$codigo.matches(/^[A-HJ-NP-Z2-9]{6}$/) && newData.hasChildren(['id', 'creado']) && newData.child('id').isString() && newData.child('id').val() === auth.token.dispositivo && newData.child('creado').isNumber() && newData.child('creado').val() === now",
+        "id": {},
+        "creado": {},
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
+    "invitaciones": {
+      "$codigo": {
+        ".read": "auth != null",
+        ".write": "auth != null && (((!data.exists() || data.child('creado').val() < now - 600000) && newData.exists() && root.child('dispositivos').child(newData.child('id').val()).child('dueno').val() === auth.uid) || (data.exists() && !newData.exists() && (root.child('dispositivos').child(data.child('id').val()).child('dueno').val() === auth.uid || newData.parent().parent().child('dispositivos').child(data.child('id').val()).child('miembros').child(auth.uid).val() === $codigo)))",
+        ".validate": "$codigo.matches(/^[A-HJ-NP-Z2-9]{6}$/) && newData.hasChildren(['id', 'creado']) && newData.child('id').isString() && newData.child('creado').isNumber() && newData.child('creado').val() === now",
+        "id": {},
+        "creado": {},
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
+    "usuarios": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !newData.exists()",
+        "dispositivos": {
+          "$id": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('dueno').val() === $uid || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('miembros').child($uid).exists())",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "imagenes": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && (root.child('administradores').child(auth.uid).val() === true || (data.exists() && newData.exists()) || (!data.exists() && newData.exists() && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) === (root.child('usuarios').child($uid).child('cuotas').child('usados').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('usados').val()) + 1 && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) <= ((root.child('config').child('limites').child('total').val() == null ? 25 : root.child('config').child('limites').child('total').val()) + (root.child('usuarios').child($uid).child('cuotas').child('extra').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('extra').val())) && (newData.parent().parent().child('cuotas').child('gifs').val() == null ? 0 : newData.parent().parent().child('cuotas').child('gifs').val()) === (root.child('usuarios').child($uid).child('cuotas').child('gifs').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('gifs').val()) && newData.parent().parent().child('cuotas').child('ultimo').val() === 'i:' + $clave) || (data.exists() && !newData.exists() && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) === (root.child('usuarios').child($uid).child('cuotas').child('usados').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('usados').val()) - 1 && (newData.parent().parent().child('cuotas').child('gifs').val() == null ? 0 : newData.parent().parent().child('cuotas').child('gifs').val()) === (root.child('usuarios').child($uid).child('cuotas').child('gifs').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('gifs').val()) && newData.parent().parent().child('cuotas').child('ultimo').val() === 'i:' + $clave))",
+            ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+            "datos": {
+              ".validate": "newData.isString() && newData.val().length <= 100000"
+            },
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "preprocesada": {
+              ".validate": "newData.isString() && newData.val().length <= 60000"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        },
+        "animaciones": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && (root.child('administradores').child(auth.uid).val() === true || (data.exists() && newData.exists()) || (!data.exists() && newData.exists() && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) === (root.child('usuarios').child($uid).child('cuotas').child('usados').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('usados').val()) + 1 && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) <= ((root.child('config').child('limites').child('total').val() == null ? 25 : root.child('config').child('limites').child('total').val()) + (root.child('usuarios').child($uid).child('cuotas').child('extra').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('extra').val())) && (newData.parent().parent().child('cuotas').child('gifs').val() == null ? 0 : newData.parent().parent().child('cuotas').child('gifs').val()) === (root.child('usuarios').child($uid).child('cuotas').child('gifs').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('gifs').val()) + 1 && (newData.parent().parent().child('cuotas').child('gifs').val() == null ? 0 : newData.parent().parent().child('cuotas').child('gifs').val()) <= ((root.child('config').child('limites').child('animaciones').val() == null ? 10 : root.child('config').child('limites').child('animaciones').val()) + (root.child('usuarios').child($uid).child('cuotas').child('extraAnimaciones').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('extraAnimaciones').val())) && newData.parent().parent().child('cuotas').child('ultimo').val() === 'a:' + $clave) || (data.exists() && !newData.exists() && (newData.parent().parent().child('cuotas').child('usados').val() == null ? 0 : newData.parent().parent().child('cuotas').child('usados').val()) === (root.child('usuarios').child($uid).child('cuotas').child('usados').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('usados').val()) - 1 && (newData.parent().parent().child('cuotas').child('gifs').val() == null ? 0 : newData.parent().parent().child('cuotas').child('gifs').val()) === (root.child('usuarios').child($uid).child('cuotas').child('gifs').val() == null ? 0 : root.child('usuarios').child($uid).child('cuotas').child('gifs').val()) - 1 && newData.parent().parent().child('cuotas').child('ultimo').val() === 'a:' + $clave))",
+            ".validate": "newData.hasChildren(['ancho', 'alto', 'cuadros'])",
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "cuadros": {
+              "$i": {
+                ".validate": "$i.matches(/^[0-9]{1,3}$/) && newData.hasChildren(['datos'])",
+                "datos": {
+                  ".validate": "newData.isString() && newData.val().length <= 2048"
+                },
+                "dur": {
+                  ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600000"
+                },
+                "$otro": {
+                  ".validate": false
+                }
+              }
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        },
+        "cuotas": {
+          "usados": {
+            ".write": "auth != null && auth.uid === $uid && (root.child('administradores').child(auth.uid).val() === true || (newData.exists() && newData.val() === data.val()) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) + 1 && newData.parent().child('ultimo').val().beginsWith('i:') && !root.child('usuarios').child($uid).child('imagenes').child(newData.parent().child('ultimo').val().replace('i:', '')).exists() && newData.parent().parent().child('imagenes').child(newData.parent().child('ultimo').val().replace('i:', '')).exists())) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) + 1 && newData.parent().child('ultimo').val().beginsWith('a:') && !root.child('usuarios').child($uid).child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists() && newData.parent().parent().child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists())) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) - 1 && newData.parent().child('ultimo').val().beginsWith('i:') && root.child('usuarios').child($uid).child('imagenes').child(newData.parent().child('ultimo').val().replace('i:', '')).exists() && !newData.parent().parent().child('imagenes').child(newData.parent().child('ultimo').val().replace('i:', '')).exists())) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) - 1 && newData.parent().child('ultimo').val().beginsWith('a:') && root.child('usuarios').child($uid).child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists() && !newData.parent().parent().child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists())))",
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "ultimo": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isString() && newData.val().length <= 90 && (newData.val().beginsWith('i:') || newData.val().beginsWith('a:'))"
+          },
+          "extra": {
+            ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "gifs": {
+            ".write": "auth != null && auth.uid === $uid && (root.child('administradores').child(auth.uid).val() === true || (newData.exists() && newData.val() === data.val()) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) + 1 && newData.parent().child('ultimo').val().beginsWith('a:') && !root.child('usuarios').child($uid).child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists() && newData.parent().parent().child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists())) || (newData.exists() && (newData.val() === (data.val() == null ? 0 : data.val()) - 1 && newData.parent().child('ultimo').val().beginsWith('a:') && root.child('usuarios').child($uid).child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists() && !newData.parent().parent().child('animaciones').child(newData.parent().child('ultimo').val().replace('a:', '')).exists())))",
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "extraAnimaciones": {
+            ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        },
+        "imagenes_indice": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || ((auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && newData.parent().parent().child('imagenes').child($clave).exists()))",
+            ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+            "datos": {
+              ".validate": "newData.isString() && newData.val().length <= 100000"
+            },
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "editable": {
+              ".validate": "newData.isBoolean()"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        },
+        "animaciones_indice": {
+          "$clave": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || ((auth.token.email_verified === true || root.child('administradores').child(auth.uid).val() === true) && newData.parent().parent().child('animaciones').child($clave).exists()))",
+            ".validate": "newData.hasChildren(['ancho', 'alto', 'cantidad', 'miniatura'])",
+            "ancho": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "alto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+            },
+            "cantidad": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000"
+            },
+            "miniatura": {
+              ".validate": "newData.isString() && newData.val().length <= 2048"
+            },
+            "meta": {
+              "origen": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "umbral": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 255"
+              },
+              "dithering": {
+                ".validate": "newData.isBoolean()"
+              },
+              "fecha": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9007199254740991"
+              },
+              "escala": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "fondo": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "rotar": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360"
+              },
+              "volteoH": {
+                ".validate": "newData.isBoolean()"
+              },
+              "volteoV": {
+                ".validate": "newData.isBoolean()"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "musicales": {
+      "indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true"
+        }
+      },
+      "datos": {
+        "$clave": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+    "biblioteca": {
+      "imagenes": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+          "datos": {
+            ".validate": "newData.isString() && newData.val().length <= 100000"
+          },
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "preprocesada": {
+            ".validate": "newData.isString() && newData.val().length <= 60000"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "animaciones": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['ancho', 'alto', 'cuadros'])",
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "cuadros": {
+            "$i": {
+              ".validate": "$i.matches(/^[0-9]{1,3}$/) && newData.hasChildren(['datos'])",
+              "datos": {
+                ".validate": "newData.isString() && newData.val().length <= 4096"
+              },
+              "dur": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600000"
+              },
+              "$otro": {
+                ".validate": false
+              }
+            }
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "imagenes_indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['datos', 'ancho', 'alto'])",
+          "datos": {
+            ".validate": "newData.isString() && newData.val().length <= 100000"
+          },
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "editable": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "animaciones_indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['ancho', 'alto', 'cantidad', 'miniatura'])",
+          "ancho": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "alto": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4096"
+          },
+          "cantidad": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "miniatura": {
+            ".validate": "newData.isString() && newData.val().length <= 4096"
+          },
+          "meta": {
+            "$k": {
+              ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
+            }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "config": {
+      "limites": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+        "total": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "animaciones": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "firmware": {
+      "estable": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+        ".validate": "newData.hasChildren(['build', 'tamano', 'sha256', 'firma'])",
+        "build": {
+          ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() < 2000000000"
+        },
+        "tamano": {
+          ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 3900000"
+        },
+        "sha256": {
+          ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+        },
+        "firma": {
+          ".validate": "newData.isString() && newData.val().length >= 100 && newData.val().length <= 700"
+        },
+        "url": {
+          ".validate": "newData.isString() && newData.val().length <= 300 && newData.val().beginsWith('https://')"
+        },
+        "$otro": {
+          ".validate": false
+        }
+      },
+      "datos": {
+        "$build": {
+          ".read": "auth != null && (auth.token.dispositivo != null || root.child('administradores').child(auth.uid).val() === true)",
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$build.matches(/^[0-9]{1,10}$/) && newData.isString() && newData.val().length <= 10000000"
+        }
+      },
+      "lite": {
+        "$modelo": {
+          "estable": {
+            ".read": "auth != null && $modelo.matches(/^(c3|s3)$/)",
+            ".write": "auth != null && $modelo.matches(/^(c3|s3)$/) && root.child('administradores').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['build', 'tamano', 'sha256', 'firma'])",
+            "build": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() < 2000000000"
+            },
+            "tamano": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 1310720"
+            },
+            "sha256": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+            },
+            "firma": {
+              ".validate": "newData.isString() && newData.val().length >= 100 && newData.val().length <= 700"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          },
+          "datos": {
+            "$build": {
+              ".read": "auth != null && $modelo.matches(/^(c3|s3)$/)",
+              ".write": "auth != null && $modelo.matches(/^(c3|s3)$/) && root.child('administradores').child(auth.uid).val() === true",
+              ".validate": "$build.matches(/^[0-9]{1,10}$/) && newData.isString() && newData.val().length <= 1800000"
+            }
+          }
+        }
+      }
+    }
+  }
+}
