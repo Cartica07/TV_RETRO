@@ -72,6 +72,10 @@ for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara
 if (!paraApk) {
   copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.html'), join(www, 'editor-caras.html'));
   copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.js'), join(www, 'js', 'editor-caras.js'));
+  // Editor de dúos (2026-11-24, docs/plan-duos.md; solo Pepito Pro): www/editor-duos.html, tampoco va en la APK.
+  copyFileSync(join(aqui, 'herramientas', 'editor-duos', 'editor-duos.html'), join(www, 'editor-duos.html'));
+  copyFileSync(join(aqui, 'herramientas', 'editor-duos', 'editor-duos.js'), join(www, 'js', 'editor-duos.js'));
+  copyFileSync(join(aqui, 'herramientas', 'editor-duos', 'duo.js'), join(www, 'js', 'duo.js'));
 }
 
 // Más > Caras de reloj (2026-11-24): mas.js y main.js de la Pro no conocen la pantalla nueva. En la COPIA se agrega "caras" a las

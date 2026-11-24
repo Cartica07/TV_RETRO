@@ -101,8 +101,8 @@ export function notasDesde(lista, inicio = 0) {
 export function armarDuo({ pistas = [], espera = {}, alTerminar = 'ultimo', sonido = null } = {}) {
   const porTv = { izq: null, der: null };
   for (const p of pistas) {
-    if (p.tv !== 'izq' && p.tv !== 'der') throw new Error('Cada pista va en la TV "izq" o "der"');
-    if (porTv[p.tv]) throw new Error('Solo una pista por TV');
+    if (p.tv !== 'izq' && p.tv !== 'der') throw new Error('Cada pista va en el lado "izq" o "der"');
+    if (porTv[p.tv]) throw new Error('Solo una pista por lado');
     if (!p.cuadros || !p.cuadros.length) continue;
     p.cuadros.forEach((c) => { if (!c.bitmap || c.bitmap.length !== BYTES_PANTALLA) throw new Error('Cada cuadro mide 1024 bytes'); });
     porTv[p.tv] = { inicio: Math.max(0, Math.round(p.inicio || 0)), cuadros: p.cuadros };
