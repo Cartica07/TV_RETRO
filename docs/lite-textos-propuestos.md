@@ -50,8 +50,8 @@
 | 45 | Buscar canción: botón para cerrar la ventana (texto de ayuda de la X) | Cerrar | `app-unificada/construir.mjs` |
 | 46 | (APROBADA 2026-11-23, con la barra de avance en vez del porcentaje) Actualizar un Pepito Lite, mientras se manda (la Pro dice "Actualizando… no desconectes a Pepito.") | Actualizando… No cierres la app y deja el celular cerca de tu Pepito. | `app-unificada/src/textos-pepito.mjs` |
 | 47 | (APROBADA 2026-11-23) Actualizar un Pepito Lite: no volvió tras reiniciarse (la Pro dice "…encendido y con internet.") | Pepito no respondió. Tiene que estar encendido y cerca del celular. | `app-unificada/src/textos-pepito.mjs` |
-| 49 | Config > Sistema con un Pepito Lite que no está conectado (la Pro dice "No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.") | No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla. | `app-unificada/src/textos-pepito.mjs` |
-| 50 | Actualizar un Pepito Lite con la alarma sonando (hoy sale el de la Pro: "Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.", y la Lite no tiene juegos) | Pepito está ocupado (una alarma). Inténtalo en un momento. | (sin hacer: por aprobar) |
+| 49 | (APROBADA 2026-11-24) Config > Sistema con un Pepito Lite que no está conectado (la Pro dice "No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.") | No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla. | `app-unificada/src/textos-pepito.mjs` |
+| 50 | (APROBADA 2026-11-24) Actualizar un Pepito Lite con la alarma sonando (hoy sale el de la Pro: "Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.", y la Lite no tiene juegos) | Pepito está ocupado (una alarma). Inténtalo en un momento. | `app-unificada/src/textos-pepito.mjs` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
