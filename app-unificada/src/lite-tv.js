@@ -133,6 +133,8 @@ ble.alCambiarEstado((paso) => {
 // Texto PROPUESTO (docs/lite-textos-propuestos.md, fila 24): lo aprueba el dueño.
 let ultimoAvisoVinculo = 0;
 ble.alVinculoRoto((mensaje) => {
+  // Mientras se actualiza, la TV se reinicia y la reconexión puede fallar una vez sin que el vínculo esté roto: no se asusta a nadie.
+  if (actualizando) return;
   if (Date.now() - ultimoAvisoVinculo < 60000) return;
   ultimoAvisoVinculo = Date.now();
   try { window.alert(mensaje); } catch (e) { console.warn('[TV RETRO] ' + mensaje); }
@@ -513,6 +515,8 @@ async function esperarVuelta() {
   await pausa(ESPERA_REINICIO_MS);
   const limite = Date.now() + ESPERA_VUELTA_MS;
   while (Date.now() < limite) {
+    // Un fallo pasajero justo después del reinicio pausaría la reconexión (como un vínculo roto): se reanuda en cada intento.
+    ble.reanudarReconexion();
     if (await ble.reconectar()) {
       try { return await ble.exclusivo(() => ble.pedirEstado()); } catch (e) { /* se volvió a cortar: otro intento */ }
     }
