@@ -116,10 +116,12 @@ export const TEXTOS_PEPITO = [
 
   // ---- Actualizar un Pepito Lite (2026-11-23, docs/plan-ota-lite.md): la pantalla Sistema es la de la Pro; estos textos no
   // tienen sentido con una TV por Bluetooth y cambian SOLO con un Pepito Lite (clase "tv-lite" en <body>). Van después de las
-  // filas de arriba porque parten del texto ya con Pepito. Textos 46 y 47 aprobados por el dueño el 2026-11-23; el 49 es PROPUESTA.
+  // filas de arriba porque parten del texto ya con Pepito. Textos 46, 47, 49 y 50 aprobados por el dueño el 2026-11-23/24.
   ['js/mas.js', "'Actualizando… no desconectes a Pepito.'", conLite('Actualizando… No cierres la app y deja el celular cerca de tu Pepito.', "'Actualizando… no desconectes a Pepito.'"), 2],
   ['js/mas.js', "'Pepito no respondió. Tiene que estar encendido y con internet.'", conLite('Pepito no respondió. Tiene que estar encendido y cerca del celular.', "'Pepito no respondió. Tiene que estar encendido y con internet.'"), 1],
   ['js/mas.js', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla.', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'"), 1],
+  // El 50 vive en un objeto que la Pro arma al abrir la app (antes de saber qué TV se usa): se elige al leerlo (getter).
+  ['js/mas.js', "ocupada: 'Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.'", "get ocupada() { return " + conLite('Pepito está ocupado (una alarma). Inténtalo en un momento.', "'Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.'") + '; }', 1],
 ];
 
 // Lo que puede seguir diciendo "TV" porque NO se ve: el nombre Bluetooth del firmware anterior (ble.js lo sigue reconociendo).

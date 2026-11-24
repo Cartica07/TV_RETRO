@@ -136,7 +136,7 @@ const esperarFin = (p, ms = 60000) => p.waitForFunction(() => {
   await esperarFin(pagina);
   const e = await estadoTV(pagina);
   const aviso = await txt(pagina, '#estadoTexto');
-  informe('ocupada: no se manda nada y avisa que está ocupada', e.programas.length === 0 && e.build === 1 && /ocupad/.test(aviso), aviso);
+  informe('ocupada: no se manda nada y avisa que está ocupado (texto 50, sin juegos)', e.programas.length === 0 && e.build === 1 && aviso === 'Pepito está ocupado (una alarma). Inténtalo en un momento.', aviso);
   await navegador.close();
 }
 
