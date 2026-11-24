@@ -63,6 +63,7 @@
 | 57 | (APROBADA 2026-11-24) Opción para quitar la ciudad | Sin clima | (sin hacer) |
 | 58 | (APROBADA 2026-11-24) Enviar una animación cuyo archivo no se pudo leer al abrir (Pro, Lite y la app vieja) | Esta animación no se pudo cargar. Elígela otra vez en la Galería. | `js/main.js` |
 | 59 | (APROBADA 2026-11-24) Buscador de la ciudad sin internet | Sin conexión a internet. Conéctate y vuelve a buscar. | `app-unificada/src/caras.js` |
+| 60 | (DICTADO por el dueño, 2026-11-24) Mensaje predeterminado de Pepito (Pro y Lite), en Sans tamaño 3 | Bienvenido (arriba) / Soy Pepito (abajo) | `app-unificada/src/textos-pepito.mjs`, `src/lite-tv.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
