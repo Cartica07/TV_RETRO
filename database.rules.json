@@ -731,6 +731,37 @@
           ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
           ".validate": "$build.matches(/^[0-9]{1,10}$/) && newData.isString() && newData.val().length <= 10000000"
         }
+      },
+      "lite": {
+        "$modelo": {
+          "estable": {
+            ".read": "auth != null && $modelo.matches(/^(c3|s3)$/)",
+            ".write": "auth != null && $modelo.matches(/^(c3|s3)$/) && root.child('administradores').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['build', 'tamano', 'sha256', 'firma'])",
+            "build": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() < 2000000000"
+            },
+            "tamano": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 1310720"
+            },
+            "sha256": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+            },
+            "firma": {
+              ".validate": "newData.isString() && newData.val().length >= 100 && newData.val().length <= 700"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          },
+          "datos": {
+            "$build": {
+              ".read": "auth != null && $modelo.matches(/^(c3|s3)$/)",
+              ".write": "auth != null && $modelo.matches(/^(c3|s3)$/) && root.child('administradores').child(auth.uid).val() === true",
+              ".validate": "$build.matches(/^[0-9]{1,10}$/) && newData.isString() && newData.val().length <= 1800000"
+            }
+          }
+        }
       }
     }
   }
