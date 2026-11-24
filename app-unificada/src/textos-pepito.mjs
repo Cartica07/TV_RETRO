@@ -122,6 +122,16 @@ export const TEXTOS_PEPITO = [
   ['js/mas.js', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla.', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'"), 1],
   // El 50 vive en un objeto que la Pro arma al abrir la app (antes de saber qué TV se usa): se elige al leerlo (getter).
   ['js/mas.js', "ocupada: 'Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.'", "get ocupada() { return " + conLite('Pepito está ocupado (una alarma). Inténtalo en un momento.', "'Pepito está ocupado (un juego o una alarma). Inténtalo en un momento.'") + '; }', 1],
+  // Mensaje predeterminado (dictado por el dueño el 2026-11-24): "Bienvenido" arriba y "Soy Pepito" abajo, en Sans tamaño 3 (el más
+  // grande en que las dos líneas caben enteras; en 4 y 5 "Bienvenido" se parte). Se ve con una cuenta o un Pepito que aún no
+  // tienen nada enviado. La Lite lo tiene en src/lite-tv.js.
+  ['js/main.js', "  texto: 'Bienvenido',", "  texto: 'Bienvenido\\nSoy Pepito',", 1],
+  ['js/main.js', "  tamano: 2,", "  tamano: 3,", 1],
+  ['js/firebase-pro.js', "pantalla.texto : 'Bienvenido',", "pantalla.texto : 'Bienvenido\\nSoy Pepito',", 1],
+  ['js/firebase-pro.js', "        texto: 'Bienvenido',", "        texto: 'Bienvenido\\nSoy Pepito',", 1],
+  ['js/firebase-pro.js', "        tamano: 2,", "        tamano: 3,", 1],
+  // Un Pepito recién vinculado existe en la nube (versión, latido) pero sin pantalla: también ahí va el mensaje en tamaño 3.
+  ['js/firebase-pro.js', "Math.round(Number(config.tamano)) || 2)),", "Math.round(Number(config.tamano)) || (snapPantalla.exists() ? 2 : 3))),", 1],
 ];
 
 // Lo que puede seguir diciendo "TV" porque NO se ve: el nombre Bluetooth del firmware anterior (ble.js lo sigue reconociendo).

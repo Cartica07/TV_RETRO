@@ -193,7 +193,7 @@ async function asegurarCancionEnTV(clave) {
 // Último contenido enviado (para que la app se abra donde se quedó)
 // ===================================================
 const ESTADO_VACIO = {
-  tipo: 'texto', texto: 'Bienvenido', tamano: 2, alineacion: 'centro', alineacionV: 'centro', invertido: false, modoTexto: 'ajustar',
+  tipo: 'texto', texto: 'Bienvenido\nSoy Pepito', tamano: 3, alineacion: 'centro', alineacionV: 'centro', invertido: false, modoTexto: 'ajustar',
   fuente: '', manual: false, x: 0, y: 0, direccion: 'h', imagenData: '', imagenAncho: 0, imagenAlto: 0,
   cancionNombre: '', cancionRepeticiones: 1, version: 0, exito: true, vacio: true,
 };
@@ -217,7 +217,7 @@ export async function cargarEstado() {
     }
     return {
       tipo: (['alarma', 'ajustes'].includes(pantalla.tipo) ? 'texto' : pantalla.tipo) || 'texto',
-      texto: typeof pantalla.texto === 'string' ? pantalla.texto : 'Bienvenido',
+      texto: typeof pantalla.texto === 'string' ? pantalla.texto : 'Bienvenido\nSoy Pepito',
       tamano: Math.min(5, Math.max(1, Math.round(Number(config.tamano)) || 2)),
       alineacion: config.alineacion || 'centro',
       alineacionV: config.alineacionV || 'centro',
