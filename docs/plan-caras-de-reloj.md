@@ -131,7 +131,8 @@ Página aparte solo para administradores, como `carga-masiva.html`, en `app-unif
 1. Especificación (documentos): formato `R1`, Firebase y Bluetooth. El dueño aprueba.
 2. Dibujante en JS + pruebas (Cara 1 idéntica al reloj de hoy, recetas dañadas, elementos desconocidos).
 3. Firmware Lite: dibujante, archivo, bit 4 y `0x24`; TV simulada; prueba en la placa S3.
-4. Firmware Pro v10: el mismo dibujante y la lectura de `reloj`.
+4. Firmware Pro v10: el mismo dibujante y la lectura de `reloj`. **También** la pantalla "Actualizando" con barra de
+   avance mientras se descarga una actualización (pedido del dueño el 2026-11-23, igual que la Lite; texto 48).
 5. App: pantalla Caras de reloj (paso visual y paso de lógica, en commits separados).
 6. Editor del dueño y las primeras caras (puedo proponer 3 o 4 diseños para empezar).
 7. El dueño publica las reglas; pruebas en la TV real; la v10 sale por Wi-Fi.

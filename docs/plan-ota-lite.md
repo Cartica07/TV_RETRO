@@ -176,5 +176,9 @@ con una Lite:
 3. **Sí**: todos los cambios del protocolo de la sección 4. Ya están en la especificación (sección 8.5 de
    `evaluacion-version-lite.md`).
 4. El dueño pide **barra de avance en la pantalla de la TV en las dos (Lite y Pro)**: "más entretenido y
-   visualmente mejor". En la Pro va con la v10. Textos 46 y 47: por confirmar.
+   visualmente mejor". En la Pro va con la v10. Y **también en la app, con las dos**: con la Lite, el avance real del
+   envío; con la Pro, **solo visual** (la app no sabe cuánto lleva la TV): avanza a saltos desiguales calculados sobre
+   unos 2 minutos, si tarda más se queda en un tope al azar (93-99 %) y **solo llega a 100 % cuando la actualización
+   terminó de verdad**; recién entonces se ve el mensaje de éxito. Textos 46 (sin el porcentaje: lo muestra la barra) y
+   47 aprobados; 49 y 50 propuestos (ver `lite-textos-propuestos.md`).
 5. La clave de servicio se **guarda** para publicar las versiones de prueba de la Lite.
