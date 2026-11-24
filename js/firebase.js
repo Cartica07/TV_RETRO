@@ -1061,8 +1061,9 @@ export async function cargarEstado() {
       }
 
       return {
-        // "juego", "alarma" y "ajustes" son órdenes para la TV, no contenido: el panel las muestra como Texto.
-        tipo: (['juego', 'alarma', 'ajustes'].includes(pantalla.tipo) ? 'texto' : pantalla.tipo) || 'texto',
+        // "juego", "alarma", "ajustes", "actualizar" y "restablecer" son órdenes para la TV, no contenido: el panel las muestra como
+        // Texto (las dos últimas se agregaron el 2026-11-24: con ellas el panel abría sin ninguna pestaña).
+        tipo: (['juego', 'alarma', 'ajustes', 'actualizar', 'restablecer'].includes(pantalla.tipo) ? 'texto' : pantalla.tipo) || 'texto',
         texto: (typeof pantalla.texto === 'string') ? pantalla.texto : 'Bienvenido',
         // H-51 (auditoría 2026-11-15): las reglas dejan que un miembro guarde un tamaño de 0 a 100; la vista previa
         // solo conoce 1..5 (fontMetrics[100] no existe y rompía el panel del dueño).
