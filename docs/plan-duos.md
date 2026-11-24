@@ -121,7 +121,11 @@ Copia de la Pro v11 que encendía el Bluetooth (librería del núcleo) y emitía
 - **Productos parecidos no usan radio para el vecino:** los cubos Sifteo tienen "detección de vecinos de campo cercano" propia (sus prototipos usaban infrarrojo) y los AudioCubes, infrarrojo en las caras; las credenciales de conferencias usan infrarrojo de lado a lado (~2400 bps). littleBits usa **conectores magnéticos con contactos**, y hoy se venden conectores magnéticos de pines (pogo) de 5 a 9 contactos que se atraen solos y se repelen si se ponen al revés.
 - **Conclusión:** dos caminos sin el problema de memoria y sin radio: (1) **conector magnético con contactos** en cada lateral (cable serie directo entre las TV: detección inmediata en las dos, rápido, sin gasto de batería esperando) y (2) **infrarrojo lateral** (sin contactos a la vista, lento pero suficiente para los mensajes). Pendiente: que el dueño elija.
 
-#### DECISIÓN DEL DUEÑO (2026-11-24): una radio por línea, empezando por la Pro
+#### DECISIÓN FINAL DEL DUEÑO (2026-11-24, más tarde): LOS DÚOS SON SOLO DE PEPITO PRO
+
+"La Lite ya no tendrá dúos, por el momento": es una función que, si está en las dos, le quita peso a la Pro, y complicaría más la Lite, que es la versión básica y recortada. Como los juegos, es exclusiva de la Pro (la regla "Pro y Lite parejos" no aplica). Todo lo de la Lite en este plan (Bluetooth, fase 3, bit 64 del protocolo, reserva de espacio) queda **archivado**; vale lo de la Pro: ESP-NOW entre dos Pro, sensor Hall + imán.
+
+#### Decisión anterior (reemplazada por la de arriba) (2026-11-24): una radio por línea, empezando por la Pro
 
 - **Pepito Pro ↔ Pepito Pro: ESP-NOW** (usa el Wi-Fi que la Pro ya tiene encendido). **Pepito Lite ↔ Pepito Lite: Bluetooth** (lo que la Lite ya tiene). **Una Pro y una Lite no se juntan** (decirlo claro al cliente). Excepción consciente a "Pro y Lite parejos": las dos tienen Dúos, pero no entre ellas.
 - Lo común se programa separado de la radio (formato, catálogo, herramienta, reproductor, prioridades); cada línea solo cambia la parte que lleva los mensajes.
