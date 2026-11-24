@@ -79,6 +79,7 @@ Es la referencia de TODO lo que viaja por Bluetooth. La app (`app-lite/src/ble.j
 | `0x14` | BORRAR toda la biblioteca | — | `[0x94][1]` (las canciones de una alarma NO se borran) |
 | `0x15` | INFO de la biblioteca | — | `[0x95][n u8][libre u32][total u32]` |
 | `0x20` | ALARMAS | `tono u16` (id de canción, 0 = aviso simple) y 3 × (`activa`, `hora`, `minuto`, `días` máscara bit 0 = domingo) | `[0xA0][ok]` |
+| `0x24` | CARA | `0` = volver a la Cara 1 (ver 8.6) | `[0xA4][ok]` |
 | `0x22` | AJUSTES | `brillo u8` (1–3), `volumen u8` (0–3), `zona i16`, y desde el 2026-11-23 opcional `apagado u8` (0 = nunca, 5, 10, 20 minutos; si falta, 5) | `[0xA2][ok]` |
 
 **Banderas del INICIO:** bit 0 = guardar en la memoria (solo diagnóstico), bit 1 = dibujar el avance (solo diagnóstico), **bit 2 = canción** (se guarda en la biblioteca con ese `id`), **bit 3 = contenido** (ver 8.3), **bit 4 = cara de reloj** (reservado, aprobado el 2026-11-23; ver `plan-caras-de-reloj.md`), **bit 5 = programa** (actualización de la TV, ver 8.5). Sin bits 2 ni 3 el envío solo se mide y se descarta (diagnóstico). `ok = 0` en el aviso `0x82` significa que la TV no puede recibirlo (sin espacio o contenido no válido). **Un INICIO nuevo reemplaza al envío que estuviera en curso** (por ejemplo, uno que quedó a medias porque la app falló): la TV lo abandona y empieza el nuevo. El aviso de HORA es `[0x81][ok]` (`ok = 0` si la hora no tiene sentido: antes de 2023).
@@ -106,6 +107,20 @@ Lo que la app Pro escribía en Firebase (`pantalla` y `archivo`) viaja en UN env
 - **Lo que llega del celular NO cambia la pantalla por su cuenta (igual que la Pro, 2026-11-22):** el contenido nuevo se guarda; si se está viendo el contenido se dibuja, y si se está en el reloj o con la pantalla apagada la TV se queda ahí. Suena el aviso de dos pitidos de la Pro (1500 y 1900 Hz; no suena si ya hay una canción o la alarma sonando). El reloj muestra un **sobre** arriba a la derecha (mensaje sin ver) hasta que se vuelve al contenido; una canción que manda el celular también lo activa pero sin aviso propio. La TV arranca en el contenido (sin nada que mostrar se ve el reloj). El aviso simple de la alarma usa esos mismos pitidos cada 1,4 s. **Pro y Lite iguales desde el 2026-11-24 (regla del dueño: toda mejora común va en las dos):** el botón con una canción sonando, el fin de una canción con letra (vuelve el contenido de antes), lo de después de una alarma (vuelve el contenido de antes; la Pro solo repone la última imagen de la canción si antes no había nada, H-33) y, desde el reloj con el sobre, directo al contenido. Una canción con letra que llega con la TV en el reloj suena y pone el sobre (no cambia la pantalla, decisión del dueño). Diferencias que quedan, decididas por el dueño: posponer la alarma 5 min solo en la Pro (botón de la rueda; la Lite tiene un solo botón); en la Pro, una canción con letra que llega en Juegos sale sola y pausa la partida (la Lite no tiene juegos); al emparejar un celular nuevo la Lite NO borra su contenido (la Pro sí, al desvincularse, H-34: en la Lite olvidar el vínculo por error borraría todo).
 - **Memoria permanente propia:** la Lite usa nombres propios en la NVS (`lite_alarma`, `lite_ajustes`, `lite_reloj`) y en LittleFS (`/lite_ultimo.json`, `/c/` con la marca `.formato1`) para no mezclarse con los datos de una TV Pro que estuvo en la misma placa; si falta la marca del formato, la biblioteca se vacía.
 - **Espacio:** la caché de canciones borra las menos usadas (salvo la de la alarma); un envío (canción o contenido) que no cabe se rechaza con `0x82` `ok = 0` y la app avisa antes de empezar si ve que un GIF no cabe (`0x15`).
+
+### 8.6 Cara de reloj (bandera 16) y comando `0x24` (aprobados por el dueño el 2026-11-23)
+
+Formato de la cara: [receta-r1.md](receta-r1.md). La app copia la cara elegida a la TV:
+
+- **INICIO con el bit 4:** `[0x02][tamaño u32][crc32 u32][ventana u8][banderas u8 = 16]`; lo que viaja es la receta tal cual
+  (máximo 2 048 bytes, sin Base64). La TV la recibe en la memoria y, al FIN, comprueba CRC32, tamaño y que la receta esté bien
+  formada (`cara_valida`); solo entonces la guarda en `/reloj.r1` y contesta `[0x83][ok=1]…` (14 bytes). Si está dañada:
+  `ok = 0` y la TV sigue con la cara que tenía. Con `ok = 1` la TV **pasa al reloj** para que se vea la cara nueva (decisión del
+  dueño, pregunta 4 del plan) y después sigue normal.
+- **`0x24` CARA `[0]`:** volver a la Cara 1 (borra `/reloj.r1`). Respuesta `[0xA4][ok]`. Otros valores del primer byte:
+  reservados (`ok = 0`).
+- Una Lite sin caras no conoce el bit 4: lo trata como un envío de diagnóstico y lo descarta; la app solo ofrece caras a una Lite
+  cuyo ESTADO trae `build` (la Lite con actualización por Bluetooth y caras).
 
 ### 8.5 Programa (bandera 32): actualización de la TV por Bluetooth (aprobado por el dueño el 2026-11-23)
 
