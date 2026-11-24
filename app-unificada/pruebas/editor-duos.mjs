@@ -124,11 +124,35 @@ informe('con sonido: suena en el Pepito izquierdo desde que empieza su parte (10
 await pagina.selectOption('#sonido', '');
 await pagina.selectOption('#modo', 'tiempo');
 await pagina.setInputFiles('#gifTiempo', gifChico);
-await pagina.waitForFunction(() => /150 de 300 ms/.test(document.getElementById('corteTiempoTexto').textContent), null, { timeout: 15000 });
+await pagina.waitForFunction(() => /después del cuadro 1 de 3 \(100 de 300 ms\)/.test(document.getElementById('corteTiempoTexto').textContent), null, { timeout: 15000 });
 await pagina.waitForTimeout(400);
-informe('en el tiempo: el corte a la mitad queda en 150 ms y el dúo dura lo mismo que el GIF (0,30 s)', /Duración: 0\.30 s/.test(await datos()), (await pagina.textContent('#corteTiempoTexto')) + ' | ' + (await datos()).split('\n')[0]);
+informe('en el tiempo: el corte va DESPUÉS DE UN CUADRO (en la mitad: tras el 1 de 3) y el dúo dura lo del GIF (0,30 s)', /Duración: 0\.30 s/.test(await datos()), (await pagina.textContent('#corteTiempoTexto')) + ' | ' + (await datos()).split('\n')[0]);
 const pTiempoI = await puntos('vistaIzq'), pTiempoD = await puntos('vistaDer');
 informe('en el tiempo: al principio solo se ve el Pepito derecho (el izquierdo espera en negro)', pTiempoD > 0 && pTiempoI === 0, `${pTiempoI} / ${pTiempoD}`);
+await pagina.fill('#corteTiempo', '2');
+await pagina.waitForFunction(() => /después del cuadro 2 de 3 \(200 de 300 ms\)/.test(document.getElementById('corteTiempoTexto').textContent), null, { timeout: 15000 });
+informe('en el tiempo: mover el corte al cuadro 2', true);
+await pagina.fill('#pausaTiempo', '100');
+await pagina.waitForFunction(() => /Duración: 0\.40 s/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
+informe('en el tiempo: una pausa de 100 ms entre las partes alarga el dúo a 0,40 s', true);
+await pagina.fill('#pausaTiempo', '0');
+// Recortar el principio: usar desde el cuadro 2 deja 2 cuadros (0,20 s).
+await pagina.fill('#desdeTiempo', '2');
+await pagina.waitForFunction(() => /Duración: 0\.20 s/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
+informe('recortar: usar desde el cuadro 2 deja el GIF en 2 cuadros (0,20 s) y dice cuántos tiene', (await pagina.textContent('#totalTiempo')) === '(de 3)');
+await pagina.fill('#desdeTiempo', '1');
+await pagina.waitForTimeout(500);
+// La barra de tiempo muestra un momento sin volver a armar el dúo.
+await pagina.$eval('#barraTiempo', (b) => { b.value = '150'; b.dispatchEvent(new Event('input', { bubbles: true })); });
+await pagina.waitForTimeout(300);
+const textoBarra = await pagina.textContent('#barraTexto');
+informe('barra de tiempo: a los 150 ms dice qué cuadro muestra cada Pepito', /^150 ms · izquierdo \d+\/\d+ · derecho \d+\/\d+$/.test(textoBarra), textoBarra);
+// El hueco entre las pantallas (mitades): con 5 mm la mitad derecha pierde la parte que queda "detrás del plástico".
+await pagina.selectOption('#modo', 'escena');
+await pagina.fill('#huecoMm', '5');
+await pagina.waitForFunction(() => /≈ 29 puntos/.test(document.getElementById('huecoTexto').textContent), null, { timeout: 15000 });
+informe('hueco: 5 mm son unos 29 puntos de pantalla', true, await pagina.textContent('#huecoTexto'));
+await pagina.fill('#huecoMm', '0');
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();

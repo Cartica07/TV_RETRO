@@ -168,6 +168,10 @@ function mitades() {
   escena.height = D.ALTO;
   const ctx = escena.getContext('2d', { willReadFrequently: true });
   const cortePx = Math.max(1, Math.min(e.fw - 1, Math.round((e.fw * corte) / 100)));
+  // El hueco entre las pantallas: esos puntos del GIF quedan "detrás del plástico" (no se ven en ninguna).
+  const hueco = huecoPx();
+  const desdeDer = Math.min(e.fw, cortePx + hueco);
+  $('huecoTexto').textContent = hueco ? `mm (≈ ${hueco} puntos de pantalla)` : 'mm (0 = como si se tocaran)';
   const izq = [], der = [];
   for (const cuadro of e.cuadros) {
     ctx.fillStyle = e.fondo === 'blanco' ? '#ffffff' : '#000000';
@@ -175,8 +179,9 @@ function mitades() {
     for (const [desde, ancho, x, y, recorteX] of [
       // En 0 la mitad izquierda termina justo en el borde donde se juntan (x 128) y la derecha empieza ahí, sea cual sea el corte.
       [0, cortePx, D.ANCHO - cortePx + m.izqX, e.y0 + m.izqY, 0],
-      [cortePx, e.fw - cortePx, D.ANCHO + m.derX, e.y0 + m.derY, D.ANCHO],
+      [desdeDer, e.fw - desdeDer, D.ANCHO + m.derX, e.y0 + m.derY, D.ANCHO],
     ]) {
+      if (ancho <= 0) continue;
       ctx.save();
       ctx.beginPath();
       ctx.rect(recorteX, 0, D.ANCHO, D.ALTO); // cada mitad solo se ve en su pantalla
@@ -198,12 +203,25 @@ function binarizar(gris, ancho) {
 }
 
 // GIF de una TV (128×64) -> cuadros [{dur, bitmap}] ya con vueltas y velocidad.
-function cuadrosDeGif(id, vueltasId, velocidadId) {
+// Recortar el principio y el final de un GIF (pedido 2026-11-24): "Usar desde el cuadro … hasta el …" (los virales suelen tener
+// entrada y salida). sufijo = el de los campos (Tiempo, Escena, 1, 2). Muestra cuántos cuadros tiene.
+function rangoDeCuadros(sufijo, total) {
+  $('total' + sufijo).textContent = `(de ${total})`;
+  const desde = numero('desde' + sufijo, 1, 1, total);
+  const hasta = Math.max(desde, numero('hasta' + sufijo, total, 1, total));
+  return [desde - 1, hasta];
+}
+
+function cuadrosDeGif(id, vueltasId, velocidadId, sufijo) {
   const leido = leer(id, D.ANCHO);
   if (!leido) return null;
-  const crudos = leido.grises.map((gris, i) => ({ dur: leido.delays[i], bitmap: binarizar(gris, D.ANCHO) }));
+  const [a, b] = rangoDeCuadros(sufijo, leido.grises.length);
+  const crudos = leido.grises.slice(a, b).map((gris, i) => ({ dur: leido.delays[a + i], bitmap: binarizar(gris, D.ANCHO) }));
   return D.prepararCuadros(crudos, { vueltas: numero(vueltasId, 1, 1, 20), velocidad: numero(velocidadId, 100, 10, 400) / 100 });
 }
+
+// El hueco entre las pantallas, en puntos: la pantalla de 0,96" mide ~21,74 mm de ancho para sus 128 puntos.
+const huecoPx = () => Math.round((numero('huecoMm', 0, 0, 60) * D.ANCHO) / 21.74);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Armar el dúo
@@ -214,25 +232,36 @@ let turno = 0;
 function pistasYSonidoInicio() {
   if (valor('modo') === 'tiempo') {
     // Un GIF partido en el TIEMPO: lo de antes del corte en un Pepito y, apenas termina, el resto en el otro.
-    const todo = cuadrosDeGif('tiempo', 'vueltasTiempo', 'velocidadTiempo');
+    const todo = cuadrosDeGif('tiempo', 'vueltasTiempo', 'velocidadTiempo', 'Tiempo');
     if (!todo) return null;
-    const total = D.duracionDe(todo);
-    const pct = numero('corteTiempo', 50, 5, 95);
-    const { primera, segunda } = D.partirEnTiempo(todo, (total * pct) / 100);
     const tvPrimera = valor('tvTiempo');
     const tvSegunda = tvPrimera === 'der' ? 'izq' : 'der';
-    const corteMs = D.duracionDe(primera);
-    $('corteTiempoTexto').textContent = `${pct} % (${corteMs} de ${total} ms)`;
-    const pistas = [{ tv: tvPrimera, inicio: 0, cuadros: primera }, { tv: tvSegunda, inicio: corteMs, cuadros: segunda }];
-    return { pistas, inicioDe: (tv) => (tv === tvPrimera ? 0 : corteMs) };
+    const total = D.duracionDe(todo);
+    const n = todo.length;
+    if (n < 2) {
+      $('corteTiempoTexto').textContent = 'El GIF tiene un solo cuadro: va entero en el primero.';
+      return { pistas: [{ tv: tvPrimera, inicio: 0, cuadros: todo }], inicioDe: () => 0 };
+    }
+    // El corte es DESPUÉS de un cuadro (no a ciegas en un porcentaje). Al cargar un GIF nuevo empieza en la mitad.
+    const barra = $('corteTiempo');
+    barra.max = String(n - 1);
+    if (barra.dataset.nuevo) { barra.value = String(Math.max(1, Math.floor(n / 2))); delete barra.dataset.nuevo; }
+    const k = numero('corteTiempo', Math.floor(n / 2), 1, n - 1);
+    const corteMs = D.duracionDe(todo.slice(0, k));
+    const pausa = numero('pausaTiempo', 0, 0, 5000);
+    const { primera, segunda } = D.partirEnTiempo(todo, corteMs);
+    $('corteTiempoTexto').textContent = `después del cuadro ${k} de ${n} (${corteMs} de ${total} ms)`;
+    const pistas = [{ tv: tvPrimera, inicio: 0, cuadros: primera }, { tv: tvSegunda, inicio: corteMs + pausa, cuadros: segunda }];
+    return { pistas, inicioDe: (tv) => (tv === tvPrimera ? 0 : corteMs + pausa) };
   }
   if (valor('modo') === 'escena') {
     // Un GIF partido en dos MITADES, cada una en su pantalla y movible.
     const leido = mitades();
     if (!leido) return null;
     $('corteMitadesTexto').textContent = `${numero('corteMitades', 50, 10, 90)} %`;
-    const izq = leido.izq.map((bitmap, i) => ({ dur: leido.delays[i], bitmap }));
-    const der = leido.der.map((bitmap, i) => ({ dur: leido.delays[i], bitmap }));
+    const [a, b] = rangoDeCuadros('Escena', leido.izq.length);
+    const izq = leido.izq.slice(a, b).map((bitmap, i) => ({ dur: leido.delays[a + i], bitmap }));
+    const der = leido.der.slice(a, b).map((bitmap, i) => ({ dur: leido.delays[a + i], bitmap }));
     const op = { vueltas: numero('vueltasEscena', 1, 1, 20), velocidad: numero('velocidadEscena', 100, 10, 400) / 100 };
     return {
       pistas: [{ tv: 'izq', inicio: 0, cuadros: D.prepararCuadros(izq, op) }, { tv: 'der', inicio: 0, cuadros: D.prepararCuadros(der, op) }],
@@ -241,8 +270,8 @@ function pistasYSonidoInicio() {
   }
   const tv1 = valor('tv1');
   const tv2 = tv1 === 'der' ? 'izq' : 'der';
-  const c1 = cuadrosDeGif('g1', 'vueltas1', 'velocidad1');
-  const c2 = cuadrosDeGif('g2', 'vueltas2', 'velocidad2');
+  const c1 = cuadrosDeGif('g1', 'vueltas1', 'velocidad1', '1');
+  const c2 = cuadrosDeGif('g2', 'vueltas2', 'velocidad2', '2');
   if (!c1 && !c2) return null;
   const inicio2 = valor('inicio2') === 'ms' ? numero('inicioMs', 0, 0, 15000) : (c1 ? D.duracionDe(c1) : 0);
   const pistas = [];
@@ -336,10 +365,16 @@ function cuadroEn(cuadros, t) {
 
 function dibujarEn(t) {
   if (!ultimo) return;
+  const numeros = {};
   for (const tv of ['izq', 'der']) {
-    const c = cuadroEn(ultimo.mitades[tv].cuadros, t);
+    const lista = ultimo.mitades[tv].cuadros;
+    const c = cuadroEn(lista, t);
+    numeros[tv] = `${lista.indexOf(c) + 1}/${lista.length}`;
     if (c && c !== visto[tv]) { pintar(lienzos[tv], c.bitmap); visto[tv] = c; }
   }
+  // La barra de tiempo (pedido 2026-11-24): dónde va y qué imagen muestra cada Pepito en ese momento.
+  $('barraTiempo').value = String(Math.round(t));
+  $('barraTexto').textContent = `${Math.round(t)} ms · izquierdo ${numeros.izq} · derecho ${numeros.der}`;
 }
 
 let animacion = null; // { inicio, raf, audio }
@@ -416,7 +451,9 @@ function mostrarDatos(texto, mal = false) {
   $('datos').classList.toggle('mal', !!mal);
 }
 function habilitar(si) {
-  for (const id of ['botonReproducir', 'botonPaquete', 'botonCabecera']) $(id).disabled = !si;
+  for (const id of ['botonReproducir', 'botonPaquete', 'botonCabecera', 'barraTiempo']) $(id).disabled = !si;
+  if (si && ultimo) $('barraTiempo').max = String(ultimo.duo.duracion);
+  if (!si) $('barraTexto').textContent = '';
 }
 function fallo(e) {
   console.error('[duos] error:', e);
@@ -442,6 +479,7 @@ async function tomarArchivo(input, id) {
     const buffer = await archivo.arrayBuffer();
     if (!esGif(buffer)) { aviso('Ese archivo no es un GIF.', true); return; }
     gifs[id] = { buffer, nombre: archivo.name };
+    if (id === 'tiempo') $('corteTiempo').dataset.nuevo = '1'; // el corte empieza en la mitad del GIF nuevo
     for (const k of [...lecturas.keys()]) if (k.startsWith(id + '|')) lecturas.delete(k);
     if (!valor('nombre').trim()) $('nombre').value = archivo.name.replace(/\.gif$/i, '').slice(0, 30);
     programar();
@@ -464,16 +502,24 @@ function iniciar() {
   });
   $('gif1').addEventListener('change', (e) => tomarArchivo(e.target, 'g1'));
   $('gif2').addEventListener('change', (e) => tomarArchivo(e.target, 'g2'));
+  const soloVista = (el) => el && (el.id === 'barraTiempo' || el.id === 'conSonido'); // no cambian el dúo
   document.addEventListener('change', (e) => {
-    if (!e.target || e.target.type === 'file') return;
+    if (!e.target || e.target.type === 'file' || soloVista(e.target)) return;
     actualizarPaneles();
     programar();
   });
   document.addEventListener('input', (e) => {
+    if (soloVista(e.target)) return;
     if (e.target && (e.target.type === 'range' || e.target.type === 'number' || e.target.id === 'nombre')) programar();
   });
   $('botonReproducir').addEventListener('click', reproducir);
   $('botonParar').addEventListener('click', () => parar());
+  // Mover la barra detiene la reproducción y muestra ese momento (no vuelve a armar el dúo).
+  $('barraTiempo').addEventListener('input', (e) => {
+    e.stopPropagation();
+    parar(true);
+    dibujarEn(Number(e.target.value) || 0);
+  });
   $('botonPaquete').addEventListener('click', () => {
     if (!ultimo) return;
     descargar(`${ultimo.paquete.clave}.duo.json`, JSON.stringify(ultimo.paquete, null, 1), 'application/json');
