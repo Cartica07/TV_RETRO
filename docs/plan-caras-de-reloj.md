@@ -64,6 +64,10 @@ Elementos de la primera versión:
 **Estilos de íconos (pedido del dueño, 2026-11-24):** la zona de estado y la campana llevan un **estilo** a elegir: Wi-Fi
 como barras que suben o como ondas `)))`; mensaje como sobre o como burbuja; campana con dos dibujos. Se empieza con 2 o 3
 estilos por ícono y el dueño los ve dibujados en píxeles antes de hacerlos.
+**Elegidos por el dueño (2026-11-24)** en la página de estilos (generador: `app-unificada/herramientas/iconos-reloj/`): Wi-Fi
+**Abanico** (la onda que falta no se dibuja; sin Wi-Fi, cruzado por una raya), mensaje **Burbuja de chat**, conexión
+**Nube**, alarma **Campana**, batería **Segmentos**, clima **Dibujos simples** (sol, parcial, nublado, lluvia, tormenta). Los
+estilos de hoy siguen disponibles (estilo 0) para la Cara 1 y para otras caras.
 
 **Batería (pendiente de decidir el hardware, las dos TV llevarán batería):** recomendado un divisor de voltaje (2
 resistencias de ~470 kΩ y un condensador a un pin analógico: ~4 µA, centavos, 4-5 niveles); alternativas: chip medidor
