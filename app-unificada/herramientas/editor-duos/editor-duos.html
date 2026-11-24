@@ -68,17 +68,20 @@ input[type="number"] { width: 84px; }
               <option value="izq">el Pepito de la izquierda</option>
             </select>
           </label>
-          <label class="campo">Corte <span class="fila"><input type="range" id="corteTiempo" min="5" max="95" value="50" /> <span class="nota" id="corteTiempoTexto">50 %</span></span></label>
+          <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desdeTiempo" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hastaTiempo" min="1" max="9999" value="9999" /> <span class="nota" id="totalTiempo"></span></div>
+          <label class="campo">Corte <span class="fila"><input type="range" id="corteTiempo" min="1" max="1" value="1" /> <span class="nota" id="corteTiempoTexto"></span></span></label>
+          <label class="campo">Pausa entre las partes <span class="fila"><input type="number" id="pausaTiempo" min="0" max="5000" step="20" value="0" /> <span class="nota">ms (lo que tarda en cruzar el hueco entre las pantallas)</span></span></label>
           <div class="fila">
             <label class="fila">Vueltas <input type="number" id="vueltasTiempo" min="1" max="20" value="1" /></label>
             <label class="fila">Velocidad % <input type="number" id="velocidadTiempo" min="10" max="400" value="100" /></label>
           </div>
-          <p class="nota">Lo de antes del corte se ve en un Pepito; apenas termina, el resto sigue en el otro.</p>
+          <p class="nota">Lo de antes del corte se ve en un Pepito; al terminar (más la pausa), el resto sigue en el otro.</p>
         </div>
 
         <div id="panelEscena" class="pista" hidden>
           <h3>El GIF</h3>
           <label class="campo">GIF <input type="file" id="gifEscena" accept="image/gif" /></label>
+          <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desdeEscena" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hastaEscena" min="1" max="9999" value="9999" /> <span class="nota" id="totalEscena"></span></div>
           <label class="campo">Corte <span class="fila"><input type="range" id="corteMitades" min="10" max="90" value="50" /> <span class="nota" id="corteMitadesTexto">50 %</span></span></label>
           <div class="campo">Mitad izquierda
             <span class="fila">
@@ -112,6 +115,7 @@ input[type="number"] { width: 84px; }
                 <option value="izq">el Pepito de la izquierda</option>
               </select>
             </label>
+            <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desde1" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hasta1" min="1" max="9999" value="9999" /> <span class="nota" id="total1"></span></div>
             <div class="fila">
               <label class="fila">Vueltas <input type="number" id="vueltas1" min="1" max="20" value="1" /></label>
               <label class="fila">Velocidad % <input type="number" id="velocidad1" min="10" max="400" value="100" /></label>
@@ -127,6 +131,7 @@ input[type="number"] { width: 84px; }
               </select>
             </label>
             <label class="campo" id="campoInicioMs" hidden>Milisegundos <input type="number" id="inicioMs" min="0" max="15000" step="50" value="0" /></label>
+            <div class="fila"><span class="nota">Usar desde el cuadro</span> <input type="number" id="desde2" min="1" max="9999" value="1" /> <span class="nota">hasta el</span> <input type="number" id="hasta2" min="1" max="9999" value="9999" /> <span class="nota" id="total2"></span></div>
             <div class="fila">
               <label class="fila">Vueltas <input type="number" id="vueltas2" min="1" max="20" value="1" /></label>
               <label class="fila">Velocidad % <input type="number" id="velocidad2" min="10" max="400" value="100" /></label>
@@ -148,6 +153,8 @@ input[type="number"] { width: 84px; }
             </select>
           </label>
         </div>
+        <label class="campo">Hueco entre las pantallas <span class="fila"><input type="number" id="huecoMm" min="0" max="60" step="0.5" value="0" /> <span class="nota" id="huecoTexto">mm (0 = como si se tocaran)</span></span></label>
+        <p class="nota">Con los Pepitos pegados, la distancia entre el borde de una pantalla encendida y el de la otra. Con las mitades, lo que queda en ese hueco no se ve (como si pasara por detrás). Es de la TV, no del dúo: todos los dúos deberían usar el mismo valor.</p>
       </section>
 
       <section class="tarjeta" aria-labelledby="tituloImagen">
@@ -223,6 +230,7 @@ input[type="number"] { width: 84px; }
           <button type="button" id="botonParar" disabled>Parar</button>
           <label class="fila"><input type="checkbox" id="conSonido" checked /> Con sonido</label>
         </div>
+        <label class="fila" style="width: 100%">Momento <input type="range" id="barraTiempo" min="0" max="0" value="0" style="flex: 1" disabled /> <span class="nota" id="barraTexto"></span></label>
         <p id="datos">Carga un GIF para empezar.</p>
         <p class="nota">La vista previa sale del archivo ya armado (lo mismo que reciben los Pepitos).</p>
       </section>
