@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pepito · Editor de caras de reloj</title>
+<link rel="stylesheet" href="css/fuentes.css" />
+<link rel="stylesheet" href="css/tokens.css" />
+<style>
+/* Herramienta del dueño (administrador): crea las caras de reloj del catálogo. Mismos colores y letras que la app (tokens.css). */
+body { margin: 0; background: var(--fondo, #0B1016); color: var(--texto, #E6EDF5); font-family: var(--fuente-ui, "Space Grotesk", system-ui, sans-serif); }
+.pagina { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 1.6rem; }
+h2 { margin: 0 0 10px; font-size: 1.05rem; }
+h3 { margin: 0 0 8px; font-size: 1rem; color: var(--acento, #4DD2FF); }
+.tarjeta { background: var(--superficie, #121821); border: 1px solid var(--borde, #253041); border-radius: 14px; padding: 16px; }
+.rejilla { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .rejilla { grid-template-columns: 1fr; } }
+#vista { width: 100%; height: auto; aspect-ratio: 2 / 1; display: block; background: #000; border-radius: 10px; touch-action: none; cursor: grab; image-rendering: pixelated; }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nota { color: var(--texto-2, #8A9AAE); font-size: 0.85rem; margin: 6px 0 0; }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--superficie-alta, #1A2230); border: 1px solid var(--borde, #253041); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+button.primario { background: var(--acento-relleno, #50C5EC); color: #04141c; border-color: transparent; font-weight: 600; }
+button.chico { padding: 4px 10px; font-size: 0.85rem; }
+button.peligro { color: #ff8a8a; }
+button[aria-pressed="true"] { border-color: var(--acento, #4DD2FF); color: var(--acento, #4DD2FF); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--acento, #4DD2FF); outline-offset: 2px; }
+select, input[type="text"], input[type="number"], input[type="date"], input[type="email"], input[type="password"] { background: var(--superficie-hundida, #0E141C); border: 1px solid var(--borde, #253041); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fila-elemento { width: 100%; text-align: left; }
+.fila-elemento.elegido, .fila-cara.elegido { border-color: var(--acento, #4DD2FF); }
+.fila-cara { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; border: 1px solid var(--borde, #253041); border-radius: 10px; padding: 6px 10px; }
+.campo-prop { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px; align-items: center; margin-bottom: 8px; font-size: 0.92rem; }
+#tamano { font-family: var(--fuente-mono, "JetBrains Mono", monospace); font-size: 0.8rem; color: var(--texto-2, #8A9AAE); }
+#tamano.mal, #aviso.mal { color: #ff8a8a; }
+#aviso { min-height: 1.4em; margin: 0; }
+.columna { display: grid; gap: 16px; }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <h1>Editor de caras de reloj</h1>
+    <p class="nota">Lo que guardes en el catálogo lo ven al instante todos los Pepitos (Pro y Lite) en Más &gt; Caras de reloj.</p>
+  </header>
+
+  <section class="tarjeta" id="pantallaEntrar" hidden>
+    <h2>Entra con tu cuenta de administrador</h2>
+    <form id="formEntrar" class="fila">
+      <input type="email" id="correo" placeholder="Correo" autocomplete="username" required />
+      <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password" required />
+      <button type="submit" class="primario">Entrar</button>
+    </form>
+    <p class="nota" id="errorEntrar" role="alert"></p>
+  </section>
+
+  <section class="tarjeta" id="noAdmin" hidden>
+    <h2>Esta herramienta es solo para el administrador</h2>
+    <p class="nota">Entra con la cuenta de administrador para crear caras.</p>
+  </section>
+
+  <div id="editor" hidden class="columna">
+    <div class="rejilla">
+      <div class="columna">
+        <section class="tarjeta">
+          <canvas id="vista" width="1024" height="512" aria-label="Vista previa de la cara"></canvas>
+          <div class="fila" style="justify-content: space-between; margin-top: 10px">
+            <div class="fila" role="group" aria-label="Cómo se vería">
+              <button type="button" id="muestraPro" aria-pressed="true">Pepito Pro</button>
+              <button type="button" id="muestraLite" aria-pressed="false">Pepito Lite</button>
+              <button type="button" id="muestraMensaje" aria-pressed="true">Mensaje nuevo</button>
+              <button type="button" id="muestraAlarma" aria-pressed="true">Alarma activa</button>
+            </div>
+            <span id="tamano"></span>
+          </div>
+          <p class="nota">Elige un elemento de la lista y arrástralo sobre la vista previa. El cuadro amarillo marca su punto (x, y).</p>
+        </section>
+        <section class="tarjeta">
+          <h2>Fondo</h2>
+          <div class="fila">
+            <label class="fila">Imagen <input type="file" id="archivoFondo" accept="image/*" /></label>
+            <label class="fila">Nivel de pixelado <input type="number" id="umbralFondo" min="1" max="254" value="127" style="width: 80px" /></label>
+            <button type="button" id="botonQuitarFondo" hidden>Quitar fondo</button>
+          </div>
+          <p class="nota">Se pixela como en la Galería (128×64). Pesa 1 KB de los 2 KB de la cara.</p>
+        </section>
+      </div>
+      <div class="columna">
+        <section class="tarjeta">
+          <h2>Elementos</h2>
+          <div class="fila" style="margin-bottom: 10px">
+            <select id="nuevoTipo" aria-label="Elemento para añadir"></select>
+            <button type="button" id="botonAnadir">Añadir</button>
+          </div>
+          <ul id="elementos"></ul>
+          <p class="nota" id="sinElementos">La cara está vacía.</p>
+          <div class="fila" id="accionesElemento" style="margin-top: 10px">
+            <button type="button" id="botonSubir" class="chico">Subir</button>
+            <button type="button" id="botonBajar" class="chico">Bajar</button>
+            <button type="button" id="botonDuplicar" class="chico">Duplicar</button>
+            <button type="button" id="botonQuitar" class="chico peligro">Quitar</button>
+          </div>
+          <p class="nota">Los de abajo se dibujan encima de los de arriba.</p>
+        </section>
+        <section class="tarjeta" id="propiedades"></section>
+      </div>
+    </div>
+
+    <section class="tarjeta">
+      <h2>Catálogo</h2>
+      <div class="fila" style="margin-bottom: 10px">
+        <input type="text" id="nombreCara" placeholder="Nombre (lo ven los clientes)" maxlength="30" />
+        <label class="fila">Orden <input type="number" id="ordenCara" min="1" max="999" value="1" style="width: 80px" /></label>
+        <button type="button" id="botonGuardar" class="primario">Guardar en el catálogo</button>
+        <button type="button" id="botonProbar">Probar en mi Pepito</button>
+        <button type="button" id="botonNueva">Cara nueva</button>
+      </div>
+      <p id="aviso" role="status" aria-live="polite"></p>
+      <ul id="catalogo"></ul>
+      <p class="nota" id="sinCaras">Todavía no hay caras en el catálogo (los clientes solo ven la Cara 1).</p>
+      <label class="fila nota"><input type="checkbox" id="confirmarBorrar" /> Sí, quiero borrar (marca esto antes de tocar "Borrar")</label>
+    </section>
+  </div>
+</div>
+<script type="module" src="js/editor-caras.js"></script>
+</body>
+</html>
