@@ -101,7 +101,7 @@ En la app, Más > Config > Ajustes de Pepito > "Apagar pantalla": elegir **5 min
 6. El botón ya no lleva a la pantalla apagada: contenido <-> reloj.
 7. Elegir **Nunca**: la app muestra el aviso y la pantalla ya no se apaga.
 
-**Resultados (2026-11-23, placa S3 con el dueño):** 1 a 6 bien. La canción con letra se quedaba en su último cuadro y no dejaba apagar: arreglado (`22c9de8` Lite, `60b74c1` Pro), regrabado y probado bien. **Faltan:** el apagado con **10 min** y **Nunca** (punto 7).
+**Resultados (2026-11-23, placa S3 con el dueño):** 1 a 6 bien. La canción con letra se quedaba en su último cuadro y no dejaba apagar: arreglado (`22c9de8` Lite, `60b74c1` Pro), regrabado y probado bien. 10 min y **Nunca** (punto 7): bien (confirmado por el dueño el 2026-11-23).
 
 ## 6. Qué medir mientras tanto
 
