@@ -401,17 +401,34 @@ export async function unificadaElegirCara(clave, receta) {
   if (tvLite) return (await cargarLite()).elegirCara(clave, receta);
   const id = pro.dispositivoActual();
   if (!id) return { exito: false, error: 'No hay ningún Pepito elegido' };
+  const orden = () => pro.enviarEstado(Object.assign({}, ultimoEstado || ESTADO_MINIMO, { tipo: 'ajustes' }));
+  let escritura;
+  let lenta;
   try {
     const m = await import(SDK_DB);
     const ruta = m.ref(pro.db, `dispositivos/${id}/reloj`);
-    if (clave) await m.set(ruta, { clave, datos: aBase64(receta) });
-    else await m.remove(ruta);
+    escritura = clave ? m.set(ruta, { clave, datos: aBase64(receta) }) : m.remove(ruta);
+    // Sin señal, el SDK no termina la escritura hasta que vuelve: a los 15 s (como conTope de la Pro) se avisa y se suelta el
+    // botón; la cara y la orden siguen solas cuando vuelva la señal (2026-11-24).
+    lenta = await Promise.race([escritura.then(() => false), new Promise((r) => setTimeout(() => r(true), ESPERA_CARA_MS))]);
   } catch (error) {
     console.error('[Pepito] No se pudo guardar la cara:', error);
     return { exito: false, error: pro.describirError(error) };
   }
-  return pro.enviarEstado(Object.assign({}, ultimoEstado || ESTADO_MINIMO, { tipo: 'ajustes' }));
+  if (lenta) {
+    return {
+      exito: false,
+      pendiente: true,
+      error: 'la conexión está lenta',
+      escritura: escritura.then(async () => {
+        const r = await orden();
+        return r && r.pendiente && r.escritura ? await r.escritura : r;
+      }, (error) => ({ exito: false, error: pro.describirError(error) })),
+    };
+  }
+  return orden();
 }
+const ESPERA_CARA_MS = 15000;
 
 // Suscripciones (devuelven la función para dejar de escuchar): con una TV Lite se suscriben cuando cargue la parte Bluetooth.
 const suscripcion = (nombre) => (...a) => {

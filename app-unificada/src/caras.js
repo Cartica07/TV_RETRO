@@ -15,6 +15,8 @@ const TEXTO_ACTUALIZA = 'Actualiza tu Pepito para cambiar la cara del reloj.';
 const TEXTO_LISTO = 'Pepito ya tiene esta cara ✅';
 const TEXTO_ERROR = 'No se pudo enviar. Vuelve a intentarlo.';
 const TEXTO_ENVIANDO = 'Enviando…';
+// El de siempre del panel con la señal lenta (main.js de la Pro).
+const TEXTO_LENTO = 'La conexión está lenta: se enviará solo cuando vuelva la señal.';
 // Ciudad para el clima (opción A del dueño, 2026-11-24; textos 54 a 57 aprobados).
 const TEXTO_SIN_CLIMA = 'Sin clima';
 const TEXTO_NO_ENCONTRADA = 'No encontramos esa ciudad.';
@@ -211,9 +213,18 @@ async function abrir() {
   await mostrarElegida();
 }
 
+// El resultado de un envío solo se muestra si se sigue en la misma pantalla (no se volvió a entrar) y con la misma cara elegida
+// en la lista: si no, el ✅ hablaría de otra cara (2026-11-24).
+const siguePantalla = (clave, t) => t === turno && !!$('caraLista') && $('caraLista').value === clave;
+function mostrarResultado(r, clave, t) {
+  if (!siguePantalla(clave, t)) return;
+  aviso(r && r.exito ? TEXTO_LISTO : ((r && r.error) ? `${r.error}.`.replace(/\.\.$/, '.') : TEXTO_ERROR));
+}
+
 async function enviar() {
   if (enviando) return;
   enviando = true;
+  const t = turno;
   const boton = $('botonEnviarCara');
   if (boton) boton.disabled = true;
   try {
@@ -222,7 +233,13 @@ async function enviar() {
     const receta = clave ? await recetaDe(clave) : null;
     if (clave && !receta) { aviso(TEXTO_ERROR); return; }
     const r = await unificadaElegirCara(clave, receta);
-    aviso(r && r.exito ? TEXTO_LISTO : ((r && r.error) ? `${r.error}.`.replace(/\.\.$/, '.') : TEXTO_ERROR));
+    if (r && r.pendiente && r.escritura) {
+      // Sin señal (2026-11-24): se avisa y se suelta el botón; el resultado llega cuando vuelva la señal.
+      if (siguePantalla(clave, t)) aviso(TEXTO_LENTO);
+      r.escritura.then((final) => mostrarResultado(final, clave, t), () => mostrarResultado(null, clave, t));
+      return;
+    }
+    mostrarResultado(r, clave, t);
   } catch (e) {
     console.error('[Pepito] Error al enviar la cara:', e);
     aviso(TEXTO_ERROR);

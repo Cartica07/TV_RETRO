@@ -74,6 +74,23 @@ const enviarYEsperar = async (p) => {
   await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(300);
   await pagina.click('#grupoMas button[data-mas="caras"]'); await pagina.waitForTimeout(1500);
   informe('Pro: al volver a la pantalla, la lista marca la cara que tiene la TV', (await pagina.$eval('#caraLista', (s) => s.value)) === 'cara3');
+  // Cambiar la lista justo después de tocar Enviar: el ✅ no sale con otra cara elegida (2026-11-24).
+  await pagina.selectOption('#caraLista', 'cara2'); await pagina.waitForTimeout(300);
+  await pagina.click('#botonEnviarCara');
+  await pagina.selectOption('#caraLista', 'cara3');
+  await pagina.waitForTimeout(1500);
+  informe('Pro: cambiar la lista durante el envío no deja el ✅ de otra cara', !/✅/.test(await txt(pagina, '#caraAviso')), await txt(pagina, '#caraAviso'));
+  // Sin señal: a los 15 s avisa que la conexión está lenta y suelta el botón; al volver la señal termina sola (2026-11-24).
+  await pagina.evaluate(() => { globalThis.__fakeDb.colgar = true; });
+  await pagina.click('#botonEnviarCara');
+  await pagina.waitForTimeout(16000);
+  const lento = { aviso: await txt(pagina, '#caraAviso'), libre: !(await pagina.$eval('#botonEnviarCara', (b) => b.disabled)) };
+  await pagina.evaluate(() => globalThis.__fakeDb.soltar());
+  await pagina.waitForTimeout(1500);
+  const alFinal = await txt(pagina, '#caraAviso');
+  informe('Pro: sin señal avisa "La conexión está lenta…", suelta el botón y al volver la señal dice que listo',
+    lento.aviso === 'La conexión está lenta: se enviará solo cuando vuelva la señal.' && lento.libre && alFinal === 'Pepito ya tiene esta cara ✅',
+    JSON.stringify({ lento, alFinal }));
   // ---- Ciudad para el clima (opción A): solo con una cara que muestra el clima ----
   const GEO = 'https://geocoding-api.open-meteo.com/**';
   const geoBien = (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [
