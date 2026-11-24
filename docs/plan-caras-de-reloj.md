@@ -184,3 +184,19 @@ Preguntas tal como se hicieron:
 7. ¿Apruebas para la Lite el bit 4 del envío y el comando `0x24`?
 8. ¿La lista de elementos de la sección 4 está bien o falta algo (piensa que la Lite no podrá recibir más)?
 9. Nombre del botón del menú: ¿"Caras de reloj"? Y el aviso para la Pro vieja de la sección 7.
+
+## 11. Clima: dónde guardar la ciudad (PROPUESTA, 2026-11-24)
+
+Hoy `clima.cpp` de la Pro no se usa y trae fija la ciudad de Armenia (Quindío). Para que cada cliente vea su clima:
+
+- **App:** Más > Config > Ajustes de Pepito > **"Ciudad para el clima"**: se escribe el nombre y la app muestra las ciudades
+  que encuentra (buscador gratuito de Open-Meteo, sin clave: `geocoding-api.open-meteo.com`, en español); se elige una y se
+  guarda. Texto del campo y de los resultados: propuestas al dueño.
+- **Firebase (campo nuevo, necesita aprobación):** `dispositivos/{id}/ajustes.ciudad` = `{ nombre (1-60), lat (-90 a 90), lon
+  (-180 a 180) }`. Si falta, no hay clima (el elemento Clima no se dibuja). Un firmware que no lo conoce lo ignora. Lo
+  escriben el dueño y los miembros, como el resto de los ajustes. Se borra al desvincular o restablecer.
+- **Pepito Pro:** `clima.cpp` usa esa ciudad en vez de Armenia y consulta el clima cada 30 minutos **solo si la cara elegida
+  tiene el elemento Clima** (no gasta datos ni memoria si no).
+- **Pepito Lite:** no tiene internet, así que no hay clima (más adelante la app podría mandárselo al conectarse).
+- **Privacidad:** la ciudad (no la dirección) queda guardada en la cuenta: hay que mencionarlo en la política de privacidad.
+- **Seguridad:** la política de seguridad de la página (CSP) de la app debe permitir `geocoding-api.open-meteo.com`.
