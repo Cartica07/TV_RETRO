@@ -121,6 +121,14 @@ Copia de la Pro v11 que encendía el Bluetooth (librería del núcleo) y emitía
 - **Productos parecidos no usan radio para el vecino:** los cubos Sifteo tienen "detección de vecinos de campo cercano" propia (sus prototipos usaban infrarrojo) y los AudioCubes, infrarrojo en las caras; las credenciales de conferencias usan infrarrojo de lado a lado (~2400 bps). littleBits usa **conectores magnéticos con contactos**, y hoy se venden conectores magnéticos de pines (pogo) de 5 a 9 contactos que se atraen solos y se repelen si se ponen al revés.
 - **Conclusión:** dos caminos sin el problema de memoria y sin radio: (1) **conector magnético con contactos** en cada lateral (cable serie directo entre las TV: detección inmediata en las dos, rápido, sin gasto de batería esperando) y (2) **infrarrojo lateral** (sin contactos a la vista, lento pero suficiente para los mensajes). Pendiente: que el dueño elija.
 
+#### DECISIÓN DEL DUEÑO (2026-11-24): una radio por línea, empezando por la Pro
+
+- **Pepito Pro ↔ Pepito Pro: ESP-NOW** (usa el Wi-Fi que la Pro ya tiene encendido). **Pepito Lite ↔ Pepito Lite: Bluetooth** (lo que la Lite ya tiene). **Una Pro y una Lite no se juntan** (decirlo claro al cliente). Excepción consciente a "Pro y Lite parejos": las dos tienen Dúos, pero no entre ellas.
+- Lo común se programa separado de la radio (formato, catálogo, herramienta, reproductor, prioridades); cada línea solo cambia la parte que lleva los mensajes.
+- Detección: **sensor Hall + imán** (el conector magnético con contactos salía ~14 000 COP el par contra ~5 000 del sensor con imán). Para el producto: **AH180-PG** (los dos polos, ~8 µA, de patitas, ~0,3-0,5 USD); para la prueba, el módulo que ya compró.
+- **ESP-NOW y el canal:** dos Pro en la misma casa usan el mismo router (mismo canal). Con la Pro de otra casa, la TV que detecta suelta su Wi-Fi unos segundos para buscar a la otra por los canales.
+- Siguiente: medir la memoria de ESP-NOW en la Pro (encendido por orden serie, nunca por temporizador).
+
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
