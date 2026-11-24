@@ -54,6 +54,7 @@ await pagina.selectOption('#sonido', ''); // sin sonido: así la duración es la
 const datos = () => pagina.textContent('#datos');
 
 // ---- Modo escena: un GIF para los dos ----
+await pagina.selectOption('#modo', 'escena');
 await pagina.setInputFiles('#gifEscena', gifAncho);
 await pagina.waitForFunction(() => /Duración/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
 const d1 = await datos();
@@ -78,6 +79,23 @@ const h = fs.readFileSync(await bajada2.path(), 'utf8');
 informe('descarga para el firmware (.h): las dos mitades en m1 y las imágenes para el ESP8266', bajada2.suggestedFilename() === 'duo_prueba.h' && /DUO_PRUEBA_IZQ_M1/.test(h) && /DUO_PRUEBA_DER_M1/.test(h) && /DUO_PRUEBA_IMAGENES/.test(h));
 
 // ---- Modo dos GIF: el primero en la derecha y el segundo en la izquierda cuando termina ----
+// ---- Mitades movibles: correr la mitad izquierda 20 puntos la corre 20 puntos en su pantalla ----
+const primeraColumna = (id) => pagina.evaluate((i) => {
+  const c = document.getElementById(i); const esc = c.width / 128; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  for (let x = 0; x < 128; x++) for (let y = 0; y < 64; y++) { const k = ((y * esc + 1) * c.width + x * esc + 1) * 4; if (d[k + 2] > 128) return x; }
+  return -1;
+}, id);
+await pagina.fill('#movIzqY', '0'); // vuelve a armar: la vista queda en el primer cuadro
+await pagina.waitForTimeout(800);
+const antesX = await primeraColumna('vistaIzq');
+await pagina.fill('#movIzqX', '20');
+await pagina.waitForTimeout(800);
+const despuesX = await primeraColumna('vistaIzq');
+informe('mitades: correr la mitad izquierda 20 puntos la mueve 20 puntos en su pantalla', antesX >= 0 && despuesX === antesX + 20, `${antesX} -> ${despuesX}`);
+await pagina.click('#botonJuntar');
+await pagina.waitForTimeout(800);
+informe('mitades: "Volver a juntarlas en el borde" la devuelve', (await primeraColumna('vistaIzq')) === antesX);
+
 await pagina.selectOption('#modo', 'dos');
 await pagina.setInputFiles('#gif1', gifChico);
 await pagina.setInputFiles('#gif2', gifChico);
@@ -91,6 +109,16 @@ await pagina.selectOption('#sonido', 'corazon');
 await pagina.waitForFunction(() => /Duración: 0\.48 s/.test(document.getElementById('datos').textContent), null, { timeout: 15000 });
 const d2 = await datos();
 informe('con sonido: suena en el Pepito izquierdo desde que empieza su parte (100 ms + 0,38 s = 0,48 s)', /Izquierda: .*con sonido/.test(d2) && !/Derecha: .*con sonido/.test(d2), d2.split('\n').slice(0, 3).join(' | '));
+
+// ---- En el tiempo: la primera mitad del GIF en el Pepito derecho y, apenas termina, el resto en el izquierdo ----
+await pagina.selectOption('#sonido', '');
+await pagina.selectOption('#modo', 'tiempo');
+await pagina.setInputFiles('#gifTiempo', gifChico);
+await pagina.waitForFunction(() => /150 de 300 ms/.test(document.getElementById('corteTiempoTexto').textContent), null, { timeout: 15000 });
+await pagina.waitForTimeout(400);
+informe('en el tiempo: el corte a la mitad queda en 150 ms y el dúo dura lo mismo que el GIF (0,30 s)', /Duración: 0\.30 s/.test(await datos()), (await pagina.textContent('#corteTiempoTexto')) + ' | ' + (await datos()).split('\n')[0]);
+const pTiempoI = await puntos('vistaIzq'), pTiempoD = await puntos('vistaDer');
+informe('en el tiempo: al principio solo se ve el Pepito derecho (el izquierdo espera en negro)', pTiempoD > 0 && pTiempoI === 0, `${pTiempoI} / ${pTiempoD}`);
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();

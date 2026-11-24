@@ -101,6 +101,18 @@ const comprobarMitades = (duo, nombre) => {
   informe('cabecera C: m1 de las dos mitades para la Pro y las imágenes sin comprimir para el ESP8266', /DUO_PRUEBA_IZQ_M1\[\d+\]/.test(h) && /DUO_PRUEBA_DER_M1\[\d+\]/.test(h) && /DUO_PRUEBA_IMAGENES\[3\]\[1024\]/.test(h) && /#if defined\(ESP8266\)/.test(h), `imágenes únicas: ${(h.match(/DUO_PRUEBA_IMAGENES\[(\d+)\]/) || [])[1]}`);
 }
 
+// ---- Partir en el tiempo: la primera parte en un Pepito y la segunda en el otro, sin perder ni sumar duración ----
+{
+  const a = lleno(1), b = lleno(2), c = lleno(3), d = lleno(4);
+  const cuadros = [{ dur: 100, bitmap: a }, { dur: 100, bitmap: b }, { dur: 100, bitmap: c }, { dur: 100, bitmap: d }];
+  const p = D.partirEnTiempo(cuadros, 200);
+  informe('partir en el tiempo a la mitad: dos cuadros en cada parte', p.primera.length === 2 && p.segunda.length === 2 && igual(p.primera[1].bitmap, b) && igual(p.segunda[0].bitmap, c));
+  const q = D.partirEnTiempo(cuadros, 250);
+  informe('un cuadro que cruza el corte se parte en dos (50 + 50 ms)', q.primera.length === 3 && q.primera[2].dur === 50 && q.segunda.length === 2 && q.segunda[0].dur === 50 && igual(q.segunda[0].bitmap, c) && D.duracionDe(q.primera) + D.duracionDe(q.segunda) === 400);
+  const duo = D.armarDuo({ pistas: [{ tv: 'der', inicio: 0, cuadros: q.primera }, { tv: 'izq', inicio: D.duracionDe(q.primera), cuadros: q.segunda }] });
+  informe('armado: la derecha toca la primera parte y la izquierda sigue justo al terminar', duo.duracion === 400 && duo.izq.cuadros[1].t === 250 && duo.der.cuadros.length === 3);
+}
+
 // ---- Claves ----
 informe('clave: sin tildes ni espacios', D.claveDe('¡Gatitos Bailando!') === 'gatitos_bailando' && D.claveDe('') === 'duo');
 

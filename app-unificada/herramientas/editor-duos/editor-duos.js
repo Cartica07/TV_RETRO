@@ -18,7 +18,7 @@ const marcado = (id) => $(id).checked;
 // ---------------------------------------------------------------------------------------------------------------------
 // GIF: cada uno se lee una vez por geometría (lo caro) y se binariza cada vez que cambian los ajustes (lo barato).
 // ---------------------------------------------------------------------------------------------------------------------
-const gifs = { escena: null, g1: null, g2: null }; // { buffer, nombre }
+const gifs = { tiempo: null, escena: null, g1: null, g2: null }; // { buffer, nombre }
 const lecturas = new Map(); // clave -> { grises: Uint8Array[], delays: number[] }
 
 const geometria = () => ({
@@ -70,6 +70,88 @@ function leer(id, ancho) {
   return leido;
 }
 
+// ---- Partir en dos MITADES movibles (pedido del dueño, 2026-11-24) ----
+// El GIF (recortado, girado y volteado) se acomoda como si fuera una escena de 256×64 (con el Encuadre elegido) y se corta en
+// "corte" % de su ancho. Cada mitad se dibuja en SU pantalla de 128×64: con ↔ y ↕ en 0 quedan pegadas al borde donde se
+// juntan los Pepitos (igual que una escena continua); con otros valores cada una se corre dentro de su pantalla.
+const mover = () => ({
+  izqX: numero('movIzqX', 0, -128, 128), izqY: numero('movIzqY', 0, -64, 64),
+  derX: numero('movDerX', 0, -128, 128), derY: numero('movDerY', 0, -64, 64),
+});
+
+function orientar(fuente, sw, sh, g, lienzo) {
+  const giro = g.rotar === 90 || g.rotar === 270;
+  lienzo.width = giro ? sh : sw;
+  lienzo.height = giro ? sw : sh;
+  const ctx = lienzo.getContext('2d');
+  ctx.save();
+  ctx.translate(lienzo.width / 2, lienzo.height / 2);
+  ctx.scale(g.volteoH ? -1 : 1, g.volteoV ? -1 : 1);
+  ctx.rotate((g.rotar * Math.PI) / 180);
+  ctx.drawImage(fuente, -sw / 2, -sh / 2);
+  ctx.restore();
+}
+
+function leerMitades() {
+  const gif = gifs.escena;
+  if (!gif) return null;
+  const corte = numero('corteMitades', 50, 10, 90);
+  const m = mover();
+  const g = geometria();
+  const clave = 'escena|mitades|' + JSON.stringify(g) + '|' + JSON.stringify(recorte()) + '|' + corte + '|' + JSON.stringify(m);
+  if (lecturas.has(clave)) return lecturas.get(clave);
+  const origen = document.createElement('canvas');
+  const recortado = document.createElement('canvas');
+  const orientado = document.createElement('canvas');
+  const pantallas = { izq: document.createElement('canvas'), der: document.createElement('canvas') };
+  for (const c of Object.values(pantallas)) { c.width = D.ANCHO; c.height = D.ALTO; }
+  const r = recorte();
+  const izq = [], der = [], delays = [];
+  let octx = null;
+  decodificarGif(gif.buffer, (rgba, delay, i, W, H) => {
+    if (!octx || origen.width !== W || origen.height !== H) {
+      origen.width = W;
+      origen.height = H;
+      octx = origen.getContext('2d', { willReadFrequently: true });
+    }
+    octx.putImageData(new ImageData(rgba, W, H), 0, 0);
+    const sx = Math.round((W * r.izq) / 100), sy = Math.round((H * r.arriba) / 100);
+    const sw = Math.max(1, W - sx - Math.round((W * r.der) / 100)), sh = Math.max(1, H - sy - Math.round((H * r.abajo) / 100));
+    recortado.width = sw;
+    recortado.height = sh;
+    recortado.getContext('2d').drawImage(origen, sx, sy, sw, sh, 0, 0, sw, sh);
+    orientar(recortado, sw, sh, g, orientado);
+    const rw = orientado.width, rh = orientado.height;
+    // Tamaño dentro de la escena de 256×64, como acomodarEnDestino (Ajustar, Llenar, Estirar u Original).
+    const ANCHO_ESCENA = 2 * D.ANCHO;
+    let fw, fh;
+    if (g.escala === 'estirar') { fw = ANCHO_ESCENA; fh = D.ALTO; }
+    else if (g.escala === 'original') { fw = rw; fh = rh; }
+    else if ((g.escala === 'llenar') === (rw / rh > ANCHO_ESCENA / D.ALTO)) { fh = D.ALTO; fw = Math.max(1, Math.round((D.ALTO * rw) / rh)); }
+    else { fw = ANCHO_ESCENA; fh = Math.max(1, Math.round((ANCHO_ESCENA * rh) / rw)); }
+    const x0 = Math.round((ANCHO_ESCENA - fw) / 2), y0 = Math.round((D.ALTO - fh) / 2);
+    const corteFuente = Math.max(1, Math.min(rw - 1, Math.round((rw * corte) / 100)));
+    const corteEscena = (corteFuente * fw) / rw;
+    for (const [tv, desde, ancho, x, y] of [
+      ['izq', 0, corteFuente, x0 + m.izqX, y0 + m.izqY],
+      ['der', corteFuente, rw - corteFuente, x0 + corteEscena - D.ANCHO + m.derX, y0 + m.derY],
+    ]) {
+      const ctx = pantallas[tv].getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = g.fondo === 'blanco' ? '#ffffff' : '#000000';
+      ctx.fillRect(0, 0, D.ANCHO, D.ALTO);
+      ctx.imageSmoothingEnabled = g.escala !== 'original';
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(orientado, desde, 0, ancho, rh, Math.round(x), Math.round(y), (ancho * fw) / rw, fh);
+    }
+    izq.push(grisesDeCanvas(pantallas.izq));
+    der.push(grisesDeCanvas(pantallas.der));
+    delays.push(delay);
+  });
+  const leido = { izq, der, delays };
+  lecturas.set(clave, leido);
+  return leido;
+}
+
 function binarizar(gris, ancho) {
   const umbral = numero('umbral', 127, 1, 254);
   const bm = marcado('pixelar') ? grisABitmapAtkinson(gris, ancho, D.ALTO, umbral) : grisABitmapUmbral(gris, ancho, D.ALTO, umbral);
@@ -91,15 +173,27 @@ let ultimo = null; // { duo, paquete, mitades: { izq, der } } (mitades = lo deco
 let turno = 0;
 
 function pistasYSonidoInicio() {
+  if (valor('modo') === 'tiempo') {
+    // Un GIF partido en el TIEMPO: lo de antes del corte en un Pepito y, apenas termina, el resto en el otro.
+    const todo = cuadrosDeGif('tiempo', 'vueltasTiempo', 'velocidadTiempo');
+    if (!todo) return null;
+    const total = D.duracionDe(todo);
+    const pct = numero('corteTiempo', 50, 5, 95);
+    const { primera, segunda } = D.partirEnTiempo(todo, (total * pct) / 100);
+    const tvPrimera = valor('tvTiempo');
+    const tvSegunda = tvPrimera === 'der' ? 'izq' : 'der';
+    const corteMs = D.duracionDe(primera);
+    $('corteTiempoTexto').textContent = `${pct} % (${corteMs} de ${total} ms)`;
+    const pistas = [{ tv: tvPrimera, inicio: 0, cuadros: primera }, { tv: tvSegunda, inicio: corteMs, cuadros: segunda }];
+    return { pistas, inicioDe: (tv) => (tv === tvPrimera ? 0 : corteMs) };
+  }
   if (valor('modo') === 'escena') {
-    const leido = leer('escena', 2 * D.ANCHO);
+    // Un GIF partido en dos MITADES, cada una en su pantalla y movible.
+    const leido = leerMitades();
     if (!leido) return null;
-    const izq = [], der = [];
-    leido.grises.forEach((gris, i) => {
-      const partes = D.partirEscena(binarizar(gris, 2 * D.ANCHO));
-      izq.push({ dur: leido.delays[i], bitmap: partes.izq });
-      der.push({ dur: leido.delays[i], bitmap: partes.der });
-    });
+    $('corteMitadesTexto').textContent = `${numero('corteMitades', 50, 10, 90)} %`;
+    const izq = leido.izq.map((gris, i) => ({ dur: leido.delays[i], bitmap: binarizar(gris, D.ANCHO) }));
+    const der = leido.der.map((gris, i) => ({ dur: leido.delays[i], bitmap: binarizar(gris, D.ANCHO) }));
     const op = { vueltas: numero('vueltasEscena', 1, 1, 20), velocidad: numero('velocidadEscena', 100, 10, 400) / 100 };
     return {
       pistas: [{ tv: 'izq', inicio: 0, cuadros: D.prepararCuadros(izq, op) }, { tv: 'der', inicio: 0, cuadros: D.prepararCuadros(der, op) }],
@@ -291,9 +385,11 @@ function fallo(e) {
 }
 
 function actualizarPaneles() {
-  const escena = valor('modo') === 'escena';
-  $('panelEscena').hidden = !escena;
-  $('panelDos').hidden = escena;
+  const modo = valor('modo');
+  $('panelTiempo').hidden = modo !== 'tiempo';
+  $('panelEscena').hidden = modo !== 'escena';
+  $('panelDos').hidden = modo !== 'dos';
+  $('panelEspera').hidden = modo === 'escena'; // con las mitades, los dos Pepitos animan a la vez: no hay espera
   $('tv2texto').textContent = valor('tv1') === 'der' ? '(en el Pepito de la izquierda)' : '(en el Pepito de la derecha)';
   $('campoInicioMs').hidden = valor('inicio2') !== 'ms';
   $('campoSonidoMs').hidden = valor('sonidoInicio') !== 'ms';
@@ -321,7 +417,12 @@ function iniciar() {
   for (const [clave, s] of Object.entries(D.SONIDOS)) sel.append(new Option(s.nombre, clave));
   sel.value = 'corazon';
 
+  $('gifTiempo').addEventListener('change', (e) => tomarArchivo(e.target, 'tiempo'));
   $('gifEscena').addEventListener('change', (e) => tomarArchivo(e.target, 'escena'));
+  $('botonJuntar').addEventListener('click', () => {
+    for (const id of ['movIzqX', 'movIzqY', 'movDerX', 'movDerY']) $(id).value = '0';
+    programar();
+  });
   $('gif1').addEventListener('change', (e) => tomarArchivo(e.target, 'g1'));
   $('gif2').addEventListener('change', (e) => tomarArchivo(e.target, 'g2'));
   document.addEventListener('change', (e) => {

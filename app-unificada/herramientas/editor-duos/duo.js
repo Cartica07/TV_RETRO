@@ -78,6 +78,29 @@ export function prepararCuadros(cuadros, { vueltas = 1, velocidad = 1 } = {}) {
 
 export const duracionDe = (cuadros) => cuadros.reduce((s, c) => s + c.dur, 0);
 
+/**
+ * Parte un GIF en el TIEMPO (pedido del dueño, 2026-11-24): lo de antes de "corte" ms va en un Pepito y lo de después en el
+ * otro, que lo sigue apenas termina el primero. Un cuadro que cruza el corte se parte en dos (cada parte con su duración).
+ * Devuelve { primera: [{dur, bitmap}], segunda: [...] }; ninguna queda vacía mientras haya al menos dos cuadros o duración.
+ */
+export function partirEnTiempo(cuadros, corte) {
+  const total = duracionDe(cuadros);
+  const c = Math.min(Math.max(Math.round(corte), MIN_CUADRO_MS), Math.max(MIN_CUADRO_MS, total - MIN_CUADRO_MS));
+  const primera = [], segunda = [];
+  let t = 0;
+  for (const q of cuadros) {
+    const fin = t + q.dur;
+    if (fin <= c) primera.push({ dur: q.dur, bitmap: q.bitmap });
+    else if (t >= c) segunda.push({ dur: q.dur, bitmap: q.bitmap });
+    else {
+      primera.push({ dur: c - t, bitmap: q.bitmap });
+      segunda.push({ dur: fin - c, bitmap: q.bitmap });
+    }
+    t = fin;
+  }
+  return { primera, segunda };
+}
+
 /** [[Hz, ms], ...] → [{t, f}, ...] empezando en "inicio" y terminando en silencio. */
 export function notasDesde(lista, inicio = 0) {
   const notas = [];
