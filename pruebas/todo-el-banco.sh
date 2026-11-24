@@ -36,7 +36,7 @@ done
 echo "### INTÉRPRETE DE .ino"
 timeout "$TOPE" node ino-infinito.mjs > "$SALIDA/b-ino-infinito.txt" 2>&1; echo "== ino-infinito: $(grep -c 'error:' "$SALIDA/b-ino-infinito.txt") casos cortados a tiempo (esperado: 4)"
 echo "### REGLAS (emulador, con $REGLAS_ARCHIVO)"
-for t in reglas reglas-etapa2 reglas-atomico reglas-envios-reales reglas-borrar-cuenta reglas-desvincular reglas-acuse reglas-indice reglas-juego reglas-alarma reglas-ajustes reglas-apodos reglas-firmware; do
+for t in reglas reglas-etapa2 reglas-atomico reglas-envios-reales reglas-borrar-cuenta reglas-desvincular reglas-acuse reglas-indice reglas-juego reglas-alarma reglas-ajustes reglas-apodos reglas-firmware reglas-caras; do
   timeout "$TOPE" npx firebase emulators:exec --only database --project "demo-$t" "node $t.mjs" > "$SALIDA/b-$t.txt" 2>&1; resumen "$t" "$SALIDA/b-$t.txt" $?; sleep 4
 done
 timeout "$TOPE" npx firebase emulators:exec --only auth,database --project demo-tvretro "node simular-tv.cjs" > "$SALIDA/b-sim.txt" 2>&1; resumen simular-tv "$SALIDA/b-sim.txt" $?; sleep 4
