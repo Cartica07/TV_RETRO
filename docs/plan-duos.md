@@ -113,6 +113,14 @@ Copia de la Pro v11 que encendía el Bluetooth (librería del núcleo) y emitía
 - **Opciones (decide el dueño):** (a) núcleo propio con el Bluetooth y la seguridad en la PSRAM (detrás de una bandera y con todas las pruebas, también la OTA); (b) **un sensor en cada lateral**: cada TV sabría cuándo la tocan y encendería el Bluetooth solo durante el contacto, pausando unos segundos su trabajo de red; (c) último recurso: ESP-NOW entre las Pro y Bluetooth con la Lite (dos protocolos).
 - **Regla para las próximas pruebas:** lo riesgoso se enciende con una orden por el monitor serie, nunca con un temporizador (la TV quedó reiniciándose cada minuto).
 
+#### Investigación (2026-11-24): cómo lo resolvieron otros
+
+- **El mismo problema está muy reportado en la S3** (Bluetooth + conexiones seguras sin memoria interna). La solución habitual es mover NimBLE y mbedTLS a la PSRAM con una configuración propia (`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL`, `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC`), pero el núcleo de Arduino viene precompilado: hay que reconstruirlo (esp32-arduino-lib-builder o la "compilación híbrida" de pioarduino, con fallos reportados de reconstrucciones en bucle y librerías que se pisan). Fuentes: arduino-esp32 #5751, pioarduino #564/#565, esp32-macropad #51, MeshCrossway #137.
+- **Nuestra versión del núcleo (3.3.10) tiene un fallo reportado:** las conexiones seguras fallan después de usar Bluetooth, y en la 3.3.7 no (arduino-esp32 #12769).
+- **Encender y apagar el Bluetooth pierde memoria en cada vuelta** (arduino-esp32 #3335, #7884): la opción "Bluetooth solo durante el contacto" no es segura para una TV que funciona días seguidos.
+- **Productos parecidos no usan radio para el vecino:** los cubos Sifteo tienen "detección de vecinos de campo cercano" propia (sus prototipos usaban infrarrojo) y los AudioCubes, infrarrojo en las caras; las credenciales de conferencias usan infrarrojo de lado a lado (~2400 bps). littleBits usa **conectores magnéticos con contactos**, y hoy se venden conectores magnéticos de pines (pogo) de 5 a 9 contactos que se atraen solos y se repelen si se ponen al revés.
+- **Conclusión:** dos caminos sin el problema de memoria y sin radio: (1) **conector magnético con contactos** en cada lateral (cable serie directo entre las TV: detección inmediata en las dos, rápido, sin gasto de batería esperando) y (2) **infrarrojo lateral** (sin contactos a la vista, lento pero suficiente para los mensajes). Pendiente: que el dueño elija.
+
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
