@@ -188,6 +188,14 @@ más Pepitos; juegos que cruzan de una pantalla a la otra.
 - Guardar en el catálogo. Se recicla: `js/gif.js`, `js/imageProcessor.js`, `js/compresion.js` (m1) y la forma del editor de caras.
 - **Aviso:** para vender, las animaciones deben ser propias o con licencia (un video viral tiene dueño).
 
+### Hecho el 2026-11-24: el editor de dúos
+
+- `app-unificada/herramientas/editor-duos/`: `duo.js` (lógica pura, prueba `pruebas/duo.mjs`, 20 de 20) y la página (`editor-duos.html|js`, prueba `pruebas/editor-duos.mjs`, 11 de 11). `construir.mjs` la copia a `www/editor-duos.html` (no va en la APK).
+- Dos modos: una escena de 256×64 que se parte por la mitad (el pixelado se calcula sobre la escena entera: sin costura) o un GIF por Pepito con su momento de inicio. Ajustes: Pixelar, Nivel de pixelado, Invertir (se hornea en la imagen: el m1 no tiene invertido), encuadre, fondo, girar, voltear, recortar, vueltas y velocidad. Sonidos cortos propios (sin canciones del catálogo todavía), en el Pepito elegido y desde el momento elegido.
+- **Formato del paquete (BORRADOR; nada llega a Firebase sin aprobación del dueño):** `{ formato: "duo1", version: 1, clave, nombre, duracion, sonido: "izq" | "der" | null, izq: { datos (m1 en Base64), bytes, imagenes }, der: { ... } }`. Cada Pepito guarda las dos mitades (que una TV quede a la izquierda o a la derecha depende de cómo las pongan). Las dos mitades duran lo mismo; cuadros de al menos 40 ms.
+- **Cabecera C** (`duo_prueba.h`) para el dúo de prueba del firmware: las mitades en m1 para la Pro y, para la placa de pruebas ESP8266, las imágenes sin comprimir (no trae descompresor) con su línea de tiempo y sus notas.
+- Límites PROPUESTOS (avisan, no bloquean): 40 KB por mitad, 20 KB por mitad para el dúo de prueba del firmware, 15 s de duración.
+
 ## 7. Seguridad
 
 - Solo se aceptan TV **muy cerca** (señal muy alta) y **mientras el sensor siente el imán**.
