@@ -98,6 +98,21 @@ animación en conjunto: empieza en la TV de la **derecha** (por ejemplo, un gati
 - **Lite con el celular conectado:** que siga anunciando con el celular conectado, que acepte una segunda conexión (la de otra TV) y
   la memoria que queda.
 
+#### Resultado de la fase 0b en la Pro (2026-11-24): NO PASA. Rediseño pendiente
+
+Copia de la Pro v11 que encendía el Bluetooth (librería del núcleo) y emitía una baliza, con registro de memoria cada 10 s (no entra al repositorio):
+
+| Momento | Interna libre | Mayor bloque | Mínimo histórico |
+|---|---|---|---|
+| Pro v11 sin Bluetooth (estable) | ~80 KB | 31,7 KB | 16-17 KB (durante las conexiones seguras del arranque) |
+| Con el Bluetooth encendido | **8 KB** | **7,6 KB** | **108 bytes** |
+
+- El Bluetooth se lleva **~72 KB de memoria interna**; la PSRAM (8,3 MB libres) casi no se usa. Primer intento: la TV se colgó al encenderlo ("Guru Meditation", con el mayor bloque en 31 KB). Segundo: arrancó, pero la TV quedó sin memoria (pantalla trabada). Se volvió a grabar la v11 oficial.
+- La configuración del núcleo (`qio_opi/include/sdkconfig.h`) fija el Bluetooth (NimBLE) y la seguridad (mbedTLS) en **memoria interna** (`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL`, `CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC`); el resto usa la PSRAM a partir de 4 KB (`CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL 4096`). Moverlos a la PSRAM exige **compilar un núcleo propio** (cambio grande para toda la Pro).
+- Hallazgo aparte: la Pro **ya iba justa sin Bluetooth** (mínimo de 16 KB en el arranque): por eso el clima con la conexión abierta hacía fallar el aviso de versión.
+- **Opciones (decide el dueño):** (a) núcleo propio con el Bluetooth y la seguridad en la PSRAM (detrás de una bandera y con todas las pruebas, también la OTA); (b) **un sensor en cada lateral**: cada TV sabría cuándo la tocan y encendería el Bluetooth solo durante el contacto, pausando unos segundos su trabajo de red; (c) último recurso: ESP-NOW entre las Pro y Bluetooth con la Lite (dos protocolos).
+- **Regla para las próximas pruebas:** lo riesgoso se enciende con una orden por el monitor serie, nunca con un temporizador (la TV quedó reiniciándose cada minuto).
+
 ### Fase 1: integrar en la Pro
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
