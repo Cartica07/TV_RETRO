@@ -93,6 +93,19 @@ const escenarios = {
     return informe('Guardar conserva apagado (Nunca) y ciudad (2026-11-24; antes se borraban)',
       d.ajustes && d.ajustes.brillo === 3 && d.ajustes.apagado === 0 && JSON.stringify(d.ajustes.ciudad) === JSON.stringify(ciudad), JSON.stringify(d.ajustes));
   },
+  async 'Ajustes: guardar no pisa la ciudad ni el apagado que otro celular cambió mientras tanto'() {
+    const vieja = { nombre: 'Armenia, Quindío, Colombia', lat: 4.5339, lon: -75.6811 };
+    const nueva = { nombre: 'Bogotá, Colombia', lat: 4.6097, lon: -74.0817 };
+    const { navegador, pagina } = await abrirApp({ extra: { ajustes: { brillo: 2, volumen: 1, zona: -300, apagado: 5, ciudad: vieja } } }); await abrirConfig(pagina); await apartado(pagina, 'tv');
+    // Otro celular (un miembro, desde Pepito) cambia la ciudad y el apagado con esta pantalla abierta.
+    await pagina.evaluate((c) => { const a = globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes; a.ciudad = c; a.apagado = 20; }, nueva);
+    await pagina.click('#grupoBrillo button[data-valor="3"]');
+    await pagina.click('#botonGuardarAjustes'); await pagina.waitForTimeout(800);
+    const d = await db(pagina);
+    await navegador.close();
+    return informe('Guardar conserva la ciudad y el apagado que otro celular puso después de abrir la pantalla (2026-11-24)',
+      d.ajustes && d.ajustes.brillo === 3 && d.ajustes.apagado === 20 && JSON.stringify(d.ajustes.ciudad) === JSON.stringify(nueva), JSON.stringify(d.ajustes));
+  },
   async 'Ajustes: lee los guardados (y una zona que no está en la lista)'() {
     const { navegador, pagina } = await abrirApp({ extra: { ajustes: { brillo: 2, volumen: 1, zona: 60 } } }); await abrirConfig(pagina); await apartado(pagina, 'tv');
     const brillo = await marcado(pagina, 'grupoBrillo'), volumen = await marcado(pagina, 'grupoVolumen'), zona = await pagina.inputValue('#ajusteZona');

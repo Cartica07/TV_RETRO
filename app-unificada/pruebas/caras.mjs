@@ -127,6 +127,12 @@ const enviarYEsperar = async (p) => {
   await pagina.waitForTimeout(1500);
   const rc2 = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
   informe('Ciudad: guardar los Ajustes de Pepito la conserva', rc2.dispositivos.tv1.ajustes.ciudad && rc2.dispositivos.tv1.ajustes.ciudad.nombre === 'Armenia, Quindío, Colombia', JSON.stringify(rc2.dispositivos.tv1.ajustes));
+  // Otro celular cambia la ciudad con Ajustes abierto: guardar no la pisa con la vieja (2026-11-24).
+  await pagina.evaluate(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes.ciudad = { nombre: 'Bogotá, Colombia', lat: 4.6097, lon: -74.0817 }; });
+  await pagina.click('#botonGuardarAjustes');
+  await pagina.waitForTimeout(1500);
+  const rc3 = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
+  informe('Ciudad: guardar Ajustes no pisa la ciudad que otro celular cambió mientras tanto', rc3.ciudad && rc3.ciudad.nombre === 'Bogotá, Colombia' && rc3.apagado === 5, JSON.stringify(rc3));
   informe('Pro: sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
   await navegador.close();
 }

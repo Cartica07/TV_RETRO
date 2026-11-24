@@ -251,8 +251,9 @@ export function normalizarAjustes(datos) {
   return n;
 }
 
-// Ciudad para el clima (2026-11-24): vive en dispositivos/{id}/ajustes.ciudad de un Pepito Pro. La pantalla de Ajustes de la Pro no
-// la conoce: al guardar desde allí se agrega la última que se leyó, para no borrarla.
+// Ciudad para el clima (2026-11-24): vive en dispositivos/{id}/ajustes.ciudad de un Pepito Pro. La pantalla de Ajustes no la maneja:
+// guardarAjustes de la Pro relee los ajustes justo antes de guardar y conserva lo que la pantalla no maneja (antes se agregaba la
+// ciudad leída al abrir, que podía estar vieja si otro celular la cambió). ciudadConocida queda solo como dato informativo.
 let ciudadConocida = null;
 
 export async function cargarAjustes(...a) {
@@ -267,8 +268,8 @@ export async function guardarAjustes(datos, ...resto) {
   const lista = listaApagado();
   const conApagado = lista ? Object.assign({}, datos, { apagado: normalizarApagado(lista.value) }) : datos;
   if (tvLite) return (await cargarLite()).guardarAjustes(conApagado, ...resto);
-  if (ciudadConocida && !(datos && datos.ciudad)) conApagado.ciudad = ciudadConocida;
-  const r = await pro.guardarAjustes(conApagado, ...resto);
+  // Esta pantalla maneja brillo, volumen, zona y (con la lista) el apagado; la ciudad la conserva la Pro con lo que hay ahora.
+  const r = await pro.guardarAjustes(conApagado, resto[0], lista ? ['brillo', 'volumen', 'zona', 'apagado'] : undefined);
   // Mientras las reglas publicadas de Firebase no incluyan "apagado", rechazan todo el nodo: se guarda lo demás sin él (la TV
   // usa 5 minutos) y lo de la pantalla se guardará cuando el dueño publique las reglas nuevas.
   if (!r.exito && conApagado !== datos && /permiso|permission/i.test(String(r.error || ''))) {
@@ -371,7 +372,8 @@ export async function unificadaGuardarCiudad(ciudad) {
   const datos = Object.assign({}, r.ajustes);
   if (ciudad) datos.ciudad = { nombre: String(ciudad.nombre).slice(0, 60), lat: Number(ciudad.lat), lon: Number(ciudad.lon) };
   else delete datos.ciudad;
-  const res = await pro.guardarAjustes(datos, Object.assign({}, ultimoEstado || ESTADO_MINIMO));
+  // Solo la ciudad es de esta pantalla: lo demás (brillo, apagado…) se toma de lo guardado justo ahora.
+  const res = await pro.guardarAjustes(datos, Object.assign({}, ultimoEstado || ESTADO_MINIMO), ['ciudad']);
   if (res && res.exito) ciudadConocida = datos.ciudad || null;
   return res;
 }

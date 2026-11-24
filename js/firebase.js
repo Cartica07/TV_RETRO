@@ -1667,12 +1667,31 @@ export async function cargarAjustes() {
   }
 }
 
+/** Los ajustes que muestra la pantalla Ajustes de la TV de este panel. */
+const AJUSTES_DE_LA_PANTALLA = ['brillo', 'volumen', 'zona'];
+
 /**
  * Guarda los ajustes y le avisa a la TV (orden tipo "ajustes"; la TV vuelve a leer
  * dispositivos/{id}/ajustes). Devuelve lo mismo que enviarEstado().
  */
-export async function guardarAjustes(datos, estado) {
-  const ajustes = normalizarAjustes(datos);
+export async function guardarAjustes(datos, estado, propios = AJUSTES_DE_LA_PANTALLA) {
+  // 2026-11-24: lo que esta pantalla no maneja (la ciudad y el apagado que pone la app Pepito) se toma de lo guardado JUSTO
+  // ahora, no de lo que se leyó al abrir: otro celular pudo cambiarlo mientras tanto y antes se perdía. "propios" = los campos
+  // que vienen de "datos" (si alguno falta en "datos", se borra). Si no se puede leer a tiempo, se guarda "datos" como antes.
+  let base = datos;
+  try {
+    const snap = await esperarHasta(get(ref(db, rutaAjustes())), ESPERA_MAXIMA_ENVIO_MS);
+    if (snap !== ESPERA_LENTA && snap.exists() && snap.val() && typeof snap.val() === 'object') {
+      base = Object.assign({}, snap.val());
+      for (const k of propios) {
+        if (datos && datos[k] !== undefined && datos[k] !== null) base[k] = datos[k];
+        else delete base[k];
+      }
+    }
+  } catch (error) {
+    console.warn('[TV RETRO] No se pudieron releer los ajustes antes de guardar:', error);
+  }
+  const ajustes = normalizarAjustes(base);
   try {
     const lento = await conTope(set(ref(db, rutaAjustes()), ajustes));
     if (lento) return seguirConOrden(lento, estado, 'ajustes');
