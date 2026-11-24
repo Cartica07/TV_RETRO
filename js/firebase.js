@@ -703,6 +703,8 @@ export async function desvincularDispositivo(uid, id) {
       [`dispositivos/${id}/oled_remota/archivo`]: null,
       [`dispositivos/${id}/alarma`]: null,
       [`dispositivos/${id}/ajustes`]: null,
+      // La cara de reloj elegida (2026-11-24; la pone la app Pepito): tampoco debe heredarla quien reciba la TV.
+      [`dispositivos/${id}/reloj`]: null,
       [`usuarios/${uid}/dispositivos/${id}`]: null
     });
     if (paso === ESPERA_LENTA) return { exito: false, error: 'La conexión está lenta. Vuelve a intentarlo.' };
