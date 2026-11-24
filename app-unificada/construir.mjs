@@ -233,6 +233,32 @@ if (!sinPepito) {
 // Ayuda y Legal: las páginas de Pepito (pepito/ del repo: cubren Pepito Pro y Pepito Lite), no las de la app vieja.
 // (Con --sin-pepito quedan los de la Pro, como el resto de sus textos.)
 if (!sinPepito) cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|licencias)\.html/g, 'https://cartica07.github.io/TV_RETRO/pepito/$1.html', 'los enlaces de Ayuda y Legal');
+// Más > Caras de reloj (2026-11-24, docs/plan-caras-de-reloj.md; la maneja js/caras.js): un botón en el menú Más (después de
+// Alarma) y su pantalla: la vista previa de la cara (dibujada por js/cara.js, igual que la TV), la lista de caras (se abre en
+// la ventanita de listas cortas) y "Enviar a Pepito". "Caras de reloj" y el aviso de la Pro vieja: textos aprobados.
+cambiar(/(<button type="button" class="fila-mas" data-mas="config">)/,
+  `<button type="button" class="fila-mas" data-mas="caras">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+          <span class="nombre-mas">Caras de reloj</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        $1`, 'el botón Config del menú Más');
+cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
+  `<div id="seccionCaras" style="display: none;">
+      <div class="campo cara-previa">
+        <canvas id="caraVista" width="256" height="128" aria-label="Vista previa de la cara del reloj"></canvas>
+      </div>
+      <div class="campo">
+        <div class="selector">
+          <select id="caraLista" aria-label="Caras de reloj"><option value="">Cara 1</option></select>
+          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <p class="dato-cuenta" id="caraAviso" role="status" aria-live="polite" hidden></p>
+      <button type="button" id="botonEnviarCara" class="boton-primario">Enviar a Pepito</button>
+    </div>
+
+    $1`, 'la sección de la Alarma');
 // Más > Config > Sistema: barra de avance de "Actualizar" (pedido del dueño, 2026-11-23, Pepito Pro y Lite; la mueve
 // js/barra-actualizar.js). Oculta hasta que empieza una actualización.
 cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,

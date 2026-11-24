@@ -194,7 +194,8 @@ body.sin-cuenta #botonVincularTV {
 #fuenteTexto,
 #escalaImagen,
 #ajusteZona,
-#ajusteApagado {
+#ajusteApagado,
+#caraLista {
   pointer-events: none;
 }
 
@@ -203,8 +204,28 @@ body.sin-cuenta #botonVincularTV {
 .selector:has(> #fuenteTexto),
 .selector:has(> #escalaImagen),
 .selector:has(> #ajusteZona),
-.selector:has(> #ajusteApagado) {
+.selector:has(> #ajusteApagado),
+.selector:has(> #caraLista) {
   cursor: pointer;
+}
+
+/* Más > Caras de reloj: la vista previa de la cara, como la pantalla de la TV (128×64 al doble, puntos nítidos). */
+.cara-previa {
+  display: flex;
+  justify-content: center;
+}
+#caraVista {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  image-rendering: pixelated;
+  background: #000;
+  border-radius: var(--radio-sm, 8px);
+  border: 1px solid var(--borde, #253041);
+}
+#botonEnviarCara {
+  width: 100%;
 }
 
 /* Nota bajo una opción de la ventanita (el aviso de "Nunca" en "Apagar pantalla"). */
