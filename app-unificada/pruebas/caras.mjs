@@ -9,14 +9,15 @@ const { armarReceta, TIPO } = await import(pathToFileURL(path.join(aqui, '..', '
 
 const CARA2 = armarReceta({ elementos: [{ tipo: TIPO.HORA, datos: [64, 10, 0, 1, 5, 1, 0] }, { tipo: TIPO.FECHA, datos: [64, 50, 0, 0, 1, 1, 2] }] });
 const CARA3 = armarReceta({ elementos: [{ tipo: TIPO.AGUJAS, datos: [64, 32, 0, 30, 2] }] });
+const CARA4 = armarReceta({ elementos: [{ tipo: TIPO.HORA, datos: [64, 20, 0, 0, 3, 1, 0] }, { tipo: TIPO.CLIMA, datos: [126, 54, 0, 0, 1, 2, 1] }] });
 const b64 = (u) => Buffer.from(u).toString('base64');
 
 const semilla = (build = 11) => ({
   dispositivos: { tv1: { dueno: 'uid-ana', oled_remota: { version: 3, pantalla: pant('Hola') }, firmware: { build, estado: 'ok', fecha: 1000 } } },
   usuarios: { 'uid-ana': { dispositivos: { tv1: true } } },
   relojes: {
-    indice: { cara3: { nombre: 'Agujas', orden: 2, fecha: 1 }, cara2: { nombre: 'Cara 2', orden: 1, fecha: 1 } },
-    datos: { cara2: b64(CARA2), cara3: b64(CARA3) },
+    indice: { cara3: { nombre: 'Agujas', orden: 2, fecha: 1 }, cara2: { nombre: 'Cara 2', orden: 1, fecha: 1 }, cara4: { nombre: 'Con clima', orden: 3, fecha: 1 } },
+    datos: { cara2: b64(CARA2), cara3: b64(CARA3), cara4: b64(CARA4) },
   },
 });
 
@@ -53,7 +54,7 @@ const enviarYEsperar = async (p) => {
   await abrirCaras(pagina);
   informe('Pro: la pantalla Caras de reloj se ve con su título', await visible(pagina, '#seccionCaras') && (await txt(pagina, '#tituloMas')) === 'Caras de reloj');
   const opciones = await pagina.$$eval('#caraLista option', (os) => os.map((o) => o.textContent));
-  informe('Pro: la lista es Cara 1 + el catálogo en el orden del dueño', JSON.stringify(opciones) === JSON.stringify(['Cara 1', 'Cara 2', 'Agujas']), opciones.join(', '));
+  informe('Pro: la lista es Cara 1 + el catálogo en el orden del dueño', JSON.stringify(opciones) === JSON.stringify(['Cara 1', 'Cara 2', 'Agujas', 'Con clima']), opciones.join(', '));
   informe('Pro: sin aviso de actualizar (v11)', !(await visible(pagina, '#caraAviso')));
   const v1 = await vistaPrevia(pagina);
   await pagina.selectOption('#caraLista', 'cara2'); await pagina.waitForTimeout(500);
@@ -73,6 +74,30 @@ const enviarYEsperar = async (p) => {
   await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(300);
   await pagina.click('#grupoMas button[data-mas="caras"]'); await pagina.waitForTimeout(1500);
   informe('Pro: al volver a la pantalla, la lista marca la cara que tiene la TV', (await pagina.$eval('#caraLista', (s) => s.value)) === 'cara3');
+  // ---- Ciudad para el clima (opción A): solo con una cara que muestra el clima ----
+  await pagina.route('https://geocoding-api.open-meteo.com/**', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [
+    { name: 'Armenia', admin1: 'Quindío', country: 'Colombia', latitude: 4.53389, longitude: -75.68111 },
+    { name: 'Armenia', admin1: 'Armenia', country: 'Armenia', latitude: 40.0, longitude: 45.0 },
+  ] }) }));
+  informe('Ciudad: con una cara sin clima no se ve la fila', !(await visible(pagina, '#campoCiudad')));
+  await pagina.selectOption('#caraLista', 'cara4'); await pagina.waitForTimeout(600);
+  informe('Ciudad: con la cara "Con clima" se ve la fila y dice "Sin clima"', (await visible(pagina, '#campoCiudad')) && (await pagina.$eval('#ciudadSelect', (s) => s.options[0].textContent)) === 'Sin clima');
+  await pagina.click('.selector:has(#ciudadSelect)');
+  await pagina.fill('#ciudadTexto', 'Armenia');
+  await pagina.waitForFunction(() => document.querySelectorAll('#ciudadLista button').length === 3, null, { timeout: 10000 });
+  await pagina.click('#ciudadLista button[data-i="0"]');
+  await pagina.waitForFunction(() => document.getElementById('ciudadSelect').options[0].textContent.startsWith('Armenia'), null, { timeout: 10000 });
+  const rc = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
+  const c = rc.dispositivos.tv1.ajustes && rc.dispositivos.tv1.ajustes.ciudad;
+  informe('Ciudad: se guarda en ajustes.ciudad (nombre, lat, lon) con la orden "ajustes"', c && c.nombre === 'Armenia, Quindío, Colombia' && c.lat === 4.5339 && c.lon === -75.6811 && rc.dispositivos.tv1.oled_remota.pantalla.tipo === 'ajustes', JSON.stringify(c));
+  // Guardar los Ajustes de Pepito no borra la ciudad.
+  await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(300);
+  await pagina.click('#grupoMas button[data-mas="config"]'); await pagina.waitForTimeout(300);
+  await pagina.click('#grupoConfig button[data-config="tv"]'); await pagina.waitForTimeout(1200);
+  await pagina.click('#botonGuardarAjustes');
+  await pagina.waitForTimeout(1500);
+  const rc2 = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
+  informe('Ciudad: guardar los Ajustes de Pepito la conserva', rc2.dispositivos.tv1.ajustes.ciudad && rc2.dispositivos.tv1.ajustes.ciudad.nombre === 'Armenia, Quindío, Colombia', JSON.stringify(rc2.dispositivos.tv1.ajustes));
   informe('Pro: sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
   await navegador.close();
 }
@@ -92,7 +117,9 @@ const enviarYEsperar = async (p) => {
   const { navegador, pagina, errores } = await abrir(semilla(11), { antes: conTVLite() });
   await esperarPanel(pagina);
   await abrirCaras(pagina, true);
-  informe('Lite: la lista es la misma (catálogo de la nube) y sin aviso', (await pagina.$$eval('#caraLista option', (os) => os.length)) === 3 && !(await visible(pagina, '#caraAviso')));
+  informe('Lite: la lista es la misma (catálogo de la nube) y sin aviso', (await pagina.$$eval('#caraLista option', (os) => os.length)) === 4 && !(await visible(pagina, '#caraAviso')));
+  await pagina.selectOption('#caraLista', 'cara4'); await pagina.waitForTimeout(500);
+  informe('Lite: con una cara con clima NO sale la ciudad (la Lite no tiene internet)', !(await visible(pagina, '#campoCiudad')));
   await pagina.selectOption('#caraLista', 'cara2'); await pagina.waitForTimeout(400);
   const aviso = await enviarYEsperar(pagina);
   let e = await estadoTV(pagina);

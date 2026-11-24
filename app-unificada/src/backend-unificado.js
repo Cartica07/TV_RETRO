@@ -247,8 +247,13 @@ export function normalizarAjustes(datos) {
   return n;
 }
 
+// Ciudad para el clima (2026-11-24): vive en dispositivos/{id}/ajustes.ciudad de un Pepito Pro. La pantalla de Ajustes de la Pro no
+// la conoce: al guardar desde allí se agrega la última que se leyó, para no borrarla.
+let ciudadConocida = null;
+
 export async function cargarAjustes(...a) {
   const r = await (tvLite ? cargarLite().then((m) => m.cargarAjustes(...a)) : pro.cargarAjustes(...a));
+  if (!tvLite && r && r.exito) ciudadConocida = (r.ajustes && r.ajustes.ciudad) || null;
   const lista = listaApagado();
   if (lista && r && r.exito) lista.value = String(normalizarApagado(r.ajustes && r.ajustes.apagado));
   return r;
@@ -258,6 +263,7 @@ export async function guardarAjustes(datos, ...resto) {
   const lista = listaApagado();
   const conApagado = lista ? Object.assign({}, datos, { apagado: normalizarApagado(lista.value) }) : datos;
   if (tvLite) return (await cargarLite()).guardarAjustes(conApagado, ...resto);
+  if (ciudadConocida && !(datos && datos.ciudad)) conApagado.ciudad = ciudadConocida;
   const r = await pro.guardarAjustes(conApagado, ...resto);
   // Mientras las reglas publicadas de Firebase no incluyan "apagado", rechazan todo el nodo: se guarda lo demás sin él (la TV
   // usa 5 minutos) y lo de la pantalla se guardará cuando el dueño publique las reglas nuevas.
@@ -265,6 +271,7 @@ export async function guardarAjustes(datos, ...resto) {
     console.warn('[Pepito] Las reglas de Firebase aún no aceptan "apagado": los ajustes se guardan sin él.');
     const sinApagado = Object.assign({}, conApagado);
     delete sinApagado.apagado;
+    delete sinApagado.ciudad; // lo mismo con la ciudad (2026-11-24)
     return pro.guardarAjustes(sinApagado, ...resto);
   }
   return r;
@@ -340,6 +347,48 @@ export async function unificadaBorrarCaraCatalogo(clave) {
   } catch (error) {
     console.error('[Pepito] No se pudo borrar la cara del catálogo:', error);
     return { exito: false, error: 'No se pudo borrar: ' + pro.describirError(error) + '.' };
+  }
+}
+
+/** La ciudad para el clima del Pepito Pro en uso: { nombre, lat, lon } o null. */
+export async function unificadaCiudad() {
+  if (tvLite) return null;
+  const r = await pro.cargarAjustes();
+  if (!r || !r.exito) return null;
+  ciudadConocida = (r.ajustes && r.ajustes.ciudad) || null;
+  return ciudadConocida;
+}
+
+/** Guarda la ciudad (o null = sin clima) con los demás ajustes y le avisa a la TV (orden "ajustes"). */
+export async function unificadaGuardarCiudad(ciudad) {
+  if (tvLite) return { exito: false, error: 'Esto no está disponible en un Pepito Lite' };
+  const r = await pro.cargarAjustes();
+  if (!r || !r.exito) return { exito: false, error: (r && r.error) || 'No se pudo leer los ajustes' };
+  const datos = Object.assign({}, r.ajustes);
+  if (ciudad) datos.ciudad = { nombre: String(ciudad.nombre).slice(0, 60), lat: Number(ciudad.lat), lon: Number(ciudad.lon) };
+  else delete datos.ciudad;
+  const res = await pro.guardarAjustes(datos, Object.assign({}, ultimoEstado || ESTADO_MINIMO));
+  if (res && res.exito) ciudadConocida = datos.ciudad || null;
+  return res;
+}
+
+/** Busca ciudades por nombre (buscador gratuito de Open-Meteo, sin clave): [{ nombre, lat, lon }] o null si no hubo respuesta. */
+export async function unificadaBuscarCiudad(texto) {
+  const t = String(texto || '').trim();
+  if (t.length < 2) return [];
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(t)}&count=8&language=es&format=json`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const j = await res.json();
+    return (j.results || []).map((c) => ({
+      nombre: [c.name, c.admin1, c.country].filter((x, i, l) => x && l.indexOf(x) === i).join(', ').slice(0, 60),
+      lat: Math.round(Number(c.latitude) * 10000) / 10000,
+      lon: Math.round(Number(c.longitude) * 10000) / 10000,
+    })).filter((c) => c.nombre && Number.isFinite(c.lat) && Number.isFinite(c.lon));
+  } catch (e) {
+    console.warn('[Pepito] No se pudo buscar la ciudad:', e && e.message);
+    return null;
   }
 }
 

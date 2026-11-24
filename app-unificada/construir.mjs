@@ -120,8 +120,9 @@ if (!sinPepito) {
   const patron = /(    zona: entero\(d\.zona, -720, 840, AJUSTES_DEFECTO\.zona\))(\r?\n  \};)/g;
   const veces = (fuente.match(patron) || []).length;
   if (veces !== 1) throw new Error('js/firebase.js de la Pro ya no tiene normalizarAjustes como se esperaba: revisa app-unificada/construir.mjs');
-  writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {})$2'));
+  writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),\n    // unificada: ciudad para el clima de las caras de reloj (2026-11-24), solo si viene y tiene sentido\n    ...(d.ciudad && typeof d.ciudad === \'object\' && typeof d.ciudad.nombre === \'string\' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180\n      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})$2'));
 }
+
 
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
@@ -315,6 +316,9 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
 cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
   '$1\n        <div class="barra-actualizar" id="barraActualizar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div class="barra-actualizar-relleno" id="barraActualizarRelleno"></div></div>',
   'el estado de la actualización (Sistema)');
+// Ciudad para el clima (2026-11-24, Caras de reloj): la app busca la ciudad en el buscador gratuito de Open-Meteo; la política de
+// seguridad de la web (H-21) tiene que permitirlo (la APK no lleva esa política).
+if (!sinPepito) cambiar(/(connect-src 'self')/, "$1 https://geocoding-api.open-meteo.com", 'la política de seguridad (connect-src)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
   '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>',
