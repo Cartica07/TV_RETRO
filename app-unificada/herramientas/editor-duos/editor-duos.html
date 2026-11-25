@@ -340,11 +340,20 @@ input[type="number"] { width: 84px; }
           <button type="button" id="botonCabecera" disabled>Descargar para el firmware (.h)</button>
         </div>
         <div class="fila">
+          <label class="fila">Probar en mi Pepito
+            <select id="probarMitad">
+              <option value="izq">la mitad izquierda</option>
+              <option value="der">la mitad derecha</option>
+            </select>
+          </label>
+          <button type="button" id="botonProbar" disabled>Enviar a mi Pepito</button>
+        </div>
+        <div class="fila">
           <button type="button" id="botonGuardarProyecto">Guardar el proyecto</button>
           <label class="fila">Abrir un proyecto o un dúo <input type="file" id="archivoAbrir" accept=".json,application/json" /></label>
         </div>
         <p id="aviso" role="status" aria-live="polite"></p>
-        <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo. El proyecto guarda los GIF y todos los ajustes, para seguir otro día. Un dúo abierto (.duo.json) se puede ver, pero no editar.</p>
+        <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo. El proyecto guarda los GIF y todos los ajustes, para seguir otro día. Un dúo abierto (.duo.json) se puede ver, pero no editar. "Probar en mi Pepito" manda esa mitad a tu Pepito Pro como una canción con letra (con tu sesión; tu Pepito debe estar mostrando el contenido, no el reloj).</p>
       </section>
     </div>
   </div>
