@@ -31,7 +31,7 @@ const conTV = (texto) => texto.split('\n').filter((l) => /\bTV\b/.test(l)).map((
   const { navegador, pagina, errores } = await abrir(semilla);
   await esperarPanel(pagina);
   informe('el botón dice "Enviar a Pepito"', (await pagina.innerText('#enviar')).trim() === 'Enviar a Pepito');
-  informe('arriba dice "Pepito"', (await pagina.innerText('h1.marca')).trim() === 'Pepito');
+  informe('arriba dice "PEPITO"', (await pagina.innerText('h1.marca')).trim() === 'PEPITO');
   await pagina.fill('#texto', 'Hola Pepito');
   await pagina.click('#enviar');
   await pagina.waitForFunction(() => /Pepito/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 15000 }).catch(() => {});
