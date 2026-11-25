@@ -25,7 +25,14 @@ const sinPepito = !paraApk && process.argv.includes('--sin-pepito');
 // La web (pruebas) y la APK van en carpetas distintas: así armar una no pisa a la otra mientras se prueba.
 const www = join(aqui, paraApk ? 'www-apk' : sinPepito ? 'www-sin-pepito' : 'www');
 
-rmSync(www, { recursive: true, force: true });
+// Si la carpeta está "en uso" (por ejemplo, una terminal o un servidor abiertos dentro de www/) Windows no deja borrar la carpeta misma:
+// en ese caso se vacía por dentro y se sigue (no hace falta cerrar nada).
+try {
+  rmSync(www, { recursive: true, force: true });
+} catch (e) {
+  if (!['EBUSY', 'EPERM', 'ENOTEMPTY'].includes(e.code)) throw e;
+  for (const nombre of readdirSync(www)) rmSync(join(www, nombre), { recursive: true, force: true });
+}
 mkdirSync(join(www, 'js'), { recursive: true });
 mkdirSync(join(www, 'css'), { recursive: true });
 
@@ -67,7 +74,7 @@ copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js', 'duos.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js', 'duos.js', 'alto-cabecera.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 // Editor de caras de reloj (herramienta del dueño, solo administrador): www/editor-caras.html, no va en la APK.
 if (!paraApk) {
   copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.html'), join(www, 'editor-caras.html'));
@@ -353,6 +360,12 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
 
     $1`, 'la sección de la Alarma (dúos)');
 }
+// Más > Alarma: cómo se silencia (ronda de ajustes visuales del 2026-11-25; la pantalla de Pepito ya no lo dice). Una nota discreta entre el
+// tono y el botón Guardar; con una TV Lite se ve la de Lite (unificada.css). Textos propuestos y aprobados el 2026-11-25.
+if (!sinPepito) cambiar(/(      <div class="campo">\r?\n        <button type="button" id="botonGuardarAlarma")/,
+  '      <p class="nota-alarma nota-alarma-pro">Botón A: la silencia. Perilla: la pospone 5 minutos. Se calla sola al minuto.</p>\r\n' +
+  '      <p class="nota-alarma nota-alarma-lite">Un toque en el botón de Pepito la silencia. Se calla sola al minuto.</p>\r\n$1',
+  'el botón Guardar alarma');
 // Más > Config > Sistema: barra de avance de "Actualizar" (pedido del dueño, 2026-11-23, Pepito Pro y Lite; la mueve
 // js/barra-actualizar.js). Oculta hasta que empieza una actualización.
 cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
@@ -360,16 +373,10 @@ cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
   'el estado de la actualización (Sistema)');
 // Ciudad para el clima (2026-11-24, Caras de reloj): la app busca la ciudad en el buscador gratuito de Open-Meteo; la política de
 // seguridad de la web (H-21) tiene que permitirlo (la APK no lleva esa política).
-// Más > Alarma: cómo se silencia (ronda de ajustes visuales del 2026-11-25; la pantalla de Pepito ya no lo dice). Una nota discreta entre el
-// tono y el botón Guardar; con una TV Lite se ve la de Lite (unificada.css). Textos propuestos y aprobados el 2026-11-25.
-if (!sinPepito) cambiar(/(      <div class="campo">\r?\n        <button type="button" id="botonGuardarAlarma")/,
-  '      <p class="nota-alarma nota-alarma-pro">Botón A: la silencia. Perilla: la pospone 5 minutos. Se calla sola al minuto.</p>\r\n' +
-  '      <p class="nota-alarma nota-alarma-lite">Un toque en el botón de Pepito la silencia. Se calla sola al minuto.</p>\r\n$1',
-  'el botón Guardar alarma');
 if (!sinPepito) cambiar(/(connect-src 'self')/, "$1 https://geocoding-api.open-meteo.com", 'la política de seguridad (connect-src)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
-  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>\n<script type="module" src="js/duos.js"></script>',
+  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>\n<script type="module" src="js/duos.js"></script>\n<script type="module" src="js/alto-cabecera.js"></script>',
   'el script js/main.js');
 
 if (paraApk) {
