@@ -200,7 +200,7 @@ const pantallaConexion = `<div class="pantalla-login" id="pantallaConexion" hidd
     <ol class="pasos-conexion">
       <li>Enciende a Pepito. Verás un PIN en su pantalla.</li>
       <li>Toca "Abrir Bluetooth", elige "Pepito Lite" y escribe el PIN.</li>
-      <li>Regresa a la app y ya Pepito estará listo para ser usado.</li>
+      <li>Regresa a la app y listo, usa a Pepito a tu antojo.</li>
     </ol>
     <button type="button" id="botonAbrirBluetooth" class="boton-primario">Abrir Bluetooth</button>
     <button type="button" id="botonConexionVolver" class="boton-secundario">Volver</button>

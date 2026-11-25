@@ -89,12 +89,12 @@ export const TEXTOS_REVISION = [
   ['js/main.js', "marcarEstado('Esta animación no se pudo cargar. Elígela otra vez en la Galería.', 'error', elementos);", "marcarEstado(animacionEsGif(estadoActual.animacion) ? 'Este GIF no se pudo cargar. Elígelo otra vez en la Galería.' : 'Esta cara no se pudo cargar. Elígela otra vez en la Galería.', 'error', elementos);", 1],
 
   // ---- Alarma (con un Pepito Lite queda su texto de hoy: va a la lista de la Lite) ----
-  ['js/mas.js', "'No se pudo leer la alarma de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo leer la alarma de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.', "'No se pudo cargar la alarma de Pepito. Revisa tu internet y vuelve a intentarlo'"), 1],
+  ['js/mas.js', "'No se pudo leer la alarma de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo cargar la alarma de Pepito. Revisa tu Bluetooth y vuelve a intentarlo.',"'No se pudo cargar la alarma de Pepito. Revisa tu internet y vuelve a intentarlo'"), 1],
   ['js/mas.js', "'Alarma guardada ✅ Ya va camino a Pepito.'", "'Alarma guardada ✅'", 1],
 
   // ---- Ajustes de Pepito (ídem con la Lite) ----
   ['js/mas.js', "opt.textContent = `UTC${ajustesDatos.zona >= 0 ? '+' : '−'}${horas}${minutos ? ':' + String(minutos).padStart(2, '0') : ''}`;", "opt.textContent = 'Otra zona horaria';", 1],
-  ['js/mas.js', "'No se pudieron leer los ajustes de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudieron leer los ajustes de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.', "'No se pudieron cargar los ajustes de Pepito. Revisa tu internet y vuelve a intentarlo'"), 1],
+  ['js/mas.js', "'No se pudieron leer los ajustes de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudieron cargar los ajustes de Pepito. Revisa tu Bluetooth y vuelve a intentarlo.',"'No se pudieron cargar los ajustes de Pepito. Revisa tu internet y vuelve a intentarlo'"), 1],
   ['js/mas.js', "'Ajustes guardados ✅ Ya van camino a Pepito.'", "'Ajustes guardados ✅'", 1],
 
   // ---- Sistema (el texto de la Lite, en conLite, no se toca) ----
@@ -129,3 +129,11 @@ export const TEXTOS_REVISION = [
   ['js/tutorial.js', "texto: 'Elige una canción para Pepito.'", "texto: 'Elige Canciones para Pepito.'", 1],
   ['js/tutorial.js', "texto: 'Aquí están tu galería, los juegos, la alarma y los ajustes.'", "texto: 'Aquí están tu galería, los juegos, la alarma y las demás funciones, también los ajustes.'", 1],
 ];
+
+// ---- Pepito Lite (lista de la Lite, 2026-11-25; los de arriba con conLite ya llevan el texto nuevo de la Lite) ----
+TEXTOS_REVISION.push(
+  // Bluetooth (app-lite/src/ble.js, ya empaquetado y con "Pepito": esbuild deja comillas dobles)
+  ['js/lite-tv.js', '"Pepito no reconoce este celular. Olvídalo en Ajustes > Bluetooth del celular, mantén pulsado el botón de Pepito 8 segundos y vuelve a intentarlo."', '"Pepito no reconoce tu celular. Bórralo de la lista de Bluetooth del celular y mantén pulsado el botón de Pepito 8 segundos."', 1],
+  // Sistema: el mismo texto que al no poder conectar en un envío
+  ['js/mas.js', "'No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla.'", "'No se pudo conectar con Pepito. Acércate y vuelve a intentarlo.'", 1],
+);

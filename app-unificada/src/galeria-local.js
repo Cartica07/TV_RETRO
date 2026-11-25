@@ -102,7 +102,7 @@ export async function guardar(tipo, nombre, payload) {
       return { exito: false, error: `llegaste al límite de ${LIMITE_GIF} GIF guardados; borra alguno para poder guardar otro` };
     }
     if (tipo === 'imagenes' && Object.keys(indice).length + 1 > LIMITE_IMAGENES) {
-      return { exito: false, error: `llegaste al límite de ${LIMITE_IMAGENES} imágenes guardadas; borra alguna para guardar otra` };
+      return { exito: false, error: `llegaste al límite de ${LIMITE_IMAGENES} imágenes guardadas; borra alguna para poder guardar otra` };
     }
   }
   await almacen.guardar(tipo, clave, payload);

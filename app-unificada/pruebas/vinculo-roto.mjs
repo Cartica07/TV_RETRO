@@ -30,7 +30,7 @@ const r = await pagina.evaluate(async () => {
 });
 
 informe('la reconexión de fondo no se queda conectada con una TV que no nos reconoce', r.reconecto === false && r.conectado === false, JSON.stringify(r));
-informe('la app avisa con un cuadro qué hacer (olvidar la TV y emparejar de nuevo)', dialogos.length === 1 && /no reconoce este celular/.test(dialogos[0]) && /Olv[ií]dalo/.test(dialogos[0]), dialogos.join(' | '));
+informe('la app avisa con un cuadro qué hacer (olvidar la TV y emparejar de nuevo)', dialogos.length === 1 && /no reconoce tu celular/.test(dialogos[0]) && /Bórralo de la lista de Bluetooth/.test(dialogos[0]), dialogos.join(' | '));
 informe('el aviso sale una sola vez (no se repite con cada intento)', dialogos.length === 1, String(dialogos.length));
 informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 250));
 await navegador.close();
