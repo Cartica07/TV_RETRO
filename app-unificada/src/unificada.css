@@ -263,16 +263,24 @@ body.sin-cuenta #botonVincularTV {
 .duos-lista button[aria-pressed="true"] .duo-nombre {
   color: var(--acento, #4DD2FF);
 }
+/* La portada: las dos pantallas por separado (dos Pepitos lado a lado), cada una con su marco (las dibuja js/duos.js). */
 .duos-lista canvas {
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 1;
+  aspect-ratio: 276 / 68;
   image-rendering: pixelated;
-  background: #000;
-  border-radius: 4px;
 }
 .duos-lista .duo-nombre {
   font-weight: 600;
+}
+/* El favorito: una estrella junto al nombre (solo en el marcado). */
+.duos-lista .duo-estrella {
+  display: none;
+  color: var(--acento, #4DD2FF);
+  margin-right: 6px;
+}
+.duos-lista button[aria-pressed="true"] .duo-estrella {
+  display: inline;
 }
 
 /* Nota bajo una opción de la ventanita (el aviso de "Nunca" en "Apagar pantalla"). */
