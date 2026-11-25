@@ -235,8 +235,9 @@ body.sin-cuenta #botonVincularTV {
   width: 100%;
 }
 
-/* Más > Dúos (solo Pepito Pro): la lista del catálogo, cada dúo con su portada (las dos pantallas juntas, 256×64) y su
-   nombre; el favorito, con el color de acento. */
+/* Más > Dúos (solo Pepito Pro; diseño del dueño, 2026-11-25): arriba "Tu favorito" con SOLO la tarjeta del favorito, una
+   línea, y debajo los demás. Cada tarjeta: la portada (dos pantallas con marco) y una fila con el nombre y la estrella. Solo la
+   estrella elige el favorito (vacía en los demás, rellena en el favorito); la tarjeta no es un botón. */
 .duos-lista {
   list-style: none;
   margin: 0;
@@ -244,23 +245,18 @@ body.sin-cuenta #botonVincularTV {
   display: grid;
   gap: 10px;
 }
-.duos-lista button {
-  width: 100%;
+.duo-tarjeta {
   display: grid;
   gap: 6px;
   padding: 8px;
   background: var(--superficie-hundida, #0E141C);
   border: 2px solid var(--borde, #253041);
   border-radius: var(--radio-sm, 8px);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
 }
-.duos-lista button[aria-pressed="true"] {
+#duosFavorito .duo-tarjeta {
   border-color: var(--acento, #4DD2FF);
 }
-.duos-lista button[aria-pressed="true"] .duo-nombre {
+#duosFavorito .duo-nombre {
   color: var(--acento, #4DD2FF);
 }
 /* La portada: las dos pantallas por separado (dos Pepitos lado a lado), cada una con su marco (las dibuja js/duos.js). */
@@ -270,17 +266,45 @@ body.sin-cuenta #botonVincularTV {
   aspect-ratio: 276 / 68;
   image-rendering: pixelated;
 }
+.duo-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .duos-lista .duo-nombre {
   font-weight: 600;
 }
-/* El favorito: una estrella junto al nombre (solo en el marcado). */
-.duos-lista .duo-estrella {
-  display: none;
-  color: var(--acento, #4DD2FF);
-  margin-right: 6px;
+.duo-estrella {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--texto-2, #8A9AAE);
+  cursor: pointer;
 }
-.duos-lista button[aria-pressed="true"] .duo-estrella {
-  display: inline;
+.duo-estrella svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.duo-estrella[aria-pressed="true"] {
+  color: var(--acento, #4DD2FF);
+}
+.duo-estrella[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+.duos-separador {
+  border: none;
+  border-top: 1px solid var(--borde, #253041);
+  margin: 14px 0;
 }
 
 /* Nota bajo una opción de la ventanita (el aviso de "Nunca" en "Apagar pantalla"). */

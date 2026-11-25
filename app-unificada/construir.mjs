@@ -336,7 +336,11 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
         </label>
       </div>
       <div class="campo">
-        <span class="rotulo">Tu favorito</span>
+        <div id="duosBloqueFavorito">
+          <span class="rotulo">Tu favorito</span>
+          <ul class="duos-lista" id="duosFavorito"></ul>
+          <hr class="duos-separador" id="duosSeparador" />
+        </div>
         <ul class="duos-lista" id="duosLista"></ul>
         <p class="dato-cuenta" id="duosVacio" hidden>Aún no hay dúos.</p>
       </div>
