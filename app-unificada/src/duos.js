@@ -23,17 +23,33 @@ function aviso(texto) {
   a.hidden = !t;
 }
 
+// La portada como DOS pantallas (dos Pepitos lado a lado, pedido del dueño 2026-11-25): cada mitad de 128×64 en su
+// pantalla negra con marco, separadas por un espacio. Lienzo de 276×68: marco de 2 puntos y 12 de separación.
+const MARCO = 2;
+const SEPARACION = 12;
+const X_DERECHA = 128 + 2 * MARCO + SEPARACION; // donde empieza el marco de la pantalla derecha
 function dibujarPortada(canvas, b64) {
-  canvas.width = 256;
-  canvas.height = 64;
+  canvas.width = 2 * (128 + 2 * MARCO) + SEPARACION;
+  canvas.height = 64 + 2 * MARCO;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, 256, 64);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const x0 of [0, X_DERECHA]) {
+    ctx.fillStyle = '#33415A'; // el marco (--borde-fuerte)
+    ctx.fillRect(x0, 0, 128 + 2 * MARCO, 64 + 2 * MARCO);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0 + MARCO, MARCO, 128, 64);
+  }
   let bytes = null;
   try { bytes = Uint8Array.from(atob(b64 || ''), (c) => c.charCodeAt(0)); } catch (e) { bytes = null; }
   if (!bytes || bytes.length !== 2048) return;
   ctx.fillStyle = '#4DD2FF';
-  for (let y = 0; y < 64; y++) for (let x = 0; x < 256; x++) if (bytes[y * 32 + (x >> 3)] & (0x80 >> (x & 7))) ctx.fillRect(x, y, 1, 1);
+  for (let y = 0; y < 64; y++) {
+    for (let x = 0; x < 256; x++) {
+      if (!(bytes[y * 32 + (x >> 3)] & (0x80 >> (x & 7)))) continue;
+      const px = x < 128 ? MARCO + x : X_DERECHA + MARCO + (x - 128);
+      ctx.fillRect(px, MARCO + y, 1, 1);
+    }
+  }
 }
 
 // El favorito que se marca: el guardado si sigue en el catálogo; si no, el primero (lo mismo que hace la TV).
@@ -53,10 +69,16 @@ function pintarLista() {
     const c = document.createElement('canvas');
     c.setAttribute('aria-hidden', 'true');
     dibujarPortada(c, d.portada);
+    const fila = document.createElement('span');
+    const estrella = document.createElement('span');
+    estrella.className = 'duo-estrella';
+    estrella.setAttribute('aria-hidden', 'true');
+    estrella.textContent = '★'; // solo se ve en el favorito (unificada.css)
     const nombre = document.createElement('span');
     nombre.className = 'duo-nombre';
     nombre.textContent = d.nombre;
-    b.append(c, nombre);
+    fila.append(estrella, nombre);
+    b.append(c, fila);
     b.addEventListener('click', () => { elegir(d.clave).catch(fallo); });
     li.append(b);
     ul.append(li);

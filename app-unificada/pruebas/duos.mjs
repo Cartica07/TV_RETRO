@@ -44,7 +44,8 @@ const esperarAviso = (p) => p.waitForFunction(() => { const a = document.getElem
   informe('Pro: la pantalla Dúos se ve con su título', await visible(pagina, '#seccionDuos') && (await txt(pagina, '#tituloMas')) === 'Dúos');
   informe('Pro: sin ajustes de dúos, "Activar dúos" viene activado', await pagina.$eval('#duosActivos', (c) => c.checked));
   informe('Pro: la lista sigue el orden del catálogo y marca el primero como favorito', (await marcados(pagina)) === 'Corazón*, Gatos', await marcados(pagina));
-  informe('Pro: cada dúo trae su portada dibujada', await pagina.$$eval('#duosLista canvas', (cs) => cs.length === 2 && cs.every((c) => c.width === 256 && c.height === 64)));
+  informe('Pro: cada dúo trae su portada como dos pantallas con marco (276×68)', await pagina.$$eval('#duosLista canvas', (cs) => cs.length === 2 && cs.every((c) => c.width === 276 && c.height === 68)));
+  informe('Pro: la estrella se ve solo en el favorito', await pagina.$$eval('#duosLista .duo-estrella', (es) => es.map((e) => getComputedStyle(e).display !== 'none').join()) === 'true,false');
   informe('Pro v11: avisa que hay que actualizar', (await txt(pagina, '#duosAviso')) === 'Actualiza tu Pepito para usar los dúos.');
 
   await pagina.click('#duosLista button[data-clave="gatos"]');
