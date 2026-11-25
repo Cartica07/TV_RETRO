@@ -528,6 +528,18 @@ body.sin-cuenta #botonVincularTV {
   line-height: 1.4;
   color: var(--texto-2);
 }
+/* La nota de Pepito Pro va en tres renglones con guion, con un espacio corto entre ellos (dueño, 2026-11-25). */
+.nota-alarma-pro {
+  font-size: 13px;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+.nota-alarma-pro span {
+  display: block;
+}
+.nota-alarma-pro span + span {
+  margin-top: 2px;
+}
 body.tv-lite .nota-alarma-pro,
 body:not(.tv-lite) .nota-alarma-lite {
   display: none;
@@ -537,6 +549,11 @@ body:not(.tv-lite) .nota-alarma-lite {
    pestaña tiene que entrar SIN scroll. Aquí se recupera ese espacio sin quitar lo que se pidió: Invertir baja menos y la tarjeta no crece, y el
    espacio extra de Alineación es de 3 puntos (en vez de 6). En celulares más altos queda todo como arriba. */
 @media (max-height: 760px) {
+  .nota-alarma-pro {
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
   .franja-inferior {
     margin-top: 10px;
   }

@@ -61,7 +61,7 @@ for (const [ancho, alto] of [[390, 844], [360, 740]]) {
     const vis = (s) => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0; };
     return { pro: vis('.nota-alarma-pro'), lite: vis('.nota-alarma-lite'), texto: (document.querySelector('.nota-alarma-pro') || {}).textContent };
   });
-  informe(t + 'Alarma con Pepito Pro: se ve la nota de Pro y no la de Lite', nota.pro && !nota.lite && /Botón A/.test(nota.texto) && /perilla/i.test(nota.texto), JSON.stringify(nota));
+  informe(t + 'Alarma con Pepito Pro: se ve la nota de Pro y no la de Lite', nota.pro && !nota.lite && /- El botón de la antena la silencia/.test(nota.texto) && /- El botón de la Perilla la pospone 5 minutos/.test(nota.texto) && /- Se calla sola luego de un minuto/.test(nota.texto), JSON.stringify(nota));
   informe(t + 'Alarma entra sin scroll', (await sobra(pagina)) <= 0, 'sobran ' + (await sobra(pagina)) + ' px');
 
   // ---- Galería: la fila de pestañas y la caneca quedan pegadas al bajar ----

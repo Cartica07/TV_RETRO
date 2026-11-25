@@ -365,7 +365,7 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
 // Más > Alarma: cómo se silencia (ronda de ajustes visuales del 2026-11-25; la pantalla de Pepito ya no lo dice). Una nota discreta entre el
 // tono y el botón Guardar; con una TV Lite se ve la de Lite (unificada.css). Textos propuestos y aprobados el 2026-11-25.
 if (!sinPepito) cambiar(/(      <div class="campo">\r?\n        <button type="button" id="botonGuardarAlarma")/,
-  '      <p class="nota-alarma nota-alarma-pro">Botón A: la silencia. Perilla: la pospone 5 minutos. Se calla sola al minuto.</p>\r\n' +
+  '      <div class="nota-alarma nota-alarma-pro"><span>- El botón de la antena la silencia</span><span>- El botón de la Perilla la pospone 5 minutos</span><span>- Se calla sola luego de un minuto</span></div>\r\n' +
   '      <p class="nota-alarma nota-alarma-lite">Un toque en el botón de Pepito la silencia. Se calla sola al minuto.</p>\r\n$1',
   'el botón Guardar alarma');
 // Más > Config > Sistema: barra de avance de "Actualizar" (pedido del dueño, 2026-11-23, Pepito Pro y Lite; la mueve
