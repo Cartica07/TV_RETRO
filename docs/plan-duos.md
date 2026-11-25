@@ -6,6 +6,8 @@
 > Regla de trabajo para toda la función: **no romper lo que ya funciona**. Primero una prueba aislada, después la integración
 > detrás de una bandera de compilación apagada por defecto.
 
+> **2026-11-25: los dúos son parte de la Pepito Pro** (decisión del dueño tras las pruebas): `TVRETRO_DUOS` encendido por defecto; la versión probada en la S3 es la base de las siguientes y se sigue mejorando sobre ella. La próxima Pro que se publique (la 12) los lleva.
+
 ## 1. La idea (en palabras del dueño)
 
 Cada TV lleva un **imán en el lateral izquierdo** y un **sensor de efecto Hall en el lateral derecho**. Al juntar dos Pepitos lado a

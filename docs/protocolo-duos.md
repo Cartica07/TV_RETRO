@@ -127,13 +127,13 @@ Después de un dúo (terminado o cortado), la izquierda **no vuelve a buscar has
 
 ## 8. Compilación
 
-- Todo va detrás de `TVRETRO_DUOS` (en `OLED_Remota/duos_config.h`, **0 por defecto**). Con 0, el firmware es el de siempre:
+- **Desde el 2026-11-25 los dúos son parte de la Pepito Pro** (decisión del dueño): `TVRETRO_DUOS` (en `OLED_Remota/duos_config.h`) viene **en 1** y todas las versiones nuevas los llevan. Con 0 (solo para comparar o descartar un fallo, nunca para publicar), el firmware queda como antes de los dúos:
   ni ESP-NOW ni cambios en el `loop()` ni en el reproductor.
 - No cambia `FIRMWARE_BUILD` ni se publica nada: la siguiente Pro publicada sigue siendo la 12.
 
 ## 9. Pruebas en la placa (fase 1; grabar cada placa necesita el permiso del dueño)
 
-Compilar la Pro con `TVRETRO_DUOS` en 1 (solo en la copia de trabajo, nunca commiteado) y la ESP8266 con `Duos_Prueba/`.
+La Pro se compila tal cual (`TVRETRO_DUOS` ya viene en 1 desde el 2026-11-25) y la ESP8266 con `Duos_Prueba/`.
 El dúo de prueba (el corazón, 3,3 s) se genera con `app-unificada/herramientas/editor-duos/generar-duo-prueba.mjs`.
 
 1. **S3 receptora:** la S3 (Pro con dúos) a la derecha, la ESP8266 a la izquierda: su botón (D1) hace de sensor (hundido = pegadas, soltarlo = separarlas; la carcasa ya no se abre). La ESP8266 busca el
