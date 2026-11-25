@@ -98,8 +98,6 @@ function pintarLista() {
   for (const d of lista) if (d !== fav) ul.append(tarjeta(d, false));
   const bloque = $('duosBloqueFavorito');
   if (bloque) bloque.hidden = !fav;
-  const linea = $('duosSeparador');
-  if (linea) linea.hidden = lista.length < 2;
   const vacio = $('duosVacio');
   if (vacio) vacio.hidden = lista.length > 0;
 }

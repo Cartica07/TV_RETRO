@@ -49,7 +49,7 @@ const esperarAviso = (p) => p.waitForFunction(() => { const a = document.getElem
   informe('Pro: sin ajustes de dúos, "Activar dúos" viene activado', await pagina.$eval('#duosActivos', (c) => c.checked));
   informe('Pro: sin favorito guardado, arriba va el primero del catálogo (estrella rellena) y debajo los demás', (await marcados(pagina)) === 'Corazón★ | Gatos☆', await marcados(pagina));
   informe('Pro: cada dúo trae su portada como dos pantallas con marco (276×68)', await pagina.$$eval('#seccionDuos canvas', (cs) => cs.length === 2 && cs.every((c) => c.width === 276 && c.height === 68)));
-  informe('Pro: una línea separa el favorito de los demás', await visible(pagina, '#duosSeparador') && await visible(pagina, '#duosBloqueFavorito'));
+  informe('Pro: el favorito va en su marco, sin línea antes de los demás', await visible(pagina, '#duosBloqueFavorito') && !(await pagina.$('#duosSeparador')));
   await pagina.click('#duosLista .duo-tarjeta[data-clave="gatos"] canvas');
   await pagina.waitForTimeout(600);
   informe('Pro: tocar la tarjeta (no la estrella) no cambia el favorito', (await marcados(pagina)) === 'Corazón★ | Gatos☆' && (await txt(pagina, '#duosAviso')) !== 'Listo', await marcados(pagina));
