@@ -37,7 +37,7 @@ Todos empiezan con la misma cabecera de 8 bytes, en little-endian:
 | Byte | Campo | Valor |
 |---|---|---|
 | 0-1 | marca | `'D'`, `'U'` |
-| 2 | versión del protocolo | `1` (la prueba de la fase 0 no tenía este byte: sus mensajes se ignoran) |
+| 2 | versión del protocolo | `2` (la 1 llevaba el AQUI sin favorito; la prueba de la fase 0 no tenía este byte: sus mensajes se ignoran) |
 | 3 | tipo | ver tabla |
 | 4-7 | sesión | número al azar que elige la izquierda en cada contacto; todos los mensajes de ese dúo lo llevan |
 
@@ -47,7 +47,7 @@ tipo, o con otra marca o versión, se ignora.
 | Tipo | Nombre | De → a | Contenido (después de la cabecera) |
 |---|---|---|---|
 | 1 | HOLA | izquierda → todas (difusión) | `favorita` uint32, `n` uint8 (≤ 16), `claves` n × uint32: los dúos que tiene; `canal` uint8: su canal Wi-Fi |
-| 2 | AQUI | derecha → izquierda | `n` uint8 (≤ 16), `claves` n × uint32; `canal` uint8: su canal Wi-Fi |
+| 2 | AQUI | derecha → izquierda | `favorita` uint32 (la de la derecha), `n` uint8 (≤ 16), `claves` n × uint32; `canal` uint8: su canal Wi-Fi |
 | 3 | PING | izquierda → derecha | `numero` uint8 |
 | 4 | PONG | derecha → izquierda | `numero` uint8 (el mismo del PING) |
 | 5 | PREPARA | izquierda → derecha | `clave` uint32: el dúo elegido |
@@ -70,8 +70,8 @@ IZQUIERDA (siente el imán)                         DERECHA
                                          ◀───────  AQUI (sus claves); queda atada a esa izquierda y esa sesión 3 s
   espera 100 ms más por si contestan varias;
   se queda con la de señal más fuerte (≥ -58 dBm)
-  elige el dúo: la favorita si la otra la tiene;
-  si no, la primera en común (el de prueba siempre está)
+  elige el dúo (ver "Qué dúo suena"): el favorito de la izquierda si la derecha lo tiene; si no, el de la derecha si la
+  izquierda lo tiene; si no, el primero en común (el de prueba siempre está)
   PING ×3 ──────────────────────────────────────▶
                                          ◀───────  PONG ×3
   demora = mediana de las 3 idas y vueltas
@@ -171,4 +171,8 @@ El dúo de prueba (el corazón, 3,3 s) se genera con `app-unificada/herramientas
   (la segunda S3).
 
 ### Qué dúo suena (confirmado por el dueño, 2026-11-25)
-- Suena el **favorito de la TV de la izquierda** (la del sensor) si la derecha también lo tiene. Si la derecha no lo tiene (por ejemplo, todavía no terminó de bajar el catálogo), suena el **primer dúo que tengan en común**. No se busca el favorito de la derecha como paso aparte. Es lo que hace `elegirDuo()` de `duos.cpp`; cambiar de lado las TV cambia cuál favorito suena.
+1. El **favorito de la TV de la izquierda** (la del sensor), si la derecha también lo tiene. Siempre manda el de la izquierda cuando se puede.
+2. Si la derecha no lo tiene (caso raro: todavía no terminó de bajar el catálogo), el **favorito de la derecha**, si la izquierda lo tiene.
+3. Solo si ninguna tiene el favorito de la otra, el **primer dúo que tengan en común** (el de prueba siempre está).
+
+Por eso el AQUI lleva el favorito de la derecha (protocolo versión 2). Es lo que hace `elegirDuo()` de `duos.cpp`; cambiar de lado las TV cambia cuál favorito suena.
