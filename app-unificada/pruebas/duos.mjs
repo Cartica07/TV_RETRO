@@ -26,11 +26,15 @@ const conTVLite = () => (p) => p.addInitScript(() => {
 });
 
 const txt = (p, sel) => p.evaluate((s) => (document.querySelector(s).textContent || '').trim(), sel);
-const marcados = (p) => p.$$eval('#duosLista button', (bs) => bs.map((b) => `${b.querySelector('.duo-nombre').textContent}${b.getAttribute('aria-pressed') === 'true' ? '*' : ''}`).join(', '));
+// "Favorito★ | Otro☆, Otro☆": arriba (bajo "Tu favorito") y debajo de la línea, con el estado de cada estrella.
+const marcados = (p) => p.evaluate(() => {
+  const n = (sel) => [...document.querySelectorAll(`${sel} .duo-tarjeta`)].map((t) => t.querySelector('.duo-nombre').textContent + (t.querySelector('.duo-estrella').getAttribute('aria-pressed') === 'true' ? '★' : '☆')).join(', ');
+  return `${n('#duosFavorito')} | ${n('#duosLista')}`;
+});
 async function abrirDuos(p) {
   await p.click('#grupoTipo button[data-valor="galeria"]'); await p.waitForTimeout(200);
   await p.click('#grupoMas button[data-mas="duos"]');
-  await p.waitForFunction(() => document.querySelectorAll('#duosLista button').length > 0 || !document.getElementById('duosVacio').hidden || !document.getElementById('duosAviso').hidden, null, { timeout: 15000 });
+  await p.waitForFunction(() => document.querySelectorAll('#seccionDuos .duo-tarjeta').length > 0 || !document.getElementById('duosVacio').hidden || !document.getElementById('duosAviso').hidden, null, { timeout: 15000 });
   await p.waitForTimeout(400);
 }
 const esperarAviso = (p) => p.waitForFunction(() => { const a = document.getElementById('duosAviso'); return !a.hidden && /Listo|Sin conexión/.test(a.textContent); }, null, { timeout: 15000 });
@@ -43,18 +47,21 @@ const esperarAviso = (p) => p.waitForFunction(() => { const a = document.getElem
   await abrirDuos(pagina);
   informe('Pro: la pantalla Dúos se ve con su título', await visible(pagina, '#seccionDuos') && (await txt(pagina, '#tituloMas')) === 'Dúos');
   informe('Pro: sin ajustes de dúos, "Activar dúos" viene activado', await pagina.$eval('#duosActivos', (c) => c.checked));
-  informe('Pro: la lista sigue el orden del catálogo y marca el primero como favorito', (await marcados(pagina)) === 'Corazón*, Gatos', await marcados(pagina));
-  informe('Pro: cada dúo trae su portada como dos pantallas con marco (276×68)', await pagina.$$eval('#duosLista canvas', (cs) => cs.length === 2 && cs.every((c) => c.width === 276 && c.height === 68)));
-  informe('Pro: la estrella se ve solo en el favorito', await pagina.$$eval('#duosLista .duo-estrella', (es) => es.map((e) => getComputedStyle(e).display !== 'none').join()) === 'true,false');
+  informe('Pro: sin favorito guardado, arriba va el primero del catálogo (estrella rellena) y debajo los demás', (await marcados(pagina)) === 'Corazón★ | Gatos☆', await marcados(pagina));
+  informe('Pro: cada dúo trae su portada como dos pantallas con marco (276×68)', await pagina.$$eval('#seccionDuos canvas', (cs) => cs.length === 2 && cs.every((c) => c.width === 276 && c.height === 68)));
+  informe('Pro: una línea separa el favorito de los demás', await visible(pagina, '#duosSeparador') && await visible(pagina, '#duosBloqueFavorito'));
+  await pagina.click('#duosLista .duo-tarjeta[data-clave="gatos"] canvas');
+  await pagina.waitForTimeout(600);
+  informe('Pro: tocar la tarjeta (no la estrella) no cambia el favorito', (await marcados(pagina)) === 'Corazón★ | Gatos☆' && (await txt(pagina, '#duosAviso')) !== 'Listo', await marcados(pagina));
   informe('Pro v11: avisa que hay que actualizar', (await txt(pagina, '#duosAviso')) === 'Actualiza tu Pepito para usar los dúos.');
 
-  await pagina.click('#duosLista button[data-clave="gatos"]');
+  await pagina.click('#duosLista .duo-estrella[data-clave="gatos"]');
   await esperarAviso(pagina);
   let raiz = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
   let aj = raiz.dispositivos.tv1.ajustes;
   informe('Pro: tocar un dúo lo guarda como favorito (y conserva lo demás de los ajustes)', aj.duoFavorito === 'gatos' && aj.brillo === 3 && aj.apagado === 10, JSON.stringify(aj));
   informe('Pro: le manda a la TV la orden "ajustes" y dice Listo', raiz.dispositivos.tv1.oled_remota.pantalla.tipo === 'ajustes' && (await txt(pagina, '#duosAviso')) === 'Listo');
-  informe('Pro: el favorito queda marcado', (await marcados(pagina)) === 'Corazón, Gatos*');
+  informe('Pro: el favorito sube arriba con la estrella rellena', (await marcados(pagina)) === 'Gatos★ | Corazón☆', await marcados(pagina));
 
   await pagina.click('#seccionDuos .switch');
   await esperarAviso(pagina);
@@ -64,16 +71,16 @@ const esperarAviso = (p) => p.waitForFunction(() => { const a = document.getElem
 
   await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(300);
   await pagina.click('#grupoMas button[data-mas="duos"]'); await pagina.waitForTimeout(1500);
-  informe('Pro: al volver, el interruptor y el favorito son los guardados', !(await pagina.$eval('#duosActivos', (c) => c.checked)) && (await marcados(pagina)) === 'Corazón, Gatos*');
+  informe('Pro: al volver, el interruptor y el favorito son los guardados', !(await pagina.$eval('#duosActivos', (c) => c.checked)) && (await marcados(pagina)) === 'Gatos★ | Corazón☆');
 
   // Sin señal: no se guarda, avisa y el favorito vuelve a ser el de antes.
   await pagina.evaluate(() => { globalThis.__fakeDb.colgar = true; });
-  await pagina.click('#duosLista button[data-clave="corazon"]');
+  await pagina.click('#duosLista .duo-estrella[data-clave="corazon"]');
   await pagina.waitForFunction(() => /Sin conexión|lenta/.test(document.getElementById('duosAviso').textContent), null, { timeout: 25000 });
   const avisoSinSenal = await txt(pagina, '#duosAviso');
   await pagina.evaluate(() => globalThis.__fakeDb.soltar());
   await pagina.waitForTimeout(800);
-  informe('Pro: sin señal avisa (y no deja la lista bloqueada)', /Sin conexión|lenta/.test(avisoSinSenal) && !(await pagina.$eval('#duosLista button', (b) => b.disabled)), avisoSinSenal);
+  informe('Pro: sin señal avisa (y no deja la lista bloqueada)', /Sin conexión|lenta/.test(avisoSinSenal) && !(await pagina.$eval('#seccionDuos .duo-estrella', (b) => b.disabled)) && (await marcados(pagina)) === 'Gatos★ | Corazón☆', avisoSinSenal);
   informe('Pro: sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
   await navegador.close();
 }

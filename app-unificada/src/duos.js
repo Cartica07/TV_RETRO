@@ -55,34 +55,51 @@ function dibujarPortada(canvas, b64) {
 // El favorito que se marca: el guardado si sigue en el catálogo; si no, el primero (lo mismo que hace la TV).
 const favoritoVisible = () => (lista.some((d) => d.clave === favorito) ? favorito : (lista[0] ? lista[0].clave : ''));
 
+// La estrella (diseño del dueño, 2026-11-25): vacía en los demás, rellena en el favorito (unificada.css). Solo ella elige.
+const ESTRELLA = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2.8 14.8 8.9 21.5 9.6 16.5 14.1 17.9 20.7 12 17.3 6.1 20.7 7.5 14.1 2.5 9.6 9.2 8.9"/></svg>';
+
+function tarjeta(d, esFavorito) {
+  const li = document.createElement('li');
+  const caja = document.createElement('div');
+  caja.className = 'duo-tarjeta';
+  caja.dataset.clave = d.clave;
+  const c = document.createElement('canvas');
+  c.setAttribute('aria-hidden', 'true');
+  dibujarPortada(c, d.portada);
+  const pie = document.createElement('div');
+  pie.className = 'duo-pie';
+  const nombre = document.createElement('span');
+  nombre.className = 'duo-nombre';
+  nombre.textContent = d.nombre;
+  const estrella = document.createElement('button');
+  estrella.type = 'button';
+  estrella.className = 'duo-estrella';
+  estrella.dataset.clave = d.clave;
+  estrella.setAttribute('aria-pressed', esFavorito ? 'true' : 'false');
+  estrella.setAttribute('aria-label', d.nombre);
+  estrella.innerHTML = ESTRELLA;
+  estrella.addEventListener('click', () => { elegir(d.clave).catch(fallo); });
+  pie.append(nombre, estrella);
+  caja.append(c, pie);
+  li.append(caja);
+  return li;
+}
+
+// Arriba, bajo "Tu favorito", solo el favorito; una línea; y debajo los demás.
 function pintarLista() {
+  const ulFav = $('duosFavorito');
   const ul = $('duosLista');
-  if (!ul) return;
+  if (!ul || !ulFav) return;
+  ulFav.innerHTML = '';
   ul.innerHTML = '';
   const marcado = favoritoVisible();
-  for (const d of lista) {
-    const li = document.createElement('li');
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.clave = d.clave;
-    b.setAttribute('aria-pressed', d.clave === marcado ? 'true' : 'false');
-    const c = document.createElement('canvas');
-    c.setAttribute('aria-hidden', 'true');
-    dibujarPortada(c, d.portada);
-    const fila = document.createElement('span');
-    const estrella = document.createElement('span');
-    estrella.className = 'duo-estrella';
-    estrella.setAttribute('aria-hidden', 'true');
-    estrella.textContent = '★'; // solo se ve en el favorito (unificada.css)
-    const nombre = document.createElement('span');
-    nombre.className = 'duo-nombre';
-    nombre.textContent = d.nombre;
-    fila.append(estrella, nombre);
-    b.append(c, fila);
-    b.addEventListener('click', () => { elegir(d.clave).catch(fallo); });
-    li.append(b);
-    ul.append(li);
-  }
+  const fav = lista.find((d) => d.clave === marcado);
+  if (fav) ulFav.append(tarjeta(fav, true));
+  for (const d of lista) if (d !== fav) ul.append(tarjeta(d, false));
+  const bloque = $('duosBloqueFavorito');
+  if (bloque) bloque.hidden = !fav;
+  const linea = $('duosSeparador');
+  if (linea) linea.hidden = lista.length < 2;
   const vacio = $('duosVacio');
   if (vacio) vacio.hidden = lista.length > 0;
 }
@@ -91,7 +108,7 @@ function bloquear(si) {
   guardando = si;
   const sw = $('duosActivos');
   if (sw) sw.disabled = si;
-  for (const b of document.querySelectorAll('#duosLista button')) b.disabled = si;
+  for (const b of document.querySelectorAll('#seccionDuos .duo-estrella')) b.disabled = si;
 }
 
 function fallo(e) {
