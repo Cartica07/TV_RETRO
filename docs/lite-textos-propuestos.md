@@ -64,6 +64,13 @@
 | 58 | (APROBADA 2026-11-24) Enviar una animación cuyo archivo no se pudo leer al abrir (Pro, Lite y la app vieja) | Esta animación no se pudo cargar. Elígela otra vez en la Galería. | `js/main.js` |
 | 59 | (APROBADA 2026-11-24) Buscador de la ciudad sin internet | Sin conexión a internet. Conéctate y vuelve a buscar. | `app-unificada/src/caras.js` |
 | 60 | (DICTADO por el dueño, 2026-11-24) Mensaje predeterminado de Pepito (Pro y Lite), en Sans tamaño 3 | Bienvenido (arriba) / Soy Pepito (abajo) | `app-unificada/src/textos-pepito.mjs`, `src/lite-tv.js` |
+| 61 | (APROBADO 2026-11-25) Menú Más y título de la pantalla | Dúos | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 62 | (APROBADO 2026-11-25) Interruptor de la pantalla Dúos | Activar dúos | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 63 | (APROBADO 2026-11-25; el dueño pidió el rótulo más grande y centrado, dentro de un marco azul con el favorito) Rótulo del favorito | Tu favorito | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 64 | (APROBADO 2026-11-25) Sin dúos en el catálogo | Aún no hay dúos. | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 65 | (APROBADO 2026-11-25) Sin señal al guardar o al abrir | Sin conexión. Vuelve a intentarlo. | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 66 | (APROBADO 2026-11-25) Pepito sin la versión con dúos | Actualiza tu Pepito para usar los dúos. | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 67 | (APROBADO 2026-11-25) Confirmación al elegir el favorito o cambiar el interruptor | Listo | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 
