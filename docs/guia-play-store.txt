@@ -1,0 +1,105 @@
+COMO SUBIR PEPITO A GOOGLE PLAY STORE
+Escrito el 2026-11-25. Dice que hace cada quien (TU o CLAUDE) y en que orden. Las reglas de Google cambian: antes de cada paso mira lo que te pida la consola de Play.
+
+
+=====================================================================
+0. LO QUE YA ESTA LISTO
+=====================================================================
+  - Nombre Pepito y paquete com.pepito.app (el paquete NO se puede cambiar despues de publicar).
+  - targetSdk 36 y minSdk 24 (Google exige targetSdk reciente: cumple).
+  - Icono propio y pantalla de carga propia.
+  - Eliminar la cuenta desde la app (Mas > Configuracion > Mi cuenta) y pagina web para pedirlo: pepito/eliminar-cuenta.html.
+  - Paginas legales con tus datos: pepito/privacidad.html, terminos.html, licencias.html, ayuda.html.
+  - Pantalla de aceptacion de terminos al entrar.
+  - Firebase ya conoce el paquete com.pepito.app con las huellas de la clave de subida y la de depuracion.
+  - Clave de subida (copia ya hecha en este PC): C:\Proyectos\TV_RETRO-claves\tvretro-subida.jks, alias "tvretro".
+
+LO QUE FALTA EN EL PROYECTO (lo hace CLAUDE cuando me digas "empieza"):
+  - La app unificada (app-unificada/android) todavia NO tiene configurada la firma de publicacion y su version es 1 / "1.0".
+    Hay que: conectar la clave de subida, poner versionCode/versionName y generar el AAB (el archivo .aab que pide Google):
+    cd app-unificada/android && gradlew bundleRelease  ->  app/build/outputs/bundle/release/app-release.aab
+  - Verificar que el AAB queda firmado y que abre bien instalado desde la pista de prueba interna.
+
+
+=====================================================================
+1. PASOS TUYOS, EN ORDEN
+=====================================================================
+
+PASO 1. Copia de seguridad de la clave (HOY, antes de todo)
+  Copia a un lugar FUERA de este PC (memoria USB y/o nube privada):
+    - C:\Proyectos\TV_RETRO-claves\tvretro-subida.jks
+    - el archivo keystore.properties (esta en app-android\android\; tiene las contrasenas)
+    - ota-principal.pem y ota-respaldo.pem (las claves de las actualizaciones de las TV)
+  Si pierdes la clave de subida, Google puede restablecerla, pero tarda y exige tramites. Si pierdes las .pem de las TV,
+  las TV ya vendidas solo se podran actualizar por cable.
+
+PASO 2. Cuenta de desarrollador de Google Play
+  - Entra a https://play.google.com/console y crea la cuenta (pago unico de unos 25 dolares).
+  - Como eres persona natural, es cuenta PERSONAL: pide tu documento de identidad, telefono y direccion.
+  - Atencion: el nombre de desarrollador y el correo de contacto pueden verse publicos en la ficha.
+  - Para cuentas personales nuevas Google exige una PRUEBA CERRADA: minimo 12 personas probando la app durante 14 dias
+    seguidos ANTES de poder pedir la publicacion. Ve reuniendo a 12 amigos/familiares con celular Android y un correo de Google.
+    (Es la regla de hoy; confirmala en la consola.)
+
+PASO 3. Que las paginas legales esten en linea (con tu permiso, yo lo hago)
+  Google pide una direccion web publica de la politica de privacidad (y una para eliminar la cuenta).
+  Hoy las paginas nuevas estan en la rama "lite" y NO se ven en internet. Salen en linea cuando pasen a "main"
+  (GitHub Pages). Eso es un paso aparte que SOLO hago si me dices expresamente "haz el merge a main".
+  Direcciones previstas:
+    https://cartica07.github.io/TV_RETRO/pepito/privacidad.html
+    https://cartica07.github.io/TV_RETRO/pepito/eliminar-cuenta.html
+  Antes de publicar, un abogado deberia revisar terminos y privacidad (ver docs/revision-legal-2026-11-25.md).
+
+PASO 4. Crear la app en la consola de Play
+  - "Crear app": nombre Pepito, idioma espanol, tipo App, gratuita.
+  - Acepta las declaraciones (politicas del programa y leyes de exportacion).
+  - Activa "Play App Signing" cuando te lo ofrezca (es lo normal): subes con tu clave de subida y Google firma con la suya.
+
+PASO 5. Ficha de la tienda (textos y graficos)
+  - Nombre (max. 30 caracteres), descripcion corta (max. 80), descripcion completa (max. 4000).
+  - Icono de 512 x 512 px (puedo generarlo del que ya tienes).
+  - Grafico de funciones: 1024 x 500 px.
+  - Al menos 2 capturas de pantalla del celular (hasta 8). Tambien puedo tomarlas de tu celular con adb.
+  - Categoria sugerida: Herramientas o Estilo de vida. Correo de contacto: el de las paginas legales.
+  - Direccion de la politica de privacidad: la del paso 3.
+  - Aclara en la descripcion que Pepito necesita la pantalla Pepito (Pro o Lite) para usarse; asi el revisor entiende por que
+    sin la TV la app se ve "vacia".
+
+PASO 6. Formularios de la consola ("Contenido de la app")
+  - Politica de privacidad: la direccion.
+  - Anuncios: NO tiene anuncios.
+  - Acceso a la app: la app pide cuenta, asi que Google necesita credenciales de PRUEBA. Crea una cuenta de prueba con correo
+    verificado y escribe las instrucciones. Como el revisor no tiene una TV, lo mejor es una nota clara y un VIDEO corto
+    mostrando la app funcionando con la TV.
+  - Clasificacion de contenido: cuestionario (no hay violencia ni contenido adulto).
+  - Publico objetivo: elige adultos y adolescentes; NO marques "para ninos" (activa reglas muy estrictas).
+  - Seguridad de los datos: declara lo que recoge la app (correo, id de cuenta, contenido que guardas en la galeria, ajustes de la TV,
+    constancia de aceptacion). Todo va cifrado en transito (Firebase). Permite eliminar la cuenta y los datos (hay enlace). No vendes datos.
+  - Eliminacion de cuenta: pon la direccion de eliminar-cuenta.html.
+  - Permisos: la app usa Bluetooth para hablar con Pepito Lite (en Android 12 o mas nuevo no pide ubicacion). Internet para la nube.
+  - Paises: empieza por Colombia (y Latinoamerica). Si distribuyes en la Union Europea Google te pide declararte "comerciante"
+    y mostrar tu direccion; evitalo al principio.
+
+PASO 7. Subir el AAB y probar
+  1) Pista de prueba interna (hasta 100 personas, sin revision larga): sube el AAB que genera Claude y probalo TU instalandolo desde Play.
+  2) Prueba cerrada (los 12 testers durante 14 dias), obligatoria para cuentas personales nuevas.
+  3) Cuando se cumpla el plazo, "Solicitar acceso a produccion" y despues "Produccion".
+  - Cada subida nueva necesita un versionCode MAYOR que la anterior (lo cambia Claude).
+  - La revision de Google puede tardar varios dias.
+
+PASO 8. Despues de la primera subida (IMPORTANTE para entrar con Google)
+  - En Play Console > Integridad de la app > "Firma de apps" copia la huella SHA-1 y SHA-256 de la clave de firma de Google.
+  - Pasaselas a Claude (o agregalas en Firebase > Configuracion del proyecto > app Android com.pepito.app > "Agregar huella digital").
+    Sin esto, el boton "Entrar con Google" falla en la app instalada desde Play (con correo y contrasena si funciona).
+  - Prueba el AAB desde la pista interna ANTES de publicar: correo, Google, vincular la TV, enviar contenido, Bluetooth con la Lite.
+
+
+=====================================================================
+2. RESUMEN: QUE HACE CADA QUIEN
+=====================================================================
+  TU:      copia de la clave; cuenta de Play (pago, documentos); 12 probadores; textos de la ficha que quieras cambiar; aprobar el merge a main;
+           llenar formularios de la consola (yo te dicto cada respuesta); abogado.
+  CLAUDE:  firma de publicacion y AAB; versionCode; icono 512 y capturas; textos sugeridos de la ficha y de los formularios;
+           huella de Play en Firebase; merge a main solo si me lo pides; correcciones si Google rechaza algo.
+
+TIEMPO REALISTA: cuenta + ficha + formularios (1 a 3 dias de trabajo) + 14 dias de prueba cerrada + revision (varios dias) = unas 3 a 4 semanas.
