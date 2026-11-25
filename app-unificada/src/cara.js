@@ -343,7 +343,7 @@ function dibujarElemento(p, tipo, d, datos) {
     case TIPO.BATERIA: {
       if (!datos.bateria) break;
       const est = b(d, 3, 0);
-      icono(p, 'bateria', est, Math.max(1, Math.min(4, datos.bateria)) - 1, x, y, c);
+      icono(p, 'bateria', est, Math.max(1, Math.min(5, datos.bateria)) - 1, x, y, c);
       if (b(d, 4, 0)) texto(p, `${datos.bateriaPct}%`, { fuente: 'clasica', tamano: 1, alin: 0 }, x + anchoIcono('bateria', est) + 2, y + 1, c);
       break;
     }
@@ -367,7 +367,7 @@ function conIcono(p, cat, estiloReceta, variante, s, l, x, y, c) {
 /**
  * Dibuja la receta. datos = { hora, minuto, dia, mes, anio, diaSemana (0 = domingo), esPro, wifiConectado, wifiBarras (0-4),
  * conexionOk, mensaje, alarmaActiva, proxAlarma: { hora, minuto } | null, clima: { temp, icono (0 sol…4 tormenta) } | null,
- * bateria (0 = sin medidor, 1-4), bateriaPct }. Devuelve la pantalla (Uint8Array de 128×64, 1 = encendido) o null si la
+ * bateria (0 = sin medidor, 1-5: 20 % por nivel), bateriaPct }. Devuelve la pantalla (Uint8Array de 128×64, 1 = encendido) o null si la
  * receta está dañada (entonces se dibuja la Cara 1).
  */
 export function dibujarCara(receta, datos, pantalla = new Uint8Array(ANCHO * ALTO)) {

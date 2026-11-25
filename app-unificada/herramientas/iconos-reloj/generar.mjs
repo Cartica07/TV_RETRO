@@ -89,9 +89,11 @@ function bateria(nivel, segmentos) {
   if (segmentos) { const m2 = nuevo(14, 7); rect(m2, 0, 0, 12, 7); lleno(m2, 12, 2, 2, 3); for (let i = 0; i < nivel; i++) lleno(m2, 2 + i * 2 + (i > 0 ? 0 : 0), 2, 1, 3); }
   return m;
 }
-function bateriaSegmentos(nivel) { const m = nuevo(17, 7); rect(m, 0, 0, 15, 7); lleno(m, 15, 2, 2, 3); for (let i = 0; i < nivel; i++) lleno(m, 2 + i * 3, 2, 2, 3); return m; }
-function bateriaBarra(nivel) { const m = nuevo(17, 7); rect(m, 0, 0, 15, 7); lleno(m, 15, 2, 2, 3); lleno(m, 2, 2, Math.round((11 * nivel) / 4), 3); return m; }
-const variantesBateria = (f) => ({ n4: f(4), n3: f(3), n2: f(2), n1: f(1) });
+// Desde el 2026-11-25 la batería tiene CINCO niveles (20 %, 40 %, 60 %, 80 % y 100 %): "Segmentos" son cinco líneas de 1 punto de ancho, una
+// cada 2 puntos y centradas dentro del marco (de x = 3 a x = 11); "Barra" se llena en quintos. El marco no cambia (17 x 7).
+function bateriaSegmentos(nivel) { const m = nuevo(17, 7); rect(m, 0, 0, 15, 7); lleno(m, 15, 2, 2, 3); for (let i = 0; i < nivel; i++) lleno(m, 3 + i * 2, 2, 1, 3); return m; }
+function bateriaBarra(nivel) { const m = nuevo(17, 7); rect(m, 0, 0, 15, 7); lleno(m, 15, 2, 2, 3); lleno(m, 2, 2, Math.round((11 * nivel) / 5), 3); return m; }
+const variantesBateria = (f) => ({ n5: f(5), n4: f(4), n3: f(3), n2: f(2), n1: f(1) });
 
 // ---- Clima (Pro) ----
 const SOL = ['....#....', '.#.....#.', '...###...', '..#####..', '#.#####.#', '..#####..', '...###...', '.#.....#.', '....#....'];
@@ -122,8 +124,8 @@ const CAMPANA = [
   est('Despertador', { normal: despertador() }, ['normal']),
 ];
 const BATERIA = [
-  est('Segmentos', variantesBateria(bateriaSegmentos), ['n4', 'n3', 'n2', 'n1'], 'n4', { n4: '100 %', n3: '75 %', n2: '50 %', n1: '25 %' }),
-  est('Barra', variantesBateria(bateriaBarra), ['n4', 'n3', 'n2', 'n1'], 'n4', { n4: '100 %', n3: '75 %', n2: '50 %', n1: '25 %' }),
+  est('Segmentos', variantesBateria(bateriaSegmentos), ['n5', 'n4', 'n3', 'n2', 'n1'], 'n5', { n5: '100 %', n4: '80 %', n3: '60 %', n2: '40 %', n1: '20 %' }),
+  est('Barra', variantesBateria(bateriaBarra), ['n5', 'n4', 'n3', 'n2', 'n1'], 'n5', { n5: '100 %', n4: '80 %', n3: '60 %', n2: '40 %', n1: '20 %' }),
 ];
 const CLIMA = [
   est('Dibujos simples', { sol: deTexto(SOL), parcial: deTexto(PARCIAL), nublado: deTexto(NUBLADO), lluvia: deTexto(LLUVIA), tormenta: deTexto(TORMENTA) },
@@ -167,7 +169,7 @@ const VARIANTES = {
   conexion: ['falla', 'ok'],
   mensaje: ['normal'],
   campana: ['normal'],
-  bateria: ['n1', 'n2', 'n3', 'n4'],
+  bateria: ['n1', 'n2', 'n3', 'n4', 'n5'],
   clima: ['sol', 'parcial', 'nublado', 'lluvia', 'tormenta'],
 };
 const CATEGORIAS = { wifi: WIFI, conexion: CONEXION, mensaje: MENSAJE, campana: CAMPANA, bateria: BATERIA, clima: CLIMA };
