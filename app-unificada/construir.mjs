@@ -67,14 +67,16 @@ if (!urlAuth) throw new Error('js/firebase.js de la Pro ya no importa el SDK de 
 const urlDb = (readFileSync(join(proJs, 'firebase.js'), 'utf8').match(/https:\/\/www\.gstatic\.com\/firebasejs\/[\d.]+\/firebase-database\.js/) || [])[0];
 if (!urlDb) throw new Error('js/firebase.js de la Pro ya no importa el SDK de base de datos desde gstatic: revisa app-unificada/construir.mjs');
 const conAuth = fuenteRouter.replace("'__SDK_AUTH__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlAuth));
-const routerFinal = conAuth.replace("'__SDK_DB__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlDb));
-if (conAuth === fuenteRouter || routerFinal === conAuth || /__SDK_(AUTH|DB)__/.test(routerFinal)) throw new Error('No se pudo poner la dirección del SDK en el enrutador (falta __SDK_AUTH__ o __SDK_DB__)');
+const conDb = conAuth.replace("'__SDK_DB__'", JSON.stringify(paraApk ? './vendor/firebase.js' : urlDb));
+// Aceptar los términos al entrar (2026-11-25): solo en la app Pepito; la copia --sin-pepito (pruebas originales de la Pro) no lo pide.
+const routerFinal = conDb.replace("'__ACEPTAR__'", JSON.stringify(sinPepito ? 'no' : 'si'));
+if (conAuth === fuenteRouter || conDb === conAuth || routerFinal === conDb || /__SDK_(AUTH|DB)__|__ACEPTAR__/.test(routerFinal)) throw new Error('No se pudo poner la dirección del SDK en el enrutador (falta __SDK_AUTH__ o __SDK_DB__)');
 writeFileSync(join(www, 'js', 'firebase.js'), routerFinal);
 copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js', 'duos.js', 'alto-cabecera.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js', 'duos.js', 'alto-cabecera.js', 'aceptacion.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 // Editor de caras de reloj (herramienta del dueño, solo administrador): www/editor-caras.html, no va en la APK.
 if (!paraApk) {
   copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.html'), join(www, 'editor-caras.html'));
@@ -136,6 +138,22 @@ if (!sinPepito) {
   if (!yaLosConserva) writeFileSync(ruta, fuente.replace(patron, '$1,\n    // unificada: apagado automático de la pantalla (0 = nunca, 5, 10, 20 minutos), solo si viene\n    ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),\n    // unificada: ciudad para el clima de las caras de reloj (2026-11-24), solo si viene y tiene sentido\n    ...(d.ciudad && typeof d.ciudad === \'object\' && typeof d.ciudad.nombre === \'string\' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180\n      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})$2'));
 }
 
+
+// Apagado de 1 y 2 minutos y sin clima (2026-11-25): la copia de normalizarAjustes de la Pro (js/firebase.js, que no se toca)
+// acepta solo 0, 5, 10 y 20 y conserva la ciudad del clima. Al guardar, set() reemplaza TODO el nodo ajustes: con esa lista el
+// 1 y el 2 se volverían 5, y una ciudad vieja guardada haría que las reglas (que ya no la aceptan) rechacen el guardado.
+// En la COPIA se amplía la lista y se quita la ciudad (al guardar también se borra la que hubiera de antes).
+if (!sinPepito) {
+  const ruta = join(www, 'js', 'firebase-pro.js');
+  let fuente = readFileSync(ruta, 'utf8');
+  const lista = /\[0, 5, 10, 20\]\.includes\(Number\(d\.apagado\)\)/g;
+  if ((fuente.match(lista) || []).length !== 1) throw new Error('js/firebase.js de la Pro ya no valida el apagado como se esperaba: revisa app-unificada/construir.mjs');
+  fuente = fuente.replace(lista, '[0, 1, 2, 5, 10, 20].includes(Number(d.apagado))');
+  const ciudad = /\r?\n\s*\.\.\.\(d\.ciudad && typeof d\.ciudad === 'object'[\s\S]*?\} : \{\}\),/g;
+  if ((fuente.match(ciudad) || []).length !== 1) throw new Error('js/firebase.js de la Pro ya no conserva la ciudad como se esperaba: revisa app-unificada/construir.mjs');
+  fuente = fuente.replace(ciudad, '');
+  writeFileSync(ruta, fuente);
+}
 
 // La parte Bluetooth (ble.js de la app Lite, el plugin de Capacitor y lite-tv.js) en un solo archivo ESM.
 await build({
@@ -263,6 +281,8 @@ if (!sinPepito) {
         <label class="rotulo" for="ajusteApagado">Apagar pantalla</label>
         <div class="selector">
           <select id="ajusteApagado">
+            <option value="1">Al minuto</option>
+            <option value="2">A los 2 min</option>
             <option value="5">A los 5 min</option>
             <option value="10">A los 10 min</option>
             <option value="20">A los 20 min</option>
@@ -301,24 +321,6 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
         <div class="selector">
           <select id="caraLista" aria-label="Caras de reloj"><option value="">Cara 1</option></select>
           <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-      <div class="campo" id="campoCiudad" hidden>
-        <label class="rotulo" for="ciudadSelect">Ciudad para el clima</label>
-        <div class="selector">
-          <select id="ciudadSelect"><option value="">Sin clima</option></select>
-          <svg class="icono selector-flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-      <div class="buscador-canciones" id="buscadorCiudad" role="dialog" aria-modal="true" aria-label="Ciudad para el clima" hidden>
-        <div class="buscador-tarjeta">
-          <div class="buscador-cabecera">
-            <span class="buscador-lupa">${ICONO_LUPA}</span>
-            <input type="text" id="ciudadTexto" placeholder="Escribe tu ciudad" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Escribe tu ciudad" />
-            <button type="button" id="ciudadCerrar" class="boton-icono" aria-label="Cerrar" title="Cerrar"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
-          </div>
-          <ul class="buscador-lista" id="ciudadLista"></ul>
-          <p class="buscador-vacio" id="ciudadVacio" hidden>No encontramos esa ciudad.</p>
         </div>
       </div>
       <p class="dato-cuenta" id="caraAviso" role="status" aria-live="polite" hidden></p>
@@ -371,9 +373,6 @@ if (!sinPepito) cambiar(/(      <div class="campo">\r?\n        <button type="bu
 cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
   '$1\n        <div class="barra-actualizar" id="barraActualizar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div class="barra-actualizar-relleno" id="barraActualizarRelleno"></div></div>',
   'el estado de la actualización (Sistema)');
-// Ciudad para el clima (2026-11-24, Caras de reloj): la app busca la ciudad en el buscador gratuito de Open-Meteo; la política de
-// seguridad de la web (H-21) tiene que permitirlo (la APK no lleva esa política).
-if (!sinPepito) cambiar(/(connect-src 'self')/, "$1 https://geocoding-api.open-meteo.com", 'la política de seguridad (connect-src)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
   '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>\n<script type="module" src="js/duos.js"></script>\n<script type="module" src="js/alto-cabecera.js"></script>',

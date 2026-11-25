@@ -60,7 +60,7 @@ export const USUARIOS = { 'ana@correo.com': { password: 'secreta1', uid: 'uid-an
  * opciones: logueado, ruta, antes(pagina), esperar (false = no espera la carga), vinculados (lo que "el celular tiene emparejado").
  * Devuelve { navegador, pagina, errores }.
  */
-export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html', antes = null, esperar = true, vinculados = [], conTutorial = false } = {}) {
+export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html', antes = null, esperar = true, vinculados = [], conTutorial = false, conAceptacion = false } = {}) {
   const base = await iniciarServidor();
   const navegador = await chromium.launch(process.env.CI ? {} : { channel: 'msedge' });
   abiertos.add(navegador);
@@ -89,6 +89,17 @@ export async function abrir(semilla = {}, { logueado = true, ruta = '/index.html
       const leer = Storage.prototype.getItem;
       Storage.prototype.getItem = function (k) {
         if (typeof k === 'string' && k.startsWith('tvretro.tutorial.')) return '1';
+        return leer.call(this, k);
+      };
+    });
+  }
+  // La pantalla de aceptación de los términos (src/aceptacion.js) taparía las pruebas: se da por aceptada (lo dice el arnés, no la
+  // app). Con conAceptacion se deja como en un celular nuevo (la prueba aceptacion.mjs).
+  if (!conAceptacion) {
+    await pagina.addInitScript(() => {
+      const leer = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (k) {
+        if (typeof k === 'string' && k.startsWith('pepito.aceptacion.')) return '2';
         return leer.call(this, k);
       };
     });

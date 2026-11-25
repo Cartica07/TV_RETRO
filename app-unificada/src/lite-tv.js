@@ -371,7 +371,7 @@ function normalizarAjustesTV(datos) {
     volumen: entero(d.volumen, 0, 3, AJUSTES_DEFECTO.volumen),
     zona: entero(d.zona, -720, 840, AJUSTES_DEFECTO.zona),
     // Apagado automático de la pantalla (2026-11-23): minutos sin usar el botón; 0 = nunca. Si falta, 5.
-    apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5,
+    apagado: [0, 1, 2, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5,
   };
 }
 

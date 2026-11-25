@@ -16,10 +16,11 @@
 
 import * as pro from './firebase-pro.js';
 import { esIdLite, listarTVLite, anadirTVLite, quitarTVLite } from './registro-lite.js';
+import { pedirAceptacion } from './aceptacion.js';
 
 // ---------- NUBE: igual que la Pro ----------
 export {
-  db, describirErrorAuth, escucharSesion, usuarioActual, iniciarSesion, crearCuenta, iniciarSesionConGoogle,
+  db, describirErrorAuth, usuarioActual, iniciarSesion, crearCuenta, iniciarSesionConGoogle,
   iniciarSesionConGoogleNativo, proveedorDeLaCuenta, eliminarMiCuenta, recuperarContrasena,
   VERSION_DESVINCULADA, normalizarCodigo, reclamarDispositivo, MAXIMO_MIEMBROS,
   MAXIMO_APODO, borrarInvitacion, listarCanciones, guardarCancionCatalogo, borrarCancionCatalogo,
@@ -55,6 +56,65 @@ export async function esAdministrador() {
 /** Igual que la Pro; con una TV Lite y sin internet devuelve enseguida "no se pudo leer" (null), como la Pro cuando falla. */
 export async function listarMusicales() {
   return conTVLite() && sinInternet() ? null : pro.listarMusicales();
+}
+
+// ---------- Aceptación de los Términos y la Política de Privacidad (2026-11-25) ----------
+// Después de iniciar sesión (y antes de dejar pasar a la app) se pide aceptar, UNA vez por cuenta y por versión de los textos
+// (pepito/terminos.html y privacidad.html; si cambian, se sube VERSION_LEGAL y se vuelve a pedir). Con cuenta, la respuesta queda
+// en usuarios/{uid}/aceptacion = { version, fecha (hora del servidor) }; sin cuenta (sesión anónima de una Lite) solo en el celular.
+// Si Firebase no deja guardarla (reglas aún sin publicar o sin señal), se recuerda en el celular y la persona no se queda bloqueada.
+// construir.mjs deja 'si' solo en la app Pepito (la copia --sin-pepito, que usan las pruebas originales de la Pro, no la pide).
+const ACEPTAR = '__ACEPTAR__' === 'si';
+const VERSION_LEGAL = '2';
+const claveAceptacion = (uid) => `pepito.aceptacion.${uid}`;
+const aceptadaAqui = (uid) => { try { return localStorage.getItem(claveAceptacion(uid)) === VERSION_LEGAL; } catch (e) { return false; } };
+const recordarAqui = (uid) => { try { localStorage.setItem(claveAceptacion(uid), VERSION_LEGAL); } catch (e) { /* sin almacenamiento */ } };
+const esperarHasta = (promesa, ms) => Promise.race([promesa, new Promise((r) => setTimeout(() => r(undefined), ms))]);
+
+async function yaAcepto(usuario) {
+  if (aceptadaAqui(usuario.uid)) return true;
+  if (!usuario.email || unificadaSinCuenta()) return false; // sesión anónima: solo se recuerda en el celular
+  try {
+    const m = await import(SDK_DB);
+    const snap = await esperarHasta(m.get(m.ref(pro.db, `usuarios/${usuario.uid}/aceptacion`)), 8000);
+    const v = snap && snap.exists && snap.exists() ? snap.val() : null;
+    if (v && v.version === VERSION_LEGAL) { recordarAqui(usuario.uid); return true; }
+  } catch (error) {
+    console.warn('[Pepito] No se pudo leer la aceptación:', error && error.message);
+  }
+  return false;
+}
+
+async function guardarAceptacion(usuario) {
+  recordarAqui(usuario.uid);
+  if (!usuario.email || unificadaSinCuenta()) return; // sesión anónima: nada en la nube
+  try {
+    const m = await import(SDK_DB);
+    await esperarHasta(m.set(m.ref(pro.db, `usuarios/${usuario.uid}/aceptacion`), { version: VERSION_LEGAL, fecha: { '.sv': 'timestamp' } }), 6000);
+  } catch (error) {
+    console.warn('[Pepito] No se pudo guardar la aceptación en la nube (queda en este celular):', error && error.message);
+  }
+}
+
+/** Igual que la Pro, pero antes de avisar que hay sesión pide aceptar los términos (una vez). */
+export function escucharSesion(callback) {
+  if (!ACEPTAR) return pro.escucharSesion(callback);
+  let turno = 0;
+  return pro.escucharSesion((usuario) => {
+    const t = ++turno;
+    if (!usuario) { callback(null); return; }
+    (async () => {
+      try {
+        if (!(await yaAcepto(usuario))) {
+          if (!(await pedirAceptacion())) { await cerrarSesion(); return; }
+          await guardarAceptacion(usuario);
+        }
+      } catch (error) {
+        console.warn('[Pepito] La aceptación falló, se sigue sin ella:', error && error.message);
+      }
+      if (t === turno) callback(usuario);
+    })();
+  });
 }
 
 // El SDK de autenticación (la misma copia que usa firebase-pro.js): construir.mjs pone aquí su dirección.
@@ -231,7 +291,7 @@ export const guardarAlarma = porTV('guardarAlarma');
 // ---------- Apagado automático de la pantalla (2026-11-23, Pepito Pro y Pepito Lite) ----------
 // Más > Config > Ajustes: lista "Apagar pantalla" (#ajusteApagado, HTML en construir.mjs). mas.js de la Pro no la conoce: aquí se
 // muestra al leer los ajustes y se agrega al guardarlos. Valores: minutos sin usar el botón (0 = nunca); si falta, 5.
-const APAGADOS = [0, 5, 10, 20];
+const APAGADOS = [0, 1, 2, 5, 10, 20];
 const APAGADO_DEFECTO = 5;
 const normalizarApagado = (v) => (APAGADOS.includes(Number(v)) ? Number(v) : APAGADO_DEFECTO);
 const listaApagado = () => { try { return document.getElementById('ajusteApagado'); } catch (e) { return null; } };
@@ -251,14 +311,8 @@ export function normalizarAjustes(datos) {
   return n;
 }
 
-// Ciudad para el clima (2026-11-24): vive en dispositivos/{id}/ajustes.ciudad de un Pepito Pro. La pantalla de Ajustes no la maneja:
-// guardarAjustes de la Pro relee los ajustes justo antes de guardar y conserva lo que la pantalla no maneja (antes se agregaba la
-// ciudad leída al abrir, que podía estar vieja si otro celular la cambió). ciudadConocida queda solo como dato informativo.
-let ciudadConocida = null;
-
 export async function cargarAjustes(...a) {
   const r = await (tvLite ? cargarLite().then((m) => m.cargarAjustes(...a)) : pro.cargarAjustes(...a));
-  if (!tvLite && r && r.exito) ciudadConocida = (r.ajustes && r.ajustes.ciudad) || null;
   const lista = listaApagado();
   if (lista && r && r.exito) lista.value = String(normalizarApagado(r.ajustes && r.ajustes.apagado));
   return r;
@@ -268,7 +322,7 @@ export async function guardarAjustes(datos, ...resto) {
   const lista = listaApagado();
   const conApagado = lista ? Object.assign({}, datos, { apagado: normalizarApagado(lista.value) }) : datos;
   if (tvLite) return (await cargarLite()).guardarAjustes(conApagado, ...resto);
-  // Esta pantalla maneja brillo, volumen, zona y (con la lista) el apagado; la ciudad la conserva la Pro con lo que hay ahora.
+  // Esta pantalla maneja brillo, volumen, zona y (con la lista) el apagado.
   const r = await pro.guardarAjustes(conApagado, resto[0], lista ? ['brillo', 'volumen', 'zona', 'apagado'] : undefined);
   // Mientras las reglas publicadas de Firebase no incluyan "apagado", rechazan todo el nodo: se guarda lo demás sin él (la TV
   // usa 5 minutos) y lo de la pantalla se guardará cuando el dueño publique las reglas nuevas.
@@ -276,7 +330,6 @@ export async function guardarAjustes(datos, ...resto) {
     console.warn('[Pepito] Las reglas de Firebase aún no aceptan "apagado": los ajustes se guardan sin él.');
     const sinApagado = Object.assign({}, conApagado);
     delete sinApagado.apagado;
-    delete sinApagado.ciudad; // lo mismo con la ciudad (2026-11-24)
     return pro.guardarAjustes(sinApagado, ...resto);
   }
   return r;
@@ -423,49 +476,6 @@ export async function unificadaPuedeDuos() {
   const s = await pro.cargarSistema();
   if (!s || !s.exito) return null;
   return !!(s.firmware && s.firmware.build >= 12);
-}
-
-/** La ciudad para el clima del Pepito Pro en uso: { nombre, lat, lon } o null. */
-export async function unificadaCiudad() {
-  if (tvLite) return null;
-  const r = await pro.cargarAjustes();
-  if (!r || !r.exito) return null;
-  ciudadConocida = (r.ajustes && r.ajustes.ciudad) || null;
-  return ciudadConocida;
-}
-
-/** Guarda la ciudad (o null = sin clima) con los demás ajustes y le avisa a la TV (orden "ajustes"). */
-export async function unificadaGuardarCiudad(ciudad) {
-  if (tvLite) return { exito: false, error: 'Esto no está disponible en un Pepito Lite' };
-  const r = await pro.cargarAjustes();
-  if (!r || !r.exito) return { exito: false, error: (r && r.error) || 'No se pudo leer los ajustes' };
-  const datos = Object.assign({}, r.ajustes);
-  if (ciudad) datos.ciudad = { nombre: String(ciudad.nombre).slice(0, 60), lat: Number(ciudad.lat), lon: Number(ciudad.lon) };
-  else delete datos.ciudad;
-  // Solo la ciudad es de esta pantalla: lo demás (brillo, apagado…) se toma de lo guardado justo ahora.
-  const res = await pro.guardarAjustes(datos, Object.assign({}, ultimoEstado || ESTADO_MINIMO), ['ciudad']);
-  if (res && res.exito) ciudadConocida = datos.ciudad || null;
-  return res;
-}
-
-/** Busca ciudades por nombre (buscador gratuito de Open-Meteo, sin clave): [{ nombre, lat, lon }] o null si no hubo respuesta. */
-export async function unificadaBuscarCiudad(texto) {
-  const t = String(texto || '').trim();
-  if (t.length < 2) return [];
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(t)}&count=8&language=es&format=json`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const j = await res.json();
-    return (j.results || []).map((c) => ({
-      nombre: [c.name, c.admin1, c.country].filter((x, i, l) => x && l.indexOf(x) === i).join(', ').slice(0, 60),
-      lat: Math.round(Number(c.latitude) * 10000) / 10000,
-      lon: Math.round(Number(c.longitude) * 10000) / 10000,
-    })).filter((c) => c.nombre && Number.isFinite(c.lat) && Number.isFinite(c.lon));
-  } catch (e) {
-    console.warn('[Pepito] No se pudo buscar la ciudad:', e && e.message);
-    return null;
-  }
 }
 
 /** Copia la cara a la TV en uso (clave '' = Cara 1). { exito } o { exito: false, error }. */

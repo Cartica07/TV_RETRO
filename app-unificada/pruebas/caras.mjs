@@ -48,8 +48,10 @@ const enviarYEsperar = async (p) => {
 };
 
 // ---------- 1. Pepito Pro (v11) ----------
+const pedidosMeteo = [];
 {
   const { navegador, pagina, errores } = await abrir(semilla(11));
+  pagina.on('request', (r) => { if (/open-meteo/i.test(r.url())) pedidosMeteo.push(r.url()); });
   await esperarPanel(pagina);
   await abrirCaras(pagina);
   informe('Pro: la pantalla Caras de reloj se ve con su título', await visible(pagina, '#seccionCaras') && (await txt(pagina, '#tituloMas')) === 'Caras de reloj');
@@ -91,48 +93,10 @@ const enviarYEsperar = async (p) => {
   informe('Pro: sin señal avisa "Conexión lenta…", suelta el botón y al volver la señal dice que listo',
     lento.aviso === 'Conexión lenta: se enviará cuando vuelva la señal.' && lento.libre && alFinal === 'Listo ✅',
     JSON.stringify({ lento, alFinal }));
-  // ---- Ciudad para el clima (opción A): solo con una cara que muestra el clima ----
-  const GEO = 'https://geocoding-api.open-meteo.com/**';
-  const geoBien = (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [
-    { name: 'Armenia', admin1: 'Quindío', country: 'Colombia', latitude: 4.53389, longitude: -75.68111 },
-    { name: 'Armenia', admin1: 'Armenia', country: 'Armenia', latitude: 40.0, longitude: 45.0 },
-  ] }) });
-  await pagina.route(GEO, geoBien);
-  informe('Ciudad: con una cara sin clima no se ve la fila', !(await visible(pagina, '#campoCiudad')));
+  // ---- Sin clima (2026-11-25): no hay fila de ciudad, ni buscador, ni pedidos a Open-Meteo (uso no comercial) ----
   await pagina.selectOption('#caraLista', 'cara4'); await pagina.waitForTimeout(600);
-  informe('Ciudad: con la cara "Con clima" se ve la fila y dice "Sin clima"', (await visible(pagina, '#campoCiudad')) && (await pagina.$eval('#ciudadSelect', (s) => s.options[0].textContent)) === 'Sin clima');
-  // Sin internet el buscador lo dice (antes decía "No encontramos esa ciudad.").
-  await pagina.unroute(GEO);
-  await pagina.route(GEO, (r) => r.abort());
-  await pagina.click('.selector:has(#ciudadSelect)');
-  await pagina.fill('#ciudadTexto', 'Bogotá');
-  await pagina.waitForFunction(() => !document.getElementById('ciudadVacio').hidden, null, { timeout: 10000 });
-  informe('Ciudad: sin internet el buscador dice "Sin conexión a internet. Conéctate y vuelve a buscar."', (await txt(pagina, '#ciudadVacio')) === 'Sin conexión a internet. Conéctate y vuelve a buscar.', await txt(pagina, '#ciudadVacio'));
-  await pagina.click('#ciudadCerrar');
-  await pagina.unroute(GEO);
-  await pagina.route(GEO, geoBien);
-  await pagina.click('.selector:has(#ciudadSelect)');
-  await pagina.fill('#ciudadTexto', 'Armenia');
-  await pagina.waitForFunction(() => document.querySelectorAll('#ciudadLista button').length === 3, null, { timeout: 10000 });
-  await pagina.click('#ciudadLista button[data-i="0"]');
-  await pagina.waitForFunction(() => document.getElementById('ciudadSelect').options[0].textContent.startsWith('Armenia'), null, { timeout: 10000 });
-  const rc = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
-  const c = rc.dispositivos.tv1.ajustes && rc.dispositivos.tv1.ajustes.ciudad;
-  informe('Ciudad: se guarda en ajustes.ciudad (nombre, lat, lon) con la orden "ajustes"', c && c.nombre === 'Armenia, Quindío, Colombia' && c.lat === 4.5339 && c.lon === -75.6811 && rc.dispositivos.tv1.oled_remota.pantalla.tipo === 'ajustes', JSON.stringify(c));
-  // Guardar los Ajustes de Pepito no borra la ciudad.
-  await pagina.click('#botonMasVolver'); await pagina.waitForTimeout(300);
-  await pagina.click('#grupoMas button[data-mas="config"]'); await pagina.waitForTimeout(300);
-  await pagina.click('#grupoConfig button[data-config="tv"]'); await pagina.waitForTimeout(1200);
-  await pagina.click('#botonGuardarAjustes');
-  await pagina.waitForTimeout(1500);
-  const rc2 = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
-  informe('Ciudad: guardar los Ajustes de Pepito la conserva', rc2.dispositivos.tv1.ajustes.ciudad && rc2.dispositivos.tv1.ajustes.ciudad.nombre === 'Armenia, Quindío, Colombia', JSON.stringify(rc2.dispositivos.tv1.ajustes));
-  // Otro celular cambia la ciudad con Ajustes abierto: guardar no la pisa con la vieja (2026-11-24).
-  await pagina.evaluate(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes.ciudad = { nombre: 'Bogotá, Colombia', lat: 4.6097, lon: -74.0817 }; });
-  await pagina.click('#botonGuardarAjustes');
-  await pagina.waitForTimeout(1500);
-  const rc3 = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
-  informe('Ciudad: guardar Ajustes no pisa la ciudad que otro celular cambió mientras tanto', rc3.ciudad && rc3.ciudad.nombre === 'Bogotá, Colombia' && rc3.apagado === 5, JSON.stringify(rc3));
+  informe('Sin clima: con la cara "Con clima" no hay fila de ciudad ni buscador', (await pagina.$('#campoCiudad')) === null && (await pagina.$('#buscadorCiudad')) === null);
+  informe('Sin clima: la app no le pidió nada a Open-Meteo', pedidosMeteo.length === 0, pedidosMeteo.join(' '));
   informe('Pro: sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
   await navegador.close();
 }
@@ -154,7 +118,7 @@ const enviarYEsperar = async (p) => {
   await abrirCaras(pagina, true);
   informe('Lite: la lista es la misma (catálogo de la nube) y sin aviso', (await pagina.$$eval('#caraLista option', (os) => os.length)) === 4 && !(await visible(pagina, '#caraAviso')));
   await pagina.selectOption('#caraLista', 'cara4'); await pagina.waitForTimeout(500);
-  informe('Lite: con una cara con clima NO sale la ciudad (la Lite no tiene internet)', !(await visible(pagina, '#campoCiudad')));
+  informe('Lite: con una cara con clima tampoco hay fila de ciudad', (await pagina.$('#campoCiudad')) === null);
   await pagina.selectOption('#caraLista', 'cara2'); await pagina.waitForTimeout(400);
   const aviso = await enviarYEsperar(pagina);
   let e = await estadoTV(pagina);

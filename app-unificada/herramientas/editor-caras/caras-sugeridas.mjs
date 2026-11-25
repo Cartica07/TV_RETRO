@@ -32,21 +32,10 @@ export const CARAS = [
       { tipo: TIPO.ESTADO, datos: [125, 54, 0, 1, 2, 1, 1] },
     ],
   },
-  {
-    clave: 'clima', nombre: 'Clima', orden: 3,
-    elementos: [
-      { tipo: TIPO.RECTANGULO, datos: [0, 0, 0, 128, 64, 0, 6] },
-      { tipo: TIPO.HORA, datos: [64, 0, 0, 3, 4, 1, 0] },
-      { tipo: TIPO.AMPM, datos: [119, 5, 0, 0, 1, 2] },
-      { tipo: TIPO.LINEA, datos: [8, 35, 0, 119, 35] },
-      { tipo: TIPO.CLIMA, datos: [8, 44, 0, 0, 1, 0, 1] },
-      { tipo: TIPO.FECHA, datos: [119, 45, 0, 0, 1, 2, 3] },
-    ],
-  },
 ];
 
 const datos = { hora: 9, minuto: 5, dia: 24, mes: 11, anio: 2026, diaSemana: 2, esPro: true, wifiConectado: true, wifiBarras: 3,
-  conexionOk: true, mensaje: true, alarmaActiva: true, proxAlarma: { hora: 6, minuto: 30 }, clima: { temp: 24, icono: 1 }, bateria: 0, bateriaPct: 0 };
+  conexionOk: true, mensaje: true, alarmaActiva: true, proxAlarma: { hora: 6, minuto: 30 }, clima: null, bateria: 0, bateriaPct: 0 };
 
 for (const c of CARAS) {
   c.receta = armarReceta({ elementos: c.elementos });

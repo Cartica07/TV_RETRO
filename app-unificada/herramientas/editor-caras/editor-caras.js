@@ -22,7 +22,7 @@ const ESTILOS = {
 const NOMBRES = {
   [TIPO.HORA]: 'Hora', [TIPO.AMPM]: 'AM/PM', [TIPO.FECHA]: 'Fecha', [TIPO.DIA]: 'Día de la semana', [TIPO.AGUJAS]: 'Reloj de agujas',
   [TIPO.ESTADO]: 'Íconos de estado', [TIPO.CAMPANA]: 'Campana (alarma activa)', [TIPO.TEXTO]: 'Texto fijo', [TIPO.RECTANGULO]: 'Rectángulo',
-  [TIPO.LINEA]: 'Línea', [TIPO.PROXIMA_ALARMA]: 'Próxima alarma', [TIPO.CLIMA]: 'Clima (solo Pro)', [TIPO.CUENTA]: 'Cuenta regresiva',
+  [TIPO.LINEA]: 'Línea', [TIPO.PROXIMA_ALARMA]: 'Próxima alarma', [TIPO.CLIMA]: 'Clima (ya no se usa)', [TIPO.CUENTA]: 'Cuenta regresiva',
   [TIPO.BATERIA]: 'Batería',
 };
 const utf8 = (s) => [...new TextEncoder().encode(s)];
@@ -76,7 +76,7 @@ function datosVista() {
     hora: t.getHours(), minuto: t.getMinutes(), dia: t.getDate(), mes: t.getMonth() + 1, anio: t.getFullYear(), diaSemana: t.getDay(),
     esPro: muestra.tv === 'pro', wifiConectado: true, wifiBarras: 3, conexionOk: true, mensaje: muestra.mensaje,
     alarmaActiva: muestra.alarma, proxAlarma: muestra.alarma ? { hora: 7, minuto: 0 } : null,
-    clima: muestra.tv === 'pro' ? { temp: 24, icono: 1 } : null, bateria: 3, bateriaPct: 75,
+    clima: null, bateria: 3, bateriaPct: 75,
   };
 }
 const receta = () => armarReceta({ fondo, elementos });
@@ -176,7 +176,8 @@ function refrescar() { listaElementos(); propiedades(); pintar(); }
 // ---- Elementos: añadir, mover, borrar ----
 function llenarAnadir() {
   const s = $('nuevoTipo');
-  for (const t of Object.values(TIPO)) { const o = document.createElement('option'); o.value = t; o.textContent = NOMBRES[t]; s.append(o); }
+  // El clima se quitó (2026-11-25, fuente de datos solo para uso no comercial): no se ofrece para añadir. Una cara vieja que lo traiga se abre igual.
+  for (const t of Object.values(TIPO)) { if (t === TIPO.CLIMA) continue; const o = document.createElement('option'); o.value = t; o.textContent = NOMBRES[t]; s.append(o); }
 }
 $('botonAnadir').addEventListener('click', () => {
   if (elementos.length >= 24) { aviso('Una cara tiene como máximo 24 elementos.', true); return; }

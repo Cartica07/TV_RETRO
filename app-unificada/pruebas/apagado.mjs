@@ -35,7 +35,7 @@ const guardar = async (p) => {
   await pagina.waitForTimeout(150);
   const nota = await pagina.evaluate(() => Array.from(document.querySelectorAll('#buscadorLista button')).map((b) => ({ t: b.firstChild.textContent, n: (b.querySelector('.buscador-nota') || {}).textContent || '' })));
   informe('en la ventanita, el aviso dictado por el dueño va debajo de "Nunca" (y solo ahí)',
-    nota.length === 4 && nota[3].t === 'Nunca' && nota[3].n === AVISO && nota.slice(0, 3).every((x) => !x.n), JSON.stringify(nota));
+    nota.length === 6 && nota.map((x) => x.t).join('|') === 'Al minuto|A los 2 min|A los 5 min|A los 10 min|A los 20 min|Nunca' && nota[5].n === AVISO && nota.slice(0, 5).every((x) => !x.n), JSON.stringify(nota));
   await pagina.click('#buscadorLista button >> text=Nunca');
   await pagina.waitForTimeout(150);
   const estado = await pagina.innerText('#estadoTexto');
@@ -48,6 +48,24 @@ const guardar = async (p) => {
   await guardar(pagina);
   guardado = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
   informe('y se guarda 20', guardado && guardado.apagado === 20, JSON.stringify(guardado));
+
+  // 1 y 2 minutos (2026-11-25): la copia de la Pro solo aceptaba 0, 5, 10 y 20 y los habría vuelto 5.
+  await elegir(pagina, 'Al minuto');
+  await guardar(pagina);
+  guardado = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
+  informe('"Al minuto" se guarda como 1', guardado && guardado.apagado === 1, JSON.stringify(guardado));
+  await elegir(pagina, 'A los 2 min');
+  await guardar(pagina);
+  guardado = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
+  informe('"A los 2 min" se guarda como 2', guardado && guardado.apagado === 2, JSON.stringify(guardado));
+
+  // Sin clima (2026-11-25): una ciudad que haya quedado guardada de antes se borra al guardar (las reglas ya no la aceptan).
+  await pagina.evaluate(() => { globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes.ciudad = { nombre: 'Armenia, Quindío, Colombia', lat: 4.5339, lon: -75.6811 }; });
+  await guardar(pagina);
+  guardado = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.ajustes);
+  informe('sin clima: una ciudad vieja se borra al guardar y el apagado sigue en 2', guardado && guardado.ciudad === undefined && guardado.apagado === 2, JSON.stringify(guardado));
+  await elegir(pagina, 'A los 20 min');
+  await guardar(pagina);
 
   // Al volver a abrir Ajustes se lee lo guardado.
   await pagina.click('#grupoTipo button[data-valor="texto"]');
@@ -74,6 +92,14 @@ const guardar = async (p) => {
   await pagina.waitForFunction(() => window.__tv.estado().ajustes, null, { timeout: 10000 }).catch(() => {});
   const e = await estadoTV(pagina);
   informe('a Pepito Lite le llega apagado = 10 (6.º byte de los ajustes)', e.ajustes && e.ajustes.apagado === 10, JSON.stringify(e.ajustes));
+  await elegir(pagina, 'Al minuto');
+  await guardar(pagina);
+  await pagina.waitForFunction(() => window.__tv.estado().ajustes && window.__tv.estado().ajustes.apagado === 1, null, { timeout: 10000 }).catch(() => {});
+  informe('a Pepito Lite le llega apagado = 1', (await estadoTV(pagina)).ajustes.apagado === 1);
+  await elegir(pagina, 'A los 2 min');
+  await guardar(pagina);
+  await pagina.waitForFunction(() => window.__tv.estado().ajustes && window.__tv.estado().ajustes.apagado === 2, null, { timeout: 10000 }).catch(() => {});
+  informe('y apagado = 2', (await estadoTV(pagina)).ajustes.apagado === 2);
   const fb = await pagina.evaluate(() => (globalThis.__fakeDb.raiz.dispositivos.tv1 || {}).ajustes || null);
   informe('y no escribe nada en Firebase', fb === null, JSON.stringify(fb));
   informe('sin errores en la página', erroresPagina(errores).length === 0, errores.join(' | ').slice(0, 200));

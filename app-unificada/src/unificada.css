@@ -121,8 +121,7 @@ body.sin-cuenta #botonVincularTV {
   pointer-events: none;
 }
 
-#buscadorTexto,
-#ciudadTexto {
+#buscadorTexto {
   flex: 1;
   min-width: 0;
   min-height: 48px;
@@ -136,14 +135,12 @@ body.sin-cuenta #botonVincularTV {
   box-sizing: border-box;
 }
 
-#buscadorTexto:focus,
-#ciudadTexto:focus {
+#buscadorTexto:focus {
   outline: 2px solid var(--acento);
   outline-offset: 2px;
 }
 
-#buscadorCerrar,
-#ciudadCerrar {
+#buscadorCerrar {
   flex-shrink: 0;
 }
 
@@ -200,8 +197,7 @@ body.sin-cuenta #botonVincularTV {
 #escalaImagen,
 #ajusteZona,
 #ajusteApagado,
-#caraLista,
-#ciudadSelect {
+#caraLista {
   pointer-events: none;
 }
 
@@ -211,9 +207,38 @@ body.sin-cuenta #botonVincularTV {
 .selector:has(> #escalaImagen),
 .selector:has(> #ajusteZona),
 .selector:has(> #ajusteApagado),
-.selector:has(> #caraLista),
-.selector:has(> #ciudadSelect) {
+.selector:has(> #caraLista) {
   cursor: pointer;
+}
+
+/* Pantalla de aceptación de los términos (src/aceptacion.js): la casilla con su frase, y el botón Salir debajo de Continuar. */
+.pantalla-aceptacion {
+  z-index: 110; /* encima de la pantalla de inicio de sesión (100) */
+}
+.aceptacion-fila {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-3);
+  min-height: 44px;
+  margin-bottom: var(--esp-5);
+  color: var(--texto);
+  font-size: var(--texto-md, 16px);
+  line-height: 1.4;
+  cursor: pointer;
+}
+.aceptacion-fila input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--acento-relleno);
+}
+.aceptacion-fila a {
+  color: var(--acento);
+}
+.pantalla-aceptacion .boton-secundario {
+  width: 100%;
+  margin-top: var(--esp-3);
 }
 
 /* Más > Caras de reloj: la vista previa de la cara, como la pantalla de la TV (128×64 al doble, puntos nítidos). */

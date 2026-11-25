@@ -237,28 +237,13 @@
             ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= -720 && newData.val() <= 840"
           },
           "apagado": {
-            ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
+            ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1 || newData.val() === 2 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
           },
           "duos": {
             ".validate": "newData.isBoolean()"
           },
           "duoFavorito": {
             ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,40}$/)"
-          },
-          "ciudad": {
-            ".validate": "newData.hasChildren(['nombre', 'lat', 'lon'])",
-            "nombre": {
-              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
-            },
-            "lat": {
-              ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
-            },
-            "lon": {
-              ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
-            },
-            "$otro": {
-              ".validate": false
-            }
           },
           "$otro": {
             ".validate": false
@@ -341,6 +326,19 @@
           "$id": {
             ".write": "auth != null && auth.uid === $uid && (!newData.exists() || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('dueno').val() === $uid || newData.parent().parent().parent().parent().child('dispositivos').child($id).child('miembros').child($uid).exists())",
             ".validate": "newData.val() === true"
+          }
+        },
+        "aceptacion": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['version', 'fecha'])",
+          "version": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{1,3}$/)"
+          },
+          "fecha": {
+            ".validate": "newData.isNumber() && newData.val() === now"
+          },
+          "$otro": {
+            ".validate": false
           }
         },
         "imagenes": {

@@ -62,7 +62,7 @@ Y después, lo propio de cada tipo:
 | 9 | Rectángulo | `ancho u8`, `alto u8`, `relleno u8` (0 borde, 1 lleno), `redondeo u8` (0 a 8) | sin letra |
 | 10 | Línea | `x2 u8`, `y2 u8` | sin letra |
 | 11 | Próxima alarma | `ícono u8` (0 sin ícono, 1… estilo de campana) | `7:00` en el formato de la hora; nada si no hay alarma activa |
-| 12 | Clima (solo Pro) | `ícono u8` (0 sin ícono, 1… estilo) | `24°`; la Lite y una Pro sin dato no lo dibujan |
+| 12 | Clima (QUITADO el 2026-11-25) | `ícono u8` (0 sin ícono, 1… estilo) | Ya no se ofrece en el editor ni hay datos de clima: se sigue leyendo (una cara vieja es válida) pero no dibuja nada |
 | 13 | Cuenta regresiva | `año u16`, `mes u8`, `día u8`, `formato u8` (0 `Faltan 12 días`, 1 `12 días`, 2 `12`) | el día mismo: `¡Hoy!`; después de la fecha: nada. Textos por aprobar |
 | 14 | Batería | `estilo u8`, `porcentaje u8` (0 no, 1 sí) | sin letra; nada en una TV sin medidor |
 
