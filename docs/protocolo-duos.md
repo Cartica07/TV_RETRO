@@ -125,3 +125,20 @@ Después de un dúo (terminado o cortado), la izquierda **no vuelve a buscar has
 - Todo va detrás de `TVRETRO_DUOS` (en `OLED_Remota/duos_config.h`, **0 por defecto**). Con 0, el firmware es el de siempre:
   ni ESP-NOW ni cambios en el `loop()` ni en el reproductor.
 - No cambia `FIRMWARE_BUILD` ni se publica nada: la siguiente Pro publicada sigue siendo la 12.
+
+## 9. Pruebas en la placa (fase 1; grabar cada placa necesita el permiso del dueño)
+
+Compilar la Pro con `TVRETRO_DUOS` en 1 (solo en la copia de trabajo, nunca commiteado) y la ESP8266 con `Duos_Prueba/`.
+El dúo de prueba (el corazón, 3,3 s) se genera con `app-unificada/herramientas/editor-duos/generar-duo-prueba.mjs`.
+
+1. **S3 receptora:** la S3 (Pro con dúos) a la derecha, la ESP8266 a la izquierda: su botón (D1) hace de sensor (hundido = pegadas, soltarlo = separarlas; la carcasa ya no se abre). La ESP8266 busca el
+   canal sola (o `canal N` por el monitor serie). Mirar: que la S3 conteste (`[duo] contesté…`), la mitad cargada y su tiempo
+   de carga, el corazón cruzando, separar a mitad (la S3 para en ~1 s sin VIVO), y que vuelva lo que mostraba la S3.
+2. **S3 transmisora:** la S3 a la izquierda (sensor en GPIO 11), la ESP8266 a la derecha. Mirar: del contacto al arranque,
+   las idas y vueltas, el sonido en la S3, separar a mitad (las dos paran), y un imán solo (sin la otra TV: nada en 2 s).
+3. **Prioridades en la S3:** con una canción con letra sonando (se corta y vuelve lo de antes), con un GIF, en el reloj, en
+   una partida (pausa y sigue), con la pantalla dormida (se prende y se apaga a los 10 s), con la alarma (gana la alarma y la
+   otra TV para), botón A a mitad (corta en las dos) y contenido que llega a mitad (se aplica al terminar).
+4. **Carga (pendiente de la fase 0):** ESP-NOW escuchando mientras baja un GIF grande, durante una actualización por Wi-Fi y
+   con la cara Clima: memoria interna libre y mayor bloque (`[duo] ESP-NOW listo …`), sin reinicios ni `HTTP -1`.
+5. **Con la bandera en 0:** el .bin debe medir lo mismo (o casi) que antes de los dúos.
