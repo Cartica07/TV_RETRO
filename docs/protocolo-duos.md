@@ -169,3 +169,6 @@ El dúo de prueba (el corazón, 3,3 s) se genera con `app-unificada/herramientas
   lectura del índice, la descarga, la comprobación m1, el borrado de un dúo quitado, el interruptor (ni busca ni contesta) y el
   favorito en el registro (`[duo] elegido … (favorito …; la otra no lo tiene)`). Un dúo del catálogo solo se verá entre dos Pro
   (la segunda S3).
+
+### Qué dúo suena (confirmado por el dueño, 2026-11-25)
+- Suena el **favorito de la TV de la izquierda** (la del sensor) si la derecha también lo tiene. Si la derecha no lo tiene (por ejemplo, todavía no terminó de bajar el catálogo), suena el **primer dúo que tengan en común**. No se busca el favorito de la derecha como paso aparte. Es lo que hace `elegirDuo()` de `duos.cpp`; cambiar de lado las TV cambia cuál favorito suena.
