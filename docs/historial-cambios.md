@@ -583,3 +583,13 @@ Versión barata de la TV: ESP32-C3, sin nube ni cuentas, solo Android, todo por 
 - **Herramientas (lecciones):** Gradle desde PowerShell con `--no-daemon --max-workers=1` y `-Xmx1024m`; grabar la S3 con `arduino-cli upload --input-dir` (nunca el `merged.bin`); los scripts con barras invertidas, con `Write`/`Edit`.
 - **Subido a GitHub** (rama `lite` de los dos repos, a pedido del dueño). `main` sin tocar.
 
+## Ronda de textos de Pepito Pro (2026-11-25)
+
+- **Cómo se hizo:** inventario de TODOS los textos visibles de la app Pepito con un Pepito Pro, en dos Excel (`C:\Proyectos\TV_RETRO-textos\revision-textos-pro.xlsx` y `…-parte2.xlsx`, fuera del repo); el dueño corrigió 79 textos. Se aplicaron EXACTOS (solo ortografía) en la COPIA de la app unificada con la tabla nueva `app-unificada/src/textos-revision.mjs` (va después de la de "Pepito"); la app vieja TV RETRO no se tocó. `1ff0ab2`.
+- **Decisiones del dueño:** todo texto empieza con mayúscula, salvo los motivos tras dos puntos (minúscula, por ortografía: "No se pudo guardar: no tienes permitido eso."); "Conexión lenta: se X cuando vuelva la señal." en todos; un espacio antes de cada emoji; si la Pro y la Lite dicen algo distinto (internet / Bluetooth), la corrección cambia solo el de la Pro y el de la Lite va a su propia lista.
+- **Ejemplos:** "Llegando a Pepito…" y "Llegó ✅" al enviar; "Listo 👌" / "Lista para enviar 👌"; "Estático" (antes "Ajustar" en Texto > Modo); "Configuración" (antes "Config"); pestaña "Caras" en la Galería (antes "Animaciones"); "Pepito está al día 💅"; "Actualizando… no apagues a Pepito 🙏."; avisos de tamaño sin MB, píxeles ni cuadros.
+- **Sin textos de cursor** (`194b85b`): la copia ya no lleva `title`; en los botones de solo ícono pasan a `aria-label` (lector de pantalla). Los `aria-label` se conservan.
+- **Lógica** (`bd85dee`): "Hace segundos" hasta los 60 s (luego "Hace 1 min"…); en Caras de reloj ya no sale "Actualiza tu Pepito…" (el botón sigue bloqueado en ese caso).
+- **Visual** (`7884131`): título PEPITO más grande y con brillo azulado; el estado de Config > Sistema centrado, en negrita y del alto de los botones; sin el título "Letra" en Canciones.
+- **Pruebas:** `pepito.mjs` (9 de 9), `caras.mjs` (25 de 25) y `actualizar-lite.mjs` (22 de 22) al día y corridas; el banco completo queda para cuando el dueño confirme la versión final. `ae82ce0`.
+- **Siguiente:** lista de textos de Pepito Lite (`C:\Proyectos\TV_RETRO-textos\revision-textos-lite.xlsx`, 43 textos), luego las pantallas de cuenta, las páginas web y los textos de la pantalla de Pepito.
