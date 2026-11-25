@@ -1651,7 +1651,10 @@ export function normalizarAjustes(datos) {
     // muestra, pero los conserva al guardar (antes los borraba). Solo si vienen y tienen sentido.
     ...(d.apagado !== undefined ? { apagado: [0, 5, 10, 20].includes(Number(d.apagado)) ? Number(d.apagado) : 5 } : {}),
     ...(d.ciudad && typeof d.ciudad === 'object' && typeof d.ciudad.nombre === 'string' && Math.abs(Number(d.ciudad.lat)) <= 90 && Math.abs(Number(d.ciudad.lon)) <= 180
-      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {})
+      ? { ciudad: { nombre: d.ciudad.nombre.slice(0, 60), lat: Number(d.ciudad.lat), lon: Number(d.ciudad.lon) } } : {}),
+    // Dúos de Pepito Pro (2026-11-24): activados y favorito. Tampoco se muestran aquí; se conservan.
+    ...(typeof d.duos === 'boolean' ? { duos: d.duos } : {}),
+    ...(typeof d.duoFavorito === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(d.duoFavorito) ? { duoFavorito: d.duoFavorito } : {})
   };
 }
 

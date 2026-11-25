@@ -93,6 +93,15 @@ const escenarios = {
     return informe('Guardar conserva apagado (Nunca) y ciudad (2026-11-24; antes se borraban)',
       d.ajustes && d.ajustes.brillo === 3 && d.ajustes.apagado === 0 && JSON.stringify(d.ajustes.ciudad) === JSON.stringify(ciudad), JSON.stringify(d.ajustes));
   },
+  async 'Ajustes: guardar conserva los dúos que puso la app Pepito'() {
+    const { navegador, pagina } = await abrirApp({ extra: { ajustes: { brillo: 2, volumen: 1, zona: -300, duos: false, duoFavorito: 'corazon' } } }); await abrirConfig(pagina); await apartado(pagina, 'tv');
+    await pagina.click('#grupoBrillo button[data-valor="3"]');
+    await pagina.click('#botonGuardarAjustes'); await pagina.waitForTimeout(800);
+    const d = await db(pagina);
+    await navegador.close();
+    return informe('Guardar conserva duos (apagados) y duoFavorito (2026-11-24)',
+      d.ajustes && d.ajustes.brillo === 3 && d.ajustes.duos === false && d.ajustes.duoFavorito === 'corazon', JSON.stringify(d.ajustes));
+  },
   async 'Ajustes: guardar no pisa la ciudad ni el apagado que otro celular cambió mientras tanto'() {
     const vieja = { nombre: 'Armenia, Quindío, Colombia', lat: 4.5339, lon: -75.6811 };
     const nueva = { nombre: 'Bogotá, Colombia', lat: 4.6097, lon: -74.0817 };
