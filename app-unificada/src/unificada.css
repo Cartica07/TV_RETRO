@@ -402,3 +402,25 @@ body.sin-cuenta #botonVincularTV {
 .buscador-canciones.sin-busqueda .buscador-lista button {
   background: var(--superficie-hundida);
 }
+
+/* ===== Ronda de textos del dueño (2026-11-25): pedidos de apariencia ===== */
+/* Título PEPITO de arriba: un poco más grande y con brillo azulado (el color de la pantalla de Pepito). */
+.barra-superior .marca {
+  font-size: var(--texto-xl);
+  color: var(--acento-brillo);
+  text-shadow: 0 0 4px rgba(77, 210, 255, .9), 0 0 12px rgba(77, 210, 255, .6), 0 0 24px rgba(77, 210, 255, .35);
+}
+
+/* Config > Sistema: el estado ("Pepito está al día", "Comprobando…", "Actualizando…") centrado y del mismo alto y letra que
+   los botones Actualizar y Restablecer. */
+#sistemaEstadoActualizar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  text-align: center;
+  font-weight: 700;
+}
+#sistemaEstadoActualizar[hidden] {
+  display: none;
+}

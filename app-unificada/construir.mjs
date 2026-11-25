@@ -267,6 +267,9 @@ if (!sinPepito) {
 // (El aviso de "Nunca" no va como renglón aparte: la pantalla de Ajustes dejaría de entrar sin scroll en 360x740. Se ve debajo
 // de "Nunca" en la ventanita de opciones (data-nota) y, al elegirla, en la línea de estado de arriba.)
 }
+// Canciones: sin el título "Letra" sobre Con letra / Sin letra (pedido del dueño, 2026-11-25: los botones ya lo dicen). El grupo
+// conserva su nombre para el lector de pantalla (aria-label).
+if (!sinPepito) cambiar(/\s*<span class="rotulo">Letra<\/span>(\s*<div class="segmento" id="grupoLetra")/, '$1', 'el título Letra de Canciones');
 // Ayuda y Legal: las páginas de Pepito (pepito/ del repo: cubren Pepito Pro y Pepito Lite), no las de la app vieja.
 // (Con --sin-pepito quedan los de la Pro, como el resto de sus textos.)
 if (!sinPepito) cambiar(/https:\/\/cartica07\.github\.io\/TV_RETRO\/(ayuda|privacidad|terminos|licencias)\.html/g, 'https://cartica07.github.io/TV_RETRO/pepito/$1.html', 'los enlaces de Ayuda y Legal');
