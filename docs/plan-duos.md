@@ -194,6 +194,9 @@ Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pue
 estados; los dúos de prueba guardados a mano.
 
 ### Fase 2: catálogo y herramienta
+
+**HECHO el 2026-11-24/25 (aprobado por el dueño; reglas PUBLICADAS por el dueño):** catálogo `duos/indice|datos` y `ajustes.duos`/`.duoFavorito` (`formatos-datos.md`, `protocolo-duos.md` sección 10); el editor sube y borra dúos del catálogo (solo administrador); la app Pepito tiene **Más > Dúos** (solo Pro: "Activar dúos" y "Tu favorito" con la portada; textos aprobados); la app vieja ya no borra esos ajustes; la Pro (con `TVRETRO_DUOS`=1) baja sola el catálogo y respeta el interruptor y el favorito. **Probado en la S3 y el celular del dueño (APK de depuración nueva):** bajó "giphy" (27 KB + 12 KB en <1 s cada mitad), favorito, interruptor apagado (ni busca ni contesta) y borrado; el dueño confirmó que todo salió como se esperaba. Falta: ver un dúo del catálogo entre dos Pro (segunda S3), un dúo durante una actualización y decidir cómo sale en la Pro 12 (la bandera hoy está en 0).
+
 - Catálogo en la nube (por aprobar) y la Pro lo baja sola **con la prioridad más baja** (nunca compite con el contenido que manda
   el celular).
 - La **herramienta para diseñar dúos** (sección 6) y la favorita en la app.
