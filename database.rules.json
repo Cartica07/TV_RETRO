@@ -239,6 +239,12 @@
           "apagado": {
             ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 5 || newData.val() === 10 || newData.val() === 20)"
           },
+          "duos": {
+            ".validate": "newData.isBoolean()"
+          },
+          "duoFavorito": {
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,40}$/)"
+          },
           "ciudad": {
             ".validate": "newData.hasChildren(['nombre', 'lat', 'lon'])",
             "nombre": {
@@ -710,6 +716,49 @@
             "$k": {
               ".validate": "(newData.isString() && newData.val().length <= 200) || newData.isNumber() || newData.isBoolean()"
             }
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "duos": {
+      "indice": {
+        ".read": "auth != null",
+        "$clave": {
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$clave.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.hasChildren(['nombre', 'orden', 'fecha', 'duracion', 'portada'])",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+          },
+          "orden": {
+            ".validate": "newData.isNumber()"
+          },
+          "fecha": {
+            ".validate": "newData.isNumber()"
+          },
+          "duracion": {
+            ".validate": "newData.isNumber() && newData.val() >= 40 && newData.val() <= 60000"
+          },
+          "portada": {
+            ".validate": "newData.isString() && newData.val().length >= 8 && newData.val().length <= 2732"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      },
+      "datos": {
+        "$clave": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('administradores').child(auth.uid).val() === true",
+          ".validate": "$clave.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.hasChildren(['izq', 'der'])",
+          "izq": {
+            ".validate": "newData.isString() && newData.val().length >= 8 && newData.val().length <= 136536"
+          },
+          "der": {
+            ".validate": "newData.isString() && newData.val().length >= 8 && newData.val().length <= 136536"
           },
           "$otro": {
             ".validate": false
