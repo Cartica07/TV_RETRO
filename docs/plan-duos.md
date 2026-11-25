@@ -1,6 +1,8 @@
 # Dúos: dos Pepitos juntos hacen una animación entre los dos (plan, 2026-11-24)
 
-> Nombre provisional: "Dúos" (el dueño elegirá el definitivo). Estado: **PLAN, nada hecho**. Revisado con el asesor el 2026-11-24.
+> Nombre provisional: "Dúos" (el dueño elegirá el definitivo). Revisado con el asesor el 2026-11-24. Estado al
+> 2026-11-24: fase 0 hecha, editor de dúos hecho, **protocolo escrito en [protocolo-duos.md](protocolo-duos.md)** (manda sobre las
+> secciones 3 y 4 de este plan) e integración en la Pro en curso (fase 1).
 > Regla de trabajo para toda la función: **no romper lo que ya funciona**. Primero una prueba aislada, después la integración
 > detrás de una bandera de compilación apagada por defecto.
 
@@ -35,7 +37,10 @@ animación en conjunto: empieza en la TV de la **derecha** (por ejemplo, un gati
 | Pro: memoria interna | Justa: una sola conexión segura de más (la del clima, abierta todo el tiempo) hizo fallar el aviso de versión (`HTTP -1`, arreglado en la v11). **La Pro nunca ha corrido Bluetooth**: es el riesgo mayor (sección 5, fase 0b) |
 | Librería | La Lite usa el Bluetooth **del núcleo** (`BLEDevice.h`). Mezclarlo con NimBLE-Arduino da error de símbolos duplicados: **todo lo de dúos usa la librería del núcleo, nunca NimBLE-Arduino** |
 
-## 3. Cómo se hablan las TV: Bluetooth, no ESP-NOW
+## 3. Cómo se hablan las TV (REEMPLAZADO: hoy es ESP-NOW entre dos Pro; ver [protocolo-duos.md](protocolo-duos.md))
+
+> Lo que sigue es el primer diseño, con Bluetooth. Quedó descartado por la memoria de la Pro (fase 0b) y porque los dúos son
+> solo de la Pro (decisión final del dueño, sección 5). Se deja como historia.
 
 - **ESP-NOW descartado:** no cabe en la Lite; la Pro conectada al router queda atada a su canal Wi-Fi (la otra TV tendría que
   buscarlo); y la radio Wi-Fi escuchando gasta mucha batería. Su única ventaja (1-3 ms por mensaje) no hace falta.
@@ -59,8 +64,11 @@ animación en conjunto: empieza en la TV de la **derecha** (por ejemplo, un gati
 - **Formato:** cada dúo son **dos grabaciones m1** (el formato de las canciones con letra: imágenes en el tiempo + notas; ver
   `docs/formatos-datos.md` sección 4), una por TV, **con la misma duración**. El sonido va en la mitad de la izquierda (por ahora).
   Se reutiliza el codificador (`js/compresion.js`) y el decodificador del firmware.
-- **Modo propio "dúo"** en el firmware: NO pasa por `pantallaActual`, `musical_iniciar`, `terminoMusical`, `/ultimo.json`, el acuse
-  ni el sobre (son justamente los caminos que más fallos dieron). Al terminar o al separarse, vuelve a dibujarse lo que había.
+- **Modo propio "dúo"** en el firmware: NO pasa por `pantallaActual`, `/ultimo.json`, el acuse ni el sobre (son justamente los
+  caminos que más fallos dieron). Al terminar o al separarse, vuelve a dibujarse lo que había.
+  **Cambio (2026-11-24, al escribir el protocolo):** SÍ usa el reproductor de las canciones con letra (`musical_iniciar`), como la
+  alarma: hay uno solo y un segundo costaría ~11 KB de memoria interna, que la Pro no tiene de sobra. Al terminar se repone
+  igual que tras una alarma (`terminoMusical` si había contenido antes de la canción). Ver `protocolo-duos.md` sección 7.
 - **Peso:** unas pocas decenas de KB por dúo (1 bit por punto, comprimido). 10 dúos ≈ 0,5 MB como máximo.
 
 ### Estados y prioridades (decidido por el dueño el 2026-11-24: "la prioridad siempre es el dúo", salvo la alarma y una actualización)
