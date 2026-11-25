@@ -191,10 +191,24 @@ más Pepitos; juegos que cruzan de una pantalla a la otra.
 ### Hecho el 2026-11-24: el editor de dúos
 
 - `app-unificada/herramientas/editor-duos/`: `duo.js` (lógica pura, prueba `pruebas/duo.mjs`, 20 de 20) y la página (`editor-duos.html|js`, prueba `pruebas/editor-duos.mjs`, 11 de 11). `construir.mjs` la copia a `www/editor-duos.html` (no va en la APK).
-- Dos modos: una escena de 256×64 que se parte por la mitad (el pixelado se calcula sobre la escena entera: sin costura) o un GIF por Pepito con su momento de inicio. Ajustes: Pixelar, Nivel de pixelado, Invertir (se hornea en la imagen: el m1 no tiene invertido), encuadre, fondo, girar, voltear, recortar, vueltas y velocidad. Sonidos cortos propios (sin canciones del catálogo todavía), en el Pepito elegido y desde el momento elegido.
+- Dos modos: una escena de 256×64 que se parte por la mitad (el pixelado se calcula sobre la escena entera: sin costura) o un GIF por Pepito con su momento de inicio. Ajustes: Pixelar, Nivel de pixelado, Invertir (se hornea en la imagen: el m1 no tiene invertido), encuadre, fondo, girar, voltear, recortar, vueltas y velocidad. Sonidos cortos propios (las canciones del catálogo llegaron después: ver abajo), en el Pepito elegido y desde el momento elegido.
 - **Formato del paquete (BORRADOR; nada llega a Firebase sin aprobación del dueño):** `{ formato: "duo1", version: 1, clave, nombre, duracion, sonido: "izq" | "der" | null, izq: { datos (m1 en Base64), bytes, imagenes }, der: { ... } }`. Cada Pepito guarda las dos mitades (que una TV quede a la izquierda o a la derecha depende de cómo las pongan). Las dos mitades duran lo mismo; cuadros de al menos 40 ms.
 - **Cabecera C** (`duo_prueba.h`) para el dúo de prueba del firmware: las mitades en m1 para la Pro y, para la placa de pruebas ESP8266, las imágenes sin comprimir (no trae descompresor) con su línea de tiempo y sus notas.
 - Límites PROPUESTOS (avisan, no bloquean): 40 KB por mitad, 20 KB por mitad para el dúo de prueba del firmware, 15 s de duración.
+
+### Ampliado el 2026-11-24 (todas las sugerencias del asesor que pidió el dueño, salvo filas de 3 o más Pepitos)
+
+Commits del panel: `e873a94` … `c5d1e99` (rama `lite`). Prueba de la página: `pruebas/editor-duos.mjs`, 33 de 33; de la lógica: `pruebas/duo.mjs`. Abrir con `node app-unificada/construir.mjs` y `npx serve app-unificada/www` → `/editor-duos`.
+- **Tres modos:** (1) **un GIF partido en el tiempo** (la primera parte en un Pepito y el resto en el otro; corte después del cuadro elegido y pausa opcional entre las partes); (2) **un GIF partido en dos mitades** (escena de 256×64, mitades movibles y botón para juntarlas; el pixelado se calcula sobre la escena entera); (3) **un GIF por Pepito** con el momento en que empieza el segundo.
+- **Recorte:** desde/hasta qué cuadro en cada GIF. **Orden:** normal, al revés o ida y vuelta, en cada GIF.
+- **Hueco entre las pantallas** (en mm, por defecto 0; el dueño lo ajusta a mano según cómo queden las TV): esconde los píxeles que caerían en el marco.
+- **Ajustes de imagen separados por GIF** (modo 3) o comunes.
+- **Sonido:** los sonidos cortos o **un tramo de una canción del catálogo** (desde el segundo elegido, lo que dure la animación o los segundos elegidos; solo las notas), en el Pepito elegido y desde el momento elegido. Para ver el catálogo se entra con la cuenta (el proyecto NO guarda el correo ni la contraseña).
+- **Texto encima** con las letras de la app (las mismas de la vista previa), en el Pepito elegido, entre dos momentos, encendiendo o apagando puntos.
+- **Vista previa** con barra de tiempo (se mueve a mano) y sonido.
+- **Portada** (el momento que se usa como miniatura; por defecto la mitad del dúo): va en el paquete como `portada: { t, izq, der }` (BORRADOR, como el resto del formato).
+- **Proyectos:** guardar (los GIF y todos los ajustes en un archivo) y abrir; también abrir un dúo ya hecho para verlo.
+- **Probar en mi Pepito:** manda una mitad a la Pepito Pro de la cuenta como canción con letra sin clave (la forma de siempre: `oled_remota/archivo`), con dos toques. Nada nuevo en Firebase. Sirve para ver cómo se ve cada mitad en la pantalla real antes de que exista el modo dúo en el firmware.
 
 ## 7. Seguridad
 
