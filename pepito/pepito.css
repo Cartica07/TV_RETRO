@@ -30,3 +30,5 @@ a { color: var(--acento); }
   margin: 0 0 var(--esp-3);
 }
 .caja p:last-child, .caja ul:last-child { margin-bottom: 0; }
+/* Datos que faltan por completar antes de publicar una página legal: se ven resaltados para no dejarlos sin llenar. */
+.pendiente { background: #4a3b00; color: #ffe08a; padding: 0 6px; border-radius: 4px; font-weight: 600; }
