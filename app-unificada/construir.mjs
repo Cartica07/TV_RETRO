@@ -337,8 +337,10 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
       </div>
       <div class="campo">
         <div id="duosBloqueFavorito">
-          <span class="rotulo">Tu favorito</span>
-          <ul class="duos-lista" id="duosFavorito"></ul>
+          <div class="duos-marco-favorito">
+            <span class="rotulo duos-rotulo-favorito">Tu favorito</span>
+            <ul class="duos-lista" id="duosFavorito"></ul>
+          </div>
           <hr class="duos-separador" id="duosSeparador" />
         </div>
         <ul class="duos-lista" id="duosLista"></ul>

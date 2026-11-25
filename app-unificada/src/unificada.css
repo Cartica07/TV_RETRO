@@ -253,8 +253,23 @@ body.sin-cuenta #botonVincularTV {
   border: 2px solid var(--borde, #253041);
   border-radius: var(--radio-sm, 8px);
 }
+/* El favorito (pedido del dueño, 2026-11-25): un solo marco azul que encierra el título "Tu favorito" y su tarjeta. */
+.duos-marco-favorito {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--acento, #4DD2FF);
+  border-radius: var(--radio-sm, 8px);
+}
+.rotulo.duos-rotulo-favorito {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 0;
+}
 #duosFavorito .duo-tarjeta {
-  border-color: var(--acento, #4DD2FF);
+  border-color: transparent;
+  padding: 0;
+  background: transparent;
 }
 #duosFavorito .duo-nombre {
   color: var(--acento, #4DD2FF);
@@ -266,11 +281,18 @@ body.sin-cuenta #botonVincularTV {
   aspect-ratio: 276 / 68;
   image-rendering: pixelated;
 }
+/* El nombre centrado y la estrella a la derecha (un espacio igual a la izquierda para que el nombre quede al centro). */
 .duo-pie {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+}
+.duo-pie .duo-nombre {
+  grid-column: 2;
+  text-align: center;
+}
+.duo-pie .duo-estrella {
+  grid-column: 3;
 }
 .duos-lista .duo-nombre {
   font-weight: 600;
@@ -303,7 +325,7 @@ body.sin-cuenta #botonVincularTV {
 }
 .duos-separador {
   border: none;
-  border-top: 1px solid var(--borde, #253041);
+  border-top: 2px solid var(--acento, #4DD2FF);
   margin: 14px 0;
 }
 
