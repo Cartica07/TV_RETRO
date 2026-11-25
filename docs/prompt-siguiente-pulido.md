@@ -59,10 +59,10 @@ a explicar. No cambies ni propongas ningún texto antes de que lo haga.**
     mitad): 31 dúos seguidos sin fallos. Dos TV pegadas al encender NO hacen el dúo hasta separarlas y juntarlas.
   - **Qué dúo suena (decidido el 2026-11-25):** el favorito de la izquierda si la derecha lo tiene; si no, el favorito
     de la derecha si la izquierda lo tiene; si no, el primero en común. Para eso el AQUI lleva el favorito de la
-    derecha: **protocolo versión 2** (compilado y commiteado, **SIN grabar ni probar en la placa**).
-  - **Estado de las placas:** la S3 (COM6) y la ESP8266 (COM3) corren el **protocolo 1**. Para probar el 2 hay que
-    grabar **las dos a la vez** (una con 1 y otra con 2 no se entienden), con permiso del dueño. La S3 lleva una
-    versión de prueba que dice ser la 11; no está publicada.
+    derecha: **protocolo versión 2**, grabado en la S3 y en la ESP8266 y PROBADO el 2026-11-25: se vio el caso "favorito de la derecha" (la S3 con favorito "rap", la ESP8266 solo con "prueba": eligió "prueba", arranque en 239 ms). Los otros dos casos (favorito de la izquierda y primero en común) se verán con la segunda S3.
+  - **Estado de las placas:** la S3 (COM6) y la ESP8266 (COM3) corren el **protocolo 2** (si algún día una se regraba
+    sola, hay que regrabar la otra: con versiones distintas no se entienden). La S3 lleva una versión de prueba que dice
+    ser la 11; no está publicada.
   - **`TVRETRO_DUOS` viene en 1 por defecto** (`OLED_Remota/duos_config.h`): todas las versiones nuevas de la Pro llevan
     los dúos.
   - **Catálogo de la nube y ajustes (aprobados; reglas PUBLICADAS por el dueño):** `duos/indice|datos/<clave>` y
@@ -103,7 +103,6 @@ a explicar. No cambies ni propongas ningún texto antes de que lo haga.**
 
 - **Reescribir los 4 juegos sin licencia** (Snake, Breakout, Flappy e Invaders derivan de un repo sin licencia; Jump es
   Unlicense): es lo más grande de código que queda antes de vender (`docs/juegos-y-controles.md`).
-- **Grabar el protocolo 2 de los dúos en las dos placas y probarlo** (con permiso para cada grabación).
 - **Publicar la Pro 12** (con dúos): antes, dejar en el firmware solo los mensajes importantes del registro serie de los
   dúos (hoy escribe una línea por cada mensaje de radio que recibe: es de diagnóstico) y pedir/generar la clave si hace
   falta. Después instalarla en la TV del dueño por Wi-Fi.
@@ -180,6 +179,6 @@ a explicar. No cambies ni propongas ningún texto antes de que lo haga.**
 
 ### 9. Primer mensaje al dueño
 
-Saluda, dile en 4 o 5 líneas lo que entendiste (dúos terminados, protocolo 2 sin grabar, el plan de textos →
+Saluda, dile en 4 o 5 líneas lo que entendiste (dúos terminados y probados, el plan de textos →
 interfaz → optimizaciones → auditoría → legal, y los pendientes del punto 5) y pregúntale **cómo quiere proceder con
 los textos**. Mientras no te lo explique, solo lee y resume.
