@@ -20,6 +20,9 @@ h2 { margin: 0 0 12px; font-size: 1.05rem; }
 .columna { display: grid; gap: 16px; }
 .fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .nota { color: var(--texto-2, #8A9AAE); font-size: 0.85rem; margin: 0; }
+.lista-catalogo { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.lista-catalogo li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lista-catalogo canvas { width: 256px; height: 64px; image-rendering: pixelated; background: #000; border-radius: 4px; }
 button, select, input { font: inherit; color: inherit; }
 button { background: var(--superficie-alta, #1A2230); border: 1px solid var(--borde, #253041); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
 button.primario { background: var(--acento-relleno, #50C5EC); color: #04141c; border-color: transparent; font-weight: 600; }
@@ -352,7 +355,14 @@ input[type="number"] { width: 84px; }
           <button type="button" id="botonGuardarProyecto">Guardar el proyecto</button>
           <label class="fila">Abrir un proyecto o un dúo <input type="file" id="archivoAbrir" accept=".json,application/json" /></label>
         </div>
+        <div class="fila">
+          <label class="fila">Orden en el catálogo <input type="number" id="ordenCatalogo" min="0" max="999" step="1" value="1" /></label>
+          <button type="button" id="botonSubir" disabled>Subir al catálogo</button>
+        </div>
         <p id="aviso" role="status" aria-live="polite"></p>
+        <h3>En el catálogo</h3>
+        <ul id="listaCatalogo" class="lista-catalogo"><li class="nota">Entra con una cuenta de administrador para verlo.</li></ul>
+        <p class="nota">"Subir al catálogo" deja el dúo en la nube para todas las Pepito Pro (solo un administrador). Con el mismo nombre, reemplaza al que había. Las Pepito lo bajan solas.</p>
         <p class="nota">El .json es el dúo completo (las dos mitades). El .h es el dúo de prueba que va dentro del firmware mientras no exista el catálogo. El proyecto guarda los GIF y todos los ajustes, para seguir otro día. Un dúo abierto (.duo.json) se puede ver, pero no editar. "Probar en mi Pepito" manda esa mitad a tu Pepito Pro como una canción con letra (con tu sesión; tu Pepito debe estar mostrando el contenido, no el reloj).</p>
       </section>
     </div>
