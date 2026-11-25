@@ -147,3 +147,25 @@ El dúo de prueba (el corazón, 3,3 s) se genera con `app-unificada/herramientas
 4. **Carga (pendiente de la fase 0):** ESP-NOW escuchando mientras baja un GIF grande, durante una actualización por Wi-Fi y
    con la cara Clima: memoria interna libre y mayor bloque (`[duo] ESP-NOW listo …`), sin reinicios ni `HTTP -1`.
 5. **Con la bandera en 0:** el .bin debe medir lo mismo (o casi) que antes de los dúos.
+
+## 10. El catálogo en la TV (2026-11-24; campos aprobados por el dueño, ver `formatos-datos.md`)
+
+- **Ajustes:** con los demás ajustes (al conectarse y con cada orden `ajustes`) la TV lee `ajustes.duos` (si falta, activados)
+  y `ajustes.duoFavorito`, y los guarda en su NVS (sin internet al encender, valen). Con los dúos desactivados la TV **ni busca
+  ni contesta** (los dos papeles).
+- **Revisión del catálogo:** al conectarse, con cada orden `ajustes` (tocar Más > Dúos en la app la manda: un dúo recién subido
+  aparece sin esperar) y cada 6 horas. Lee `duos/indice` **sin las portadas** (filtro) y se queda con los 10 primeros por `orden`.
+  Si un dúo no está o cambió su `fecha`, baja sus mitades (`duos/datos/<clave>/izq|der`) a `/duos/<clave>_<lado>.tmp`.
+- **Nunca compite con lo demás:** media mitad por vuelta de la tarea de red y solo si no hay contenido por aplicar, ni
+  actualización, ni código para vincular. Si algo falla, reintenta en 5 minutos. Si quedarían menos de 1,5 MB libres (para un
+  GIF grande), ese dúo no se baja (queda en el registro serie).
+- **Un dueño por archivo:** la tarea de red solo escribe `.tmp` (y comprueba que sean m1). El `loop()`, **fuera de un dúo**, los
+  pasa a `.m1`, guarda la `fecha` (`/duos/<clave>.fecha`), borra los que ya no están en el catálogo (nunca `prueba`), escribe el
+  orden (`/duos/orden.txt`) y vuelve a leer la lista.
+- **Orden y favorito:** la lista de la TV sigue el orden del catálogo, con `prueba` (el que va dentro del firmware) al final.
+  Favorito = el de la app si la TV lo tiene; si no, el primero del catálogo. Al juntar dos TV gana el favorito de la izquierda si
+  la otra lo tiene; si no, el primero en común.
+- **Qué se puede probar con la ESP8266:** solo tiene `prueba`, así que con ella el dúo siempre será `prueba`. Sí se prueba la
+  lectura del índice, la descarga, la comprobación m1, el borrado de un dúo quitado, el interruptor (ni busca ni contesta) y el
+  favorito en el registro (`[duo] elegido … (favorito …; la otra no lo tiene)`). Un dúo del catálogo solo se verá entre dos Pro
+  (la segunda S3).
