@@ -196,6 +196,8 @@ Detalle byte a byte en [docs/formatos-datos.md](docs/formatos-datos.md).
 
 Lo hecho está en la sección 5, en `docs/historial-cambios.md` y en `docs/auditoria-alcance.md`. Lo que FALTA, por área (el dueño decide el orden; antes de cualquier campo nuevo de Firebase hay que proponerlo y aprobarlo):
 
+**VERSIONES PUBLICADAS (2026-11-25): Pepito Pro 12 (primera con dúos) y Pepito Lite 5 (C3) por OTA; la siguiente publicación debe ser la Pro 13 y la Lite 6. La clave de servicio de Firebase (`TV_RETRO-claves`, del 2026-11-23) se usó y hay que borrarla. Detalle en `docs/historial-cambios.md`.**
+
 **PENDIENTES LEGALES Y DE LA APP (2026-11-25, NO OLVIDAR; detalle en [docs/revision-legal-2026-11-25.md](docs/revision-legal-2026-11-25.md))**
 - **Antes de publicar `pepito/*.html` hay que llenar los campos resaltados (`class="pendiente"`):** dirección de notificación, teléfono, fecha de vigencia (3 documentos) y dirección del repositorio del código (licencias). Sin eso NO se publican. Correo exclusivo para PQR y datos: pendiente del dueño (hoy su Gmail).
 - **Riesgos del producto, a analizar pronto (decidido el 2026-11-25: "pendiente, no tan lejano"):** canciones con letra de obras comerciales en el catálogo; Open-Meteo gratis solo no comercial; tipografías GNU FreeFont (GPL con excepción de fuentes); 4 juegos sin licencia; procedencia de la biblioteca de imágenes; homologación CRC; condiciones de venta.
