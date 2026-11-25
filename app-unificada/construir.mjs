@@ -341,7 +341,6 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
             <span class="rotulo duos-rotulo-favorito">Tu favorito</span>
             <ul class="duos-lista" id="duosFavorito"></ul>
           </div>
-          <hr class="duos-separador" id="duosSeparador" />
         </div>
         <ul class="duos-lista" id="duosLista"></ul>
         <p class="dato-cuenta" id="duosVacio" hidden>Aún no hay dúos.</p>

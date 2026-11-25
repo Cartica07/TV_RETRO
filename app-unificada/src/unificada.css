@@ -330,10 +330,9 @@ body.sin-cuenta #botonVincularTV {
 #seccionDuos .switch-fila .fila-ajuste-titulo {
   font-size: 18px;
 }
-.duos-separador {
-  border: none;
-  border-top: 2px solid var(--acento, #4DD2FF);
-  margin: 14px 0;
+/* Entre el favorito y los demás, solo un espacio (la línea azul se quitó: el marco ya deja claro cuál es; dueño, 2026-11-25). */
+#duosBloqueFavorito {
+  margin-bottom: 14px;
 }
 
 /* Nota bajo una opción de la ventanita (el aviso de "Nunca" en "Apagar pantalla"). */
