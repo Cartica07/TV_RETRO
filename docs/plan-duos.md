@@ -171,6 +171,23 @@ Copia de la Pro v11 con ESP-NOW encendido por orden serie (`TVRETRO_ESPNOW_ON`, 
 - Pendiente: el canal del router (la Pro real estará en el de su router); un catálogo de verdad (m1) en vez del corazón dibujado; el consumo.
 
 ### Fase 1: integrar en la Pro
+
+#### Primera prueba en la placa (2026-11-24 noche): la S3 detecta y envía, FUNCIONA
+
+S3 con la Pro y TVRETRO_DUOS=1 (firmware `738047e` y anteriores), conectada al router (canal 5), a la izquierda con el sensor; la ESP8266 (`Duos_Prueba`) a la derecha.
+
+| Medida | Resultado |
+|---|---|
+| Del contacto al arranque | 164-167 ms (el primero 292 ms); antes 36-42 ms: ahora hay ventana de 100 ms para elegir, medición y carga de la mitad |
+| Señal | -46 a -49 dBm (umbral -58) |
+| Ida y vuelta | ~3 ms (la tercera medición da ~14 ms siempre) |
+| Cargar la mitad (m1) | 12 ms |
+| Final | 2 completas (motivo 2), 2 cortadas al retirar el imán (motivo 1) |
+| Memoria interna libre con ESP-NOW | 190 KB; sin errores de red |
+
+Tres fallos encontrados por el camino (arreglados): (1) la ESP8266 se quedaba en un canal vecino (pegadas se oyen desde 2-3 canales al lado): el canal va ahora dentro del HOLA y del AQUI; (2) la hora de cada vuelta se tomaba antes de atender los mensajes y todas las esperas vencían al instante; (3) **una S3 conectada a un router descarta los mensajes DIRECTOS de la ESP8266** (ack 0/8; la difusión sí llega): la ESP8266 manda todo por difusión. Entre dos Pro (mismo chip) no debería pasar: comprobarlo con la segunda S3. Además, soltar el sensor cuenta tras 300 ms (con el imán en la mano parpadeaba).
+
+Falta: la S3 recibiendo (la ESP8266 a la izquierda con su botón), las prioridades, la prueba de carga y dos Pro reales.
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
 
