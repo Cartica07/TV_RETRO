@@ -71,6 +71,10 @@
 | 65 | (APROBADO 2026-11-25) Sin señal al guardar o al abrir | Sin conexión. Vuelve a intentarlo. | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
 | 66 | (APROBADO 2026-11-25) Pepito sin la versión con dúos | Actualiza tu Pepito para usar los dúos. | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
 | 67 | (APROBADO 2026-11-25) Confirmación al elegir el favorito o cambiar el interruptor | Listo | `app-unificada/src/duos.js` y `construir.mjs` (solo Pepito Pro) |
+| 68 | (PROPUESTA 2026-11-25) Apagar pantalla: nuevas opciones de la lista | Al minuto · A los 2 min | `construir.mjs` (Ajustes de Pepito) |
+| 69 | (PROPUESTA 2026-11-25) Pantalla de aceptación tras iniciar sesión: título | Antes de entrar | `app-unificada/src/aceptacion.js` |
+| 70 | (PROPUESTA 2026-11-25) Casilla de aceptación (los dos nombres son enlaces) | Acepto los Términos y Condiciones y la Política de Privacidad. | `app-unificada/src/aceptacion.js` |
+| 71 | (PROPUESTA 2026-11-25) Botones de la aceptación | Continuar (se enciende al marcar la casilla) · Salir (cierra la sesión) | `app-unificada/src/aceptacion.js` |
 
 ## En la pantalla de la TV (OLED; la fuente no tiene tildes ni ñ)
 

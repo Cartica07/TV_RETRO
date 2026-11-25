@@ -29,7 +29,7 @@ for (const tipo of ['actualizar', 'restablecer', 'ajustes', 'juego']) {
   await pagina.click('#enviar');
   await pagina.waitForTimeout(1200);
   const r = await pagina.evaluate(() => ({ estado: document.getElementById('estadoTexto').textContent.trim(), version: globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version }));
-  informe('Animación sin cuadros: no se envía y lo dice', r.estado === 'Esta animación no se pudo cargar. Elígela otra vez en la Galería.' && r.version === 3, JSON.stringify(r));
+  informe('Animación sin cuadros: no se envía y lo dice', r.estado === 'Esta cara no se pudo cargar. Elígela otra vez en la Galería.' && r.version === 3, JSON.stringify(r));
   await navegador.close();
 }
 cerrar();
