@@ -187,7 +187,9 @@ S3 con la Pro y TVRETRO_DUOS=1 (firmware `738047e` y anteriores), conectada al r
 
 Tres fallos encontrados por el camino (arreglados): (1) la ESP8266 se quedaba en un canal vecino (pegadas se oyen desde 2-3 canales al lado): el canal va ahora dentro del HOLA y del AQUI; (2) la hora de cada vuelta se tomaba antes de atender los mensajes y todas las esperas vencían al instante; (3) **una S3 conectada a un router descarta los mensajes DIRECTOS de la ESP8266** (ack 0/8; la difusión sí llega): la ESP8266 manda todo por difusión. Entre dos Pro (mismo chip) no debería pasar: comprobarlo con la segunda S3. Además, soltar el sensor cuenta tras 300 ms (con el imán en la mano parpadeaba).
 
-Falta: la S3 recibiendo (la ESP8266 a la izquierda con su botón), las prioridades, la prueba de carga y dos Pro reales.
+**La S3 recibe (2026-11-24, 22:32): también FUNCIONA.** La ESP8266 a la izquierda con su botón hundido, la S3 a la derecha: contesta (señal -53 a -56 dBm), carga su mitad en 9-10 ms, arranca con la salida y para con el FIN (terminado, motivo 2; botón soltado, motivo 1). La regla de cercanía también se vio trabajar: al cambiar las TV de lugar descartó respuestas a -61/-62 dBm. **Ojo:** en este sentido la señal queda a solo 2-5 dB del umbral (-58): medir con dos Pro en sus carcasas antes de fijarlo.
+
+Falta: las prioridades (canción, GIF, reloj, partida, pantalla dormida, alarma, botón A, contenido que llega a mitad), la prueba de carga y dos Pro reales.
 Con una bandera de compilación **apagada por defecto**, para que la Pro v12 pueda salir sin dúos si hace falta. Modo dúo y tabla de
 estados; los dúos de prueba guardados a mano.
 
