@@ -261,3 +261,17 @@ Commits del panel: `e873a94` … `c5d1e99` (rama `lite`). Prueba de la página: 
 | Especificación nueva del protocolo entre TV (servicio "Dúos") | Fase 0, al cerrar la prueba |
 | Textos que se vean en la app (propuestas para el dueño) | Fases 2 y 3 |
 | Nombre definitivo de la función | Cuando el dueño lo elija |
+
+## 9. Qué falta y cosas a tener en cuenta (2026-11-25)
+
+Los dúos están **hechos y probados** con la S3 y la ESP8266; son parte de la Pepito Pro (`TVRETRO_DUOS` en 1). Lo que queda:
+
+- **Grabar y probar el protocolo versión 2** (la elección favorito de la izquierda, luego el de la derecha, luego el primero en común). Las placas del dueño corren la versión 1: **hay que grabar las dos a la vez** (una con 1 y otra con 2 no se entienden). Con la ESP8266 solo se ve en el registro cuál de los tres casos se aplicó (ella solo tiene el dúo de prueba).
+- **Recortar el registro serie** de los dúos antes de publicar la Pro 12: hoy escribe una línea por cada mensaje de radio que llega (diagnóstico). Dejar contacto, elegido, salida y fin.
+- **La segunda S3** (llega en unos días): grabarle esta versión, fabricarla (clave de servicio temporal) y vincularla. Comprobar: los mensajes directos entre dos Pro con router (con la ESP8266 una S3 los descarta y ella manda todo por difusión), la señal dentro de las carcasas (el umbral de -58 dBm quedó justo: -53 a -56 con la S3 a la derecha; si hace falta, subirlo a -62 o -64 con medidas) y un dúo del catálogo de verdad.
+- **Prueba de carga pendiente:** ESP-NOW escuchando mientras baja un GIF muy grande, durante una actualización por Wi-Fi y con la cara Clima (memoria interna mínima vista: 78 KB; la actualización no deja empezar un dúo y lo corta).
+- **Publicar la Pro 12** con los dúos. La TV del dueño corre una versión de prueba que dice ser la 11: la 12 la actualiza por Wi-Fi como cualquier TV.
+- **Decisiones futuras (no hechas):** el nombre definitivo (hoy "Dúos"); que el sonido empiece primero en la derecha y luego en la izquierda; filas de 3 o más Pepito; Pepito con routers distintos (hoy solo se encuentran en el mismo canal); un modo para pasar en el momento un dúo que la otra TV no tiene.
+- **Límites vigentes:** hasta 10 dúos por TV, 100 KB por mitad (reglas), 15 s propuestos, 1,5 MB de flash libres de margen, y la Lite no tiene dúos.
+- **Herramientas de prueba:** `Duos_Prueba/` (ESP8266, su botón D1 hace de imán; no es parte del producto) y `app-unificada/herramientas/editor-duos/generar-duo-prueba.mjs` (genera el dúo de prueba que va dentro del firmware).
+
