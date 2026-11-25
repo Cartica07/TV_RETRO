@@ -7,6 +7,8 @@
    (por Bluetooth, desde el 2026-11-23: docs/plan-ota-lite.md). mas.js muestra Restablecer con un estilo en línea: hace falta !important. */
 body.tv-lite [data-mas="juegos"],
 body.tv-lite #seccionJuegos,
+body.tv-lite [data-mas="duos"],
+body.tv-lite #seccionDuos,
 body.tv-lite #campoSistemaRestablecer {
   display: none !important;
 }
@@ -231,6 +233,46 @@ body.sin-cuenta #botonVincularTV {
 }
 #botonEnviarCara {
   width: 100%;
+}
+
+/* Más > Dúos (solo Pepito Pro): la lista del catálogo, cada dúo con su portada (las dos pantallas juntas, 256×64) y su
+   nombre; el favorito, con el color de acento. */
+.duos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.duos-lista button {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: var(--superficie-hundida, #0E141C);
+  border: 2px solid var(--borde, #253041);
+  border-radius: var(--radio-sm, 8px);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.duos-lista button[aria-pressed="true"] {
+  border-color: var(--acento, #4DD2FF);
+}
+.duos-lista button[aria-pressed="true"] .duo-nombre {
+  color: var(--acento, #4DD2FF);
+}
+.duos-lista canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 1;
+  image-rendering: pixelated;
+  background: #000;
+  border-radius: 4px;
+}
+.duos-lista .duo-nombre {
+  font-weight: 600;
 }
 
 /* Nota bajo una opción de la ventanita (el aviso de "Nunca" en "Apagar pantalla"). */

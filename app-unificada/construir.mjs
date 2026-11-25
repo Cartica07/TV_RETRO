@@ -316,6 +316,34 @@ cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
     </div>
 
     $1`, 'la sección de la Alarma');
+// Más > Dúos (2026-11-24, docs/plan-duos.md; solo Pepito Pro: con una Lite el botón no se ve, unificada.css; la maneja
+// js/duos.js): el interruptor "Activar dúos" y la lista del catálogo con la portada de cada dúo para elegir el favorito.
+// Textos aprobados por el dueño el 2026-11-24.
+cambiar(/(<button type="button" class="fila-mas" data-mas="config">)/,
+  `<button type="button" class="fila-mas" data-mas="duos">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="8.5" height="12" rx="1.5"/><rect x="13" y="6" width="8.5" height="12" rx="1.5"/></svg>
+          <span class="nombre-mas">Dúos</span>
+          <svg class="icono chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        $1`, 'el botón Config del menú Más (dúos)');
+cambiar(/(<div id="seccionAlarma" style="display: none;">)/,
+  `<div id="seccionDuos" style="display: none;">
+      <div class="campo switch-fila fila-ajuste-simple">
+        <label class="fila-ajuste-titulo" for="duosActivos">Activar dúos</label>
+        <label class="switch">
+          <input type="checkbox" id="duosActivos" checked />
+          <span class="via"><span class="perilla"></span></span>
+        </label>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Tu favorito</span>
+        <ul class="duos-lista" id="duosLista"></ul>
+        <p class="dato-cuenta" id="duosVacio" hidden>Aún no hay dúos.</p>
+      </div>
+      <p class="dato-cuenta" id="duosAviso" role="status" aria-live="polite" hidden></p>
+    </div>
+
+    $1`, 'la sección de la Alarma (dúos)');
 }
 // Más > Config > Sistema: barra de avance de "Actualizar" (pedido del dueño, 2026-11-23, Pepito Pro y Lite; la mueve
 // js/barra-actualizar.js). Oculta hasta que empieza una actualización.
