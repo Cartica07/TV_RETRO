@@ -593,3 +593,10 @@ Versión barata de la TV: ESP32-C3, sin nube ni cuentas, solo Android, todo por 
 - **Visual** (`7884131`): título PEPITO más grande y con brillo azulado; el estado de Config > Sistema centrado, en negrita y del alto de los botones; sin el título "Letra" en Canciones.
 - **Pruebas:** `pepito.mjs` (9 de 9), `caras.mjs` (25 de 25) y `actualizar-lite.mjs` (22 de 22) al día y corridas; el banco completo queda para cuando el dueño confirme la versión final. `ae82ce0`.
 - **Siguiente:** lista de textos de Pepito Lite (`C:\Proyectos\TV_RETRO-textos\revision-textos-lite.xlsx`, 43 textos), luego las pantallas de cuenta, las páginas web y los textos de la pantalla de Pepito.
+
+## Revisión legal de los documentos de Pepito (2026-11-25)
+
+- **Pedido del dueño:** revisar `ayuda`, `privacidad`, `términos` y `licencias` como lo haría un abogado, con la normativa colombiana, en tono serio y sin emojis. Informe completo: [revision-legal-2026-11-25.md](revision-legal-2026-11-25.md) (hallazgos por documento, respuestas a las 8 preguntas de la auditoría, riesgos fuera de las páginas y datos que faltan).
+- **Páginas nuevas (borrador 2, sin publicar):** `729fa4e` y `4c7222f` (política de tratamiento de datos personales y aviso de privacidad), `ed5b4c3` (términos y condiciones), `acb2f05` (licencias y atribuciones), `221c693` (ayuda: rutas con "Configuración", enlaces legales y canal de PQR). Los datos que faltan salen resaltados (`class="pendiente"`, estilo nuevo en `pepito.css`): dirección, teléfono, fecha de vigencia y dirección del repositorio del código.
+- **Hallazgos mayores (no son textos, cambian el producto):** canciones con letra de obras comerciales en el catálogo de todos los usuarios; Open-Meteo gratuito es solo para uso no comercial; tipografías GNU FreeFont (GPL con excepción de fuentes) dentro del firmware y la app; 4 juegos sin licencia; procedencia de las imágenes de la biblioteca; homologación del dispositivo ante la CRC; faltan las condiciones de venta.
+- **Pendiente con aprobación del dueño:** casilla de aceptación en la app y registro de la versión aceptada (campo nuevo en Firebase), enlace web de eliminación de cuenta para Google Play.
