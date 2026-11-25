@@ -1,0 +1,109 @@
+PEPITO LITE (ESP32-C3): PINES, BATERIA Y COMO GRABARLA SOLO
+Escrito el 2026-11-25. Todo sale del codigo tal como esta hoy (OLED_Lite/pines_lite.h y docs/bateria-divisor.md).
+
+
+=====================================================================
+1. A QUE PINES CONECTAS EN LA C3
+=====================================================================
+
+El firmware de la C3 YA tiene sus propios pines. No usa los de la S3: el codigo elige segun el chip.
+Estan fijos en OLED_Lite/pines_lite.h (repo del firmware).
+
+  Pantalla SDA ........................ GPIO 4
+  Pantalla SCL ........................ GPIO 5
+  Buzzer (a traves del transistor) .... GPIO 6
+  Boton (entre el pin y GND) .......... GPIO 7
+  Divisor de la bateria (despues) ..... GPIO 3
+
+Ademas:
+  - La pantalla va a 3V3 y a GND.
+  - El boton no lleva resistencia: usa la resistencia interna del chip.
+  - El buzzer NO va directo al pin. Va con el montaje del transistor:
+        GPIO 6 --[ 1 kohm ]-- base de un transistor NPN (S8050, 2N2222 o BC547)
+        buzzer entre 3V3 y el colector
+        diodo 1N4148 o 1N4007 en paralelo con el buzzer (la raya del diodo hacia el lado de 3V3)
+        emisor a GND
+    (El esquema dibujado esta en README.md del repo del firmware, seccion "Buzzer".)
+  - No uses el GPIO 9 (boton BOOT de la placa) ni el GPIO 8 (LED de la placa).
+
+ADVERTENCIA HONESTA: estos pines estan en el codigo como PROVISORIOS. Se eligieron porque en las placas
+"Super Mini" de la C3 son libres, pero NUNCA se han probado en una C3 real. Cuando llegue la placa, mira en
+su dibujo de pines que el 3, 4, 5, 6 y 7 existan y esten libres. Si alguno no sirve, se cambia en un solo
+archivo (pines_lite.h) y se vuelve a compilar.
+
+
+=====================================================================
+2. PIN DEL DIVISOR DE BATERIA
+=====================================================================
+
+En la S3 (Pepito Pro) es el GPIO 3, en la misma fila de la placa donde estan los pines 4 a 11.
+En la C3 (Pepito Lite) tambien es el GPIO 3.
+
+  Pepito Pro (S3):
+      bateria (+) --[ 100 kohm ]--+--[ 220 kohm ]-- GND
+                                  |
+                                  +-- GPIO 3
+                                  +--[ 100 nF ]-- GND
+
+  Pepito Lite (C3):
+      bateria (+) --[ 100 kohm ]--+--[ 100 kohm ]-- GND      <- OJO: 100 k abajo, no 220 k
+                                  |
+                                  +-- GPIO 3
+                                  +--[ 100 nF ]-- GND
+
+  Por que 100 k en la C3: su lector de voltaje llega solo a unos 2,5 V. Con 220 k una bateria llena
+  (4,2 V) daria 2,89 V y la lectura se aplastaria; con 100 k llega 2,1 V y se lee bien.
+
+  - El condensador de 100 nF (ceramico, nunca mas de 220 nF) va entre el GPIO 3 y GND, pegado al pin.
+  - El GND del divisor tiene que ser el mismo GND de la placa.
+  - Toma el positivo de la bateria DESPUES del interruptor, si lo hay (si lo tomas antes, el divisor gasta
+    unos 13 microamperios aunque Pepito este apagado).
+  - Si cargas la bateria con un modulo (TP4056), el divisor va en el positivo de la BATERIA, no en la
+    salida de USB.
+  - Guia completa: docs/bateria-divisor.md del repo del panel.
+
+
+=====================================================================
+3. GRABAR LA C3 NUEVA SIN AYUDA
+=====================================================================
+
+La C3 nueva viene en blanco, asi que la PRIMERA vez se graba por cable. Despues, todas las actualizaciones
+se hacen por Bluetooth desde la app (Mas > Configuracion > Sistema > Actualizar).
+
+Paso a paso:
+
+ 1. Conecta la C3 por USB. En el Administrador de dispositivos, mira en "Puertos (COM y LPT)" que numero le
+    salio (por ejemplo COM7). Si el PC no la ve: mantén pulsado el boton BOOT de la placa, conecta el cable
+    y suelta el boton.
+
+ 2. Abre PowerShell y pega esto (UNA sola linea), cambiando COM7 por tu puerto:
+
+    & "$env:LOCALAPPDATA\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" upload -p COM7 --fqbn esp32:esp32:esp32c3:CDCOnBoot=cdc,FlashSize=4M --input-dir C:\Proyectos\TV_RETRO-compilados\2026-11-25b\lite-c3
+
+ 3. Cuando diga que termino, la pantalla se enciende y muestra el PIN de emparejar. En la app entra a
+    "Tengo un Pepito Lite" y sigue los pasos: ahi escribes ese PIN.
+
+Notas importantes:
+  - Esa carpeta tiene la Lite 6 (la actual). Si mas adelante hay una version mas nueva, grabala desde la app
+    por Bluetooth, no por cable.
+  - Esos tres archivos (bootloader, partitions y el programa) son seguros en una placa NUEVA. NUNCA grabes
+    un archivo llamado "merged.bin" en una placa que ya tenga datos: borra todo.
+  - Si sale "Access is denied", cierra el Monitor Serie del Arduino IDE y vuelve a intentar.
+  - Si algo falla, copia el mensaje de error completo y se lo llevas a Claude.
+  - Si la pantalla fuera de 1,3" y resultara SH1106 (no SSD1306), hay que cambiar el firmware antes:
+    lee PANTALLA-1.3-SH1106.md en la raiz del repo del firmware.
+
+
+=====================================================================
+4. PENDIENTES AL CERRAR (2026-11-25)
+=====================================================================
+  - Borrar la clave de servicio de Firebase (consola de Firebase y el archivo de TV_RETRO-claves).
+  - Borrar la cara "Clima" que sigue en la nube (relojes/clima), con el editor de caras.
+  - Probar en la placa Pro 13 que el boton A, la perilla y los juegos se sienten igual (se agrego un
+    descanso de 1 ms por vuelta para ahorrar bateria).
+  - Aprobar los textos de la pantalla de aceptacion (docs/lite-textos-propuestos.md, filas 68 a 71).
+  - Auditoria completa del sistema (docs/auditoria-alcance.md).
+  - Explicacion de Play Store (nombre Pepito, paquete com.pepito.app, AAB firmado).
+  - Pagina web de Pepito para iPhone (pendiente).
+  - Riesgos del producto por analizar con el abogado (canciones con letra, tipografias GPL, 4 juegos sin
+    licencia, imagenes de la biblioteca, homologacion CRC, condiciones de venta).
