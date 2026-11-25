@@ -6,7 +6,10 @@ import { decodificarGif, comprobarTamanoArchivo, esGif } from './gif.js';
 import { acomodarEnDestino, grisesDeCanvas, grisABitmapAtkinson, grisABitmapUmbral } from './imageProcessor.js';
 import { codificarMusical, decodificarMusical } from './compresion.js';
 import * as D from './duo.js';
-import { escucharSesion, iniciarSesion, listarMusicales, leerMusical, listarMisDispositivos, usarCuenta, enviarEstado } from './firebase.js';
+import {
+  escucharSesion, iniciarSesion, listarMusicales, leerMusical, listarMisDispositivos, usarCuenta, enviarEstado,
+  esAdministrador, unificadaListarDuos, unificadaGuardarDuoCatalogo, unificadaBorrarDuoCatalogo,
+} from './firebase.js';
 import { dibujarOLED } from './renderer.js';
 
 const $ = (id) => document.getElementById(id);
@@ -514,6 +517,7 @@ function mostrarDatos(texto, mal = false) {
 }
 function habilitar(si) {
   for (const id of ['botonReproducir', 'botonPaquete', 'botonCabecera', 'barraTiempo', 'botonProbar']) $(id).disabled = !si;
+  $('botonSubir').disabled = !si || !soyAdmin;
   if (si && ultimo) $('barraTiempo').max = String(ultimo.duo.duracion);
   if (!si) $('barraTexto').textContent = '';
 }
@@ -600,11 +604,105 @@ function iniciarCuenta() {
   escucharSesion((usuario) => {
     sesionUid = usuario ? usuario.uid : null;
     $('formEntrar').hidden = !!usuario;
+    soyAdmin = false;
+    $('botonSubir').disabled = true;
     if (usuario) {
       $('estadoCuenta').textContent = `Sesión iniciada: ${usuario.email}. Tus canciones están en la lista de sonidos.`;
       cargarCanciones().catch((e) => console.warn('[duos] no se pudo leer el catálogo de canciones:', e));
+      usarCuenta(usuario.uid, ''); // esAdministrador mira la cuenta en uso (igual que el editor de caras)
+      esAdministrador().then((si) => {
+        soyAdmin = !!si;
+        $('botonSubir').disabled = !ultimo || !soyAdmin;
+        if (soyAdmin) refrescarCatalogo().catch(fallo);
+        else $('listaCatalogo').innerHTML = '<li class="nota">Solo una cuenta de administrador puede subir al catálogo.</li>';
+      }).catch(fallo);
     }
   });
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Catálogo de la nube (2026-11-24, aprobado por el dueño: duos/indice|datos; solo un administrador escribe). Subir el dúo
+// armado (o un .duo.json abierto) y ver o borrar lo que ya hay. Subir y borrar piden un segundo toque.
+// ---------------------------------------------------------------------------------------------------------------------
+let soyAdmin = false;
+let catalogo = [];
+let confirmarSubir = '';
+let confirmarBorrar = '';
+
+function dibujarPortada(canvas, b64) {
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 256, 64);
+  if (!b64) return;
+  const bytes = D.deBase64(b64);
+  if (bytes.length !== 2048) return;
+  ctx.fillStyle = '#4DD2FF';
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 256; x++) if (bytes[y * 32 + (x >> 3)] & (0x80 >> (x & 7))) ctx.fillRect(x, y, 1, 1);
+}
+
+async function refrescarCatalogo() {
+  catalogo = await unificadaListarDuos();
+  const lista = $('listaCatalogo');
+  lista.innerHTML = '';
+  if (!catalogo.length) {
+    lista.innerHTML = '<li class="nota">Todavía no hay dúos en el catálogo.</li>';
+    return;
+  }
+  for (const d of catalogo) {
+    const li = document.createElement('li');
+    li.dataset.clave = d.clave;
+    const c = document.createElement('canvas');
+    dibujarPortada(c, d.portada);
+    const texto = document.createElement('span');
+    texto.textContent = `${d.orden}. ${d.nombre} (${(d.duracion / 1000).toFixed(1)} s)`;
+    const borrar = document.createElement('button');
+    borrar.type = 'button';
+    borrar.textContent = 'Borrar';
+    borrar.addEventListener('click', () => { borrarDelCatalogo(d.clave, d.nombre).catch(fallo); });
+    li.append(c, texto, borrar);
+    lista.append(li);
+  }
+}
+
+async function subirAlCatalogo() {
+  if (!ultimo || !soyAdmin) return;
+  const p = ultimo.paquete;
+  const nombre = String(p.nombre || '').trim();
+  if (!nombre) { aviso('Ponle un nombre al dúo antes de subirlo.', true); return; }
+  const clave = D.claveDe(nombre);
+  if (confirmarSubir !== clave) {
+    confirmarSubir = clave;
+    const yaEsta = catalogo.some((d) => d.clave === clave);
+    aviso(yaEsta ? `Ya hay un dúo "${nombre}" en el catálogo. Toca otra vez "Subir al catálogo" para reemplazarlo.`
+      : `Toca otra vez "Subir al catálogo" para subir "${nombre}" (lo verán todas las Pepito Pro).`);
+    setTimeout(() => { if (confirmarSubir === clave) confirmarSubir = ''; }, 8000);
+    return;
+  }
+  confirmarSubir = '';
+  const orden = Math.max(0, Math.min(999, Math.round(Number($('ordenCatalogo').value) || 0)));
+  aviso('Subiendo…');
+  const r = await unificadaGuardarDuoCatalogo(clave, {
+    nombre, orden, duracion: p.duracion, portada: D.portadaEscena(p), izq: p.izq.datos, der: p.der.datos,
+  });
+  if (!r || !r.exito) { aviso((r && r.error) || 'No se pudo subir.', true); return; }
+  aviso(`Listo: "${nombre}" está en el catálogo.`);
+  await refrescarCatalogo();
+}
+
+async function borrarDelCatalogo(clave, nombre) {
+  if (confirmarBorrar !== clave) {
+    confirmarBorrar = clave;
+    aviso(`Toca otra vez "Borrar" para quitar "${nombre}" del catálogo.`);
+    setTimeout(() => { if (confirmarBorrar === clave) confirmarBorrar = ''; }, 8000);
+    return;
+  }
+  confirmarBorrar = '';
+  const r = await unificadaBorrarDuoCatalogo(clave);
+  if (!r || !r.exito) { aviso((r && r.error) || 'No se pudo borrar.', true); return; }
+  aviso(`Listo: "${nombre}" ya no está en el catálogo.`);
+  await refrescarCatalogo();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -733,12 +831,13 @@ function iniciar() {
   });
   $('botonGuardarProyecto').addEventListener('click', guardarProyecto);
   $('botonProbar').addEventListener('click', () => { probarEnMiPepito().catch(fallo); });
+  $('botonSubir').addEventListener('click', () => { subirAlCatalogo().catch(fallo); });
   $('botonPortadaAqui').addEventListener('click', () => { $('portadaMs').value = $('barraTiempo').value; programar(); });
   iniciarCuenta();
   $('archivoAbrir').addEventListener('change', (e) => { abrirArchivo(e.target).catch(fallo); });
 
   // No cambian el dúo: no se vuelve a armar (ni se borra el aviso) al tocarlos.
-  const soloVista = (el) => el && ['barraTiempo', 'conSonido', 'probarMitad', 'correo', 'clave'].includes(el.id);
+  const soloVista = (el) => el && ['barraTiempo', 'conSonido', 'probarMitad', 'correo', 'clave', 'ordenCatalogo'].includes(el.id);
   document.addEventListener('change', (e) => {
     if (!e.target || e.target.type === 'file' || soloVista(e.target)) return;
     guardarAjustes(e.target);

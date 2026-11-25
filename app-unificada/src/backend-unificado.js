@@ -355,6 +355,48 @@ export async function unificadaBorrarCaraCatalogo(clave) {
   }
 }
 
+// ---------- Dúos (2026-11-24, docs/protocolo-duos.md y formatos-datos.md; solo Pepito Pro) ----------
+// Catálogo duos/indice|datos (lee cualquier sesión, escribe un administrador). Lo sube el editor de dúos.
+
+/** Los dúos del catálogo: [{ clave, nombre, orden, duracion, portada }] (portada = 256×64 en Base64), o [] sin datos. */
+export async function unificadaListarDuos() {
+  const v = await leerNube('duos/indice');
+  if (!v || typeof v !== 'object') return [];
+  return Object.entries(v)
+    .filter(([, d]) => d && typeof d.nombre === 'string')
+    .map(([clave, d]) => ({ clave, nombre: d.nombre, orden: Number(d.orden) || 0, duracion: Number(d.duracion) || 0, portada: typeof d.portada === 'string' ? d.portada : '' }))
+    .sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+/** Editor del dueño: sube un dúo (las dos mitades m1 en Base64 y su índice con la portada). */
+export async function unificadaGuardarDuoCatalogo(clave, { nombre, orden, duracion, portada, izq, der }) {
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(clave))) return { exito: false, error: 'El nombre no sirve como clave.' };
+  try {
+    const m = await import(SDK_DB);
+    await m.update(m.ref(pro.db), {
+      [`duos/datos/${clave}`]: { izq, der },
+      [`duos/indice/${clave}`]: { nombre, orden, fecha: Date.now(), duracion, portada },
+    });
+    return { exito: true };
+  } catch (error) {
+    console.error('[Pepito] No se pudo subir el dúo al catálogo:', error);
+    return { exito: false, error: 'No se pudo subir: ' + pro.describirError(error) + '.' };
+  }
+}
+
+/** Editor del dueño: borra un dúo del catálogo (las TV que ya lo bajaron lo borran al leer el catálogo otra vez). */
+export async function unificadaBorrarDuoCatalogo(clave) {
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(clave))) return { exito: false, error: 'Clave no válida.' };
+  try {
+    const m = await import(SDK_DB);
+    await m.update(m.ref(pro.db), { [`duos/datos/${clave}`]: null, [`duos/indice/${clave}`]: null });
+    return { exito: true };
+  } catch (error) {
+    console.error('[Pepito] No se pudo borrar el dúo del catálogo:', error);
+    return { exito: false, error: 'No se pudo borrar: ' + pro.describirError(error) + '.' };
+  }
+}
+
 /** La ciudad para el clima del Pepito Pro en uso: { nombre, lat, lon } o null. */
 export async function unificadaCiudad() {
   if (tvLite) return null;

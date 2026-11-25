@@ -10,7 +10,7 @@ const { codificarMusical } = await import(pathToFileURL(path.join(path.dirname(f
 // Una canción de prueba en el catálogo: 440 Hz de 0 a 1 s, silencio hasta 1,5 s y 880 Hz hasta 3 s.
 const negro1024 = new Uint8Array(1024);
 const cancionM1 = await codificarMusical({ notas: [{ t: 0, f: 440 }, { t: 1000, f: 0 }, { t: 1500, f: 880 }], cuadros: [{ t: 0, bitmap: negro1024 }], duracion: 3000, repetir: false });
-const semilla = { usuarios: { 'uid-ana': { dispositivos: { tv1: true } } }, dispositivos: { tv1: { dueno: 'uid-ana', oled_remota: { version: 3, pantalla: { tipo: 'texto', texto: 'Hola', config: {} } } } }, musicales: { indice: { cumple: { nombre: 'Cumpleaños feliz', duracion: 3000 } }, datos: { cumple: cancionM1.datos } } };
+const semilla = { administradores: { 'uid-ana': true }, usuarios: { 'uid-ana': { dispositivos: { tv1: true } } }, dispositivos: { tv1: { dueno: 'uid-ana', oled_remota: { version: 3, pantalla: { tipo: 'texto', texto: 'Hola', config: {} } } } }, musicales: { indice: { cumple: { nombre: 'Cumpleaños feliz', duracion: 3000 } }, datos: { cumple: cancionM1.datos } } };
 
 // GIF de 2 colores, ancho×alto, con un cuadrado blanco que avanza (LZW sin compresión real: CLEAR cada 2 puntos, así el
 // ancho del código queda en 3 bits).
@@ -249,6 +249,29 @@ await pagina.click('#botonProbar');
 await pagina.waitForFunction(() => /Listo: mira tu Pepito/.test(document.getElementById('aviso').textContent), null, { timeout: 15000 });
 const o = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota);
 informe('probar: la mitad derecha llega como canción con letra, sin clave y con su archivo m1', o.pantalla.tipo === 'musical' && !o.pantalla.musical.clave && /\(derecha\)$/.test(o.pantalla.musical.nombre) && o.archivo && o.archivo.datos === paquetePr.der.datos && paquetePr.der.datos !== paquetePr.izq.datos && o.archivo.version === o.version, JSON.stringify(o.pantalla.musical) + ' v=' + o.version + ' archivo=' + JSON.stringify(o.archivo && { version: o.archivo.version, largo: (o.archivo.datos || '').length }));
+
+// ---- Catálogo (administrador): subir con dos toques, verlo en la lista y borrarlo con dos toques ----
+await pagina.waitForFunction(() => !document.getElementById('botonSubir').disabled, null, { timeout: 10000 });
+const [bajadaCat] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonPaquete')]);
+const paqueteCat = JSON.parse(fs.readFileSync(await bajadaCat.path(), 'utf8'));
+await pagina.fill('#ordenCatalogo', '3');
+await pagina.click('#botonSubir');
+await pagina.waitForTimeout(300);
+const antesDeSubir = await pagina.evaluate(() => !!(globalThis.__fakeDb.raiz.duos));
+informe('catálogo: el primer toque de Subir solo pide confirmar', !antesDeSubir && /Toca otra vez/.test(await pagina.textContent('#aviso')));
+await pagina.click('#botonSubir');
+await pagina.waitForFunction(() => /está en el catálogo/.test(document.getElementById('aviso').textContent), null, { timeout: 15000 });
+const cat = await pagina.evaluate(() => globalThis.__fakeDb.raiz.duos);
+const claveCat = Object.keys(cat.indice)[0];
+const ind = cat.indice[claveCat];
+informe('catálogo: sube las dos mitades y el índice con su portada de 256×64', claveCat === paqueteCat.clave && cat.datos[claveCat].izq === paqueteCat.izq.datos && cat.datos[claveCat].der === paqueteCat.der.datos && ind.nombre === paqueteCat.nombre && ind.orden === 3 && ind.duracion === paqueteCat.duracion && ind.portada.length === 2732 && typeof ind.fecha === 'number', JSON.stringify({ claveCat, orden: ind.orden, portada: ind.portada && ind.portada.length }));
+await pagina.waitForFunction(() => document.querySelectorAll('#listaCatalogo li[data-clave]').length === 1, null, { timeout: 10000 });
+informe('catálogo: aparece en la lista con su portada', await pagina.evaluate(() => !!document.querySelector('#listaCatalogo li[data-clave] canvas')));
+await pagina.click('#listaCatalogo li[data-clave] button');
+await pagina.click('#listaCatalogo li[data-clave] button');
+await pagina.waitForFunction(() => /ya no está en el catálogo/.test(document.getElementById('aviso').textContent), null, { timeout: 15000 });
+const trasBorrar = await pagina.evaluate(() => globalThis.__fakeDb.raiz.duos);
+informe('catálogo: Borrar (dos toques) lo quita de los datos y del índice', !trasBorrar || (!(trasBorrar.indice || {})[claveCat] && !(trasBorrar.datos || {})[claveCat]), JSON.stringify(trasBorrar));
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();

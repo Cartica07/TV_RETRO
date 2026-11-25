@@ -54,6 +54,22 @@ export function partirEscena(escena) {
   return { izq, der };
 }
 
+/** Lo contrario de partirEscena: las dos mitades (1024 bytes cada una) → la escena de 256×64 (2048 bytes). */
+export function juntarEscena(izq, der) {
+  if (!izq || !der || izq.length !== BYTES_PANTALLA || der.length !== BYTES_PANTALLA) throw new Error('Cada mitad mide 1024 bytes');
+  const escena = new Uint8Array(2 * BYTES_PANTALLA);
+  for (let y = 0; y < ALTO; y++) {
+    escena.set(izq.subarray(y * 16, y * 16 + 16), y * 32);
+    escena.set(der.subarray(y * 16, y * 16 + 16), y * 32 + 16);
+  }
+  return escena;
+}
+
+/** La portada del paquete como una sola imagen de 256×64 en Base64 (2 732 letras): la del catálogo de la nube (duos/indice). */
+export function portadaEscena(paquete) {
+  return aBase64(juntarEscena(deBase64(paquete.portada.izq), deBase64(paquete.portada.der)));
+}
+
 const igual = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 const limitar = (ms) => Math.min(MAX_CUADRO_MS, Math.max(MIN_CUADRO_MS, Math.round(ms)));
 

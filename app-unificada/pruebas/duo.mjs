@@ -31,6 +31,12 @@ const igual = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
   let error = '';
   try { D.partirEscena(new Uint8Array(1024)); } catch (e) { error = e.message; }
   informe('una escena que no mide 256×64 se rechaza', /256×64/.test(error));
+  // Juntar (para la portada del catálogo) es lo contrario de partir.
+  const vuelta = D.juntarEscena(izq, der);
+  informe('juntar las mitades devuelve la misma escena', igual(vuelta, escena));
+  const pFalso = { portada: { izq: D.aBase64(izq), der: D.aBase64(der) } };
+  const portada = D.portadaEscena(pFalso);
+  informe('la portada del catálogo es la escena de 256×64 en Base64 (2732 letras)', portada.length === 2732 && igual(D.deBase64(portada), escena), String(portada.length));
 }
 
 // ---- Invertir ----
