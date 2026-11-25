@@ -411,6 +411,11 @@ if (!sinPepito) {
       return etiqueta.replace(/\stitle="[^"]*"/, '');
     });
     if (/\stitle="/.test(h)) throw new Error('Quedó algún title en index.html: revisa app-unificada/construir.mjs');
+    // Título de la pantalla de inicio de sesión en mayúscula (dueño, 2026-11-25). Solo esa: la de "¿Qué Pepito tienes?" usa la
+    // misma etiqueta, así que se reconoce por el subtítulo que la sigue.
+    const conTitulo = h.replace(/(<h1 class="login-titulo">)Pepito(<\/h1>\s*<p class="login-subtitulo" id="loginSubtitulo">)/, '$1PEPITO$2');
+    if (conTitulo === h) throw new Error('index.html ya no tiene el título del inicio de sesión: revisa app-unificada/construir.mjs');
+    h = conTitulo;
     writeFileSync(rutaHtml, h);
     const rutaMain = join(www, 'js', 'main.js');
     const m = readFileSync(rutaMain, 'utf8');

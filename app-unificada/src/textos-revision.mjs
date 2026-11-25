@@ -138,3 +138,15 @@ TEXTOS_REVISION.push(
   // Sistema: el mismo texto que al no poder conectar en un envío
   ['js/mas.js', "'No se pudo conectar con Pepito. Acércate y vuelve a abrir esta pantalla.'", "'No se pudo conectar con Pepito. Acércate y vuelve a intentarlo.'", 1],
 );
+
+// ---- Pantallas de cuenta (lista de cuentas, 2026-11-25) ----
+TEXTOS_REVISION.push(
+  ['index.html', 'Inicia sesión para controlar tu pantalla.', 'Inicia sesión para controlar tu Pepito.', 1],
+  ['js/cuentas.js', "'Crea tu cuenta para controlar tu pantalla.' : 'Inicia sesión para controlar tu pantalla.'", "'Crea tu cuenta para controlar tu Pepito.' : 'Inicia sesión para controlar tu Pepito.'", 1],
+  ['js/cuentas.js', "'Elige cuál usar o añade otra con su código.'", "'Elige cuál usar o añade otro con su código.'", 1],
+  ['js/cuentas.js', "'Compartida contigo'", "'Compartido contigo'", 1],
+  ['js/cuentas.js', "'No se pudo cargar tus Pepitos'", "'No se pudieron cargar tus Pepitos'", 1],
+  ['js/firebase-pro.js', "Pide uno nuevo en Pepito.'", "Pide uno nuevo en tu Pepito.'", 1],
+  ['js/firebase-pro.js', "'La conexión está lenta. Vuelve a intentarlo.'", "'Conexión lenta. Vuelve a intentarlo.'", 18],
+  ['index.html', 'Se borrará tu cuenta y todo lo que guardaste.', 'Se borrará tu cuenta y todo el contenido que guardaste.', 1],
+);
