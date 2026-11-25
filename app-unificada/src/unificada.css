@@ -507,3 +507,19 @@ body.tv-lite .nota-alarma-pro,
 body:not(.tv-lite) .nota-alarma-lite {
   display: none;
 }
+
+/* 7) Celulares bajos (hasta 760 de alto, como 360x740): los espacios nuevos de arriba harían que la página se deslizara unos puntos, y cada
+   pestaña tiene que entrar SIN scroll. Aquí se recupera ese espacio sin quitar lo que se pidió: Invertir baja menos y la tarjeta no crece, y el
+   espacio extra de Alineación es de 3 puntos (en vez de 6). En celulares más altos queda todo como arriba. */
+@media (max-height: 760px) {
+  .franja-inferior {
+    margin-top: 10px;
+  }
+  .dispositivo {
+    padding-bottom: 0;
+  }
+  #filaAlineacionAuto,
+  #filaAlineacionManual {
+    padding-top: 3px;
+  }
+}

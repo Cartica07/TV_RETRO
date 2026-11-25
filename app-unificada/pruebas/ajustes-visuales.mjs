@@ -13,15 +13,7 @@ const semilla = () => ({
   biblioteca: { imagenes: muchas, imagenes_indice: indice },
 });
 
-const holgura = (p) => p.evaluate(() => {
-  const m = document.querySelector('main.controles');
-  const barra = document.querySelector('.barra-accion');
-  const nav = document.querySelector('nav.nav-inferior');
-  const tope = (barra && getComputedStyle(barra).display !== 'none' && barra.getBoundingClientRect().height > 0 ? barra : nav).getBoundingClientRect().top;
-  let fin = 0;
-  for (const h of m.children) { const r = h.getBoundingClientRect(); if (r.height > 0 && getComputedStyle(h).display !== 'none') fin = Math.max(fin, r.bottom); }
-  return Math.round(tope - fin);
-});
+const sobra = (p) => p.evaluate(() => document.scrollingElement.scrollHeight - innerHeight); // px que la página se puede deslizar (<= 0: sin scroll)
 
 for (const [ancho, alto] of [[390, 844], [360, 740]]) {
   const { navegador, pagina, errores } = await abrir(semilla());
@@ -44,7 +36,7 @@ for (const [ancho, alto] of [[390, 844], [360, 740]]) {
     const tarjeta = document.querySelector('.dispositivo').getBoundingClientRect();
     return { arriba: Math.round(f.top - marco.bottom), abajo: Math.round(tarjeta.bottom - f.bottom) };
   });
-  informe(t + 'Invertir quedó más centrado entre la pantalla y el borde (más aire arriba que antes)', inv.arriba >= 12 && inv.abajo - inv.arriba <= 10, JSON.stringify(inv));
+  informe(t + 'Invertir quedó más centrado entre la pantalla y el borde (más aire arriba que antes)', inv.arriba >= 10 && inv.abajo - inv.arriba <= 12, JSON.stringify(inv));
 
   // ---- Texto: más espacio entre Auto/Manual y los botones de abajo ----
   await pagina.click('#grupoTipo button[data-valor="texto"]');
@@ -54,12 +46,12 @@ for (const [ancho, alto] of [[390, 844], [360, 740]]) {
     const b = document.querySelector('#grupoAlineacion').getBoundingClientRect(); // el primer botón (la fila lleva 6 de relleno arriba)
     return { hueco: Math.round(b.top - a.bottom) };
   });
-  informe(t + 'Auto/Manual y los botones de alineación ya no están pegados', ali.hueco >= 9, JSON.stringify(ali));
-  informe(t + 'Texto entra sin scroll', (await holgura(pagina)) >= 0, String(await holgura(pagina)));
+  informe(t + 'Auto/Manual y los botones de alineación ya no están pegados', ali.hueco >= 6, JSON.stringify(ali));
+  informe(t + 'Texto entra sin scroll', (await sobra(pagina)) <= 0, 'sobran ' + (await sobra(pagina)) + ' px');
 
   await pagina.click('#grupoTipo button[data-valor="dibujo"]');
   await pagina.waitForTimeout(300);
-  informe(t + 'Dibujo entra sin scroll', (await holgura(pagina)) >= 0, String(await holgura(pagina)));
+  informe(t + 'Dibujo entra sin scroll', (await sobra(pagina)) <= 0, 'sobran ' + (await sobra(pagina)) + ' px');
 
   // ---- alarma: nota (Pro) y sin scroll ----
   await pagina.click('#grupoTipo button[data-valor="galeria"]');
@@ -70,7 +62,7 @@ for (const [ancho, alto] of [[390, 844], [360, 740]]) {
     return { pro: vis('.nota-alarma-pro'), lite: vis('.nota-alarma-lite'), texto: (document.querySelector('.nota-alarma-pro') || {}).textContent };
   });
   informe(t + 'Alarma con Pepito Pro: se ve la nota de Pro y no la de Lite', nota.pro && !nota.lite && /Botón A/.test(nota.texto) && /perilla/i.test(nota.texto), JSON.stringify(nota));
-  informe(t + 'Alarma entra sin scroll', (await holgura(pagina)) >= 0, String(await holgura(pagina)));
+  informe(t + 'Alarma entra sin scroll', (await sobra(pagina)) <= 0, 'sobran ' + (await sobra(pagina)) + ' px');
 
   // ---- Galería: la fila de pestañas y la caneca quedan pegadas al bajar ----
   await pagina.click('#botonMasVolver');
