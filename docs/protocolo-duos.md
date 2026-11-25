@@ -19,6 +19,11 @@
 - ESP-NOW en el **canal actual** del Wi-Fi (par con canal 0). Dos Pro en la misma casa están en el canal de su router.
   Con dos routers distintos (otra casa) no se encuentran todavía: queda para más adelante (soltar el Wi-Fi unos segundos y
   buscar por los canales).
+- **El canal va dentro del HOLA (2026-11-24, tras la primera prueba en la placa):** pegadas, una TV oye a la otra aunque esté
+  sintonizada 2 o 3 canales más allá (los canales de 2,4 GHz se pisan). La ESP8266 de pruebas se quedaba en un canal vecino
+  (6 o 9) y su respuesta llegaba débil a la S3, que la descartaba por la regla de cercanía. Por eso la izquierda dice su canal
+  y una TV que puede cambiar de canal (la ESP8266, que no está en ningún router) se pone en ese. Una Pro conectada a su router
+  no cambia de canal: si los canales no coinciden, no contesta (dos routers distintos: más adelante).
 - Sin cifrado ESP-NOW (la seguridad está en la sesión, la cercanía y la ventana de tiempo: sección 6).
 - ESP-NOW se enciende solo cuando el Wi-Fi ya está en marcha (modo estación). Con el portal del Wi-Fi abierto no hay dúos
   (el portal corre antes del `loop()`).
@@ -41,8 +46,8 @@ tipo, o con otra marca o versión, se ignora.
 
 | Tipo | Nombre | De → a | Contenido (después de la cabecera) |
 |---|---|---|---|
-| 1 | HOLA | izquierda → todas (difusión) | `favorita` uint32, `n` uint8 (≤ 16), `claves` n × uint32: los dúos que tiene |
-| 2 | AQUI | derecha → izquierda | `n` uint8 (≤ 16), `claves` n × uint32 |
+| 1 | HOLA | izquierda → todas (difusión) | `favorita` uint32, `n` uint8 (≤ 16), `claves` n × uint32: los dúos que tiene; `canal` uint8: su canal Wi-Fi |
+| 2 | AQUI | derecha → izquierda | `n` uint8 (≤ 16), `claves` n × uint32; `canal` uint8: su canal Wi-Fi |
 | 3 | PING | izquierda → derecha | `numero` uint8 |
 | 4 | PONG | derecha → izquierda | `numero` uint8 (el mismo del PING) |
 | 5 | PREPARA | izquierda → derecha | `clave` uint32: el dúo elegido |
