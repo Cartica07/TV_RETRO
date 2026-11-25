@@ -67,7 +67,7 @@ copyFileSync(join(aqui, 'src', 'gif-unificado.js'), join(www, 'js', 'gif.js'));
 copyFileSync(join(aqui, 'src', 'anadir-lite.js'), join(www, 'js', 'anadir-lite.js'));
 copyFileSync(join(aqui, 'src', 'registro-lite.js'), join(www, 'js', 'registro-lite.js'));
 copyFileSync(join(aqui, 'src', 'teclado.js'), join(www, 'js', 'teclado.js'));
-for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
+for (const f of ['atras.js', 'buscar-canciones.js', 'barra-actualizar.js', 'cara.js', 'cara-datos.js', 'caras.js', 'duos.js']) copyFileSync(join(aqui, 'src', f), join(www, 'js', f));
 // Editor de caras de reloj (herramienta del dueño, solo administrador): www/editor-caras.html, no va en la APK.
 if (!paraApk) {
   copyFileSync(join(aqui, 'herramientas', 'editor-caras', 'editor-caras.html'), join(www, 'editor-caras.html'));
@@ -93,13 +93,13 @@ if (!paraApk) {
     writeFileSync(ruta, fuente);
   };
   parchar('mas.js', [
-    ["['juegos', 'galeria', 'alarma', 'config'].includes(vista)", "['juegos', 'galeria', 'alarma', 'config', 'caras'].includes(vista)"],
-    ["    if (masVista === 'alarma') abrirAlarma();", "    if (masVista === 'alarma') abrirAlarma();\n    if (masVista === 'caras') window.dispatchEvent(new CustomEvent('pepito-abrir-caras'));"],
+    ["['juegos', 'galeria', 'alarma', 'config'].includes(vista)", "['juegos', 'galeria', 'alarma', 'config', 'caras', 'duos'].includes(vista)"],
+    ["    if (masVista === 'alarma') abrirAlarma();", "    if (masVista === 'alarma') abrirAlarma();\n    if (masVista === 'caras') window.dispatchEvent(new CustomEvent('pepito-abrir-caras'));\n    if (masVista === 'duos') window.dispatchEvent(new CustomEvent('pepito-abrir-duos'));"],
   ]);
   parchar('main.js', [
-    ["  const enGaleria = enMas && obtenerMasVista() === 'galeria';", "  const enGaleria = enMas && obtenerMasVista() === 'galeria';\n  const enCaras = enMas && obtenerMasVista() === 'caras';"],
-    ["  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';", "  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';\n  { const sc = document.getElementById('seccionCaras'); if (sc) sc.style.display = enCaras ? 'block' : 'none'; }"],
-    ["enAlarma ? 'Alarma' :", "enAlarma ? 'Alarma' : enCaras ? 'Caras de reloj' :"],
+    ["  const enGaleria = enMas && obtenerMasVista() === 'galeria';", "  const enGaleria = enMas && obtenerMasVista() === 'galeria';\n  const enCaras = enMas && obtenerMasVista() === 'caras';\n  const enDuos = enMas && obtenerMasVista() === 'duos';"],
+    ["  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';", "  if (elementos.seccionAlarma) elementos.seccionAlarma.style.display = enAlarma ? 'block' : 'none';\n  { const sc = document.getElementById('seccionCaras'); if (sc) sc.style.display = enCaras ? 'block' : 'none'; }\n  { const sd = document.getElementById('seccionDuos'); if (sd) sd.style.display = enDuos ? 'block' : 'none'; }"],
+    ["enAlarma ? 'Alarma' :", "enAlarma ? 'Alarma' : enCaras ? 'Caras de reloj' : enDuos ? 'Dúos' :"],
   ]);
 }
 
@@ -355,7 +355,7 @@ cambiar(/(<p class="dato-cuenta" id="sistemaEstadoActualizar"[^>]*><\/p>)/,
 if (!sinPepito) cambiar(/(connect-src 'self')/, "$1 https://geocoding-api.open-meteo.com", 'la política de seguridad (connect-src)');
 // atras.js va ANTES que main.js (envuelve el botón Atrás antes de que la Pro lo escuche); lo demás, después.
 cambiar(/(<script type="module" src="js\/main\.js"><\/script>)/,
-  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>',
+  '<script type="module" src="js/atras.js"></script>\n$1\n<script type="module" src="js/anadir-lite.js"></script>\n<script type="module" src="js/teclado.js"></script>\n<script type="module" src="js/buscar-canciones.js"></script>\n<script type="module" src="js/barra-actualizar.js"></script>\n<script type="module" src="js/caras.js"></script>\n<script type="module" src="js/duos.js"></script>',
   'el script js/main.js');
 
 if (paraApk) {

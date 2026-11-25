@@ -397,6 +397,34 @@ export async function unificadaBorrarDuoCatalogo(clave) {
   }
 }
 
+/** Más > Dúos: { exito, activos, favorito } del Pepito Pro en uso (ajustes.duos, si falta = activados; ajustes.duoFavorito). */
+export async function unificadaDuosAjustes() {
+  if (tvLite) return { exito: false, error: 'Esto no está disponible en un Pepito Lite' };
+  const r = await pro.cargarAjustes();
+  if (!r || !r.exito) return { exito: false, error: (r && r.error) || 'No se pudo leer los ajustes' };
+  const a = r.ajustes || {};
+  return { exito: true, activos: a.duos !== false, favorito: typeof a.duoFavorito === 'string' ? a.duoFavorito : '' };
+}
+
+/** Más > Dúos: guarda solo lo de esa pantalla ({ duos } o { duoFavorito }); lo demás se toma de lo guardado justo ahora. */
+export async function unificadaGuardarDuosAjustes(cambios) {
+  if (tvLite) return { exito: false, error: 'Esto no está disponible en un Pepito Lite' };
+  const propios = Object.keys(cambios || {}).filter((k) => k === 'duos' || k === 'duoFavorito');
+  if (!propios.length) return { exito: false, error: 'Nada que guardar' };
+  const r = await pro.cargarAjustes();
+  if (!r || !r.exito) return { exito: false, error: (r && r.error) || 'No se pudo leer los ajustes' };
+  const datos = Object.assign({}, r.ajustes, cambios);
+  return pro.guardarAjustes(datos, Object.assign({}, ultimoEstado || ESTADO_MINIMO), propios);
+}
+
+/** ¿El Pepito Pro en uso ya tiene dúos? true / false (hay que actualizarlo) / null (no se sabe). La primera con dúos: la 12. */
+export async function unificadaPuedeDuos() {
+  if (tvLite) return false;
+  const s = await pro.cargarSistema();
+  if (!s || !s.exito) return null;
+  return !!(s.firmware && s.firmware.build >= 12);
+}
+
 /** La ciudad para el clima del Pepito Pro en uso: { nombre, lat, lon } o null. */
 export async function unificadaCiudad() {
   if (tvLite) return null;
