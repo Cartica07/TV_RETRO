@@ -395,6 +395,27 @@ if (!sinPepito) {
   }
   for (const [ruta, texto] of porArchivo) writeFileSync(ruta, texto);
 
+  // Sin textos de cursor (decisión del dueño, 2026-11-25): los "title" solo se ven al pasar el mouse, nunca en el celular. Se
+  // quitan de la copia. Si el elemento es solo un ícono (o un número, como el zoom) y no tiene nombre para el lector de pantalla
+  // (aria-label), el texto pasa a ser ese nombre: TalkBack no se queda mudo. Los aria-label se conservan.
+  {
+    const rutaHtml = join(www, 'index.html');
+    let h = readFileSync(rutaHtml, 'utf8');
+    h = h.replace(/<[a-zA-Z][^>]*\stitle="[^"]*"[^>]*>/g, (etiqueta) => {
+      const titulo = etiqueta.match(/\stitle="([^"]*)"/)[1];
+      const soloIcono = /class="[^"]*\b(boton-icono|indicador-zoom|switch)\b/.test(etiqueta);
+      if (!/\saria-label="/.test(etiqueta) && soloIcono) return etiqueta.replace(/\stitle="/, ' aria-label="');
+      return etiqueta.replace(/\stitle="[^"]*"/, '');
+    });
+    if (/\stitle="/.test(h)) throw new Error('Quedó algún title en index.html: revisa app-unificada/construir.mjs');
+    writeFileSync(rutaHtml, h);
+    const rutaMain = join(www, 'js', 'main.js');
+    const m = readFileSync(rutaMain, 'utf8');
+    const viejo = "elementos.botonFondoImagen.title = blanco ? 'Fondo: blanco (toca para negro)' : 'Fondo: negro (toca para blanco)';";
+    if (contar(m, viejo) !== 1) throw new Error('js/main.js de la Pro ya no pone el title del botón de fondo: revisa app-unificada/construir.mjs');
+    writeFileSync(rutaMain, m.replace(viejo, "elementos.botonFondoImagen.removeAttribute('title'); // Pepito: sin textos de cursor"));
+  }
+
   // Revisión: ningún "TV" a la vista. En el HTML, fuera de los comentarios (los IDs como codigoTV no cuentan: no es una palabra
   // suelta). En el JS, dentro de textos entre comillas, sin contar comentarios ni mensajes de consola.
   const quedan = [];
