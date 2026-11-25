@@ -10,7 +10,7 @@ const { codificarMusical } = await import(pathToFileURL(path.join(path.dirname(f
 // Una canción de prueba en el catálogo: 440 Hz de 0 a 1 s, silencio hasta 1,5 s y 880 Hz hasta 3 s.
 const negro1024 = new Uint8Array(1024);
 const cancionM1 = await codificarMusical({ notas: [{ t: 0, f: 440 }, { t: 1000, f: 0 }, { t: 1500, f: 880 }], cuadros: [{ t: 0, bitmap: negro1024 }], duracion: 3000, repetir: false });
-const semilla = { usuarios: { 'uid-ana': { dispositivos: {} } }, musicales: { indice: { cumple: { nombre: 'Cumpleaños feliz', duracion: 3000 } }, datos: { cumple: cancionM1.datos } } };
+const semilla = { usuarios: { 'uid-ana': { dispositivos: { tv1: true } } }, dispositivos: { tv1: { dueno: 'uid-ana', oled_remota: { version: 3, pantalla: { tipo: 'texto', texto: 'Hola', config: {} } } } }, musicales: { indice: { cumple: { nombre: 'Cumpleaños feliz', duracion: 3000 } }, datos: { cumple: cancionM1.datos } } };
 
 // GIF de 2 colores, ancho×alto, con un cuadrado blanco que avanza (LZW sin compresión real: CLEAR cada 2 puntos, así el
 // ancho del código queda en 3 bits).
@@ -234,6 +234,19 @@ await verEn(0);
 const conTexto = await puntos('vistaIzq');
 informe('texto encima: "Hola" aparece en el Pepito izquierdo (que estaba en negro)', sinTexto === 0 && conTexto > 0, `${sinTexto} -> ${conTexto}`);
 await pagina.fill('#textoEncima', '');
+
+// ---- Probar en mi Pepito: la mitad elegida va a la Pepito Pro de la cuenta como canción con letra sin clave ----
+await pagina.waitForTimeout(700);
+const versionAntes = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
+await pagina.selectOption('#probarMitad', 'der');
+await pagina.click('#botonProbar');
+await pagina.waitForTimeout(400);
+const sinEnviar = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
+informe("probar: el primer toque solo pide confirmar (no envía)", sinEnviar === versionAntes && /Toca otra vez/.test(await pagina.textContent("#aviso")), String(versionAntes) + " " + String(sinEnviar) + " " + await pagina.textContent("#aviso"));
+await pagina.click('#botonProbar');
+await pagina.waitForFunction(() => /Listo: mira tu Pepito/.test(document.getElementById('aviso').textContent), null, { timeout: 15000 });
+const o = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota);
+informe('probar: la mitad derecha llega como canción con letra, sin clave y con su archivo m1', o.pantalla.tipo === 'musical' && !o.pantalla.musical.clave && /\(derecha\)$/.test(o.pantalla.musical.nombre) && o.archivo && o.archivo.datos.length > 0 && o.archivo.version === o.version, JSON.stringify(o.pantalla.musical) + ' v=' + o.version + ' archivo=' + JSON.stringify(o.archivo && { version: o.archivo.version, largo: (o.archivo.datos || '').length }));
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();

@@ -6,7 +6,7 @@ import { decodificarGif, comprobarTamanoArchivo, esGif } from './gif.js';
 import { acomodarEnDestino, grisesDeCanvas, grisABitmapAtkinson, grisABitmapUmbral } from './imageProcessor.js';
 import { codificarMusical, decodificarMusical } from './compresion.js';
 import * as D from './duo.js';
-import { escucharSesion, iniciarSesion, listarMusicales, leerMusical } from './firebase.js';
+import { escucharSesion, iniciarSesion, listarMusicales, leerMusical, listarMisDispositivos, usarCuenta, enviarEstado } from './firebase.js';
 import { dibujarOLED } from './renderer.js';
 
 const $ = (id) => document.getElementById(id);
@@ -513,7 +513,7 @@ function mostrarDatos(texto, mal = false) {
   $('datos').classList.toggle('mal', !!mal);
 }
 function habilitar(si) {
-  for (const id of ['botonReproducir', 'botonPaquete', 'botonCabecera', 'barraTiempo']) $(id).disabled = !si;
+  for (const id of ['botonReproducir', 'botonPaquete', 'botonCabecera', 'barraTiempo', 'botonProbar']) $(id).disabled = !si;
   if (si && ultimo) $('barraTiempo').max = String(ultimo.duo.duracion);
   if (!si) $('barraTexto').textContent = '';
 }
@@ -559,6 +559,36 @@ async function cargarCanciones() {
   actualizarPaneles();
 }
 
+// Probar en mi Pepito (2026-11-24): manda una mitad del dúo a la Pepito Pro de la cuenta como una canción con letra SIN clave del
+// catálogo (la forma anterior: el m1 va en oled_remota/archivo; la v11 la sigue aceptando). Nada nuevo en Firebase. Dos toques:
+// el primero pide confirmar.
+let sesionUid = null;
+let confirmarProbar = false;
+async function probarEnMiPepito() {
+  if (!ultimo) return;
+  if (!sesionUid) { aviso('Entra con tu cuenta (arriba) para probar en tu Pepito.', true); return; }
+  if (!confirmarProbar) {
+    confirmarProbar = true;
+    aviso('Toca otra vez "Enviar a mi Pepito" para mandar esa mitad (se verá como una canción con letra).');
+    setTimeout(() => { confirmarProbar = false; }, 8000);
+    return;
+  }
+  confirmarProbar = false;
+  const lista = await listarMisDispositivos(sesionUid);
+  const id = lista && lista.exito ? lista.dispositivos.find((d) => !String(d).startsWith('lite:')) : null;
+  if (!id) { aviso('No encontré un Pepito Pro en tu cuenta.', true); return; }
+  usarCuenta(sesionUid, id);
+  const tv = valor('probarMitad');
+  aviso('Enviando a tu Pepito…');
+  const r = await enviarEstado({
+    tipo: 'musical', texto: '', tamano: 2, alineacion: 'centro', alineacionV: 'centro', invertido: false, modoTexto: 'ajustar',
+    fuente: 'sans', manual: false, x: 0, y: 0, direccion: 'h',
+    musicalNombre: (ultimo.paquete.nombre || 'Dúo') + (tv === 'izq' ? ' (izquierda)' : ' (derecha)'), musicalRepeticiones: 1,
+    musicalDatos: ultimo.paquete[tv].datos,
+  });
+  aviso(r && r.exito ? 'Listo: mira tu Pepito.' : (r && r.error) ? `No se pudo enviar: ${r.error}.` : 'No se pudo enviar.', !(r && r.exito));
+}
+
 function iniciarCuenta() {
   $('formEntrar').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -568,6 +598,7 @@ function iniciarCuenta() {
     if (!r || !r.exito) $('estadoCuenta').textContent = (r && r.error) || 'No se pudo entrar.';
   });
   escucharSesion((usuario) => {
+    sesionUid = usuario ? usuario.uid : null;
     $('formEntrar').hidden = !!usuario;
     if (usuario) {
       $('estadoCuenta').textContent = `Sesión iniciada: ${usuario.email}. Tus canciones están en la lista de sonidos.`;
@@ -701,11 +732,13 @@ function iniciar() {
     ponerAjustesEnPantalla(ajustes[editando] || ajustes.general);
   });
   $('botonGuardarProyecto').addEventListener('click', guardarProyecto);
+  $('botonProbar').addEventListener('click', () => { probarEnMiPepito().catch(fallo); });
   $('botonPortadaAqui').addEventListener('click', () => { $('portadaMs').value = $('barraTiempo').value; programar(); });
   iniciarCuenta();
   $('archivoAbrir').addEventListener('change', (e) => { abrirArchivo(e.target).catch(fallo); });
 
-  const soloVista = (el) => el && (el.id === 'barraTiempo' || el.id === 'conSonido'); // no cambian el dúo
+  // No cambian el dúo: no se vuelve a armar (ni se borra el aviso) al tocarlos.
+  const soloVista = (el) => el && ['barraTiempo', 'conSonido', 'probarMitad', 'correo', 'clave'].includes(el.id);
   document.addEventListener('change', (e) => {
     if (!e.target || e.target.type === 'file' || soloVista(e.target)) return;
     guardarAjustes(e.target);
