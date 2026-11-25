@@ -103,5 +103,38 @@ for (const [ancho, alto] of [[390, 844], [360, 740]]) {
   await navegador.close();
 }
 
+// ---- con un toque de verdad (emulación táctil): el botón desactivado vuelve a verse igual que los demás, y sin el arreglo se reproduce el marco azul pegado ----
+{
+  const { navegador, pagina } = await abrir(semilla());
+  await esperarPanel(pagina);
+  const cdp = await pagina.context().newCDPSession(pagina);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await pagina.reload();
+  await esperarPanel(pagina);
+  await pagina.click('#grupoTipo button[data-valor="dibujo"]');
+  await pagina.waitForTimeout(400);
+  const tactil = await pagina.evaluate(() => matchMedia('(hover: none)').matches);
+  const color = (id) => pagina.evaluate((i) => { const c = getComputedStyle(document.getElementById(i)); return c.borderTopColor + ' | ' + c.color; }, id);
+  const toque = async (id) => {
+    const b = await pagina.locator('#' + id).boundingBox();
+    const punto = [{ x: b.x + b.width / 2, y: b.y + b.height / 2 }];
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: punto });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await pagina.waitForTimeout(450);
+  };
+  const normal = await color('botonRehacerDibujo');
+  await toque('botonGomaDibujo');
+  await toque('botonGomaDibujo');
+  const desactivado = await color('botonGomaDibujo');
+  informe('táctil: la pantalla se ve como táctil (hover: none)', tactil);
+  informe('táctil: la goma desactivada queda igual que un botón normal (sin marco azul pegado)', desactivado === normal, normal + ' / ' + desactivado);
+  await pagina.evaluate(() => document.querySelectorAll('link[href*="unificada.css"]').forEach((l) => { l.disabled = true; }));
+  await toque('botonGomaDibujo');
+  await toque('botonGomaDibujo');
+  const sinArreglo = await color('botonGomaDibujo');
+  informe('táctil: sin el arreglo se reproduce el marco azul pegado (la prueba sirve)', sinArreglo !== normal, sinArreglo);
+  await navegador.close();
+}
+
 cerrar();
 process.exit(0);
