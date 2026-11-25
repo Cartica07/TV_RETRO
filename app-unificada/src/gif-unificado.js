@@ -18,10 +18,10 @@ export function evaluarPesoComprimido(bytesComprimidos, cantidadCuadros) {
   const kb = Math.round(bytes / 1024);
   const n = cantidadCuadros || 0;
   if (bytes > PESO_COMPRIMIDO_MAXIMO_LITE_BYTES) {
-    return { bytes, kb, cuadros: n, nivel: 'muy-pesado', mensaje: 'GIF muy pesado, puede tardar en llegar' };
+    return { bytes, kb, cuadros: n, nivel: 'muy-pesado', mensaje: 'GIF muy pesado, tardará en llegar' };
   }
   if (bytes > PESO_COMPRIMIDO_RECOMENDADO_LITE_BYTES) {
-    return { bytes, kb, cuadros: n, nivel: 'pesado', mensaje: 'GIF pesado: tardará un poco más de lo normal en llegar' };
+    return { bytes, kb, cuadros: n, nivel: 'pesado', mensaje: 'GIF pesado, tardará un poco en llegar' };
   }
   return { bytes, kb, cuadros: n, nivel: 'ok', mensaje: '' };
 }

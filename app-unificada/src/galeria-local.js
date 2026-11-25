@@ -99,7 +99,7 @@ export async function guardar(tipo, nombre, payload) {
   const indice = await cargarIndice(tipo);
   if (!Object.prototype.hasOwnProperty.call(indice, clave)) {
     if (tipo === 'animaciones' && Object.keys(indice).length + 1 > LIMITE_GIF) {
-      return { exito: false, error: `llegaste al límite de ${LIMITE_GIF} GIF (animaciones) guardados; borra alguno para guardar otro` };
+      return { exito: false, error: `llegaste al límite de ${LIMITE_GIF} GIF guardados; borra alguno para poder guardar otro` };
     }
     if (tipo === 'imagenes' && Object.keys(indice).length + 1 > LIMITE_IMAGENES) {
       return { exito: false, error: `llegaste al límite de ${LIMITE_IMAGENES} imágenes guardadas; borra alguna para guardar otra` };

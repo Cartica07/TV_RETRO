@@ -178,7 +178,7 @@ const esperarFin = (p, ms = 60000) => p.waitForFunction(() => {
   const a1 = await ancho(pagina);
   const tPro = await txt(pagina, '#sistemaEstadoActualizar');
   informe('Pro: la barra aparece y avanza sola, lejos del 100 % a los 9 s', (await visible(pagina, '#barraActualizar')) && a1 > 0 && a1 < 40, String(a1));
-  informe('Pro: el texto de la Pro (no el de la Lite)', /no desconectes a Pepito/.test(tPro), tPro);
+  informe('Pro: el texto de la Pro (no el de la Lite)', /no apagues a Pepito/.test(tPro), tPro);
   await tvEscribe({ build: 8, estado: 'reiniciando', fecha: 3000 });
   await pagina.waitForTimeout(300);
   await tvEscribe({ build: 9, estado: 'ok', fecha: 4000 });

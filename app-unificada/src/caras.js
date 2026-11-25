@@ -12,11 +12,11 @@ import { alAtras } from './atras.js';
 // Textos: "Actualiza tu Pepito para cambiar la cara del reloj." lo dictó el dueño; los demás son PROPUESTAS
 // (docs/lite-textos-propuestos.md, filas 51 a 53).
 const TEXTO_ACTUALIZA = 'Actualiza tu Pepito para cambiar la cara del reloj.';
-const TEXTO_LISTO = 'Pepito ya tiene esta cara ✅';
+const TEXTO_LISTO = 'Listo ✅'; // ronda de textos del 2026-11-25 (antes "Pepito ya tiene esta cara ✅")
 const TEXTO_ERROR = 'No se pudo enviar. Vuelve a intentarlo.';
 const TEXTO_ENVIANDO = 'Enviando…';
 // El de siempre del panel con la señal lenta (main.js de la Pro).
-const TEXTO_LENTO = 'La conexión está lenta: se enviará solo cuando vuelva la señal.';
+const TEXTO_LENTO = 'Conexión lenta: se enviará cuando vuelva la señal.';
 // Ciudad para el clima (opción A del dueño, 2026-11-24; textos 54 a 57 aprobados).
 const TEXTO_SIN_CLIMA = 'Sin clima';
 const TEXTO_NO_ENCONTRADA = 'No encontramos esa ciudad.';

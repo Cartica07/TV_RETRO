@@ -36,7 +36,7 @@ const conTV = (texto) => texto.split('\n').filter((l) => /\bTV\b/.test(l)).map((
   await pagina.click('#enviar');
   await pagina.waitForFunction(() => /Pepito/.test(document.getElementById('estadoTexto').textContent), null, { timeout: 15000 }).catch(() => {});
   const estado = await pagina.innerText('#estadoTexto');
-  informe('al enviar dice "…camino a Pepito" o "En Pepito ✅"', /camino a Pepito|En Pepito/.test(estado), estado);
+  informe('al enviar dice "Llegando a Pepito…" o "Llegó ✅"', /Llegando a Pepito|Llegó/.test(estado), estado);
   await pagina.evaluate(() => document.getElementById('botonMiTV').click());
   await pagina.waitForSelector('#pantallaTV:not([hidden])');
   const mis = await pagina.innerText('#pantallaTV');

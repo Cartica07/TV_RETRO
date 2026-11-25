@@ -63,7 +63,7 @@ const enviarYEsperar = async (p) => {
   const raiz = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
   const reloj = raiz.dispositivos.tv1.reloj;
   informe('Pro: guarda la cara en dispositivos/tv1/reloj (clave y receta)', reloj && reloj.clave === 'cara2' && reloj.datos === b64(CARA2), JSON.stringify(reloj).slice(0, 80));
-  informe('Pro: le manda a la TV la orden "ajustes" y dice que listo', raiz.dispositivos.tv1.oled_remota.pantalla.tipo === 'ajustes' && aviso === 'Pepito ya tiene esta cara ✅', aviso);
+  informe('Pro: le manda a la TV la orden "ajustes" y dice que listo', raiz.dispositivos.tv1.oled_remota.pantalla.tipo === 'ajustes' && aviso === 'Listo ✅', aviso);
   await pagina.selectOption('#caraLista', ''); await pagina.waitForTimeout(300);
   await enviarYEsperar(pagina);
   const raiz2 = await pagina.evaluate(() => globalThis.__fakeDb.raiz);
@@ -88,8 +88,8 @@ const enviarYEsperar = async (p) => {
   await pagina.evaluate(() => globalThis.__fakeDb.soltar());
   await pagina.waitForTimeout(1500);
   const alFinal = await txt(pagina, '#caraAviso');
-  informe('Pro: sin señal avisa "La conexión está lenta…", suelta el botón y al volver la señal dice que listo',
-    lento.aviso === 'La conexión está lenta: se enviará solo cuando vuelva la señal.' && lento.libre && alFinal === 'Pepito ya tiene esta cara ✅',
+  informe('Pro: sin señal avisa "Conexión lenta…", suelta el botón y al volver la señal dice que listo',
+    lento.aviso === 'Conexión lenta: se enviará cuando vuelva la señal.' && lento.libre && alFinal === 'Listo ✅',
     JSON.stringify({ lento, alFinal }));
   // ---- Ciudad para el clima (opción A): solo con una cara que muestra el clima ----
   const GEO = 'https://geocoding-api.open-meteo.com/**';
@@ -158,7 +158,7 @@ const enviarYEsperar = async (p) => {
   await pagina.selectOption('#caraLista', 'cara2'); await pagina.waitForTimeout(400);
   const aviso = await enviarYEsperar(pagina);
   let e = await estadoTV(pagina);
-  informe('Lite: la cara llega por Bluetooth tal cual (bit 4)', aviso === 'Pepito ya tiene esta cara ✅' && e.cara && Buffer.from(e.cara).equals(Buffer.from(CARA2)), aviso);
+  informe('Lite: la cara llega por Bluetooth tal cual (bit 4)', aviso === 'Listo ✅' && e.cara && Buffer.from(e.cara).equals(Buffer.from(CARA2)), aviso);
   await pagina.selectOption('#caraLista', ''); await pagina.waitForTimeout(300);
   await enviarYEsperar(pagina);
   e = await estadoTV(pagina);

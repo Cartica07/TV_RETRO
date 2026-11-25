@@ -379,9 +379,11 @@ copyFileSync(join(aqui, 'src', 'unificada.css'), join(www, 'css', 'unificada.css
 // ---- Nombre "Pepito" (docs/nombre-pepito.md): textos de la COPIA, con revisión de que no quede "TV" a la vista ----
 if (!sinPepito) {
   const { TEXTOS_PEPITO, TV_PERMITIDO } = await import(pathToFileURL(join(aqui, 'src', 'textos-pepito.mjs')).href);
+  // Ronda de textos del dueño (2026-11-25): va DESPUÉS de la tabla de "Pepito" (parte de esos textos ya cambiados).
+  const { TEXTOS_REVISION } = await import(pathToFileURL(join(aqui, 'src', 'textos-revision.mjs')).href);
   const contar = (texto, buscado) => texto.split(buscado).length - 1;
   const porArchivo = new Map();
-  for (const [archivo, viejo, nuevo, veces] of TEXTOS_PEPITO) {
+  for (const [archivo, viejo, nuevo, veces] of [...TEXTOS_PEPITO, ...TEXTOS_REVISION]) {
     const ruta = join(www, archivo);
     let texto = porArchivo.has(ruta) ? porArchivo.get(ruta) : readFileSync(ruta, 'utf8');
     const hay = contar(texto, viejo);
