@@ -99,6 +99,7 @@ export const TEXTOS_REVISION = [
 
   // ---- Sistema (el texto de la Lite, en conLite, no se toca) ----
   ['js/mas.js', "'Pepito está al día ✅'", "'Pepito está al día 💅'", 1],
+  ['js/mas.js', "'Hay una versión nueva para Pepito.'", "'Hay una versión nueva para Pepito ✨'", 1],
   ['js/mas.js', "'Actualizando… no desconectes a Pepito.'", "'Actualizando… no apagues a Pepito 🙏.'", 2],
   ['js/mas.js', "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", "'No se pudo leer el estado de Pepito. Revisa tu internet y vuelve a intentarlo.'", 1],
   ['js/mas.js', "'Pepito se restableció, pero no se pudo soltar de tu cuenta: '", "'Pepito se restableció, pero aún está ligado a tu cuenta: '", 1],
