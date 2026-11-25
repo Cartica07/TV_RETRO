@@ -94,7 +94,7 @@ let v = await verVentana();
 informe('Letra: abre la lista con el estilo de la app, sin buscador y con "Letra" arriba',
   v.abierta && v.titulo === 'Letra' && !v.campoVisible && v.opciones.length === 5 && v.opciones.includes('Serif'), JSON.stringify(v));
 const tarjeta = await pagina.evaluate(() => {
-  const t = document.querySelector('.buscador-tarjeta').getBoundingClientRect();
+  const t = document.querySelector('#buscadorCanciones .buscador-tarjeta').getBoundingClientRect();
   return { alto: Math.round(t.height), altoPantalla: innerHeight, arriba: Math.round(t.top) };
 });
 informe('es una ventanita centrada del tamaño de sus opciones (no ocupa toda la pantalla)', tarjeta.alto < tarjeta.altoPantalla * 0.75 && tarjeta.arriba > 40, JSON.stringify(tarjeta));

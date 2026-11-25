@@ -33,9 +33,10 @@ await pagina.waitForTimeout(500);
 
 // ---------- 1. Arranca en la TV Lite que quedó elegida ----------
 informe('arranca en la TV Lite elegida (modo TV Lite)', await pagina.evaluate(() => document.body.classList.contains('tv-lite')));
-informe('en modo TV Lite no se ven los juegos ni actualizar la TV', await pagina.evaluate(() => {
+// Desde el 2026-11-23 la Lite SÍ actualiza por Bluetooth: Más > Configuración > Sistema se ve (sin Restablecer); los juegos no.
+informe('en modo TV Lite no se ven los juegos ni Restablecer, pero sí Sistema (actualizar)', await pagina.evaluate(() => {
   const oculto = (s) => { const e = document.querySelector(s); return !e || getComputedStyle(e).display === 'none'; };
-  return oculto('[data-mas="juegos"]') && oculto('[data-config="sistema"]');
+  return oculto('[data-mas="juegos"]') && !oculto('[data-config="sistema"]') && oculto('#campoSistemaRestablecer');
 }));
 let lec = await lecturas(pagina);
 informe('y no lee el estado de la TV Pro ni nada de dispositivos/lite:… (solo el rol de la TV Pro de la lista)', !lec.some((r) => /dispositivos\/(tv1\/oled|lite)/.test(r)), lec.filter((r) => /dispositivos\//.test(r)).join(', '));
