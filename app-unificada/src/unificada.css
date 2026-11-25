@@ -424,3 +424,86 @@ body.sin-cuenta #botonVincularTV {
 #sistemaEstadoActualizar[hidden] {
   display: none;
 }
+
+/* ===== Ajustes visuales del dueño (2026-11-25) ===== */
+
+/* 1) "Mis Pepitos" pasa a la esquina izquierda, simétrico con "Cerrar sesión" a la derecha. El contenedor de la derecha deja de
+   ser una caja (display: contents) y cada botón se acomoda solo en la cuadrícula de la barra: izquierda | título | derecha. */
+.barra-superior-derecha {
+  display: contents;
+}
+.barra-superior .marca,
+.barra-superior #botonMiTV,
+.barra-superior #botonCerrarSesion {
+  grid-row: 1;
+}
+.barra-superior #botonMiTV {
+  grid-column: 1;
+  justify-self: start;
+}
+.barra-superior #botonCerrarSesion {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* 2) Invertir: más abajo, mejor centrado entre la vista previa y el borde de abajo de la tarjeta (celulares). */
+@media (max-width: 600px) {
+  .franja-inferior {
+    margin-top: 14px;
+  }
+  .dispositivo {
+    padding-bottom: 1px;
+  }
+}
+
+/* 3) Texto > Alineación: más espacio entre Auto/Manual y los botones de abajo; los botones de alineación y todo lo que sigue
+   (Modo y sus botones) bajan lo mismo. */
+/* (relleno y no margen: el margen se fusionaba con el de abajo de la fila de Auto/Manual y no sumaba) */
+#filaAlineacionAuto,
+#filaAlineacionManual {
+  padding-top: 6px;
+}
+
+/* 4) Botones de ícono (Dibujo y los demás) en pantallas táctiles: el :hover se queda pegado después de tocar y dejaba un marco azul en
+   el botón ya desactivado, como si siguiera activo. En táctil no hay hover: el botón vuelve de inmediato a su aspecto normal. */
+@media (hover: none) {
+  .boton-icono:not([aria-pressed="true"]):not(.activo):not(.boton-icono-enviar):not(.boton-icono-peligro):hover:not(:disabled) {
+    border-color: var(--borde);
+    color: var(--texto);
+  }
+  .boton-icono-peligro:hover:not(:disabled) {
+    border-color: var(--borde);
+    color: var(--error);
+  }
+  .boton-icono-enviar:hover:not(:disabled) {
+    filter: none;
+  }
+}
+
+/* 5) Galería: las pestañas y la caneca se quedan a la vista al bajar por las miniaturas. Mientras la sección de herramientas está
+   visible (main.js le pone display: block) deja de ser una caja para que la fila se pegue dentro de toda la tarjeta; queda justo
+   debajo de la cabecera fija (su alto lo calcula js/alto-cabecera.js). */
+#seccionGaleriaFinal[style*="display: block"] {
+  display: contents !important;
+}
+#seccionGaleriaFinal[style*="display: block"] > .fila-galeria-cabecera {
+  position: sticky;
+  top: var(--alto-cabecera, 0px);
+  z-index: 6;
+  padding: 8px 0;
+  margin-top: -8px;
+  background: var(--panel);
+  box-shadow: 0 6px 6px -6px rgba(0, 0, 0, .6);
+}
+
+/* 6) Más > Alarma: cómo se silencia (Pepito Pro o Pepito Lite). Un texto corto y discreto entre el tono y el botón Guardar. */
+.nota-alarma {
+  margin: -4px 2px 12px;
+  font-size: var(--texto-sm);
+  line-height: 1.4;
+  color: var(--texto-2);
+}
+body.tv-lite .nota-alarma-pro,
+body:not(.tv-lite) .nota-alarma-lite {
+  display: none;
+}
