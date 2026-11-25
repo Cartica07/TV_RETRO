@@ -150,3 +150,10 @@ TEXTOS_REVISION.push(
   ['js/firebase-pro.js', "'La conexión está lenta. Vuelve a intentarlo.'", "'Conexión lenta. Vuelve a intentarlo.'", 18],
   ['index.html', 'Se borrará tu cuenta y todo lo que guardaste.', 'Se borrará tu cuenta y todo el contenido que guardaste.', 1],
 );
+TEXTOS_REVISION.push(
+  ['js/firebase-pro.js', "'El navegador bloqueó la ventana de Google. Permítela e inténtalo de nuevo.'", "'Se bloqueó la ventana de Google. Permítela y vuelve a intentarlo.'", 1],
+  ['js/firebase-pro.js', "'Entrar con Google no está habilitado en esta dirección.'", "'Entrar con Google no está disponible aquí. Entra con tu correo y contraseña.'", 1],
+  ['js/firebase-pro.js', "'Ese correo ya tiene una cuenta con otra forma de entrar. Entra con tu correo y contraseña.'", "'Ese correo ya tiene una cuenta. Entra con tu correo y contraseña.'", 1],
+  ['js/firebase-pro.js', "'Escribe los 6 caracteres del código que muestra Pepito.'", "'Escribe el código completo que muestra Pepito (6 letras y números).'", 1],
+  ['js/firebase-pro.js', "'Escribe los 6 caracteres del código.'", "'Escribe el código completo (6 letras y números).'", 1],
+);
