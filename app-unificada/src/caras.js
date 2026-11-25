@@ -207,7 +207,7 @@ async function abrir() {
   ciudad = laCiudad || null;
   llenarLista(lista || [], actual || '');
   if (puede === false) {
-    aviso(TEXTO_ACTUALIZA);
+    // (El aviso TEXTO_ACTUALIZA ya no se muestra: ningún Pepito que se entregue tiene una versión sin caras; dueño, 2026-11-25.)
     if (boton) boton.disabled = true;
   }
   await mostrarElegida();

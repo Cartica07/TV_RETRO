@@ -99,6 +99,8 @@ export const TEXTOS_REVISION = [
   ['js/main.js', "marcarConexion('sin conexión'", "marcarConexion('Sin conexión'", 2],
   ['js/conexion.js', "marcarConexion('en línea'", "marcarConexion('En línea'", 1],
   ['js/conexion.js', "marcarConexion('desconectado'", "marcarConexion('Desconectado'", 2],
+  // Hasta 60 segundos no se cuentan los segundos: "Hace segundos" (pedido del dueño). Desde los 61, "Hace 1 min".
+  ['js/conexion.js', "if (seg < 60) return `hace ${seg} s`;", "if (seg <= 60) return 'Hace segundos';", 1],
   ['js/conexion.js', "return `hace ${min} min`;", "return `Hace ${min} min`;", 1],
   ['js/conexion.js', "return `hace ${horas} h`;", "return `Hace ${horas} h`;", 1],
   ['js/conexion.js', "return `el ${dd}/${mm} ${hh}:${mi}`;", "return `El ${dd}/${mm} ${hh}:${mi}`;", 1],

@@ -142,8 +142,8 @@ const enviarYEsperar = async (p) => {
   const { navegador, pagina } = await abrir(semilla(10));
   await esperarPanel(pagina);
   await abrirCaras(pagina);
-  informe('Pro v10: dice "Actualiza tu Pepito para cambiar la cara del reloj." y no deja enviar',
-    (await txt(pagina, '#caraAviso')) === 'Actualiza tu Pepito para cambiar la cara del reloj.' && (await pagina.$eval('#botonEnviarCara', (b) => b.disabled)));
+  informe('Pro v10: no muestra aviso (dueño, 2026-11-25) y no deja enviar',
+    !/Actualiza/.test(await txt(pagina, '#caraAviso')) && (await pagina.$eval('#botonEnviarCara', (b) => b.disabled)));
   await navegador.close();
 }
 
@@ -172,7 +172,7 @@ const enviarYEsperar = async (p) => {
   const { navegador, pagina } = await abrir(semilla(11), { antes: conTVLite({ build: 3 }) });
   await esperarPanel(pagina);
   await abrirCaras(pagina, true);
-  informe('Lite v3 (sin caras): pide actualizar y no deja enviar', (await txt(pagina, '#caraAviso')) === 'Actualiza tu Pepito para cambiar la cara del reloj.' && (await pagina.$eval('#botonEnviarCara', (b) => b.disabled)));
+  informe('Lite v3 (sin caras): no muestra aviso y no deja enviar', !/Actualiza/.test(await txt(pagina, '#caraAviso')) && (await pagina.$eval('#botonEnviarCara', (b) => b.disabled)));
   await navegador.close();
 }
 
@@ -181,7 +181,7 @@ const enviarYEsperar = async (p) => {
   const { navegador, pagina } = await abrir(semilla(11), { antes: conTVLite({ build: null }) });
   await esperarPanel(pagina);
   await abrirCaras(pagina, true);
-  informe('Lite anterior: pide actualizar', (await txt(pagina, '#caraAviso')) === 'Actualiza tu Pepito para cambiar la cara del reloj.');
+  informe('Lite anterior: no muestra aviso', !/Actualiza/.test(await txt(pagina, '#caraAviso')));
   await navegador.close();
 }
 
