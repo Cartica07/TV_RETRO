@@ -323,6 +323,13 @@ body.sin-cuenta #botonVincularTV {
 .duo-estrella[aria-pressed="true"] svg {
   fill: currentColor;
 }
+/* "Activar dúos": el interruptor junto al título (no al otro extremo) y el título un poco más grande (pedido del dueño, 2026-11-25). */
+#seccionDuos .switch-fila {
+  justify-content: flex-start;
+}
+#seccionDuos .switch-fila .fila-ajuste-titulo {
+  font-size: 18px;
+}
 .duos-separador {
   border: none;
   border-top: 2px solid var(--acento, #4DD2FF);
