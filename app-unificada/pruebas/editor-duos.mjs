@@ -239,6 +239,8 @@ await pagina.fill('#textoEncima', '');
 await pagina.waitForTimeout(700);
 const versionAntes = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
 await pagina.selectOption('#probarMitad', 'der');
+const [bajadaPr] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#botonPaquete')]);
+const paquetePr = JSON.parse(fs.readFileSync(await bajadaPr.path(), 'utf8'));
 await pagina.click('#botonProbar');
 await pagina.waitForTimeout(400);
 const sinEnviar = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota.version);
@@ -246,7 +248,7 @@ informe("probar: el primer toque solo pide confirmar (no envía)", sinEnviar ===
 await pagina.click('#botonProbar');
 await pagina.waitForFunction(() => /Listo: mira tu Pepito/.test(document.getElementById('aviso').textContent), null, { timeout: 15000 });
 const o = await pagina.evaluate(() => globalThis.__fakeDb.raiz.dispositivos.tv1.oled_remota);
-informe('probar: la mitad derecha llega como canción con letra, sin clave y con su archivo m1', o.pantalla.tipo === 'musical' && !o.pantalla.musical.clave && /\(derecha\)$/.test(o.pantalla.musical.nombre) && o.archivo && o.archivo.datos.length > 0 && o.archivo.version === o.version, JSON.stringify(o.pantalla.musical) + ' v=' + o.version + ' archivo=' + JSON.stringify(o.archivo && { version: o.archivo.version, largo: (o.archivo.datos || '').length }));
+informe('probar: la mitad derecha llega como canción con letra, sin clave y con su archivo m1', o.pantalla.tipo === 'musical' && !o.pantalla.musical.clave && /\(derecha\)$/.test(o.pantalla.musical.nombre) && o.archivo && o.archivo.datos === paquetePr.der.datos && paquetePr.der.datos !== paquetePr.izq.datos && o.archivo.version === o.version, JSON.stringify(o.pantalla.musical) + ' v=' + o.version + ' archivo=' + JSON.stringify(o.archivo && { version: o.archivo.version, largo: (o.archivo.datos || '').length }));
 
 informe('sin errores en la página', erroresPagina(errores).length === 0, erroresPagina(errores).join(' | '));
 await navegador.close();
