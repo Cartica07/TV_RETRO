@@ -76,7 +76,17 @@ export const TEXTOS_REVISION = [
   ['js/galeria.js', "marcarEstado(`${queEs} ${queEs === 'GIF' ? 'cargado' : 'cargada'}`, 'ok', E());", "marcarEstado(queEs === 'GIF' ? 'Listo para enviar 👌' : 'Lista para enviar 👌', 'ok', E());", 1],
   ['js/galeria.js', "p.textContent = `${mensaje}: sin conexión o sin permiso.`;", "p.textContent = `${mensaje}, no hay conexión`;", 1],
   ['js/galeria.js', "'No se pudo leer la galería de imágenes')", "'No se pudo cargar la galería de imágenes')", 1],
-  ['js/galeria.js', "'No se pudieron leer las animaciones')", "'No se pudieron cargar las animaciones')", 1],
+  ['js/galeria.js', "'No se pudieron leer las animaciones')", "'No se pudieron cargar las caras ni los GIF')", 1],
+  // La pestaña "Animaciones" pasa a "Caras" (dueño, 2026-11-25): sus mensajes dicen "cara". Los GIF también son animaciones
+  // guardadas (mismos mensajes): con un GIF dicen "GIF".
+  ['index.html', '<p class="galeria-vacio" id="animacionesVacio">Todavía no hay animaciones guardadas.</p>', '<p class="galeria-vacio" id="animacionesVacio">Todavía no hay caras guardadas.</p>', 1],
+  ['js/galeria.js', "ponerVacio(gridAnim, 'Todavía no hay animaciones guardadas.');", "ponerVacio(gridAnim, 'Todavía no hay caras guardadas.');", 1],
+  ['index.html', 'aria-label="Borrar la animación seleccionada"', 'aria-label="Borrar la cara o el GIF seleccionado"', 1],
+  ['js/galeria.js', "marcarEstado('No se pudo cargar esa animación. Revisa tu internet y vuelve a intentarlo.', 'error', E());", "marcarEstado(esAnimacionDeGif(entry) ? 'No se pudo cargar ese GIF. Revisa tu internet y vuelve a intentarlo.' : 'No se pudo cargar esa cara. Revisa tu internet y vuelve a intentarlo.', 'error', E());", 1],
+  ['js/galeria.js', "const predeterminada = !!(animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada);", "const predeterminada = !!(animacionesCatalogo[key] && animacionesCatalogo[key].predeterminada); const esGifBorrado = esAnimacionDeGif(animacionesCatalogo[key]);", 1],
+  ['js/galeria.js', "marcarEstado('Animación borrada', 'ok', E());", "marcarEstado(esGifBorrado ? 'GIF borrado' : 'Cara borrada', 'ok', E());", 1],
+  ['js/galeria.js', "marcarEstado('No se pudo borrar la animación: ' + describirError(resultado.error), 'error', E());", "marcarEstado((esGifBorrado ? 'No se pudo borrar el GIF: ' : 'No se pudo borrar la cara: ') + describirError(resultado.error), 'error', E());", 1],
+  ['js/main.js', "marcarEstado('Esta animación no se pudo cargar. Elígela otra vez en la Galería.', 'error', elementos);", "marcarEstado(animacionEsGif(estadoActual.animacion) ? 'Este GIF no se pudo cargar. Elígelo otra vez en la Galería.' : 'Esta cara no se pudo cargar. Elígela otra vez en la Galería.', 'error', elementos);", 1],
 
   // ---- Alarma (con un Pepito Lite queda su texto de hoy: va a la lista de la Lite) ----
   ['js/mas.js', "'No se pudo leer la alarma de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.'", conLite('No se pudo leer la alarma de Pepito. Revisa tu internet y vuelve a abrir esta pantalla.', "'No se pudo cargar la alarma de Pepito. Revisa tu internet y vuelve a intentarlo'"), 1],
