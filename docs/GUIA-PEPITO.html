@@ -52,6 +52,7 @@
     <li><a href="#canciones">Cómo agregar canciones nuevas</a></li>
     <li><a href="#hall">El sensor Hall de los dúos</a></li>
     <li><a href="#herramientas">Todas las herramientas</a></li>
+    <li><a href="#juegos">Cómo agregar un juego nuevo (ya con su código hecho)</a></li>
     <li><a href="#play">Subir Pepito a Google Play</a></li>
     <li><a href="#archivos">Dónde está cada archivo y mensaje para la próxima conversación</a></li>
   </ol>
@@ -82,8 +83,8 @@
   <tr><td>4</td><td>Aprobar los textos de la pantalla de aceptación (filas 68 a 71 de <code>docs/lite-textos-propuestos.md</code>): "Antes de entrar", "Acepto los Términos y Condiciones y la Política de Privacidad.", "Continuar" y "Salir".</td><td><span class="tu">TÚ</span></td></tr>
   <tr><td>5</td><td>Probar la <strong>C3 real</strong> cuando llegue: los pines son provisorios y el divisor de batería nunca se ha medido.</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
   <tr><td>6</td><td><strong>Auditoría completa</strong> del sistema.</td><td><span class="yo">CLAUDE</span></td></tr>
-  <tr><td>7</td><td><strong>Play Store</strong>: firma de publicación y AAB, ficha, formularios (sección 7).</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
-  <tr><td>8</td><td>Copia de seguridad de las claves fuera del PC (sección 7, paso 1).</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>7</td><td><strong>Play Store</strong>: firma de publicación y AAB, ficha, formularios (sección 8).</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
+  <tr><td>8</td><td>Copia de seguridad de las claves fuera del PC (sección 8, paso 1).</td><td><span class="tu">TÚ</span></td></tr>
   <tr><td>9</td><td>Página web de Pepito para iPhone.</td><td><span class="yo">CLAUDE</span></td></tr>
   <tr><td>10</td><td>Revisar si la pantalla de 1,3" es SH1106 (guía <code>PANTALLA-1.3-SH1106.md</code> en la raíz del repo del firmware).</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
   <tr><td>11</td><td>Riesgos legales con el abogado: canciones con letra de obras comerciales, tipografías con licencia GPL, 4 juegos sin licencia, imágenes de la biblioteca, homologación CRC, condiciones de venta, y que confirme que la cláusula de licencias sin repositorio público basta.</td><td><span class="tu">TÚ</span></td></tr>
@@ -385,7 +386,73 @@ Pepito Lite (C3):
 
 
 <!-- =========================================================== -->
-<h2 id="play">7. Subir Pepito a Google Play</h2>
+<h2 id="juegos">7. Cómo agregar un juego nuevo (ya con su código hecho)</h2>
+<p>Los juegos son <strong>solo de Pepito Pro</strong> (decisión tuya: la Lite no los lleva). Hoy hay 5: Snake, Breakout, Flappy, Invaders y Jump. Un juego nuevo toca <strong>el firmware de la Pro</strong> y <strong>una fila en la app</strong>. En Firebase <strong>no hay que cambiar nada</strong>: la orden "abrir juego" ya acepta cualquier nombre de 1 a 12 letras minúsculas.</p>
+
+<h3>Antes de empezar: lo que debe cumplir el juego</h3>
+<table>
+  <tr><th>Tema</th><th>Qué se necesita</th></tr>
+  <tr><td><strong>Licencia / origen</strong></td><td>Que el código sea <strong>tuyo</strong> o de una licencia libre (MIT, Unlicense, dominio público…). Código ajeno <strong>sin licencia</strong> no se debe usar en algo que vendes: por eso 4 de los 5 juegos actuales hay que reescribirlos antes de vender. Dime de dónde viene.</td></tr>
+  <tr><td><strong>Nombre</strong></td><td>Hasta <strong>8 letras</strong> sin tildes, en mayúsculas en la lista de la TV (por ejemplo <code>PONG</code>). El <strong>id</strong> para la app es ese mismo nombre en <strong>minúsculas</strong>, solo letras de la <code>a</code> a la <code>z</code> (sin números, espacios ni guiones). Un nombre con número, como <code>PONG2</code>, se podría jugar desde la lista de la TV pero <strong>no</strong> desde la app.</td></tr>
+  <tr><td><strong>Pantalla</strong></td><td>128 × 64 puntos, un solo color. Unos <strong>30 cuadros por segundo</strong>.</td></tr>
+  <tr><td><strong>Controles</strong></td><td>La <strong>rueda</strong> (giro a la izquierda o derecha) y el <strong>botón A</strong>. El botón de la rueda lo reserva el administrador de juegos: toque corto = pausa, mantenido 1 s = reiniciar. Mantener A sale del juego. Eso es igual para todos y no lo decide cada juego.</td></tr>
+  <tr><td><strong>Sonido</strong></td><td>Por los servicios del firmware (<code>playSfx</code> o notas). El juego <strong>nunca</strong> debe tocar el pin del buzzer directamente.</td></tr>
+  <tr><td><strong>Reglas de programación</strong></td><td>Sin <code>delay()</code> ni bucles que bloqueen; el tiempo se mide con el que entrega el administrador (<code>tick(dtMs)</code>); sin <code>Serial</code> en cada cuadro; memoria reservada una sola vez (variables fijas, no crear y borrar objetos a cada cuadro).</td></tr>
+</table>
+
+<h3>Paso 1. Qué le entregas a Claude</h3>
+<ul>
+  <li>El <strong>código del juego</strong> (la carpeta o el archivo <code>.ino</code> / <code>.cpp</code>), por ejemplo dentro de <code>C:\Proyectos\TV_RETRO-firmware\Juegos\</code> (esa carpeta ya existe para tus juegos originales).</li>
+  <li>El <strong>nombre</strong> para la lista (hasta 8 letras) y el nombre bonito para la app ("Pong").</li>
+  <li><strong>De dónde viene</strong> y su licencia (tuyo, de internet con enlace, etc.).</li>
+  <li>Si tiene sonidos o imágenes propios, los archivos o su descripción.</li>
+</ul>
+<p>Mensaje que puedes pegarle:</p>
+<pre><code>Quiero agregar un juego nuevo a Pepito Pro. Su código está en: &lt;ruta&gt;.
+Nombre en la lista (hasta 8 letras): &lt;NOMBRE&gt;. Nombre en la app: &lt;Nombre&gt;.
+Origen y licencia: &lt;mío / enlace y licencia&gt;.
+Haz los pasos de la guía "Cómo agregar un juego nuevo" (sección 7 de GUIA-PEPITO.html): firmware de la Pro,
+la fila en la app, las pruebas y la documentación. Compila y no grabes ni publiques nada sin que yo lo pida.</code></pre>
+
+<h3>Paso 2. El firmware de la Pro (lo hace Claude)</h3>
+<ol>
+  <li><strong>Convertir el código a la estructura de los juegos.</strong> Cada juego es una clase que hereda de <code>Screen</code> (archivo <code>juegos_base.h</code>) con estos momentos: <code>onEnter()</code> (empieza o reinicia la partida), <code>tick(dtMs)</code> (avanza la lógica), <code>handleInput(...)</code> (lee la rueda y el botón A), <code>render(...)</code> (dibuja) y, si hace falta, <code>onResume()</code> (al salir de la pausa). Si el código original era un sketch de Arduino con <code>setup()</code> y <code>loop()</code>: <code>setup()</code> pasa a <code>onEnter()</code>, la lógica del <code>loop()</code> a <code>tick()</code>, lo que dibuja a <code>render()</code>, los <code>tone()</code> a <code>playSfx()</code>, y se quitan los <code>delay()</code>. Se crean los archivos <code>juego_nombre.h</code> y <code>juego_nombre.cpp</code> en <code>OLED_Remota/</code> (el Arduino IDE compila solo todos los archivos de la carpeta).</li>
+  <li><strong>Registrarlo</strong> en <code>OLED_Remota/juegos.cpp</code>, en tres líneas: el <code>#include "juego_nombre.h"</code>; la instancia <code>static AppNombre nombre(audio);</code>; y la entrada <code>{"NOMBRE", &amp;nombre}</code> dentro de la lista <code>juegos[]</code>. Con eso aparece en la lista de la TV y la orden de la app lo encuentra por su nombre (sin importar mayúsculas).</li>
+  <li><strong>Compilar</strong> la Pro (<code>--jobs 1</code>) y comprobar que sigue pasando las pruebas de copias Pro/Lite. Un juego pequeño casi no pesa: el programa de la Pro ocupa hoy un 9 % de la flash.</li>
+  <li><strong>Subir el número de versión</strong> (<code>FIRMWARE_BUILD</code> en <code>sistema.h</code>; hoy la Pro es la 13, así que la siguiente es la 14).</li>
+</ol>
+
+<h3>Paso 3. La fila en la app (lo hace Claude)</h3>
+<p>La lista de Más &rarr; Juegos sale de la app vieja (<code>index.html</code>), que <strong>no se toca</strong>. Por eso la fila nueva se agrega <strong>solo en la app Pepito</strong> con un parche en <code>app-unificada/construir.mjs</code>: una fila con el ícono, el nombre y un botón "Jugar" con <code>data-juego="nombre"</code> (el id en minúsculas). El botón manda la orden <code>juego</code> con ese id, igual que los demás.</p>
+<ul>
+  <li>Hay que <strong>medir que la pestaña Juegos siga entrando sin scroll</strong> en celulares de 390×844 y 360×740 (con 6 juegos puede no caber: se acomoda el espacio, o tú decides si ahí se permite deslizar).</li>
+  <li>Se actualiza la prueba que cuenta los juegos y se revisa la pestaña con las pruebas de la app.</li>
+  <li>La <strong>app vieja y la web de iPhone</strong> no mostrarían el juego nuevo; si lo quieres ahí también, hay que aprobar tocar esa app.</li>
+  <li>El nombre visible es un texto nuevo: se propone y lo apruebas tú.</li>
+  <li>La Lite no ve la pestaña Juegos, así que no cambia nada.</li>
+</ul>
+
+<h3>Paso 4. Probar en la placa (lo haces tú)</h3>
+<ol>
+  <li>Instala la versión nueva de la Pro (por OTA desde la app, o por cable).</li>
+  <li>En la TV: mantén A 1,5 s en la portada de Juegos &rarr; el juego debe salir en la lista &rarr; gira la rueda para elegirlo &rarr; botón de la rueda para iniciar.</li>
+  <li>Revisa: que se mueva fluido, que la rueda y el botón A respondan, que suene bien y no demasiado fuerte, que la <strong>pausa</strong> (toque corto en el botón de la rueda) y el <strong>reinicio</strong> (mantenido 1 s) funcionen, que <strong>mantener A</strong> salga a la lista y luego a la portada, y que al volver al reloj o a otro contenido todo siga normal (también el buzzer).</li>
+  <li>Desde la app: Más &rarr; Juegos &rarr; "Jugar" en el juego nuevo; la TV debe abrirlo.</li>
+  <li>Si la TV se queda pegada o se reinicia, avísale a Claude con el mensaje del monitor serie.</li>
+</ol>
+
+<h3>Paso 5. Publicar y dejar documentado</h3>
+<ul>
+  <li><strong>Orden:</strong> primero el firmware (OTA) y después la app. No hay reglas de Firebase que cambiar. Si alguien abre el juego desde la app con una TV que todavía no tiene la versión nueva, simplemente no pasa nada.</li>
+  <li>Claude actualiza <code>docs/juegos-y-controles.md</code> (tabla de juegos y licencia), <code>docs/historial-cambios.md</code> y la fila de la auditoría. Si el juego viene de código ajeno, se anota su licencia.</li>
+  <li>Publicar una versión por OTA necesita una clave de servicio temporal, que se borra al terminar.</li>
+</ul>
+
+<div class="aviso"><strong>Pendiente relacionado:</strong> reescribir desde cero Snake, Breakout, Flappy e Invaders (vienen de un repositorio sin licencia; solo Jump es libre) y guardar los récords de cada juego en la memoria de la TV (no está hecho). Detalle completo de cómo funciona el modo Juegos: <code>docs/juegos-y-controles.md</code>.</div>
+
+
+<!-- =========================================================== -->
+<h2 id="play">8. Subir Pepito a Google Play</h2>
 <p>Las reglas de Google cambian: antes de cada paso mira lo que te pida la consola de Play.</p>
 
 <h3>Lo que ya está listo</h3>
@@ -422,7 +489,7 @@ Pepito Lite (C3):
 
 
 <!-- =========================================================== -->
-<h2 id="archivos">8. Dónde está cada archivo y mensaje para la próxima conversación</h2>
+<h2 id="archivos">9. Dónde está cada archivo y mensaje para la próxima conversación</h2>
 
 <h3>Carpetas importantes</h3>
 <table>
