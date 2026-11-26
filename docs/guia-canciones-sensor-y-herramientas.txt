@@ -1,0 +1,138 @@
+PEPITO: AGREGAR CANCIONES, SENSOR HALL DE LOS DUOS Y TODAS LAS HERRAMIENTAS
+Escrito el 2026-11-25.
+
+
+=====================================================================
+1. COMO AGREGAR CANCIONES NUEVAS
+=====================================================================
+
+Sigue siendo el MISMO formato .ino de siempre (el que haces con tu simulador CancionesMiniTV). No hay que tocar
+el firmware ni la TV.
+
+Donde se hace:
+  1) Abre la app con tu cuenta de ADMINISTRADOR (la de jhoncarta0706). El boton de importar solo lo ven los
+     administradores, y las reglas de Firebase tambien lo exigen. Las cuentas de clientes no lo ven.
+  2) Ve a la pestana "Canciones" y toca el boton "+".
+  3) Elige uno o varios archivos .ino a la vez.
+
+Que pasa despues:
+  - La app ejecuta el .ino en el celular, graba las notas, las pantallas y las imagenes, y guarda la grabacion en la nube.
+  - La clave de cada cancion es el nombre del archivo sin ".ino". Si ya existe una con ese nombre, la reemplaza.
+  - La app muestra cuantas fallaron y por que.
+  - Quedan en el catalogo comun: todas las cuentas, con Pepito Pro y con Pepito Lite, las ven y las eligen.
+
+Puntos a tener en cuenta:
+  - La app interpreta un C++ "reducido". Un .ino muy raro puede fallar al importarse (le paso a "tv_lanavedelolvido").
+  - Tus 57 .ino originales estan en C:\Proyectos\Canciones-ino (carpeta de solo lectura: no se modifica).
+  - Las canciones con letra de obras comerciales siguen siendo uno de los riesgos legales para revisar con el abogado.
+  - Para cambiar solo el NOMBRE VISIBLE de canciones ya subidas, usa la herramienta "Renombrar canciones" (seccion 3).
+
+
+=====================================================================
+2. EL SENSOR HALL QUE REEMPLAZA AL MODULO (DUOS, SOLO PEPITO PRO)
+=====================================================================
+
+Hoy usas el modulo "MH-Sensor-Series" (chip 3144 + comparador LM393). Gasta unos 10 mA, solo reacciona a UN polo
+del imán y es solo para pruebas.
+
+El plan para el producto: el chip AH180 en version de patitas (terminacion "PG"). Cuesta unos 0,3 a 0,5 dolares.
+  - Reacciona a los DOS polos del iman (no importa como lo pegues).
+  - Gasta unos 8 microamperios (casi nada, no pesa en la bateria).
+  - Es SOLO el sensor: sin modulo ni comparador. Tiene 3 patitas.
+
+Conexion del sensor suelto, con los pines del firmware actual (pines.h, PIN_HALL_DUO):
+
+    Patita del sensor      A donde va
+    ---------------------  ------------------------------------------------------------
+    VCC                    3V3 de la placa  (NUNCA 5 V: los pines del ESP32 no aguantan 5 V)
+    GND                    GND
+    OUT (salida)           GPIO 11 de la Pro
+
+  - Pon un condensador de 100 nF entre VCC y GND, pegado al sensor.
+  - No hace falta resistencia: el firmware activa la resistencia interna del pin y espera que la salida baje a LOW
+    al sentir el iman (asi lo hacen estos sensores). Si el cable al sensor fuera largo, se puede anadir una
+    resistencia de 10 kohm de OUT a 3V3.
+  - Sigue usando imanes de neodimio de unos 8 x 2 mm. Mide la distancia a traves de la carcasa real.
+  - Ponlo lejos del buzzer (el buzzer es magnetico y podria disparar el sensor).
+
+ANTES DE COMPRAR, revisa el datasheet de la referencia exacta (no se puede verificar desde aqui y las variantes
+cambian):
+  - que funcione con 3,3 V;
+  - el tipo de salida (con la resistencia interna sirven open-drain y push-pull);
+  - que sea OMNIPOLAR (los dos polos);
+  - que tenga version de patitas, para soldarlo a mano.
+
+Alternativa de bajo consumo: DRV5032 (Texas Instruments), tambien en el plan. Es de montaje superficial y diminuto:
+necesitaria una plaquita adaptadora. Para empezar, el AH180 de patitas es mas facil de soldar.
+
+Cuando llegue, pruebalo primero con cables antes de soldarlo definitivo. La deteccion con el iman a traves de la
+carcasa se debe medir con la pieza real. Si los duos se disparan tarde o no se disparan, se ajusta.
+Mas detalle: docs/plan-duos.md y docs/protocolo-duos.md del repo del panel.
+
+
+=====================================================================
+3. TODAS LAS HERRAMIENTAS
+=====================================================================
+
+NOTA: las herramientas de este proyecto se abren en tu PC (no estan en internet). Las que tocan Firebase piden
+iniciar sesion con tu cuenta de ADMINISTRADOR. La unica que esta en internet es el simulador de canciones (ver A).
+
+A) SIMULADOR / CREADOR DE CANCIONES (CancionesMiniTV)  -- donde haces los .ino de las canciones
+   Carpeta: C:\Proyectos\CancionesMiniTV   (repo GitHub: https://github.com/Cartica07/CancionesMiniTV)
+   Archivos: simulador.html (el simulador), index.html, conversor.html (pestana "Conversor MP3 -> MIDI").
+   En internet (GitHub Pages, direccion probable; verifica que abra):
+       https://cartica07.github.io/CancionesMiniTV/simulador.html
+   En tu PC:  abre la carpeta con un servidor, por ejemplo:   cd C:\Proyectos\CancionesMiniTV   y   npx serve .
+              y entra a  http://localhost:3000/simulador.html
+   (Repositorio de referencia: solo lectura desde Claude.)
+
+B) EDITOR DE DUOS  -- crea, sube y borra duos del catalogo de la nube (admin)
+   Archivos: C:\Proyectos\TV_RETRO\app-unificada\herramientas\editor-duos\ (editor-duos.html, editor-duos.js, duo.js)
+   Abrir:    cd C:\Proyectos\TV_RETRO\app-unificada
+             node construir.mjs
+             npx serve www -l 3010
+             y entra a  http://localhost:3010/editor-duos.html
+   Tambien: generar-duo-prueba.mjs (genera el duo de prueba que viene dentro del firmware).
+
+C) EDITOR DE CARAS DE RELOJ  -- crea y sube caras del reloj al catalogo de la nube (admin)
+   Archivos: C:\Proyectos\TV_RETRO\app-unificada\herramientas\editor-caras\ (editor-caras.html, editor-caras.js,
+             caras-sugeridas.mjs y .json)
+   Abrir:    igual que el editor de duos (con "npx serve www -l 3010") y entra a
+             http://localhost:3010/editor-caras.html
+   (Recuerda: la cara "Clima" que sigue en la nube se borra con este editor.)
+
+D) CARGA MASIVA  -- sube imagenes y animaciones/GIF en lote; con el interruptor "Biblioteca predeterminada" sube a la
+   biblioteca que ven todas las cuentas (admin)
+   Archivo:  C:\Proyectos\TV_RETRO\carga-masiva.html
+   Abrir:    cd C:\Proyectos\TV_RETRO   y   npx serve .
+             y entra a  http://localhost:3000/carga-masiva.html
+   (Las canciones ya NO se suben aqui: esa seccion esta oculta; las canciones se importan desde la app.)
+
+E) RENOMBRAR CANCIONES  -- cambia solo el nombre visible de las canciones del catalogo (admin)
+   Archivo:  C:\Proyectos\TV_RETRO\app-unificada\herramientas\renombrar-canciones.html
+   Abrir:    cd C:\Proyectos\TV_RETRO   y   npx serve .
+             y entra a  http://localhost:3000/app-unificada/herramientas/renombrar-canciones.html
+   Respaldo de los nombres anteriores: C:\Proyectos\TV_RETRO-respaldos\musicales-indice-2026-11-23.json
+
+F) ICONOS DE LAS CARAS (herramienta de desarrollo)  -- genera las tablas de iconos de las caras (Wi-Fi, campana, bateria)
+   Carpeta:  C:\Proyectos\TV_RETRO\app-unificada\herramientas\iconos-reloj\ (iconos-reloj.html, generar.mjs, iconos.json)
+   Casi nunca se usa; los iconos ya estan dentro del firmware y de la app.
+
+G) HERRAMIENTAS DEL FIRMWARE (carpeta C:\Proyectos\TV_RETRO-firmware\herramientas\, se usan con "node"; casi todas
+   necesitan una clave de servicio de Firebase TEMPORAL que se borra al terminar):
+   - publicar-firmware.cjs   publica una version del programa para actualizar por OTA (Pro, y Lite con --lite c3).
+                             Ejemplo en seco: node publicar-firmware.cjs --bin <archivo.bin> --build 14 --seco
+   - fabricar-tv.cjs         fabrica una TV nueva (crea su cuenta y la graba por cable).
+   - liberar-tv.cjs          libera una TV cuya cuenta se perdio.
+   - generar-claves-ota.cjs  genera las claves de las actualizaciones (ya hechas: ota-principal.pem y ota-respaldo.pem;
+                             NO regenerar sin necesidad).
+   - escuchar-serie-seguro.ps1  monitor serie de la TV (se limita por tiempo y tamano).
+   - comprobar-copias-lite.cjs  comprueba que los archivos compartidos Pro/Lite sigan identicos.
+   - generar-portal.cjs      regenera las paginas del portal del Wi-Fi de la TV.
+   - generar_fuentes.js      genera las tablas de fuentes del firmware.
+   Guia: README.md y CLAUDE.md del repo del firmware.
+
+H) PRUEBAS (para Claude o para quien programe):  app-unificada\pruebas\ ("node <suite>.mjs") y pruebas\ del panel.
+
+Claves y archivos importantes (NO subir a internet): C:\Proyectos\TV_RETRO-claves\
+  (tvretro-subida.jks, ota-principal.pem, ota-respaldo.pem y, mientras exista, la clave de servicio de Firebase).
