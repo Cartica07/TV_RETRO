@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guía de Pepito: C3, canciones, sensor, herramientas y Play Store</title>
+<style>
+  :root { --acento: #0A6FA8; --fondo: #FFFFFF; --texto: #1B2430; --suave: #5A6878; --borde: #D5DCE4; --caja: #F3F7FB; --aviso: #FFF6DC; --aviso-borde: #E2B93B; --rojo: #FDECEC; --rojo-borde: #D95C5C; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, Arial, sans-serif; color: var(--texto); background: var(--fondo); line-height: 1.55; font-size: 16px; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 30px; margin: 8px 0 4px; color: var(--acento); }
+  .sub { color: var(--suave); margin: 0 0 20px; }
+  h2 { font-size: 23px; margin: 44px 0 10px; padding-top: 14px; border-top: 3px solid var(--acento); color: var(--acento); }
+  h3 { font-size: 18px; margin: 26px 0 6px; }
+  nav.indice { background: var(--caja); border: 1px solid var(--borde); border-radius: 10px; padding: 14px 20px; margin: 18px 0 8px; }
+  nav.indice ol { margin: 6px 0 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  nav.indice li { margin: 3px 0; }
+  a { color: var(--acento); }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 15px; }
+  th, td { border: 1px solid var(--borde); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--caja); }
+  code, pre { font-family: Consolas, "Courier New", monospace; font-size: 14px; }
+  code { background: #EEF2F6; padding: 1px 5px; border-radius: 4px; }
+  pre { background: #1B2430; color: #E8EEF4; padding: 12px 14px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .aviso, .peligro, .ok { border-left: 5px solid; border-radius: 6px; padding: 10px 14px; margin: 14px 0; }
+  .aviso { background: var(--aviso); border-color: var(--aviso-borde); }
+  .peligro { background: var(--rojo); border-color: var(--rojo-borde); }
+  .ok { background: #EAF7EE; border-color: #4DAA6A; }
+  .tu { display: inline-block; background: #DCEBFA; color: #0B4F82; border-radius: 10px; padding: 0 8px; font-size: 13px; font-weight: 600; }
+  .yo { display: inline-block; background: #E6F4E6; color: #1F6B2F; border-radius: 10px; padding: 0 8px; font-size: 13px; font-weight: 600; }
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  .esquema { background: var(--caja); border: 1px solid var(--borde); border-radius: 8px; padding: 10px; margin: 10px 0; } .esquema svg { width: 100%; height: auto; max-width: 680px; display: block; margin: 0 auto; }
+  .diagrama { font-family: Consolas, monospace; background: var(--caja); border: 1px solid var(--borde); border-radius: 8px; padding: 10px 14px; white-space: pre; overflow-x: auto; font-size: 14px; }
+  @media print { main { max-width: none; padding: 0; } h2 { break-before: page; } h2:first-of-type { break-before: auto; } pre, .diagrama, .esquema, table, .aviso, .peligro { break-inside: avoid; } nav.indice ol { columns: 1; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Guía de Pepito</h1>
+<p class="sub">Pines de la C3, cómo grabarla, canciones, sensor Hall de los dúos, herramientas y Play Store. Escrita el 25 de noviembre de 2026. Todo sale del código tal como está hoy.</p>
+
+<nav class="indice">
+  <strong>Contenido</strong>
+  <ol>
+    <li><a href="#estado">Dónde quedó todo y qué falta</a></li>
+    <li><a href="#c3">Pepito Lite con ESP32-C3: pines y batería</a></li>
+    <li><a href="#grabar">Cómo grabar la C3 (y la Pro) y cómo instalar la app</a></li>
+    <li><a href="#canciones">Cómo agregar canciones nuevas</a></li>
+    <li><a href="#hall">El sensor Hall de los dúos</a></li>
+    <li><a href="#herramientas">Todas las herramientas</a></li>
+    <li><a href="#play">Subir Pepito a Google Play</a></li>
+    <li><a href="#archivos">Dónde está cada archivo y mensaje para la próxima conversación</a></li>
+  </ol>
+</nav>
+<p><span class="tu">TÚ</span> = lo haces tú. <span class="yo">CLAUDE</span> = lo hace Claude cuando se lo pidas.</p>
+
+
+<!-- =========================================================== -->
+<h2 id="estado">1. Dónde quedó todo y qué falta</h2>
+
+<h3>Ya está hecho (25 de noviembre)</h3>
+<ul>
+  <li><strong>Publicadas por OTA:</strong> Pepito Pro 13 y Pepito Lite 6 (para la C3). Las reglas de Firebase también están publicadas.</li>
+  <li><strong>Apagar pantalla</strong> con 1 y 2 minutos, además de 5, 10, 20 y Nunca.</li>
+  <li><strong>Clima quitado</strong> por completo (la fuente de datos era gratis solo para uso no comercial).</li>
+  <li>Tildes en las pantallas de la TV, datos legales completos, página para eliminar la cuenta y pantalla de aceptación de términos.</li>
+  <li>Nota de la alarma en tres renglones, <strong>ícono propio</strong> y <strong>pantalla de carga propia</strong>. La app ya está instalada en tu celular.</li>
+  <li>El código de Pepito <strong>no se publica</strong> (decisión tuya).</li>
+  <li>Todo está commiteado y subido a la rama <code>lite</code> de GitHub. La rama <code>main</code> no se ha tocado.</li>
+</ul>
+
+<h3>Lo que falta, en orden</h3>
+<table>
+  <tr><th>#</th><th>Qué</th><th>Quién</th></tr>
+  <tr><td>1</td><td>Borrar la <strong>clave de servicio</strong> de Firebase (consola de Firebase y el archivo de <code>TV_RETRO-claves</code>). No borres las <code>.pem</code>.</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>2</td><td>Borrar la cara <strong>"Clima"</strong> de la nube (<code>relojes/clima</code>) con el editor de caras.</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>3</td><td>Probar en la placa la <strong>Pro 13</strong>: botón A, perilla, juegos y reloj deben sentirse igual (se añadió un descanso de 1 ms por vuelta para ahorrar batería).</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>4</td><td>Aprobar los textos de la pantalla de aceptación (filas 68 a 71 de <code>docs/lite-textos-propuestos.md</code>): "Antes de entrar", "Acepto los Términos y Condiciones y la Política de Privacidad.", "Continuar" y "Salir".</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>5</td><td>Probar la <strong>C3 real</strong> cuando llegue: los pines son provisorios y el divisor de batería nunca se ha medido.</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
+  <tr><td>6</td><td><strong>Auditoría completa</strong> del sistema.</td><td><span class="yo">CLAUDE</span></td></tr>
+  <tr><td>7</td><td><strong>Play Store</strong>: firma de publicación y AAB, ficha, formularios (sección 7).</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
+  <tr><td>8</td><td>Copia de seguridad de las claves fuera del PC (sección 7, paso 1).</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>9</td><td>Página web de Pepito para iPhone.</td><td><span class="yo">CLAUDE</span></td></tr>
+  <tr><td>10</td><td>Revisar si la pantalla de 1,3" es SH1106 (guía <code>PANTALLA-1.3-SH1106.md</code> en la raíz del repo del firmware).</td><td><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span></td></tr>
+  <tr><td>11</td><td>Riesgos legales con el abogado: canciones con letra de obras comerciales, tipografías con licencia GPL, 4 juegos sin licencia, imágenes de la biblioteca, homologación CRC, condiciones de venta, y que confirme que la cláusula de licencias sin repositorio público basta.</td><td><span class="tu">TÚ</span></td></tr>
+  <tr><td>12</td><td>Decidir con batería y medición el ahorro de Wi-Fi de la Pro (puede afectar los dúos).</td><td>Los dos</td></tr>
+</table>
+
+
+<!-- =========================================================== -->
+<h2 id="c3">2. Pepito Lite con ESP32-C3: pines y batería</h2>
+
+<h3>A qué pines conectas en la C3</h3>
+<p>El firmware de la C3 <strong>ya tiene sus propios pines</strong>; no usa los de la S3 (el código elige según el chip). Están en <code>OLED_Lite/pines_lite.h</code>.</p>
+<table>
+  <tr><th>Qué</th><th>Pin de la C3</th></tr>
+  <tr><td>Pantalla SDA</td><td><strong>GPIO 4</strong></td></tr>
+  <tr><td>Pantalla SCL</td><td><strong>GPIO 5</strong></td></tr>
+  <tr><td>Buzzer (a través del transistor)</td><td><strong>GPIO 6</strong></td></tr>
+  <tr><td>Botón (entre el pin y GND)</td><td><strong>GPIO 7</strong></td></tr>
+  <tr><td>Divisor de la batería (después)</td><td><strong>GPIO 3</strong></td></tr>
+</table>
+<ul>
+  <li>La pantalla va a 3V3 y a GND.</li>
+  <li>El botón no lleva resistencia: usa la resistencia interna del chip.</li>
+  <li>No uses el GPIO 9 (botón BOOT de la placa) ni el GPIO 8 (LED de la placa).</li>
+</ul>
+
+<h3>El buzzer con transistor 2N2222 (Pro y Lite) y cómo hacerlo sonar más fuerte</h3>
+<p>El buzzer es un pasivo magnético de 12 mm con una bobina de unos 16 Ω: pide unos 200 mA, y un pin del ESP32 solo da 20 a 40 mA. Por eso <strong>no va directo al pin</strong>: un transistor hace de interruptor. En la Lite con C3 el pin es el <strong>GPIO 6</strong>; en la Pro es el <strong>GPIO 4</strong>. El resto del circuito es igual.</p>
+
+<div class="esquema">
+<svg viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Circuito del buzzer con transistor 2N2222" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <g stroke="#1B2430" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- rieles -->
+    <line x1="80" y1="50" x2="410" y2="50" stroke="#C0392B" stroke-width="3"/>
+    <line x1="80" y1="390" x2="410" y2="390" stroke="#1B2430" stroke-width="3"/>
+    <!-- condensador 100 uF -->
+    <line x1="110" y1="50" x2="110" y2="185"/>
+    <line x1="92" y1="185" x2="128" y2="185"/>
+    <line x1="92" y1="198" x2="128" y2="198"/>
+    <line x1="110" y1="198" x2="110" y2="390"/>
+    <!-- buzzer -->
+    <line x1="275" y1="50" x2="275" y2="100"/>
+    <circle cx="275" cy="135" r="35"/>
+    <line x1="275" y1="170" x2="275" y2="240"/>
+    <!-- diodo (raya hacia arriba) -->
+    <line x1="365" y1="50" x2="365" y2="95"/>
+    <line x1="347" y1="95" x2="383" y2="95"/>
+    <polygon points="347,135 383,135 365,95" fill="#EEF2F6"/>
+    <line x1="365" y1="135" x2="365" y2="225"/>
+    <line x1="365" y1="225" x2="275" y2="225"/>
+    <!-- transistor NPN -->
+    <line x1="240" y1="255" x2="240" y2="315"/>
+    <line x1="240" y1="270" x2="275" y2="248"/>
+    <line x1="275" y1="240" x2="275" y2="248"/>
+    <line x1="240" y1="300" x2="275" y2="322"/>
+    <line x1="275" y1="322" x2="275" y2="390"/>
+    <polygon points="268,314 257,316 262,306" fill="#1B2430"/>
+    <!-- base: GPIO -> R1 -> base -->
+    <line x1="20" y1="285" x2="125" y2="285"/>
+    <rect x="125" y="275" width="70" height="20" fill="#FFF6DC"/>
+    <line x1="195" y1="285" x2="240" y2="285"/>
+    <!-- R2 base a GND -->
+    <line x1="215" y1="285" x2="215" y2="318"/>
+    <rect x="205" y="318" width="20" height="46" fill="#FFF6DC"/>
+    <line x1="215" y1="364" x2="215" y2="390"/>
+  </g>
+  <g fill="#1B2430">
+    <circle cx="275" cy="50" r="4"/><circle cx="365" cy="50" r="4"/><circle cx="110" cy="50" r="4"/>
+    <circle cx="275" cy="225" r="4"/><circle cx="215" cy="285" r="4"/>
+    <circle cx="110" cy="390" r="4"/><circle cx="215" cy="390" r="4"/><circle cx="275" cy="390" r="4"/>
+  </g>
+  <g fill="#1B2430">
+    <text x="80" y="30" font-weight="700" fill="#C0392B">V_BUZZER = 3V3  (o 5 V / positivo de la batería, para más volumen)</text>
+    <text x="80" y="412" font-weight="700">GND</text>
+    <text x="136" y="178">+</text>
+    <text x="138" y="198">Condensador</text>
+    <text x="138" y="214">100 µF</text>
+    <text x="138" y="230" font-size="12" fill="#5A6878">(pegado al buzzer)</text>
+    <text x="275" y="131" text-anchor="middle" font-size="12" font-weight="700">BUZZER</text>
+    <text x="275" y="147" text-anchor="middle" font-size="12">16 Ω</text>
+    <text x="283" y="90" font-weight="700">+</text>
+    <text x="392" y="112" font-weight="700">Diodo 1N4007</text>
+    <text x="392" y="128" font-size="12">(la raya hacia V_BUZZER)</text>
+    <text x="284" y="262" font-weight="700">C</text>
+    <text x="224" y="262" font-weight="700">B</text>
+    <text x="284" y="318" font-weight="700">E</text>
+    <text x="300" y="350" font-weight="700">Transistor NPN</text>
+    <text x="300" y="366">2N2222A / PN2222A</text>
+    <text x="20" y="262" font-weight="700">GPIO 6 (Lite)</text>
+    <text x="20" y="277" font-size="12">GPIO 4 (Pro)</text>
+    <text x="160" y="268" text-anchor="middle" font-weight="700">R1</text>
+    <text x="160" y="312" text-anchor="middle" font-size="12">1 kΩ o 470 Ω</text>
+    <text x="198" y="341" text-anchor="end" font-weight="700">R2 10 kΩ</text>
+    <text x="198" y="357" text-anchor="end" font-size="12">(opcional)</text>
+  </g>
+</svg>
+</div>
+
+<h4>Valores de los componentes</h4>
+<table>
+  <tr><th>Pieza</th><th>Valor</th><th>Para qué</th></tr>
+  <tr><td>Transistor</td><td><strong>2N2222A</strong> o <strong>PN2222A</strong> (NPN, 600 mA, 40 V)</td><td>Interruptor que maneja los ~200 a 300 mA del buzzer.</td></tr>
+  <tr><td>R1 (del GPIO a la base)</td><td><strong>1 kΩ</strong> (lo que ya se probó con 3,3 V) o <strong>470 Ω</strong> (más margen si subes el voltaje)</td><td>Limita la corriente de base: con 470 Ω salen unos 5 mA, que el pin aguanta de sobra y dejan al transistor bien "cerrado".</td></tr>
+  <tr><td>R2 (de la base a GND)</td><td>10 kΩ (opcional)</td><td>Mantiene el buzzer callado mientras la placa arranca.</td></tr>
+  <tr><td>Diodo</td><td><strong>1N4007</strong> (o 1N4148 / 1N5819)</td><td><strong>Obligatorio</strong>: protege al transistor del pico de la bobina al apagarse. Va en paralelo con el buzzer, con la raya hacia el lado positivo.</td></tr>
+  <tr><td>Condensador</td><td><strong>100 µF</strong> (electrolítico, 10 V o más) junto al buzzer; puede sumarse uno de 100 nF</td><td>Evita que los golpes de corriente reinicien la placa o bajen el voltaje de la pantalla.</td></tr>
+  <tr><td>Buzzer</td><td>Pasivo magnético de 12 mm, ~16 Ω</td><td>El firmware lo maneja con PWM (<code>sonido.cpp</code>).</td></tr>
+</table>
+
+<h4>Patas del transistor</h4>
+<ul>
+  <li><strong>PN2222A</strong> (plástico, el más común) y S8050: con la cara plana hacia ti, de izquierda a derecha <strong>E - B - C</strong>.</li>
+  <li><strong>P2N2222A</strong> y BC547: <strong>C - B - E</strong> (al revés).</li>
+  <li>El 2N2222A metálico (lata redonda): la pestañita marca el emisor.</li>
+  <li><strong>Compruébalo con el multímetro en modo diodo</strong> (punta roja en la base: debe marcar ~0,6 V hacia el emisor y hacia el colector). Con las patas al revés el buzzer suena flojo o no suena.</li>
+</ul>
+
+<h4>Cómo sacarle más volumen</h4>
+<ol>
+  <li><strong>Alimenta el buzzer con más voltaje</strong> (es lo que más sube el sonido): en vez de 3V3, conecta el lado positivo del buzzer al <strong>5 V</strong> o al <strong>positivo de la batería, después del interruptor</strong> (3,7 a 4,2 V). Con 5 V suena unos 3,6 dB más fuerte que con 3,3 V. Con 5 V la corriente por el buzzer es de unos 300 mA, pero como la señal es de media onda (50 % del tiempo) el promedio es de ~150 mA, y el 2N2222A aguanta 600 mA.
+    <ul>
+      <li>El GPIO nunca ve ese voltaje: la base solo sube a ~0,7 V.</li>
+      <li>En la Pro (DevKitC-1) el pin <code>5VIN</code> es solo de entrada: para sacar 5 V del USB hay que soldar el puente "IN-OUT" de la placa. Con batería, usa su positivo.</li>
+      <li>En la C3 Super Mini, el pin 5V sí entrega el voltaje del USB.</li>
+    </ul></li>
+  <li><strong>Usa R1 de 470 Ω</strong> si subes el voltaje, para que el transistor quede bien saturado.</li>
+  <li><strong>Pon el volumen de la app en "Alto".</strong> El firmware ya usa el máximo ancho de pulso de un buzzer pasivo (50 %); más no se puede por software.</li>
+  <li><strong>Caja:</strong> haz un agujero de sonido frente al buzzer, déjalo mirando hacia afuera y sin tapar; sellado se oye mucho menos.</li>
+</ol>
+<div class="aviso">El montaje con <strong>3,3 V, R1 de 1 kΩ y diodo</strong> es el que se probó en la placa (volumen Medio ajustado a oído, 2026-11-15). Las opciones de más voltaje y R1 de 470 Ω son recomendaciones de diseño que <strong>no se han medido en esta placa</strong>: pruébalas con la pieza real y, si algo se calienta o suena raro, vuelve a 3,3 V y 1 kΩ. El firmware no cambia con ninguna de las dos. El esquema original está en el <code>README.md</code> del repo del firmware, sección "Buzzer".</div>
+
+<div class="aviso"><strong>Advertencia honesta:</strong> estos pines están en el código como <strong>provisorios</strong>. Se eligieron porque en las placas "Super Mini" de la C3 son libres, pero <strong>nunca se han probado en una C3 real</strong>. Cuando llegue la placa, mira en su dibujo de pines que el 3, 4, 5, 6 y 7 existan y estén libres. Si alguno no sirve, se cambia en un solo archivo (<code>pines_lite.h</code>) y se vuelve a compilar.</div>
+
+<h3>Pin del divisor de batería</h3>
+<p>En la S3 (Pepito Pro) es el <strong>GPIO 3</strong>, en la misma fila de la placa donde están los pines 4 a 11. En la C3 (Pepito Lite) también es el <strong>GPIO 3</strong>.</p>
+<div class="diagrama">Pepito Pro (S3):
+    batería (+) ──[ 100 kΩ ]──┬──[ 220 kΩ ]── GND
+                              │
+                              ├── GPIO 3
+                              └──[ 100 nF ]── GND
+
+Pepito Lite (C3):
+    batería (+) ──[ 100 kΩ ]──┬──[ 100 kΩ ]── GND      ← OJO: 100 k abajo, no 220 k
+                              │
+                              ├── GPIO 3
+                              └──[ 100 nF ]── GND</div>
+<ul>
+  <li><strong>Por qué 100 k en la C3:</strong> su lector de voltaje llega solo a unos 2,5 V. Con 220 k una batería llena (4,2 V) daría 2,89 V y la lectura se aplastaría; con 100 k llega a 2,1 V y se lee bien.</li>
+  <li>El condensador de 100 nF (cerámico, nunca más de 220 nF) va entre el GPIO 3 y GND, pegado al pin.</li>
+  <li>El GND del divisor tiene que ser el mismo GND de la placa.</li>
+  <li>Toma el positivo de la batería <strong>después del interruptor</strong>, si lo hay (si lo tomas antes, el divisor gasta unos 13 microamperios aunque Pepito esté apagado).</li>
+  <li>Si cargas la batería con un módulo (TP4056), el divisor va en el positivo de la <strong>batería</strong>, no en la salida de USB.</li>
+  <li>Guía completa: <code>docs/bateria-divisor.md</code> del repo del panel.</li>
+</ul>
+
+
+<!-- =========================================================== -->
+<h2 id="grabar">3. Cómo grabar la C3 (y la Pro) y cómo instalar la app</h2>
+
+<h3>Grabar la C3 nueva sin ayuda</h3>
+<p>La C3 nueva viene en blanco, así que la <strong>primera vez</strong> se graba por cable. Después, todas las actualizaciones se hacen por Bluetooth desde la app (Más &rarr; Configuración &rarr; Sistema &rarr; Actualizar).</p>
+<ol>
+  <li>Conecta la C3 por USB. En el Administrador de dispositivos, mira en "Puertos (COM y LPT)" qué número le salió (por ejemplo <code>COM7</code>). Si el PC no la ve: mantén pulsado el botón <strong>BOOT</strong> de la placa, conecta el cable y suelta el botón.</li>
+  <li>Abre PowerShell y pega esto (<strong>una sola línea</strong>), cambiando <code>COM7</code> por tu puerto:
+<pre><code>&amp; "$env:LOCALAPPDATA\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" upload -p COM7 --fqbn esp32:esp32:esp32c3:CDCOnBoot=cdc,FlashSize=4M --input-dir C:\Proyectos\TV_RETRO-compilados\2026-11-25b\lite-c3</code></pre></li>
+  <li>Cuando diga que terminó, la pantalla se enciende y muestra el PIN de emparejar. En la app entra a "Tengo un Pepito Lite" y sigue los pasos: ahí escribes ese PIN.</li>
+</ol>
+<div class="peligro"><strong>Nunca</strong> grabes un archivo llamado <code>merged.bin</code> en una placa que ya tenga datos: borra la cuenta, el Wi-Fi, las alarmas y la cara. Los tres archivos de arriba (bootloader, partitions y el programa) son seguros.</div>
+<ul>
+  <li>La carpeta <code>lite-c3</code> tiene la Lite 6 (la actual). Si más adelante hay una versión más nueva, instálala desde la app por Bluetooth, no por cable.</li>
+  <li>Si sale "Access is denied", cierra el Monitor Serie del Arduino IDE y vuelve a intentar.</li>
+  <li>Si algo falla, copia el mensaje de error completo y se lo llevas a Claude.</li>
+  <li>Si la pantalla es de 1,3" y resulta SH1106 (no SSD1306), hay que cambiar el firmware antes: lee <code>PANTALLA-1.3-SH1106.md</code> en la raíz del repo del firmware.</li>
+</ul>
+
+<h3>La Pro (ESP32-S3)</h3>
+<p>La Pro se actualiza <strong>por Wi-Fi desde la app</strong> (Más &rarr; Configuración &rarr; Sistema &rarr; "Actualizar a Pepito"). Solo si hiciera falta grabarla por cable (puerto <code>COM6</code> en tu equipo):</p>
+<pre><code>&amp; "$env:LOCALAPPDATA\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" upload -p COM6 --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,FlashMode=qio,PartitionScheme=custom --input-dir C:\Proyectos\TV_RETRO-compilados\2026-11-25b\pro-s3</code></pre>
+<p>Esa carpeta tiene la Pro 13. Abrir el puerto serie reinicia la placa.</p>
+
+<h3>Instalar la app (APK) en el celular</h3>
+<p>Con el celular conectado por cable y la depuración USB activada:</p>
+<pre><code>adb install -r C:\Proyectos\TV_RETRO-compilados\2026-11-25b\apk\app-debug.apk</code></pre>
+<p>Si el ícono viejo sigue saliendo, desinstala la app y vuelve a instalarla (algunos lanzadores guardan el ícono anterior).</p>
+
+<h3>Orden cuando se cambia algo que toca Firebase</h3>
+<p><strong>1) Reglas de Firebase &rarr; 2) firmware (OTA) &rarr; 3) app.</strong> Las reglas las publicas tú en la consola.</p>
+
+
+<!-- =========================================================== -->
+<h2 id="canciones">4. Cómo agregar canciones nuevas</h2>
+<p>Sigue siendo el <strong>mismo formato <code>.ino</code> de siempre</strong> (el que haces con tu simulador CancionesMiniTV). No hay que tocar el firmware ni la TV.</p>
+
+<h3>Dónde se hace</h3>
+<ol>
+  <li>Abre la app con tu cuenta de <strong>administrador</strong> (la de jhoncarta0706). El botón de importar solo lo ven los administradores, y las reglas de Firebase también lo exigen. Las cuentas de clientes no lo ven.</li>
+  <li>Ve a la pestaña <strong>Canciones</strong> y toca el botón <strong>+</strong>.</li>
+  <li>Elige uno o varios archivos <code>.ino</code> a la vez.</li>
+</ol>
+
+<h3>Qué pasa después</h3>
+<ul>
+  <li>La app ejecuta el <code>.ino</code> en el celular, graba las notas, las pantallas y las imágenes, y guarda la grabación en la nube.</li>
+  <li>La clave de cada canción es el nombre del archivo sin <code>.ino</code>. Si ya existe una con ese nombre, la reemplaza.</li>
+  <li>La app muestra cuántas fallaron y por qué.</li>
+  <li>Quedan en el catálogo común: todas las cuentas, con Pepito Pro y con Pepito Lite, las ven y las eligen.</li>
+</ul>
+
+<h3>Puntos a tener en cuenta</h3>
+<ul>
+  <li>La app interpreta un C++ "reducido". Un <code>.ino</code> muy raro puede fallar al importarse (le pasó a <code>tv_lanavedelolvido</code>).</li>
+  <li>Tus 57 <code>.ino</code> originales están en <code>C:\Proyectos\Canciones-ino</code> (carpeta de solo lectura: no se modifica).</li>
+  <li>Las canciones con letra de obras comerciales siguen siendo un riesgo legal para revisar con el abogado.</li>
+  <li>Para cambiar solo el <strong>nombre visible</strong> de canciones ya subidas, usa la herramienta "Renombrar canciones" (sección 6).</li>
+</ul>
+
+
+<!-- =========================================================== -->
+<h2 id="hall">5. El sensor Hall de los dúos (solo Pepito Pro)</h2>
+<p>Hoy usas el módulo <strong>MH-Sensor-Series</strong> (chip 3144 + comparador LM393). Gasta unos 10 mA, solo reacciona a <strong>un</strong> polo del imán y es solo para pruebas.</p>
+<p>El plan para el producto: el chip <strong>AH180 en versión de patitas</strong> (terminación "PG"), por unos 0,3 a 0,5 dólares.</p>
+<ul>
+  <li>Reacciona a <strong>los dos polos</strong> del imán (no importa cómo lo pegues).</li>
+  <li>Gasta unos <strong>8 microamperios</strong> (casi nada: no pesa en la batería).</li>
+  <li>Es <strong>solo el sensor</strong>: sin módulo ni comparador. Tiene 3 patitas.</li>
+</ul>
+
+<h3>Conexión del sensor suelto (pin del firmware: GPIO 11)</h3>
+<table>
+  <tr><th>Patita del sensor</th><th>A dónde va</th></tr>
+  <tr><td>VCC</td><td>3V3 de la placa (<strong>nunca 5 V</strong>: los pines del ESP32 no aguantan 5 V)</td></tr>
+  <tr><td>GND</td><td>GND</td></tr>
+  <tr><td>OUT (salida)</td><td><strong>GPIO 11</strong> de la Pro</td></tr>
+</table>
+<ul>
+  <li>Pon un condensador de 100 nF entre VCC y GND, pegado al sensor.</li>
+  <li>No hace falta resistencia: el firmware activa la resistencia interna del pin y espera que la salida baje a LOW al sentir el imán. Si el cable al sensor fuera largo, se puede añadir una resistencia de 10 kΩ de OUT a 3V3.</li>
+  <li>Sigue usando imanes de neodimio de unos 8 × 2 mm. Mide la distancia a través de la carcasa real.</li>
+  <li>Ponlo lejos del buzzer (el buzzer es magnético y podría disparar el sensor).</li>
+</ul>
+
+<div class="aviso"><strong>Antes de comprar, revisa el datasheet de la referencia exacta</strong> (no se puede verificar desde aquí y las variantes cambian): que funcione con 3,3 V, el tipo de salida (con la resistencia interna sirven open-drain y push-pull), que sea <strong>omnipolar</strong> (los dos polos) y que tenga versión de patitas para soldarlo a mano.</div>
+<p><strong>Alternativa de bajo consumo:</strong> DRV5032 (Texas Instruments), también en el plan. Es de montaje superficial y diminuto: necesitaría una plaquita adaptadora. Para empezar, el AH180 de patitas es más fácil de soldar.</p>
+<p>Cuando llegue, pruébalo primero con cables antes de soldarlo definitivo. La detección con el imán a través de la carcasa se debe medir con la pieza real. Si los dúos se disparan tarde o no se disparan, se ajusta. Más detalle: <code>docs/plan-duos.md</code> y <code>docs/protocolo-duos.md</code> del repo del panel.</p>
+
+
+<!-- =========================================================== -->
+<h2 id="herramientas">6. Todas las herramientas</h2>
+<div class="ok">Las herramientas de este proyecto se abren en <strong>tu PC</strong> (no están en internet). Las que tocan Firebase piden iniciar sesión con tu cuenta de <strong>administrador</strong>. La única que está en internet es el simulador de canciones.</div>
+
+<table>
+  <tr><th>Herramienta</th><th>Para qué sirve</th><th>Cómo abrirla</th></tr>
+  <tr>
+    <td><strong>Simulador de canciones</strong> (CancionesMiniTV)</td>
+    <td>Crear los <code>.ino</code> de las canciones. También tiene la pestaña "Conversor MP3 &rarr; MIDI".</td>
+    <td>En internet (dirección probable, verifica que abra): <code>https://cartica07.github.io/CancionesMiniTV/simulador.html</code><br />
+    En tu PC: <code>cd C:\Proyectos\CancionesMiniTV</code> y <code>npx serve .</code>, luego <code>localhost:3000/simulador.html</code>.<br />Repositorio: <code>https://github.com/Cartica07/CancionesMiniTV</code></td>
+  </tr>
+  <tr>
+    <td><strong>Editor de dúos</strong></td>
+    <td>Crear, subir y borrar dúos del catálogo de la nube (admin).</td>
+    <td><code>cd C:\Proyectos\TV_RETRO\app-unificada</code><br /><code>node construir.mjs</code><br /><code>npx serve www -l 3010</code><br />luego <code>localhost:3010/editor-duos.html</code></td>
+  </tr>
+  <tr>
+    <td><strong>Editor de caras de reloj</strong></td>
+    <td>Crear y subir caras al catálogo de la nube (admin). Con él se borra la cara "Clima".</td>
+    <td>Igual que el de dúos, y entras a <code>localhost:3010/editor-caras.html</code></td>
+  </tr>
+  <tr>
+    <td><strong>Carga masiva</strong></td>
+    <td>Subir imágenes y GIF en lote. Con el interruptor "Biblioteca predeterminada" sube a la biblioteca que ven todas las cuentas (admin). Las canciones ya no se suben aquí.</td>
+    <td><code>cd C:\Proyectos\TV_RETRO</code> y <code>npx serve .</code>, luego <code>localhost:3000/carga-masiva.html</code></td>
+  </tr>
+  <tr>
+    <td><strong>Renombrar canciones</strong></td>
+    <td>Cambiar solo el nombre visible de las canciones del catálogo (admin). Respaldo de los nombres anteriores: <code>TV_RETRO-respaldos\musicales-indice-2026-11-23.json</code>.</td>
+    <td><code>npx serve .</code> en <code>C:\Proyectos\TV_RETRO</code>, luego <code>localhost:3000/app-unificada/herramientas/renombrar-canciones.html</code></td>
+  </tr>
+  <tr>
+    <td><strong>Íconos de las caras</strong> (desarrollo)</td>
+    <td>Genera las tablas de íconos de las caras (Wi-Fi, campana, batería). Casi nunca se usa.</td>
+    <td>Carpeta <code>app-unificada\herramientas\iconos-reloj\</code></td>
+  </tr>
+</table>
+
+<h3>Herramientas del firmware</h3>
+<p>Carpeta <code>C:\Proyectos\TV_RETRO-firmware\herramientas\</code>. Se usan con <code>node</code>; casi todas necesitan una <strong>clave de servicio de Firebase temporal</strong> que se borra al terminar. Guía: <code>README.md</code> y <code>CLAUDE.md</code> del repo del firmware.</p>
+<table>
+  <tr><th>Archivo</th><th>Para qué</th></tr>
+  <tr><td><code>publicar-firmware.cjs</code></td><td>Publica una versión del programa para actualizar por OTA (Pro; Lite con <code>--lite c3</code>). Prueba en seco: <code>node publicar-firmware.cjs --bin &lt;archivo.bin&gt; --build 14 --seco</code></td></tr>
+  <tr><td><code>fabricar-tv.cjs</code></td><td>Fabrica una TV nueva (crea su cuenta y la graba por cable).</td></tr>
+  <tr><td><code>liberar-tv.cjs</code></td><td>Libera una TV cuya cuenta se perdió.</td></tr>
+  <tr><td><code>generar-claves-ota.cjs</code></td><td>Genera las claves de las actualizaciones. Ya están hechas (<code>ota-principal.pem</code> y <code>ota-respaldo.pem</code>): no regenerar sin necesidad.</td></tr>
+  <tr><td><code>escuchar-serie-seguro.ps1</code></td><td>Monitor serie de la TV (se limita por tiempo y tamaño).</td></tr>
+  <tr><td><code>comprobar-copias-lite.cjs</code></td><td>Comprueba que los archivos compartidos entre la Pro y la Lite sigan idénticos.</td></tr>
+  <tr><td><code>generar-portal.cjs</code>, <code>generar_fuentes.js</code></td><td>Regeneran las páginas del portal del Wi-Fi y las tablas de fuentes del firmware.</td></tr>
+</table>
+<p><strong>Pruebas</strong> (para Claude o para quien programe): <code>app-unificada\pruebas\</code> (<code>node &lt;prueba&gt;.mjs</code>) y <code>pruebas\</code> del panel.</p>
+
+
+<!-- =========================================================== -->
+<h2 id="play">7. Subir Pepito a Google Play</h2>
+<p>Las reglas de Google cambian: antes de cada paso mira lo que te pida la consola de Play.</p>
+
+<h3>Lo que ya está listo</h3>
+<ul>
+  <li>Nombre <strong>Pepito</strong> y paquete <code>com.pepito.app</code> (el paquete <strong>no se puede cambiar</strong> después de publicar).</li>
+  <li>targetSdk 36 y minSdk 24: cumple lo que Google exige.</li>
+  <li>Ícono propio y pantalla de carga propia.</li>
+  <li>"Eliminar mi cuenta" desde la app y página web para pedirlo (<code>pepito/eliminar-cuenta.html</code>).</li>
+  <li>Páginas legales con tus datos (<code>pepito/privacidad.html</code>, <code>terminos.html</code>, <code>licencias.html</code>, <code>ayuda.html</code>) y pantalla de aceptación de términos.</li>
+  <li>Firebase ya conoce el paquete <code>com.pepito.app</code> con las huellas de la clave de subida y la de depuración.</li>
+  <li>Clave de subida: <code>C:\Proyectos\TV_RETRO-claves\tvretro-subida.jks</code>, alias <code>tvretro</code>.</li>
+</ul>
+<div class="aviso"><strong>Lo que falta del proyecto (<span class="yo">CLAUDE</span> cuando le digas "empieza"):</strong> la app unificada todavía <strong>no tiene configurada la firma de publicación</strong> (está en versión 1 / "1.0"). Hay que conectar la clave de subida, poner <code>versionCode</code> y <code>versionName</code>, generar el <strong>AAB</strong> (<code>gradlew bundleRelease</code>) y verificar que queda firmado y que abre bien instalado desde la pista de prueba interna.</div>
+
+<h3>Pasos, en orden</h3>
+<ol>
+  <li><span class="tu">TÚ</span> <strong>Copia de seguridad de la clave (hoy, antes de todo).</strong> Copia <strong>fuera de este PC</strong> (USB y/o nube privada): <code>tvretro-subida.jks</code>, el archivo <code>keystore.properties</code> (está en <code>app-android\android\</code>; tiene las contraseñas) y las dos claves <code>ota-principal.pem</code> y <code>ota-respaldo.pem</code>. Si pierdes las <code>.pem</code>, las TV ya vendidas solo se podrán actualizar por cable.</li>
+  <li><span class="tu">TÚ</span> <strong>Cuenta de desarrollador de Google Play</strong> en <code>https://play.google.com/console</code> (pago único de unos 25 dólares). Como eres persona natural es una cuenta <strong>personal</strong>: pide tu documento, teléfono y dirección. El nombre de desarrollador y el correo de contacto pueden verse públicos en la ficha. Para cuentas personales nuevas Google exige una <strong>prueba cerrada: mínimo 12 personas probando la app durante 14 días seguidos</strong> antes de poder publicar. Ve reuniendo a 12 amigos o familiares con celular Android y correo de Google (confírmalo en la consola).</li>
+  <li><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span> <strong>Páginas legales en línea.</strong> Google pide una dirección web pública de la política de privacidad y otra para eliminar la cuenta. Hoy esas páginas están en la rama <code>lite</code> y no se ven en internet. GitHub Pages publica lo que hay en <code>main</code>; por eso salen en línea cuando pasen a <code>main</code> (o a una rama <code>gh-pages</code>). Eso lo hace Claude <strong>solo si le dices expresamente "haz el merge a main"</strong>. Antes, decide si el repositorio <code>Cartica07/TV_RETRO</code> es público o privado: si es público, un merge dejaría el código visible (no lo quieres), y la alternativa es publicar solo las páginas legales con <code>gh-pages</code>. Direcciones previstas: <code>https://cartica07.github.io/TV_RETRO/pepito/privacidad.html</code> y <code>https://cartica07.github.io/TV_RETRO/pepito/eliminar-cuenta.html</code>. Un abogado debería revisar términos y privacidad antes de publicar.</li>
+  <li><span class="tu">TÚ</span> <strong>Crear la app en la consola:</strong> nombre Pepito, idioma español, tipo App, gratuita. Acepta las declaraciones. Activa <strong>Play App Signing</strong> cuando te lo ofrezca (subes con tu clave de subida y Google firma con la suya).</li>
+  <li><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span> <strong>Ficha de la tienda:</strong> nombre (máx. 30 caracteres), descripción corta (máx. 80) y completa (máx. 4000); ícono de 512 × 512 px y gráfico de funciones de 1024 × 500 px (Claude los genera de tu ícono); al menos 2 capturas del celular (Claude las toma con adb); categoría (Herramientas o Estilo de vida); correo de contacto; dirección de la política de privacidad. Aclara que Pepito necesita la pantalla Pepito (Pro o Lite) para usarse.</li>
+  <li><span class="tu">TÚ</span> (Claude te dicta cada respuesta) <strong>Formularios de "Contenido de la app":</strong> política de privacidad (la dirección); <strong>sin anuncios</strong>; <strong>acceso a la app</strong>: la app pide cuenta, así que Google necesita credenciales de prueba (crea una cuenta de prueba con correo verificado y escribe las instrucciones; como el revisor no tiene una TV, una nota clara y un <strong>video corto</strong> mostrando la app funcionando con la TV); clasificación de contenido (cuestionario; no hay violencia ni contenido adulto); público objetivo adultos y adolescentes (<strong>no</strong> marques "para niños"); seguridad de los datos (correo, id de cuenta, contenido de la galería, ajustes de la TV y constancia de aceptación; cifrado en tránsito; se puede eliminar la cuenta y los datos; no vendes datos); eliminación de cuenta (la dirección de <code>eliminar-cuenta.html</code>); permisos (Bluetooth para hablar con Pepito Lite e Internet para la nube). Empieza por distribuir en Colombia y Latinoamérica: si incluyes la Unión Europea, Google te exige declararte "comerciante" y mostrar tu dirección.</li>
+  <li><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span> <strong>Subir el AAB y probar.</strong> (1) Pista de <strong>prueba interna</strong> (hasta 100 personas, sin revisión larga): sube el AAB que genera Claude y pruébalo tú instalándolo desde Play. (2) <strong>Prueba cerrada</strong> (los 12 probadores, 14 días). (3) Cuando se cumpla el plazo: "Solicitar acceso a producción" y después "Producción". Cada subida nueva necesita un <code>versionCode</code> mayor (lo cambia Claude). La revisión de Google puede tardar varios días.</li>
+  <li><span class="tu">TÚ</span> + <span class="yo">CLAUDE</span> <strong>Después de la primera subida (importante para entrar con Google):</strong> en Play Console, Integridad de la app &rarr; "Firma de apps", copia la huella SHA-1 y SHA-256 de la clave de firma de Google y pásasela a Claude (o agrégalas en Firebase: Configuración del proyecto &rarr; app Android <code>com.pepito.app</code> &rarr; "Agregar huella digital"). Sin eso, el botón "Entrar con Google" falla en la app instalada desde Play (con correo y contraseña sí funciona). Prueba todo desde la pista interna antes de publicar: correo, Google, vincular la TV, enviar contenido y Bluetooth con la Lite.</li>
+</ol>
+
+<h3>Resumen y tiempo</h3>
+<table>
+  <tr><th>Quién</th><th>Qué hace</th></tr>
+  <tr><td><span class="tu">TÚ</span></td><td>Copia de la clave; cuenta de Play (pago y documentos); 12 probadores; textos de la ficha que quieras cambiar; aprobar el merge a <code>main</code>; llenar los formularios; abogado.</td></tr>
+  <tr><td><span class="yo">CLAUDE</span></td><td>Firma de publicación y AAB; <code>versionCode</code>; ícono 512 y capturas; textos sugeridos de la ficha y los formularios; huella de Play en Firebase; merge a <code>main</code> solo si lo pides; correcciones si Google rechaza algo.</td></tr>
+</table>
+<p><strong>Tiempo realista:</strong> cuenta, ficha y formularios (1 a 3 días de trabajo) + 14 días de prueba cerrada + revisión (varios días) = unas <strong>3 a 4 semanas</strong>.</p>
+
+
+<!-- =========================================================== -->
+<h2 id="archivos">8. Dónde está cada archivo y mensaje para la próxima conversación</h2>
+
+<h3>Carpetas importantes</h3>
+<table>
+  <tr><th>Qué</th><th>Dónde</th></tr>
+  <tr><td>Proyecto del panel y la app</td><td><code>C:\Proyectos\TV_RETRO</code> (rama <code>lite</code>)</td></tr>
+  <tr><td>Firmware</td><td><code>C:\Proyectos\TV_RETRO-firmware</code> (rama <code>lite</code>)</td></tr>
+  <tr><td>Binarios y APK ya compilados (Pro 13, Lite 6)</td><td><code>C:\Proyectos\TV_RETRO-compilados\2026-11-25b\</code> (<code>pro-s3</code>, <code>lite-c3</code>, <code>apk</code>)</td></tr>
+  <tr><td>Claves (no subir a internet)</td><td><code>C:\Proyectos\TV_RETRO-claves\</code>: <code>tvretro-subida.jks</code>, <code>ota-principal.pem</code>, <code>ota-respaldo.pem</code> y, mientras exista, la clave de servicio de Firebase</td></tr>
+  <tr><td>Respaldos</td><td><code>C:\Proyectos\TV_RETRO-respaldos\</code></td></tr>
+  <tr><td>Tus canciones originales (solo lectura)</td><td><code>C:\Proyectos\Canciones-ino</code> y <code>C:\Proyectos\CancionesMiniTV</code></td></tr>
+  <tr><td>Prompt largo para la próxima conversación</td><td><code>C:\Proyectos\TV_RETRO\docs\prompt-siguiente-auditoria-playstore.md</code> (copia: <code>PROMPT-siguiente-conversacion.md</code> en la carpeta de compilados)</td></tr>
+  <tr><td>Historial de todo lo hecho y lo que falta</td><td><code>docs\historial-cambios.md</code> (sección "Cierre del 2026-11-25 (noche)")</td></tr>
+</table>
+
+<h3>Primer mensaje para la próxima conversación</h3>
+<p>Copia esto y pégalo como primer mensaje:</p>
+<pre><code>Hola, Claude. Soy el dueño de Pepito (antes TV RETRO) y vamos a continuar el trabajo de otra conversación. Responde siempre en español, tratándome de "tú" y en palabras simples (no soy programador).
+
+Todo el contexto está en un prompt largo que dejé escrito en:
+C:\Proyectos\TV_RETRO\docs\prompt-siguiente-auditoria-playstore.md
+(hay una copia en C:\Proyectos\TV_RETRO-compilados\2026-11-25b\PROMPT-siguiente-conversacion.md)
+
+Por favor:
+1. Lee ese archivo completo y sigue sus instrucciones al pie de la letra: ahí están qué leer y en qué orden, dónde quedó todo, qué falta, mis reglas y cómo trabajo.
+2. Cuando termines de leer todo lo que te indica, resúmeme en pocas líneas lo que entendiste y pregúntame por dónde quiero empezar. No cambies nada ni toques ningún texto hasta que yo te lo diga.</code></pre>
+
+</main>
+</body>
+</html>
